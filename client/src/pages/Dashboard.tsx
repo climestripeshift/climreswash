@@ -5,6 +5,7 @@ import { DistrictData, MapViewMode } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Settings } from "lucide-react";
 import { Link } from "wouter";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function Dashboard() {
   const [mode, setMode] = useState<MapViewMode>('vulnerability');
@@ -13,11 +14,13 @@ export default function Dashboard() {
   return (
     <div className="h-screen w-full bg-background p-4 flex flex-col lg:flex-row gap-4 overflow-hidden relative">
       
-      {/* Admin Link Overlay */}
-      <div className="absolute top-6 right-6 z-[50]">
+      {/* Top Right Controls */}
+      <div className="absolute top-6 right-6 z-[50] flex items-center gap-2">
+        <ThemeToggle />
         <Link href="/admin">
-          <Button variant="secondary" size="icon" className="h-8 w-8 rounded-full shadow-md opacity-50 hover:opacity-100 transition-opacity">
+          <Button variant="outline" size="sm" className="gap-2" data-testid="link-admin">
             <Settings className="h-4 w-4" />
+            Admin
           </Button>
         </Link>
       </div>

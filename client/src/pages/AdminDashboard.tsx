@@ -13,6 +13,7 @@ import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchDistricts, deleteDistrict, fetchIntegrations, updateIntegration } from "@/lib/api";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function AdminDashboard() {
   const { toast } = useToast();
@@ -85,10 +86,13 @@ export default function AdminDashboard() {
           </div>
           <p className="text-muted-foreground ml-14">Manage data sources, API integrations, and district registries.</p>
         </div>
-        <Button>
-          <Save className="mr-2 h-4 w-4" />
-          Save Changes
-        </Button>
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+          <Button>
+            <Save className="mr-2 h-4 w-4" />
+            Save Changes
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="data" className="w-full">
