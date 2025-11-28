@@ -69,6 +69,44 @@ export const apiIntegrations = pgTable("api_integrations", {
   metadata: jsonb("metadata"),
 });
 
+// Early Warning Alerts
+export const alerts = pgTable("alerts", {
+  id: varchar("id", { length: 100 }).primaryKey(),
+  districtId: varchar("district_id", { length: 100 }).notNull(),
+  severity: varchar("severity", { length: 20 }).notNull(), // 'advisory', 'watch', 'warning', 'emergency'
+  type: varchar("type", { length: 50 }).notNull(), // 'heatwave', 'flood', 'drought', 'air_quality', 'health'
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description").notNull(),
+  impactedPopulation: integer("impacted_population").notNull(),
+  recommendedActions: text("recommended_actions").array().notNull(),
+  drivers: text("drivers").array().notNull(), // factors contributing to alert
+  projectedImpact: text("projected_impact").notNull(),
+  validFrom: timestamp("valid_from").notNull(),
+  validUntil: timestamp("valid_until").notNull(),
+  isActive: integer("is_active").notNull().default(1),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// AQI Observations
+export const aqiObservations = pgTable("aqi_observations", {
+  id: varchar("id", { length: 100 }).primaryKey(),
+  districtId: varchar("district_id", { length: 100 }).notNull(),
+  aqiValue: integer("aqi_value").notNull(),
+  aqiCategory: varchar("aqi_category", { length: 50 }).notNull(), // 'Good', 'Satisfactory', 'Moderate', 'Poor', 'Very Poor', 'Severe'
+  pm25: real("pm25"),
+  pm10: real("pm10"),
+  no2: real("no2"),
+  so2: real("so2"),
+  co: real("co"),
+  o3: real("o3"),
+  dominantPollutant: varchar("dominant_pollutant", { length: 20 }),
+  healthAdvisory: text("health_advisory"),
+  respiratoryRiskMultiplier: real("respiratory_risk_multiplier").notNull().default(1),
+  source: varchar("source", { length: 100 }).notNull().default('CPCB'),
+  observedAt: timestamp("observed_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // User schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -84,6 +122,16 @@ export const insertDistrictSchema = createInsertSchema(districts).omit({
 // API Integration schemas
 export const insertApiIntegrationSchema = createInsertSchema(apiIntegrations);
 
+// Alert schemas
+export const insertAlertSchema = createInsertSchema(alerts).omit({
+  createdAt: true,
+});
+
+// AQI schemas
+export const insertAqiObservationSchema = createInsertSchema(aqiObservations).omit({
+  createdAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -91,3 +139,7 @@ export type District = typeof districts.$inferSelect;
 export type InsertDistrict = z.infer<typeof insertDistrictSchema>;
 export type ApiIntegration = typeof apiIntegrations.$inferSelect;
 export type InsertApiIntegration = z.infer<typeof insertApiIntegrationSchema>;
+export type Alert = typeof alerts.$inferSelect;
+export type InsertAlert = z.infer<typeof insertAlertSchema>;
+export type AqiObservation = typeof aqiObservations.$inferSelect;
+export type InsertAqiObservation = z.infer<typeof insertAqiObservationSchema>;

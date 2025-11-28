@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertDistrictSchema } from "@shared/schema";
+import { insertDistrictSchema, insertAlertSchema, insertAqiObservationSchema } from "@shared/schema";
 import { fromError } from "zod-validation-error";
 
 export async function registerRoutes(
@@ -90,10 +90,96 @@ export async function registerRoutes(
     }
   });
 
+  // Alerts Routes
+  app.get("/api/alerts", async (_req, res) => {
+    try {
+      const activeAlerts = await storage.getActiveAlerts();
+      res.json(activeAlerts);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/alerts/all", async (_req, res) => {
+    try {
+      const allAlerts = await storage.getAllAlerts();
+      res.json(allAlerts);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/districts/:id/alerts", async (req, res) => {
+    try {
+      const alerts = await storage.getAlertsByDistrict(req.params.id);
+      res.json(alerts);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/alerts", async (req, res) => {
+    try {
+      const validated = insertAlertSchema.parse(req.body);
+      const alert = await storage.createAlert(validated);
+      res.status(201).json(alert);
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: fromError(error).toString() });
+      }
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.patch("/api/alerts/:id/deactivate", async (req, res) => {
+    try {
+      const alert = await storage.deactivateAlert(req.params.id);
+      if (!alert) {
+        return res.status(404).json({ error: "Alert not found" });
+      }
+      res.json(alert);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // AQI Routes
+  app.get("/api/aqi", async (_req, res) => {
+    try {
+      const allAqi = await storage.getAllLatestAqi();
+      res.json(allAqi);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/districts/:id/aqi", async (req, res) => {
+    try {
+      const days = parseInt(req.query.days as string) || 7;
+      const history = await storage.getAqiHistory(req.params.id, days);
+      const latest = await storage.getLatestAqi(req.params.id);
+      res.json({ latest, history });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/aqi", async (req, res) => {
+    try {
+      const validated = insertAqiObservationSchema.parse(req.body);
+      const observation = await storage.createAqiObservation(validated);
+      res.status(201).json(observation);
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: fromError(error).toString() });
+      }
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Mock IMD API endpoint
   app.get("/api/imd/forecast/:region", async (req, res) => {
     try {
-      // Mock IMD weather data
       const mockData = {
         region: req.params.region,
         forecast: [
@@ -112,7 +198,6 @@ export async function registerRoutes(
   // Mock Groundwater API endpoint
   app.get("/api/groundwater/levels/:district", async (req, res) => {
     try {
-      // Mock CGWB groundwater data
       const mockData = {
         district: req.params.district,
         measurements: [
