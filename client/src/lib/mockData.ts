@@ -91,6 +91,21 @@ export const getDistrictData = (districtName: string): DistrictData => {
     };
   });
 
+  // WASH Indicators - correlated with vulnerability
+  const waterAccessPercent = Math.max(40, Math.min(95, 90 - (vulnerabilityScore * 0.5) + (hash % 20)));
+  const toiletCoveragePercent = Math.max(50, Math.min(98, 85 - (vulnerabilityScore * 0.4) + (hash % 15)));
+  const handwashingFacilityPercent = Math.max(30, Math.min(85, 70 - (vulnerabilityScore * 0.5) + (hash % 25)));
+  
+  // Health & Social Indicators - inversely correlated with water/sanitation access
+  const childMarriageRate = Math.max(5, Math.min(40, 15 + (100 - toiletCoveragePercent) * 0.3 + (hash % 10)));
+  const malnutritionStunting = Math.max(20, Math.min(50, 25 + (100 - waterAccessPercent) * 0.3 + (hash % 10)));
+  const malnutritionWasting = Math.max(10, Math.min(30, 15 + (100 - handwashingFacilityPercent) * 0.2 + (hash % 8)));
+  const malnutritionUnderweight = Math.max(15, Math.min(45, 20 + (100 - waterAccessPercent) * 0.25 + (hash % 12)));
+  
+  // Mortality indicators - correlated with WASH and malnutrition
+  const infantMortalityRate = Math.max(20, Math.min(60, 25 + malnutritionWasting * 0.5 + (100 - waterAccessPercent) * 0.2));
+  const maternalMortalityRatio = Math.max(80, Math.min(250, 100 + (100 - toiletCoveragePercent) * 1.5 + (hash % 30)));
+
   return {
     id: districtName,
     name: districtName,
@@ -105,12 +120,26 @@ export const getDistrictData = (districtName: string): DistrictData => {
     adaptationStrategies: districtStrategies,
     impactIfNoAction: `Severe impact on ${(childrenPct * 100).toFixed(1)}% child population due to malnutrition and heat stress.`,
     
-    // New Fields
+    // Infrastructure
     soilType,
     rockType,
     toiletTechnology,
     waterSupplyStrategy,
     dropoutRate: Number(baseDropout.toFixed(1)),
+    
+    // WASH
+    waterAccessPercent: Number(waterAccessPercent.toFixed(1)),
+    toiletCoveragePercent: Number(toiletCoveragePercent.toFixed(1)),
+    handwashingFacilityPercent: Number(handwashingFacilityPercent.toFixed(1)),
+    
+    // Health & Social
+    childMarriageRate: Number(childMarriageRate.toFixed(1)),
+    malnutritionStunting: Number(malnutritionStunting.toFixed(1)),
+    malnutritionWasting: Number(malnutritionWasting.toFixed(1)),
+    malnutritionUnderweight: Number(malnutritionUnderweight.toFixed(1)),
+    infantMortalityRate: Number(infantMortalityRate.toFixed(1)),
+    maternalMortalityRatio: Number(maternalMortalityRatio.toFixed(1)),
+    
     seasonalData
   };
 };

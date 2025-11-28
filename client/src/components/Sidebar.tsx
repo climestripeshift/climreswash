@@ -3,11 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Shield, Users, ThermometerSun, Droplets, Zap, Activity, Mountain, Sprout, Bath, TrendingUp, Calendar } from "lucide-react";
+import { AlertTriangle, Shield, Users, ThermometerSun, Droplets, Zap, Activity, Mountain, Sprout, Bath, TrendingUp, Calendar, Heart, Baby, HeartPulse, GraduationCap, Hand } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid, Legend, RadarChart, PolarGrid, PolarAngleAxis, Radar, PolarRadiusAxis } from 'recharts';
 
 interface SidebarProps {
   mode: MapViewMode;
@@ -79,9 +79,10 @@ export function Sidebar({ mode, setMode, selectedDistrict }: SidebarProps) {
                 <CardContent className="space-y-0">
                   
                   <Tabs defaultValue="overview" className="w-full">
-                    <TabsList className="w-full grid grid-cols-3 mb-4">
+                    <TabsList className="w-full grid grid-cols-4 mb-4">
                       <TabsTrigger value="overview">Overview</TabsTrigger>
-                      <TabsTrigger value="infra">Infra & Geo</TabsTrigger>
+                      <TabsTrigger value="health">Health</TabsTrigger>
+                      <TabsTrigger value="infra">Infra</TabsTrigger>
                       <TabsTrigger value="seasonal">Trends</TabsTrigger>
                     </TabsList>
 
@@ -163,6 +164,112 @@ export function Sidebar({ mode, setMode, selectedDistrict }: SidebarProps) {
                         </h4>
                         <p className="text-sm text-muted-foreground leading-relaxed">
                           {selectedDistrict.impactIfNoAction}
+                        </p>
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="health" className="space-y-4 animate-in slide-in-from-left-2 duration-300">
+                      {/* WASH Indicators */}
+                      <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20 space-y-3">
+                        <h4 className="text-sm font-medium flex items-center gap-2 text-blue-400">
+                          <Droplets className="h-4 w-4" />
+                          Water, Sanitation & Hygiene (WASH)
+                        </h4>
+                        <div className="space-y-3">
+                          <div>
+                            <div className="flex justify-between text-xs mb-1">
+                              <span className="text-muted-foreground">Piped Water Access</span>
+                              <span className="font-mono font-bold text-blue-400">{selectedDistrict.waterAccessPercent}%</span>
+                            </div>
+                            <Progress value={selectedDistrict.waterAccessPercent} className="h-1.5 bg-background" indicatorClassName="bg-blue-400" />
+                          </div>
+                          <div>
+                            <div className="flex justify-between text-xs mb-1">
+                              <span className="text-muted-foreground">Toilet Coverage</span>
+                              <span className="font-mono font-bold text-emerald-400">{selectedDistrict.toiletCoveragePercent}%</span>
+                            </div>
+                            <Progress value={selectedDistrict.toiletCoveragePercent} className="h-1.5 bg-background" indicatorClassName="bg-emerald-400" />
+                          </div>
+                          <div>
+                            <div className="flex justify-between text-xs mb-1">
+                              <span className="text-muted-foreground flex items-center gap-1">
+                                <Hand className="h-3 w-3" /> Handwashing Facilities
+                              </span>
+                              <span className="font-mono font-bold text-cyan-400">{selectedDistrict.handwashingFacilityPercent}%</span>
+                            </div>
+                            <Progress value={selectedDistrict.handwashingFacilityPercent} className="h-1.5 bg-background" indicatorClassName="bg-cyan-400" />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Mortality Indicators */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20">
+                          <div className="flex items-center gap-2 text-rose-400 mb-2">
+                            <Baby className="h-4 w-4" />
+                            <span className="text-xs font-medium">IMR</span>
+                          </div>
+                          <div className="text-2xl font-mono font-bold text-rose-400">{selectedDistrict.infantMortalityRate}</div>
+                          <div className="text-xs text-muted-foreground">per 1000 live births</div>
+                        </div>
+                        <div className="p-3 rounded-lg bg-pink-500/10 border border-pink-500/20">
+                          <div className="flex items-center gap-2 text-pink-400 mb-2">
+                            <HeartPulse className="h-4 w-4" />
+                            <span className="text-xs font-medium">MMR</span>
+                          </div>
+                          <div className="text-2xl font-mono font-bold text-pink-400">{selectedDistrict.maternalMortalityRatio}</div>
+                          <div className="text-xs text-muted-foreground">per 100k births</div>
+                        </div>
+                      </div>
+
+                      {/* Malnutrition */}
+                      <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20 space-y-3">
+                        <h4 className="text-sm font-medium flex items-center gap-2 text-amber-400">
+                          <Heart className="h-4 w-4" />
+                          Child Malnutrition (Under 5)
+                        </h4>
+                        <div className="grid grid-cols-3 gap-2 text-center">
+                          <div className="p-2 rounded bg-background/50">
+                            <div className="text-lg font-mono font-bold text-amber-400">{selectedDistrict.malnutritionStunting}%</div>
+                            <div className="text-xs text-muted-foreground">Stunting</div>
+                          </div>
+                          <div className="p-2 rounded bg-background/50">
+                            <div className="text-lg font-mono font-bold text-orange-400">{selectedDistrict.malnutritionWasting}%</div>
+                            <div className="text-xs text-muted-foreground">Wasting</div>
+                          </div>
+                          <div className="p-2 rounded bg-background/50">
+                            <div className="text-lg font-mono font-bold text-red-400">{selectedDistrict.malnutritionUnderweight}%</div>
+                            <div className="text-xs text-muted-foreground">Underweight</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Social Indicators */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                          <div className="flex items-center gap-2 text-purple-400 mb-2">
+                            <Heart className="h-4 w-4" />
+                            <span className="text-xs font-medium">Child Marriage</span>
+                          </div>
+                          <div className="text-2xl font-mono font-bold text-purple-400">{selectedDistrict.childMarriageRate}%</div>
+                          <div className="text-xs text-muted-foreground">girls &lt;18 yrs</div>
+                        </div>
+                        <div className="p-3 rounded-lg bg-orange-500/10 border border-orange-500/20">
+                          <div className="flex items-center gap-2 text-orange-400 mb-2">
+                            <GraduationCap className="h-4 w-4" />
+                            <span className="text-xs font-medium">School Dropout</span>
+                          </div>
+                          <div className="text-2xl font-mono font-bold text-orange-400">{selectedDistrict.dropoutRate}%</div>
+                          <div className="text-xs text-muted-foreground">primary level</div>
+                        </div>
+                      </div>
+
+                      {/* Correlation Insight */}
+                      <div className="bg-secondary/50 p-3 rounded-lg border border-border">
+                        <h4 className="text-xs uppercase text-muted-foreground font-bold tracking-wider mb-2">Climate-Health Correlation</h4>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          Districts with lower water access ({selectedDistrict.waterAccessPercent}%) show higher malnutrition ({selectedDistrict.malnutritionStunting}% stunting) 
+                          and elevated infant mortality ({selectedDistrict.infantMortalityRate}/1000). Climate stress exacerbates these vulnerabilities.
                         </p>
                       </div>
                     </TabsContent>

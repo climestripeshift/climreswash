@@ -1,5 +1,7 @@
 import { storage } from "./storage";
 import { getDistrictData } from "../client/src/lib/mockData";
+import { db } from "./db";
+import { districts, apiIntegrations } from "@shared/schema";
 
 const districtNames = [
   "Ajmer", "Alwar", "Banswara", "Baran", "Barmer", "Bharatpur", "Bhilwara", "Bikaner",
@@ -13,6 +15,11 @@ async function seedDatabase() {
   console.log("🌱 Seeding database...");
 
   try {
+    // Clear existing data
+    console.log("🗑️ Clearing existing data...");
+    await db.delete(districts);
+    await db.delete(apiIntegrations);
+    
     // Seed API integrations
     const integrations = [
       {
@@ -36,11 +43,8 @@ async function seedDatabase() {
     ];
 
     for (const integration of integrations) {
-      const existing = await storage.getIntegration(integration.id);
-      if (!existing) {
-        await storage.createIntegration(integration);
-        console.log(`✅ Created integration: ${integration.name}`);
-      }
+      await storage.createIntegration(integration);
+      console.log(`✅ Created integration: ${integration.name}`);
     }
 
     // Seed districts
@@ -63,14 +67,20 @@ async function seedDatabase() {
         toiletTechnology: mockData.toiletTechnology,
         waterSupplyStrategy: mockData.waterSupplyStrategy,
         dropoutRate: mockData.dropoutRate,
+        waterAccessPercent: mockData.waterAccessPercent,
+        toiletCoveragePercent: mockData.toiletCoveragePercent,
+        handwashingFacilityPercent: mockData.handwashingFacilityPercent,
+        childMarriageRate: mockData.childMarriageRate,
+        malnutritionStunting: mockData.malnutritionStunting,
+        malnutritionWasting: mockData.malnutritionWasting,
+        malnutritionUnderweight: mockData.malnutritionUnderweight,
+        infantMortalityRate: mockData.infantMortalityRate,
+        maternalMortalityRatio: mockData.maternalMortalityRatio,
         seasonalData: mockData.seasonalData
       };
 
-      const existing = await storage.getDistrict(districtData.id);
-      if (!existing) {
-        await storage.createDistrict(districtData);
-        console.log(`✅ Created district: ${districtName}`);
-      }
+      await storage.createDistrict(districtData);
+      console.log(`✅ Created district: ${districtName}`);
     }
 
     console.log("🎉 Database seeded successfully!");

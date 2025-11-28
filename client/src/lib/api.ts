@@ -26,6 +26,15 @@ export async function fetchDistricts(): Promise<DistrictData[]> {
     toiletTechnology: d.toiletTechnology,
     waterSupplyStrategy: d.waterSupplyStrategy,
     dropoutRate: d.dropoutRate,
+    waterAccessPercent: d.waterAccessPercent,
+    toiletCoveragePercent: d.toiletCoveragePercent,
+    handwashingFacilityPercent: d.handwashingFacilityPercent,
+    childMarriageRate: d.childMarriageRate,
+    malnutritionStunting: d.malnutritionStunting,
+    malnutritionWasting: d.malnutritionWasting,
+    malnutritionUnderweight: d.malnutritionUnderweight,
+    infantMortalityRate: d.infantMortalityRate,
+    maternalMortalityRatio: d.maternalMortalityRatio,
     seasonalData: d.seasonalData
   }));
 }

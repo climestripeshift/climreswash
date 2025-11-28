@@ -23,12 +23,25 @@ export interface DistrictData {
   adaptationStrategies: string[];
   impactIfNoAction: string;
   
-  // New Indicators
+  // Infrastructure Indicators
   soilType: string;
   rockType: string;
   toiletTechnology: string;
   waterSupplyStrategy: string;
-  dropoutRate: number; // Percentage
+  dropoutRate: number;
+  
+  // WASH Indicators
+  waterAccessPercent: number;
+  toiletCoveragePercent: number;
+  handwashingFacilityPercent: number;
+  
+  // Health & Social Indicators
+  childMarriageRate: number;
+  malnutritionStunting: number;
+  malnutritionWasting: number;
+  malnutritionUnderweight: number;
+  infantMortalityRate: number;
+  maternalMortalityRatio: number;
   
   // Seasonality
   seasonalData: SeasonalImpact[];

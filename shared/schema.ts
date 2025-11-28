@@ -32,6 +32,19 @@ export const districts = pgTable("districts", {
   waterSupplyStrategy: varchar("water_supply_strategy", { length: 150 }).notNull(),
   dropoutRate: real("dropout_rate").notNull(),
   
+  // WASH Indicators (Water, Sanitation, Hygiene)
+  waterAccessPercent: real("water_access_percent").notNull().default(0),
+  toiletCoveragePercent: real("toilet_coverage_percent").notNull().default(0),
+  handwashingFacilityPercent: real("handwashing_facility_percent").notNull().default(0),
+  
+  // Health & Social Indicators
+  childMarriageRate: real("child_marriage_rate").notNull().default(0),
+  malnutritionStunting: real("malnutrition_stunting").notNull().default(0),
+  malnutritionWasting: real("malnutrition_wasting").notNull().default(0),
+  malnutritionUnderweight: real("malnutrition_underweight").notNull().default(0),
+  infantMortalityRate: real("infant_mortality_rate").notNull().default(0),
+  maternalMortalityRatio: real("maternal_mortality_ratio").notNull().default(0),
+  
   // Seasonal Data (stored as JSONB for flexibility)
   seasonalData: jsonb("seasonal_data").notNull().$type<Array<{
     month: string;
