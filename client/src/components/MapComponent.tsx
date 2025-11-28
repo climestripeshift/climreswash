@@ -3,8 +3,9 @@ import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { DistrictData, MapViewMode } from "@/lib/types";
-import { getDistrictData } from "@/lib/mockData";
+import { fetchDistricts } from "@/lib/api";
 import { Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 // Fix for default marker icons in React Leaflet
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -42,25 +43,38 @@ const getColor = (score: number, mode: MapViewMode) => {
 
 export function MapComponent({ mode, onDistrictSelect, selectedDistrictId }: MapComponentProps) {
   const [geoJsonData, setGeoJsonData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [districtDataMap, setDistrictDataMap] = useState<Map<string, DistrictData>>(new Map());
+
+  const { data: districts, isLoading: districtsLoading } = useQuery({
+    queryKey: ['districts'],
+    queryFn: fetchDistricts
+  });
 
   useEffect(() => {
     fetch('/data/rajasthan.json')
       .then(res => res.json())
       .then(data => {
         setGeoJsonData(data);
-        setLoading(false);
       })
       .catch(err => {
         console.error("Failed to load map data", err);
-        setLoading(false);
       });
   }, []);
+
+  useEffect(() => {
+    if (districts) {
+      const map = new Map<string, DistrictData>();
+      districts.forEach(d => map.set(d.name.toUpperCase(), d));
+      setDistrictDataMap(map);
+    }
+  }, [districts]);
 
   // Style function for GeoJSON
   const style = (feature: any) => {
     const districtName = feature.properties.DISTRICT;
-    const data = getDistrictData(districtName);
+    const data = districtDataMap.get(districtName.toUpperCase());
+    if (!data) return { fillColor: '#666', weight: 1, opacity: 1, color: '#1e293b', fillOpacity: 0.3 };
+    
     const score = mode === 'vulnerability' ? data.vulnerabilityScore : data.adaptationScore;
     
     const isSelected = selectedDistrictId === districtName;
@@ -77,7 +91,8 @@ export function MapComponent({ mode, onDistrictSelect, selectedDistrictId }: Map
 
   const onEachFeature = (feature: any, layer: L.Layer) => {
     const districtName = feature.properties.DISTRICT;
-    const data = getDistrictData(districtName);
+    const data = districtDataMap.get(districtName.toUpperCase());
+    if (!data) return;
 
     layer.on({
       mouseover: (e) => {
@@ -105,7 +120,7 @@ export function MapComponent({ mode, onDistrictSelect, selectedDistrictId }: Map
     });
   };
 
-  if (loading) {
+  if (!geoJsonData || districtsLoading) {
     return (
       <div className="h-full w-full flex items-center justify-center bg-slate-950 text-white">
         <Loader2 className="h-8 w-8 animate-spin mr-2" />

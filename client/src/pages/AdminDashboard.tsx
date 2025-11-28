@@ -11,35 +11,65 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus, Trash2, Save, RefreshCw, Database, CloudRain, Droplets, ArrowLeft } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { fetchDistricts, deleteDistrict, fetchIntegrations, updateIntegration } from "@/lib/api";
 
 export default function AdminDashboard() {
   const { toast } = useToast();
-  const [imdConnected, setImdConnected] = useState(false);
-  const [groundwaterConnected, setGroundwaterConnected] = useState(true);
-  
-  // Mock Data for Table
-  const [districts, setDistricts] = useState([
-    { id: "IND-ADM2-JAIPUR", name: "Jaipur", population: "3.1M", risk: "High" },
-    { id: "IND-ADM2-JODHPUR", name: "Jodhpur", population: "1.8M", risk: "Critical" },
-    { id: "IND-ADM2-UDAIPUR", name: "Udaipur", population: "1.2M", risk: "Moderate" },
-    { id: "IND-ADM2-KOTA", name: "Kota", population: "1.5M", risk: "Low" },
-  ]);
+  const queryClient = useQueryClient();
 
-  const handleConnect = (service: string) => {
-    toast({
-      title: "Service Connected",
-      description: `Successfully established connection with ${service} API.`,
+  const { data: districts = [], isLoading: districtsLoading } = useQuery({
+    queryKey: ['districts'],
+    queryFn: fetchDistricts
+  });
+
+  const { data: integrations = [] } = useQuery({
+    queryKey: ['integrations'],
+    queryFn: fetchIntegrations
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteDistrict,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['districts'] });
+      toast({
+        title: "District Removed",
+        description: "District data has been removed from the registry.",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const updateIntegrationMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => updateIntegration(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['integrations'] });
+    }
+  });
+
+  const handleConnect = (integrationId: string, service: string, connected: boolean) => {
+    updateIntegrationMutation.mutate({
+      id: integrationId,
+      data: { 
+        isConnected: connected ? 1 : 0,
+        lastSync: connected ? new Date() : null
+      }
     });
+    
+    if (connected) {
+      toast({
+        title: "Service Connected",
+        description: `Successfully established connection with ${service} API.`,
+      });
+    }
   };
 
   const handleDelete = (id: string) => {
-    setDistricts(districts.filter(d => d.id !== id));
-    toast({
-      title: "District Removed",
-      description: "District data has been removed from the registry.",
-      variant: "destructive"
-    });
+    deleteMutation.mutate(id);
   };
+
+  const imdIntegration = integrations.find((i: any) => i.type === 'imd');
+  const groundwaterIntegration = integrations.find((i: any) => i.type === 'groundwater');
 
   return (
     <div className="min-h-screen bg-background p-6 space-y-8">
@@ -88,39 +118,50 @@ export default function AdminDashboard() {
               </Button>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>District ID</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Population</TableHead>
-                    <TableHead>Risk Profile</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {districts.map((district) => (
-                    <TableRow key={district.id}>
-                      <TableCell className="font-mono text-xs text-muted-foreground">{district.id}</TableCell>
-                      <TableCell className="font-medium">{district.name}</TableCell>
-                      <TableCell>{district.population}</TableCell>
-                      <TableCell>
-                        <Badge variant={district.risk === "Critical" ? "destructive" : "outline"} 
-                               className={district.risk === "Critical" ? "" : 
-                                          district.risk === "High" ? "border-orange-500 text-orange-500" : 
-                                          district.risk === "Moderate" ? "border-yellow-500 text-yellow-500" : "border-green-500 text-green-500"}>
-                          {district.risk}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => handleDelete(district.id)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
+              {districtsLoading ? (
+                <div className="flex items-center justify-center p-8">
+                  <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>District ID</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Population</TableHead>
+                      <TableHead>Risk Profile</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {districts.map((district: any) => {
+                      const risk = district.vulnerabilityScore > 80 ? "Critical" :
+                                   district.vulnerabilityScore > 60 ? "High" :
+                                   district.vulnerabilityScore > 40 ? "Moderate" : "Low";
+                      return (
+                        <TableRow key={district.id}>
+                          <TableCell className="font-mono text-xs text-muted-foreground">{district.id}</TableCell>
+                          <TableCell className="font-medium">{district.name}</TableCell>
+                          <TableCell>{(district.population / 1000000).toFixed(1)}M</TableCell>
+                          <TableCell>
+                            <Badge variant={risk === "Critical" ? "destructive" : "outline"} 
+                                   className={risk === "Critical" ? "" : 
+                                              risk === "High" ? "border-orange-500 text-orange-500" : 
+                                              risk === "Moderate" ? "border-yellow-500 text-yellow-500" : "border-green-500 text-green-500"}>
+                              {risk}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => handleDelete(district.id)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
 
@@ -163,23 +204,20 @@ export default function AdminDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             
             {/* IMD API Card */}
-            <Card className={imdConnected ? "border-primary" : ""}>
+            <Card className={imdIntegration?.isConnected ? "border-primary" : ""}>
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <CloudRain className="h-8 w-8 text-blue-400 mb-2" />
                   <Switch 
-                    checked={imdConnected} 
-                    onCheckedChange={(c) => {
-                      setImdConnected(c);
-                      if(c) handleConnect("IMD Weather");
-                    }} 
+                    checked={!!imdIntegration?.isConnected} 
+                    onCheckedChange={(c) => handleConnect("imd-weather", "IMD Weather", c)} 
                   />
                 </div>
                 <CardTitle>IMD Weather API</CardTitle>
                 <CardDescription>Real-time weather forecast and historical climate data.</CardDescription>
               </CardHeader>
               <CardContent>
-                {imdConnected ? (
+                {imdIntegration?.isConnected ? (
                   <div className="space-y-3">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Status</span>
@@ -203,23 +241,20 @@ export default function AdminDashboard() {
             </Card>
 
             {/* Groundwater API Card */}
-            <Card className={groundwaterConnected ? "border-primary" : ""}>
+            <Card className={groundwaterIntegration?.isConnected ? "border-primary" : ""}>
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <Droplets className="h-8 w-8 text-cyan-400 mb-2" />
                   <Switch 
-                    checked={groundwaterConnected} 
-                    onCheckedChange={(c) => {
-                      setGroundwaterConnected(c);
-                      if(c) handleConnect("CGWB Groundwater");
-                    }} 
+                    checked={!!groundwaterIntegration?.isConnected} 
+                    onCheckedChange={(c) => handleConnect("cgwb-groundwater", "CGWB Groundwater", c)} 
                   />
                 </div>
                 <CardTitle>CGWB Groundwater</CardTitle>
                 <CardDescription>Central Ground Water Board aquifer monitoring data.</CardDescription>
               </CardHeader>
               <CardContent>
-                {groundwaterConnected ? (
+                {groundwaterIntegration?.isConnected ? (
                   <div className="space-y-3">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Status</span>
