@@ -1,10 +1,10 @@
-import { useState, useEffect, useMemo } from "react";
-import { MapContainer, TileLayer, GeoJSON, useMap } from "react-leaflet";
+import { useState, useEffect } from "react";
+import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import geoJsonRaw from "@assets/rajasthan_districts_filtered_1764311849713.geojson";
 import { DistrictData, MapViewMode } from "@/lib/types";
 import { getDistrictData } from "@/lib/mockData";
+import { Loader2 } from "lucide-react";
 
 // Fix for default marker icons in React Leaflet
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -41,8 +41,21 @@ const getColor = (score: number, mode: MapViewMode) => {
 };
 
 export function MapComponent({ mode, onDistrictSelect, selectedDistrictId }: MapComponentProps) {
-  // Memoize GeoJSON data to prevent re-parsing
-  const geoJsonData = useMemo(() => geoJsonRaw as any, []);
+  const [geoJsonData, setGeoJsonData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/data/rajasthan.json')
+      .then(res => res.json())
+      .then(data => {
+        setGeoJsonData(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Failed to load map data", err);
+        setLoading(false);
+      });
+  }, []);
 
   // Style function for GeoJSON
   const style = (feature: any) => {
@@ -92,6 +105,15 @@ export function MapComponent({ mode, onDistrictSelect, selectedDistrictId }: Map
     });
   };
 
+  if (loading) {
+    return (
+      <div className="h-full w-full flex items-center justify-center bg-slate-950 text-white">
+        <Loader2 className="h-8 w-8 animate-spin mr-2" />
+        <span>Loading Map Data...</span>
+      </div>
+    );
+  }
+
   return (
     <div className="h-full w-full rounded-lg overflow-hidden border border-border shadow-lg relative z-0">
       <MapContainer 
@@ -104,12 +126,14 @@ export function MapComponent({ mode, onDistrictSelect, selectedDistrictId }: Map
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
           url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
         />
-        <GeoJSON 
-          data={geoJsonData} 
-          style={style} 
-          onEachFeature={onEachFeature}
-          key={mode} // Force re-render when mode changes to update colors immediately
-        />
+        {geoJsonData && (
+          <GeoJSON 
+            data={geoJsonData} 
+            style={style} 
+            onEachFeature={onEachFeature}
+            key={mode} // Force re-render when mode changes to update colors immediately
+          />
+        )}
       </MapContainer>
       
       {/* Legend Overlay */}
