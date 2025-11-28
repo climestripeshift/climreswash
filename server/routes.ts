@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertDistrictSchema, insertAlertSchema, insertAqiObservationSchema } from "@shared/schema";
 import { fromError } from "zod-validation-error";
+import { recomputeAllAlerts } from "./earlyWarning";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -138,6 +139,15 @@ export async function registerRoutes(
         return res.status(404).json({ error: "Alert not found" });
       }
       res.json(alert);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/alerts/recompute", async (_req, res) => {
+    try {
+      const newAlerts = await recomputeAllAlerts();
+      res.json({ message: "Alerts recomputed", count: newAlerts.length, alerts: newAlerts });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
