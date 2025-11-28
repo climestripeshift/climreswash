@@ -48,3 +48,39 @@ export interface DistrictData {
 }
 
 export type MapViewMode = 'vulnerability' | 'adaptation';
+
+export interface Alert {
+  id: string;
+  districtId: string;
+  severity: 'advisory' | 'watch' | 'warning' | 'emergency';
+  type: 'heatwave' | 'flood' | 'drought' | 'air_quality' | 'health' | 'dust_storm';
+  title: string;
+  description: string;
+  impactedPopulation: number;
+  recommendedActions: string[];
+  drivers: string[];
+  projectedImpact: string;
+  validFrom: string;
+  validUntil: string;
+  isActive: number;
+  createdAt: string;
+}
+
+export interface AqiObservation {
+  id: string;
+  districtId: string;
+  aqiValue: number;
+  aqiCategory: string;
+  pm25: number | null;
+  pm10: number | null;
+  no2: number | null;
+  so2: number | null;
+  co: number | null;
+  o3: number | null;
+  dominantPollutant: string | null;
+  healthAdvisory: string | null;
+  respiratoryRiskMultiplier: number;
+  source: string;
+  observedAt: string;
+  createdAt: string;
+}

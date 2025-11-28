@@ -18,29 +18,34 @@ const SEVERITY_THRESHOLDS = {
   emergency: 90
 };
 
-const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 
-                     'July', 'August', 'September', 'October', 'November', 'December'];
+const MONTH_NAMES_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                           'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 function getCurrentMonth(): string {
-  return MONTH_NAMES[new Date().getMonth()];
+  return MONTH_NAMES_SHORT[new Date().getMonth()];
 }
 
 function getNextMonths(count: number): string[] {
   const current = new Date().getMonth();
   const months: string[] = [];
   for (let i = 0; i < count; i++) {
-    months.push(MONTH_NAMES[(current + i) % 12]);
+    months.push(MONTH_NAMES_SHORT[(current + i) % 12]);
   }
   return months;
 }
 
-function calculateHealthRiskMultiplier(district: District): number {
-  const imrFactor = Math.min(district.infantMortalityRate / 30, 1.5);
-  const mmrFactor = Math.min(district.maternalMortalityRatio / 100, 1.5);
-  const malnutritionFactor = (district.malnutritionStunting + district.malnutritionWasting + district.malnutritionUnderweight) / 100;
-  const washFactor = (300 - district.waterAccessPercent - district.toiletCoveragePercent - district.handwashingFacilityPercent) / 300;
+function calculateHealthRiskScore(district: District): number {
+  const imrFactor = Math.min(district.infantMortalityRate / 50, 1) * 100;
+  const mmrFactor = Math.min(district.maternalMortalityRatio / 200, 1) * 100;
+  const malnutritionFactor = (district.malnutritionStunting + district.malnutritionWasting + district.malnutritionUnderweight) / 3;
+  const washDeficit = 100 - ((district.waterAccessPercent + district.toiletCoveragePercent + district.handwashingFacilityPercent) / 3);
   
-  return 1 + (imrFactor + mmrFactor + malnutritionFactor + washFactor) / 4;
+  return (imrFactor + mmrFactor + malnutritionFactor + washDeficit) / 4;
+}
+
+function calculateHealthRiskMultiplier(district: District): number {
+  const healthScore = calculateHealthRiskScore(district);
+  return 1 + (healthScore / 100);
 }
 
 function getSeasonalHazards(district: District, months: string[]): { hazard: string; intensity: number; description: string }[] {
@@ -50,7 +55,7 @@ function getSeasonalHazards(district: District, months: string[]): { hazard: str
   
   for (const month of months) {
     const monthData = district.seasonalData.find((s: any) => s.month === month);
-    if (monthData && monthData.hazardIntensity >= 0.5) {
+    if (monthData && monthData.hazard !== 'None' && monthData.hazardIntensity >= 30) {
       hazards.push({
         hazard: monthData.hazard,
         intensity: monthData.hazardIntensity,
@@ -219,14 +224,22 @@ export async function generateAlertsForDistrict(district: District): Promise<Ins
   const alerts: InsertAlert[] = [];
   const upcomingMonths = getNextMonths(3);
   const seasonalHazards = getSeasonalHazards(district, upcomingMonths);
-  const healthMultiplier = calculateHealthRiskMultiplier(district);
-
+  const healthRiskScore = calculateHealthRiskScore(district);
+  
+  const bestHazards = new Map<string, { hazard: string; intensity: number; description: string }>();
   for (const hazardData of seasonalHazards) {
+    const existing = bestHazards.get(hazardData.hazard);
+    if (!existing || hazardData.intensity > existing.intensity) {
+      bestHazards.set(hazardData.hazard, hazardData);
+    }
+  }
+
+  for (const hazardData of Array.from(bestHazards.values())) {
     const riskFactors: RiskFactors = {
-      hazardIntensity: hazardData.intensity * 100,
+      hazardIntensity: hazardData.intensity,
       vulnerabilityScore: district.vulnerabilityScore,
-      healthRisk: healthMultiplier * 25,
-      seasonalFactor: (1 - district.adaptationScore / 100) * 100
+      healthRisk: healthRiskScore,
+      seasonalFactor: 100 - district.adaptationScore
     };
 
     const compositeRisk = calculateCompositeRisk(riskFactors);
@@ -239,8 +252,9 @@ export async function generateAlertsForDistrict(district: District): Promise<Ins
       const validUntil = new Date();
       validUntil.setDate(validUntil.getDate() + 7);
 
+      const alertId = `alert-${district.id}-${type}-${hazardData.hazard.replace(/\s+/g, '-').toLowerCase()}`;
       const alert: InsertAlert = {
-        id: `alert-${district.id}-${type}-${Date.now()}`,
+        id: alertId,
         districtId: district.id,
         severity,
         type,
@@ -249,10 +263,10 @@ export async function generateAlertsForDistrict(district: District): Promise<Ins
         impactedPopulation: calculateImpactedPopulation(district, severity),
         recommendedActions: getRecommendedActions(type, severity),
         drivers: [
-          `High hazard intensity (${(hazardData.intensity * 100).toFixed(0)}%)`,
+          `Hazard intensity: ${hazardData.intensity.toFixed(0)}%`,
           `Vulnerability score: ${district.vulnerabilityScore}`,
-          `Health risk multiplier: ${healthMultiplier.toFixed(2)}x`,
-          `Adaptation capacity: ${district.adaptationScore}%`
+          `Health risk: ${healthRiskScore.toFixed(0)}/100`,
+          `Adaptation deficit: ${(100 - district.adaptationScore).toFixed(0)}%`
         ],
         projectedImpact: generateProjectedImpact(type, severity, district),
         validFrom: now,

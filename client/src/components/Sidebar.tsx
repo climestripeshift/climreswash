@@ -1,21 +1,45 @@
-import { DistrictData, MapViewMode } from "@/lib/types";
+import { DistrictData, MapViewMode, Alert, AqiObservation } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Shield, Users, ThermometerSun, Droplets, Zap, Activity, Mountain, Sprout, Bath, TrendingUp, Calendar, Heart, Baby, HeartPulse, GraduationCap, Hand } from "lucide-react";
+import { AlertTriangle, Shield, Users, ThermometerSun, Droplets, Zap, Activity, Sprout, Bath, TrendingUp, Calendar, Heart, Baby, HeartPulse, GraduationCap, Hand, Wind, Bell, CheckCircle, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid, Legend, RadarChart, PolarGrid, PolarAngleAxis, Radar, PolarRadiusAxis } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid, Legend, AreaChart, Area } from 'recharts';
 
 interface SidebarProps {
   mode: MapViewMode;
   setMode: (mode: MapViewMode) => void;
   selectedDistrict: DistrictData | null;
+  districtAlerts?: Alert[];
+  districtAqi?: { latest: AqiObservation | null; history: AqiObservation[] } | null;
 }
 
-export function Sidebar({ mode, setMode, selectedDistrict }: SidebarProps) {
+const severityConfig = {
+  advisory: { color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/30', icon: '📘' },
+  watch: { color: 'text-yellow-400', bg: 'bg-yellow-500/10', border: 'border-yellow-500/30', icon: '⚠️' },
+  warning: { color: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/30', icon: '🔶' },
+  emergency: { color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/30', icon: '🚨' }
+};
+
+const aqiColors: Record<string, string> = {
+  'Good': '#00e400',
+  'Satisfactory': '#92d050',
+  'Moderate': '#ffff00',
+  'Poor': '#ff7e00',
+  'Very Poor': '#ff0000',
+  'Severe': '#7e0023'
+};
+
+function getAqiColor(category: string): string {
+  return aqiColors[category] || '#888';
+}
+
+export function Sidebar({ mode, setMode, selectedDistrict, districtAlerts = [], districtAqi }: SidebarProps) {
+  const activeAlerts = districtAlerts.filter(a => a.isActive === 1);
+  
   return (
     <div className="w-full lg:w-[450px] flex flex-col gap-4 h-full overflow-hidden">
       
@@ -71,16 +95,32 @@ export function Sidebar({ mode, setMode, selectedDistrict }: SidebarProps) {
                       <CardTitle className="text-2xl">{selectedDistrict.name}</CardTitle>
                       <CardDescription className="mt-1">District ID: {selectedDistrict.id}</CardDescription>
                     </div>
-                    <Badge variant="outline" className="text-xs font-mono">
-                      POP: {(selectedDistrict.population / 1000).toFixed(1)}K
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      {activeAlerts.length > 0 && (
+                        <Badge variant="destructive" className="animate-pulse">
+                          <Bell className="h-3 w-3 mr-1" />
+                          {activeAlerts.length} Alert{activeAlerts.length > 1 ? 's' : ''}
+                        </Badge>
+                      )}
+                      <Badge variant="outline" className="text-xs font-mono">
+                        POP: {(selectedDistrict.population / 1000).toFixed(1)}K
+                      </Badge>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-0">
                   
                   <Tabs defaultValue="overview" className="w-full">
-                    <TabsList className="w-full grid grid-cols-4 mb-4">
+                    <TabsList className="w-full grid grid-cols-5 mb-4">
                       <TabsTrigger value="overview">Overview</TabsTrigger>
+                      <TabsTrigger value="alerts" className="relative">
+                        Alerts
+                        {activeAlerts.length > 0 && (
+                          <span className="absolute -top-1 -right-1 h-4 w-4 bg-destructive text-destructive-foreground text-[10px] rounded-full flex items-center justify-center">
+                            {activeAlerts.length}
+                          </span>
+                        )}
+                      </TabsTrigger>
                       <TabsTrigger value="health">Health</TabsTrigger>
                       <TabsTrigger value="infra">Infra</TabsTrigger>
                       <TabsTrigger value="seasonal">Trends</TabsTrigger>
@@ -168,7 +208,163 @@ export function Sidebar({ mode, setMode, selectedDistrict }: SidebarProps) {
                       </div>
                     </TabsContent>
 
+                    {/* Alerts Tab */}
+                    <TabsContent value="alerts" className="space-y-4 animate-in slide-in-from-left-2 duration-300">
+                      {activeAlerts.length === 0 ? (
+                        <div className="text-center py-8">
+                          <CheckCircle className="h-12 w-12 mx-auto text-green-500 mb-3" />
+                          <h4 className="text-lg font-medium text-green-500">No Active Alerts</h4>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            This district currently has no climate-related warnings.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {activeAlerts.map((alert) => (
+                            <div 
+                              key={alert.id}
+                              className={`p-4 rounded-lg ${severityConfig[alert.severity].bg} border ${severityConfig[alert.severity].border}`}
+                            >
+                              <div className="flex items-start gap-3">
+                                <span className="text-2xl">{severityConfig[alert.severity].icon}</span>
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <Badge variant="outline" className={`${severityConfig[alert.severity].color} border-current uppercase text-xs`}>
+                                      {alert.severity}
+                                    </Badge>
+                                    <Badge variant="secondary" className="text-xs">
+                                      {alert.type.replace('_', ' ')}
+                                    </Badge>
+                                  </div>
+                                  <h4 className={`font-bold ${severityConfig[alert.severity].color}`}>{alert.title}</h4>
+                                  <p className="text-sm text-muted-foreground mt-1">{alert.description}</p>
+                                  
+                                  <div className="mt-3 p-2 rounded bg-background/50">
+                                    <div className="text-xs text-muted-foreground mb-1">Impacted Population</div>
+                                    <div className="font-mono font-bold">{alert.impactedPopulation.toLocaleString()}</div>
+                                  </div>
+                                  
+                                  <div className="mt-3">
+                                    <div className="text-xs font-medium mb-2">Recommended Actions:</div>
+                                    <ul className="text-xs text-muted-foreground space-y-1">
+                                      {alert.recommendedActions.slice(0, 3).map((action, i) => (
+                                        <li key={i} className="flex items-start gap-2">
+                                          <ChevronRight className="h-3 w-3 mt-0.5 shrink-0 text-primary" />
+                                          {action}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Prediction Insight */}
+                      <div className="bg-secondary/50 p-4 rounded-lg border border-border">
+                        <h4 className="text-xs uppercase text-muted-foreground font-bold tracking-wider mb-2">Early Warning System</h4>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          Alerts are generated based on seasonal hazard patterns, vulnerability scores, and health indicators. 
+                          The system analyzes historical data and current conditions to predict potential impacts.
+                        </p>
+                      </div>
+                    </TabsContent>
+
                     <TabsContent value="health" className="space-y-4 animate-in slide-in-from-left-2 duration-300">
+                      {/* AQI Display */}
+                      {districtAqi?.latest && (
+                        <div 
+                          className="p-4 rounded-lg border-2"
+                          style={{ 
+                            borderColor: getAqiColor(districtAqi.latest.aqiCategory),
+                            backgroundColor: `${getAqiColor(districtAqi.latest.aqiCategory)}15`
+                          }}
+                        >
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                              <Wind className="h-5 w-5" style={{ color: getAqiColor(districtAqi.latest.aqiCategory) }} />
+                              <span className="font-medium">Air Quality Index (AQI)</span>
+                            </div>
+                            <Badge 
+                              style={{ 
+                                backgroundColor: getAqiColor(districtAqi.latest.aqiCategory),
+                                color: ['Good', 'Satisfactory', 'Moderate'].includes(districtAqi.latest.aqiCategory) ? '#000' : '#fff'
+                              }}
+                            >
+                              {districtAqi.latest.aqiCategory}
+                            </Badge>
+                          </div>
+                          
+                          <div className="flex items-baseline gap-2 mb-3">
+                            <span 
+                              className="text-4xl font-mono font-bold"
+                              style={{ color: getAqiColor(districtAqi.latest.aqiCategory) }}
+                            >
+                              {districtAqi.latest.aqiValue}
+                            </span>
+                            <span className="text-sm text-muted-foreground">
+                              Dominant: {districtAqi.latest.dominantPollutant || 'PM2.5'}
+                            </span>
+                          </div>
+
+                          {/* Pollutant breakdown */}
+                          <div className="grid grid-cols-3 gap-2 text-center mb-3">
+                            <div className="p-2 rounded bg-background/50">
+                              <div className="text-xs text-muted-foreground">PM2.5</div>
+                              <div className="font-mono font-bold">{districtAqi.latest.pm25}</div>
+                            </div>
+                            <div className="p-2 rounded bg-background/50">
+                              <div className="text-xs text-muted-foreground">PM10</div>
+                              <div className="font-mono font-bold">{districtAqi.latest.pm10}</div>
+                            </div>
+                            <div className="p-2 rounded bg-background/50">
+                              <div className="text-xs text-muted-foreground">NO₂</div>
+                              <div className="font-mono font-bold">{districtAqi.latest.no2}</div>
+                            </div>
+                          </div>
+
+                          {/* 7-day trend */}
+                          {districtAqi.history.length > 1 && (
+                            <div className="h-[80px] w-full">
+                              <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={[...districtAqi.history].reverse()}>
+                                  <defs>
+                                    <linearGradient id="aqiGradient" x1="0" y1="0" x2="0" y2="1">
+                                      <stop offset="5%" stopColor={getAqiColor(districtAqi.latest.aqiCategory)} stopOpacity={0.3}/>
+                                      <stop offset="95%" stopColor={getAqiColor(districtAqi.latest.aqiCategory)} stopOpacity={0}/>
+                                    </linearGradient>
+                                  </defs>
+                                  <Area 
+                                    type="monotone" 
+                                    dataKey="aqiValue" 
+                                    stroke={getAqiColor(districtAqi.latest.aqiCategory)}
+                                    fill="url(#aqiGradient)"
+                                    strokeWidth={2}
+                                  />
+                                  <Tooltip 
+                                    contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', fontSize: '12px' }}
+                                    formatter={(value: any) => [`AQI: ${value}`, '']}
+                                    labelFormatter={(label: any) => new Date(label).toLocaleDateString()}
+                                  />
+                                </AreaChart>
+                              </ResponsiveContainer>
+                            </div>
+                          )}
+
+                          <p className="text-xs text-muted-foreground mt-2">
+                            {districtAqi.latest.healthAdvisory}
+                          </p>
+                          
+                          <div className="mt-2 text-xs text-muted-foreground flex items-center gap-1">
+                            <span>Source: {districtAqi.latest.source}</span>
+                            <span className="mx-1">•</span>
+                            <span>Risk Multiplier: {districtAqi.latest.respiratoryRiskMultiplier}x</span>
+                          </div>
+                        </div>
+                      )}
+
                       {/* WASH Indicators */}
                       <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20 space-y-3">
                         <h4 className="text-sm font-medium flex items-center gap-2 text-blue-400">
@@ -268,8 +464,10 @@ export function Sidebar({ mode, setMode, selectedDistrict }: SidebarProps) {
                       <div className="bg-secondary/50 p-3 rounded-lg border border-border">
                         <h4 className="text-xs uppercase text-muted-foreground font-bold tracking-wider mb-2">Climate-Health Correlation</h4>
                         <p className="text-xs text-muted-foreground leading-relaxed">
-                          Districts with lower water access ({selectedDistrict.waterAccessPercent}%) show higher malnutrition ({selectedDistrict.malnutritionStunting}% stunting) 
-                          and elevated infant mortality ({selectedDistrict.infantMortalityRate}/1000). Climate stress exacerbates these vulnerabilities.
+                          {districtAqi?.latest && districtAqi.latest.aqiValue > 150 
+                            ? `Poor air quality (AQI ${districtAqi.latest.aqiValue}) increases respiratory risks by ${districtAqi.latest.respiratoryRiskMultiplier}x, especially impacting children and elderly.`
+                            : `Districts with lower water access (${selectedDistrict.waterAccessPercent}%) show higher malnutrition (${selectedDistrict.malnutritionStunting}% stunting) and elevated infant mortality (${selectedDistrict.infantMortalityRate}/1000). Climate stress exacerbates these vulnerabilities.`
+                          }
                         </p>
                       </div>
                     </TabsContent>
