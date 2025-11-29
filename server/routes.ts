@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertDistrictSchema, insertAlertSchema, insertAqiObservationSchema, insertInterventionSchema, insertCommunityReportSchema } from "@shared/schema";
+import { insertDistrictSchema, insertAlertSchema, insertAqiObservationSchema, insertInterventionSchema, insertCommunityReportSchema, insertCountrySchema, insertStateSchema, insertBlockSchema } from "@shared/schema";
 import { fromError } from "zod-validation-error";
 import { recomputeAllAlerts } from "./earlyWarning";
 
@@ -10,6 +10,68 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
   
+  // Country Routes (aggregate level)
+  app.get("/api/countries", async (_req, res) => {
+    try {
+      const countriesList = await storage.getAllCountries();
+      res.json(countriesList);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/countries/:id", async (req, res) => {
+    try {
+      const country = await storage.getCountry(req.params.id);
+      if (!country) {
+        return res.status(404).json({ error: "Country not found" });
+      }
+      res.json(country);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/countries/:id/states", async (req, res) => {
+    try {
+      const statesList = await storage.getStatesByCountry(req.params.id);
+      res.json(statesList);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // State Routes (aggregate level)
+  app.get("/api/states", async (_req, res) => {
+    try {
+      const statesList = await storage.getAllStates();
+      res.json(statesList);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/states/:id", async (req, res) => {
+    try {
+      const state = await storage.getState(req.params.id);
+      if (!state) {
+        return res.status(404).json({ error: "State not found" });
+      }
+      res.json(state);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/states/:id/districts", async (req, res) => {
+    try {
+      const districtsList = await storage.getDistrictsByState(req.params.id);
+      res.json(districtsList);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // District Routes
   app.get("/api/districts", async (_req, res) => {
     try {
@@ -62,6 +124,74 @@ export async function registerRoutes(
       const deleted = await storage.deleteDistrict(req.params.id);
       if (!deleted) {
         return res.status(404).json({ error: "District not found" });
+      }
+      res.status(204).send();
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Block Routes (sub-district level)
+  app.get("/api/blocks", async (_req, res) => {
+    try {
+      const blocksList = await storage.getAllBlocks();
+      res.json(blocksList);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/blocks/:id", async (req, res) => {
+    try {
+      const block = await storage.getBlock(req.params.id);
+      if (!block) {
+        return res.status(404).json({ error: "Block not found" });
+      }
+      res.json(block);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/districts/:id/blocks", async (req, res) => {
+    try {
+      const blocksList = await storage.getBlocksByDistrict(req.params.id);
+      res.json(blocksList);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/blocks", async (req, res) => {
+    try {
+      const validated = insertBlockSchema.parse(req.body);
+      const block = await storage.createBlock(validated);
+      res.status(201).json(block);
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: fromError(error).toString() });
+      }
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.patch("/api/blocks/:id", async (req, res) => {
+    try {
+      const block = await storage.updateBlock(req.params.id, req.body);
+      if (!block) {
+        return res.status(404).json({ error: "Block not found" });
+      }
+      res.json(block);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.delete("/api/blocks/:id", async (req, res) => {
+    try {
+      const deleted = await storage.deleteBlock(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Block not found" });
       }
       res.status(204).send();
     } catch (error: any) {
