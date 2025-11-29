@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { MapComponent } from "@/components/MapComponent";
 import { Sidebar } from "@/components/Sidebar";
-import { DistrictData, MapViewMode, Alert, AqiObservation } from "@/lib/types";
+import { DistrictData, MapViewMode, Alert, AqiObservation, Intervention, CommunityReport } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Settings, AlertTriangle, Bell, X, Wind, ChevronRight } from "lucide-react";
 import { Link } from "wouter";
@@ -21,6 +21,8 @@ export default function Dashboard() {
   const [selectedDistrict, setSelectedDistrict] = useState<DistrictData | null>(null);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [aqiData, setAqiData] = useState<Record<string, { latest: AqiObservation | null; history: AqiObservation[] }>>({});
+  const [interventions, setInterventions] = useState<Record<string, Intervention[]>>({});
+  const [communityReports, setCommunityReports] = useState<Record<string, CommunityReport[]>>({});
   const [showAlertBanner, setShowAlertBanner] = useState(true);
 
   useEffect(() => {
@@ -41,6 +43,26 @@ export default function Dashboard() {
           }));
         })
         .catch(err => console.error('Failed to fetch AQI:', err));
+      
+      fetch(`/api/districts/${selectedDistrict.id}/interventions`)
+        .then(res => res.json())
+        .then(data => {
+          setInterventions(prev => ({
+            ...prev,
+            [selectedDistrict.id]: data
+          }));
+        })
+        .catch(err => console.error('Failed to fetch interventions:', err));
+      
+      fetch(`/api/districts/${selectedDistrict.id}/community-reports`)
+        .then(res => res.json())
+        .then(data => {
+          setCommunityReports(prev => ({
+            ...prev,
+            [selectedDistrict.id]: data
+          }));
+        })
+        .catch(err => console.error('Failed to fetch community reports:', err));
     }
   }, [selectedDistrict?.id]);
 
@@ -49,6 +71,8 @@ export default function Dashboard() {
     ? alerts.filter(a => a.districtId === selectedDistrict.id)
     : [];
   const currentAqi = selectedDistrict ? aqiData[selectedDistrict.id] : null;
+  const districtInterventions = selectedDistrict ? interventions[selectedDistrict.id] || [] : [];
+  const districtCommunityReports = selectedDistrict ? communityReports[selectedDistrict.id] || [] : [];
 
   return (
     <div className="h-screen w-full bg-background flex flex-col overflow-hidden relative">
@@ -138,6 +162,8 @@ export default function Dashboard() {
           selectedDistrict={selectedDistrict}
           districtAlerts={districtAlerts}
           districtAqi={currentAqi}
+          districtInterventions={districtInterventions}
+          districtCommunityReports={districtCommunityReports}
         />
         <div className="flex-1 h-full min-h-[400px]">
           <MapComponent 

@@ -48,8 +48,8 @@ function calculateHealthRiskMultiplier(district: District): number {
   return 1 + (healthScore / 100);
 }
 
-function getSeasonalHazards(district: District, months: string[]): { hazard: string; intensity: number; description: string }[] {
-  const hazards: { hazard: string; intensity: number; description: string }[] = [];
+function getSeasonalHazards(district: District, months: string[]): { month: string; hazard: string; intensity: number; description: string }[] {
+  const hazards: { month: string; hazard: string; intensity: number; description: string }[] = [];
   
   if (!district.seasonalData || !Array.isArray(district.seasonalData)) return hazards;
   
@@ -57,6 +57,7 @@ function getSeasonalHazards(district: District, months: string[]): { hazard: str
     const monthData = district.seasonalData.find((s: any) => s.month === month);
     if (monthData && monthData.hazard !== 'None' && monthData.hazardIntensity >= 30) {
       hazards.push({
+        month,
         hazard: monthData.hazard,
         intensity: monthData.hazardIntensity,
         description: monthData.description
@@ -65,6 +66,16 @@ function getSeasonalHazards(district: District, months: string[]): { hazard: str
   }
   
   return hazards;
+}
+
+function getFullMonthName(shortMonth: string): string {
+  const current = new Date();
+  const monthIndex = MONTH_NAMES_SHORT.indexOf(shortMonth);
+  const currentMonth = current.getMonth();
+  const year = monthIndex < currentMonth ? current.getFullYear() + 1 : current.getFullYear();
+  const fullMonths = ['January', 'February', 'March', 'April', 'May', 'June',
+                      'July', 'August', 'September', 'October', 'November', 'December'];
+  return `${fullMonths[monthIndex]} ${year}`;
 }
 
 function calculateCompositeRisk(factors: RiskFactors): number {
@@ -226,15 +237,7 @@ export async function generateAlertsForDistrict(district: District): Promise<Ins
   const seasonalHazards = getSeasonalHazards(district, upcomingMonths);
   const healthRiskScore = calculateHealthRiskScore(district);
   
-  const bestHazards = new Map<string, { hazard: string; intensity: number; description: string }>();
   for (const hazardData of seasonalHazards) {
-    const existing = bestHazards.get(hazardData.hazard);
-    if (!existing || hazardData.intensity > existing.intensity) {
-      bestHazards.set(hazardData.hazard, hazardData);
-    }
-  }
-
-  for (const hazardData of Array.from(bestHazards.values())) {
     const riskFactors: RiskFactors = {
       hazardIntensity: hazardData.intensity,
       vulnerabilityScore: district.vulnerabilityScore,
@@ -247,12 +250,13 @@ export async function generateAlertsForDistrict(district: District): Promise<Ins
     if (compositeRisk >= SEVERITY_THRESHOLDS.advisory) {
       const severity = determineSeverity(compositeRisk);
       const type = mapHazardToType(hazardData.hazard);
+      const forecastMonth = getFullMonthName(hazardData.month);
       
       const now = new Date();
       const validUntil = new Date();
       validUntil.setDate(validUntil.getDate() + 7);
 
-      const alertId = `alert-${district.id}-${type}-${hazardData.hazard.replace(/\s+/g, '-').toLowerCase()}`;
+      const alertId = `alert-${district.id}-${type}-${hazardData.month.toLowerCase()}-${hazardData.hazard.replace(/\s+/g, '-').toLowerCase()}`;
       const alert: InsertAlert = {
         id: alertId,
         districtId: district.id,
@@ -260,6 +264,8 @@ export async function generateAlertsForDistrict(district: District): Promise<Ins
         type,
         title: `${hazardData.hazard} ${severity.charAt(0).toUpperCase() + severity.slice(1)} for ${district.name}`,
         description: hazardData.description,
+        forecastMonth,
+        riskScore: compositeRisk,
         impactedPopulation: calculateImpactedPopulation(district, severity),
         recommendedActions: getRecommendedActions(type, severity),
         drivers: [

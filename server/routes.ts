@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertDistrictSchema, insertAlertSchema, insertAqiObservationSchema } from "@shared/schema";
+import { insertDistrictSchema, insertAlertSchema, insertAqiObservationSchema, insertInterventionSchema, insertCommunityReportSchema } from "@shared/schema";
 import { fromError } from "zod-validation-error";
 import { recomputeAllAlerts } from "./earlyWarning";
 
@@ -219,6 +219,115 @@ export async function registerRoutes(
         recommendations: ["Implement rainwater harvesting", "Monitor extraction rates"]
       };
       res.json(mockData);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Interventions Routes
+  app.get("/api/interventions", async (_req, res) => {
+    try {
+      const interventions = await storage.getAllInterventions();
+      res.json(interventions);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/alerts/:alertId/interventions", async (req, res) => {
+    try {
+      const interventions = await storage.getInterventionsByAlert(req.params.alertId);
+      res.json(interventions);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/districts/:id/interventions", async (req, res) => {
+    try {
+      const interventions = await storage.getInterventionsByDistrict(req.params.id);
+      res.json(interventions);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/interventions", async (req, res) => {
+    try {
+      const validated = insertInterventionSchema.parse(req.body);
+      const intervention = await storage.createIntervention(validated);
+      res.status(201).json(intervention);
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: fromError(error).toString() });
+      }
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.patch("/api/interventions/:id", async (req, res) => {
+    try {
+      const intervention = await storage.updateIntervention(req.params.id, req.body);
+      if (!intervention) {
+        return res.status(404).json({ error: "Intervention not found" });
+      }
+      res.json(intervention);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.delete("/api/interventions/:id", async (req, res) => {
+    try {
+      const deleted = await storage.deleteIntervention(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Intervention not found" });
+      }
+      res.status(204).send();
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Community Reports Routes
+  app.get("/api/community-reports", async (_req, res) => {
+    try {
+      const reports = await storage.getAllCommunityReports();
+      res.json(reports);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/districts/:id/community-reports", async (req, res) => {
+    try {
+      const reports = await storage.getCommunityReportsByDistrict(req.params.id);
+      res.json(reports);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/community-reports", async (req, res) => {
+    try {
+      const validated = insertCommunityReportSchema.parse(req.body);
+      const report = await storage.createCommunityReport(validated);
+      res.status(201).json(report);
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: fromError(error).toString() });
+      }
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.patch("/api/community-reports/:id/status", async (req, res) => {
+    try {
+      const report = await storage.updateCommunityReportStatus(req.params.id, req.body.status);
+      if (!report) {
+        return res.status(404).json({ error: "Report not found" });
+      }
+      res.json(report);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }

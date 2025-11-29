@@ -77,6 +77,8 @@ export const alerts = pgTable("alerts", {
   type: varchar("type", { length: 50 }).notNull(), // 'heatwave', 'flood', 'drought', 'air_quality', 'health'
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description").notNull(),
+  forecastMonth: varchar("forecast_month", { length: 20 }), // 'Dec 2025', 'Jan 2026' for timeline view
+  riskScore: real("risk_score").notNull().default(0), // composite risk score 0-100
   impactedPopulation: integer("impacted_population").notNull(),
   recommendedActions: text("recommended_actions").array().notNull(),
   drivers: text("drivers").array().notNull(), // factors contributing to alert
@@ -84,6 +86,40 @@ export const alerts = pgTable("alerts", {
   validFrom: timestamp("valid_from").notNull(),
   validUntil: timestamp("valid_until").notNull(),
   isActive: integer("is_active").notNull().default(1),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Interventions for Action Planning
+export const interventions = pgTable("interventions", {
+  id: varchar("id", { length: 100 }).primaryKey(),
+  alertId: varchar("alert_id", { length: 100 }).notNull(),
+  districtId: varchar("district_id", { length: 100 }).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description").notNull(),
+  priority: varchar("priority", { length: 20 }).notNull(), // 'critical', 'high', 'medium', 'low'
+  category: varchar("category", { length: 50 }).notNull(), // 'health', 'infrastructure', 'water', 'shelter', 'food'
+  assignedTo: varchar("assigned_to", { length: 100 }),
+  assignedDepartment: varchar("assigned_department", { length: 100 }),
+  status: varchar("status", { length: 20 }).notNull().default('pending'), // 'pending', 'in_progress', 'completed', 'cancelled'
+  dueDate: timestamp("due_date"),
+  completedAt: timestamp("completed_at"),
+  resourcesRequired: text("resources_required"),
+  estimatedCost: real("estimated_cost"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Community Reports (placeholder for engagement)
+export const communityReports = pgTable("community_reports", {
+  id: varchar("id", { length: 100 }).primaryKey(),
+  districtId: varchar("district_id", { length: 100 }).notNull(),
+  reportType: varchar("report_type", { length: 50 }).notNull(), // 'hazard_sighting', 'damage_report', 'resource_need', 'feedback'
+  description: text("description").notNull(),
+  location: varchar("location", { length: 255 }),
+  reporterPhone: varchar("reporter_phone", { length: 20 }),
+  status: varchar("status", { length: 20 }).notNull().default('pending'), // 'pending', 'verified', 'addressed'
+  severity: varchar("severity", { length: 20 }), // 'low', 'medium', 'high'
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -132,6 +168,17 @@ export const insertAqiObservationSchema = createInsertSchema(aqiObservations).om
   createdAt: true,
 });
 
+// Intervention schemas
+export const insertInterventionSchema = createInsertSchema(interventions).omit({
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Community Report schemas
+export const insertCommunityReportSchema = createInsertSchema(communityReports).omit({
+  createdAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -143,3 +190,7 @@ export type Alert = typeof alerts.$inferSelect;
 export type InsertAlert = z.infer<typeof insertAlertSchema>;
 export type AqiObservation = typeof aqiObservations.$inferSelect;
 export type InsertAqiObservation = z.infer<typeof insertAqiObservationSchema>;
+export type Intervention = typeof interventions.$inferSelect;
+export type InsertIntervention = z.infer<typeof insertInterventionSchema>;
+export type CommunityReport = typeof communityReports.$inferSelect;
+export type InsertCommunityReport = z.infer<typeof insertCommunityReportSchema>;

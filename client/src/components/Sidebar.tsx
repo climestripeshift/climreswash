@@ -1,9 +1,9 @@
-import { DistrictData, MapViewMode, Alert, AqiObservation } from "@/lib/types";
+import { DistrictData, MapViewMode, Alert, AqiObservation, Intervention, CommunityReport } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Shield, Users, ThermometerSun, Droplets, Zap, Activity, Sprout, Bath, TrendingUp, Calendar, Heart, Baby, HeartPulse, GraduationCap, Hand, Wind, Bell, CheckCircle, ChevronRight } from "lucide-react";
+import { AlertTriangle, Shield, Users, ThermometerSun, Droplets, Zap, Activity, Sprout, Bath, TrendingUp, Calendar, Heart, Baby, HeartPulse, GraduationCap, Hand, Wind, Bell, CheckCircle, ChevronRight, ClipboardList, MessageSquare, Phone, Clock, Target, FileText, Download } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -15,6 +15,8 @@ interface SidebarProps {
   selectedDistrict: DistrictData | null;
   districtAlerts?: Alert[];
   districtAqi?: { latest: AqiObservation | null; history: AqiObservation[] } | null;
+  districtInterventions?: Intervention[];
+  districtCommunityReports?: CommunityReport[];
 }
 
 const severityConfig = {
@@ -37,8 +39,30 @@ function getAqiColor(category: string): string {
   return aqiColors[category] || '#888';
 }
 
-export function Sidebar({ mode, setMode, selectedDistrict, districtAlerts = [], districtAqi }: SidebarProps) {
+const priorityConfig = {
+  critical: { color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/30' },
+  high: { color: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/30' },
+  medium: { color: 'text-yellow-400', bg: 'bg-yellow-500/10', border: 'border-yellow-500/30' },
+  low: { color: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/30' }
+};
+
+const statusConfig = {
+  pending: { color: 'text-gray-400', bg: 'bg-gray-500/10', label: 'Pending' },
+  in_progress: { color: 'text-blue-400', bg: 'bg-blue-500/10', label: 'In Progress' },
+  completed: { color: 'text-green-400', bg: 'bg-green-500/10', label: 'Completed' },
+  cancelled: { color: 'text-red-400', bg: 'bg-red-500/10', label: 'Cancelled' }
+};
+
+export function Sidebar({ mode, setMode, selectedDistrict, districtAlerts = [], districtAqi, districtInterventions = [], districtCommunityReports = [] }: SidebarProps) {
   const activeAlerts = districtAlerts.filter(a => a.isActive === 1);
+  const pendingInterventions = districtInterventions.filter(i => i.status !== 'completed');
+  
+  const alertsByMonth = activeAlerts.reduce((acc, alert) => {
+    const month = alert.forecastMonth || 'Current';
+    if (!acc[month]) acc[month] = [];
+    acc[month].push(alert);
+    return acc;
+  }, {} as Record<string, Alert[]>);
   
   return (
     <div className="w-full lg:w-[450px] flex flex-col gap-4 h-full overflow-hidden">
@@ -111,7 +135,7 @@ export function Sidebar({ mode, setMode, selectedDistrict, districtAlerts = [], 
                 <CardContent className="space-y-0">
                   
                   <Tabs defaultValue="overview" className="w-full">
-                    <TabsList className="w-full grid grid-cols-5 mb-4">
+                    <TabsList className="w-full grid grid-cols-4 mb-2">
                       <TabsTrigger value="overview">Overview</TabsTrigger>
                       <TabsTrigger value="alerts" className="relative">
                         Alerts
@@ -121,6 +145,19 @@ export function Sidebar({ mode, setMode, selectedDistrict, districtAlerts = [], 
                           </span>
                         )}
                       </TabsTrigger>
+                      <TabsTrigger value="actions" className="relative">
+                        Actions
+                        {pendingInterventions.length > 0 && (
+                          <span className="absolute -top-1 -right-1 h-4 w-4 bg-orange-500 text-white text-[10px] rounded-full flex items-center justify-center">
+                            {pendingInterventions.length}
+                          </span>
+                        )}
+                      </TabsTrigger>
+                      <TabsTrigger value="community">
+                        Community
+                      </TabsTrigger>
+                    </TabsList>
+                    <TabsList className="w-full grid grid-cols-3 mb-4">
                       <TabsTrigger value="health">Health</TabsTrigger>
                       <TabsTrigger value="infra">Infra</TabsTrigger>
                       <TabsTrigger value="seasonal">Trends</TabsTrigger>
@@ -208,7 +245,7 @@ export function Sidebar({ mode, setMode, selectedDistrict, districtAlerts = [], 
                       </div>
                     </TabsContent>
 
-                    {/* Alerts Tab */}
+                    {/* Alerts Tab with Multi-Month Timeline */}
                     <TabsContent value="alerts" className="space-y-4 animate-in slide-in-from-left-2 duration-300">
                       {activeAlerts.length === 0 ? (
                         <div className="text-center py-8">
@@ -219,47 +256,111 @@ export function Sidebar({ mode, setMode, selectedDistrict, districtAlerts = [], 
                           </p>
                         </div>
                       ) : (
-                        <div className="space-y-3">
-                          {activeAlerts.map((alert) => (
-                            <div 
-                              key={alert.id}
-                              className={`p-4 rounded-lg ${severityConfig[alert.severity].bg} border ${severityConfig[alert.severity].border}`}
-                            >
-                              <div className="flex items-start gap-3">
-                                <span className="text-2xl">{severityConfig[alert.severity].icon}</span>
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <Badge variant="outline" className={`${severityConfig[alert.severity].color} border-current uppercase text-xs`}>
-                                      {alert.severity}
-                                    </Badge>
-                                    <Badge variant="secondary" className="text-xs">
-                                      {alert.type.replace('_', ' ')}
-                                    </Badge>
-                                  </div>
-                                  <h4 className={`font-bold ${severityConfig[alert.severity].color}`}>{alert.title}</h4>
-                                  <p className="text-sm text-muted-foreground mt-1">{alert.description}</p>
-                                  
-                                  <div className="mt-3 p-2 rounded bg-background/50">
-                                    <div className="text-xs text-muted-foreground mb-1">Impacted Population</div>
-                                    <div className="font-mono font-bold">{alert.impactedPopulation.toLocaleString()}</div>
-                                  </div>
-                                  
-                                  <div className="mt-3">
-                                    <div className="text-xs font-medium mb-2">Recommended Actions:</div>
-                                    <ul className="text-xs text-muted-foreground space-y-1">
-                                      {alert.recommendedActions.slice(0, 3).map((action, i) => (
-                                        <li key={i} className="flex items-start gap-2">
-                                          <ChevronRight className="h-3 w-3 mt-0.5 shrink-0 text-primary" />
-                                          {action}
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  </div>
+                        <>
+                          {/* Forecast Timeline */}
+                          <div className="bg-secondary/30 p-3 rounded-lg border border-border mb-4">
+                            <h4 className="text-xs uppercase text-muted-foreground font-bold tracking-wider mb-3 flex items-center gap-2">
+                              <Calendar className="h-3 w-3" />
+                              3-Month Forecast Timeline
+                            </h4>
+                            <div className="flex gap-2">
+                              {Object.entries(alertsByMonth).map(([month, monthAlerts]) => (
+                                <div 
+                                  key={month} 
+                                  className={`flex-1 p-2 rounded text-center border ${
+                                    monthAlerts.some(a => a.severity === 'emergency') ? 'bg-red-500/20 border-red-500/40' :
+                                    monthAlerts.some(a => a.severity === 'warning') ? 'bg-orange-500/20 border-orange-500/40' :
+                                    monthAlerts.some(a => a.severity === 'watch') ? 'bg-yellow-500/20 border-yellow-500/40' :
+                                    'bg-blue-500/20 border-blue-500/40'
+                                  }`}
+                                >
+                                  <div className="text-xs font-medium">{month}</div>
+                                  <div className="text-lg font-bold">{monthAlerts.length}</div>
+                                  <div className="text-[10px] text-muted-foreground">alert{monthAlerts.length !== 1 ? 's' : ''}</div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Risk Score Trend */}
+                          {activeAlerts.length > 1 && (
+                            <div className="h-[80px] w-full mb-4">
+                              <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={activeAlerts.map(a => ({ 
+                                  month: a.forecastMonth?.split(' ')[0] || 'Current', 
+                                  risk: a.riskScore,
+                                  type: a.type
+                                }))}>
+                                  <Bar 
+                                    dataKey="risk" 
+                                    fill="hsl(var(--destructive))"
+                                    radius={[4, 4, 0, 0]}
+                                  />
+                                  <XAxis 
+                                    dataKey="month" 
+                                    tick={{fontSize: 10, fill: 'hsl(var(--muted-foreground))'}}
+                                    axisLine={false}
+                                    tickLine={false}
+                                  />
+                                  <Tooltip 
+                                    contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', fontSize: '12px' }}
+                                    formatter={(value: any) => [`Risk Score: ${value.toFixed(0)}`, '']}
+                                  />
+                                </BarChart>
+                              </ResponsiveContainer>
+                            </div>
+                          )}
+
+                          {/* Alerts by Month */}
+                          <div className="space-y-4">
+                            {Object.entries(alertsByMonth).map(([month, monthAlerts]) => (
+                              <div key={month}>
+                                <h4 className="text-xs font-bold uppercase text-muted-foreground mb-2 flex items-center gap-2">
+                                  <Clock className="h-3 w-3" />
+                                  {month}
+                                </h4>
+                                <div className="space-y-2">
+                                  {monthAlerts.map((alert) => (
+                                    <div 
+                                      key={alert.id}
+                                      className={`p-3 rounded-lg ${severityConfig[alert.severity].bg} border ${severityConfig[alert.severity].border}`}
+                                    >
+                                      <div className="flex items-start gap-2">
+                                        <span className="text-lg">{severityConfig[alert.severity].icon}</span>
+                                        <div className="flex-1">
+                                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                            <Badge variant="outline" className={`${severityConfig[alert.severity].color} border-current uppercase text-[10px]`}>
+                                              {alert.severity}
+                                            </Badge>
+                                            <Badge variant="secondary" className="text-[10px]">
+                                              {alert.type.replace('_', ' ')}
+                                            </Badge>
+                                            <span className="text-[10px] text-muted-foreground ml-auto">
+                                              Risk: {alert.riskScore?.toFixed(0) || 'N/A'}%
+                                            </span>
+                                          </div>
+                                          <h4 className={`text-sm font-bold ${severityConfig[alert.severity].color}`}>{alert.title}</h4>
+                                          <p className="text-xs text-muted-foreground mt-1">{alert.description}</p>
+                                          
+                                          <div className="mt-2 grid grid-cols-2 gap-2">
+                                            <div className="p-1.5 rounded bg-background/50 text-center">
+                                              <div className="text-[10px] text-muted-foreground">Impacted</div>
+                                              <div className="text-xs font-mono font-bold">{alert.impactedPopulation.toLocaleString()}</div>
+                                            </div>
+                                            <div className="p-1.5 rounded bg-background/50 text-center">
+                                              <div className="text-[10px] text-muted-foreground">Valid Until</div>
+                                              <div className="text-xs font-mono">{new Date(alert.validUntil).toLocaleDateString()}</div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
                                 </div>
                               </div>
-                            </div>
-                          ))}
-                        </div>
+                            ))}
+                          </div>
+                        </>
                       )}
 
                       {/* Prediction Insight */}
@@ -267,8 +368,197 @@ export function Sidebar({ mode, setMode, selectedDistrict, districtAlerts = [], 
                         <h4 className="text-xs uppercase text-muted-foreground font-bold tracking-wider mb-2">Early Warning System</h4>
                         <p className="text-xs text-muted-foreground leading-relaxed">
                           Alerts are generated based on seasonal hazard patterns, vulnerability scores, and health indicators. 
-                          The system analyzes historical data and current conditions to predict potential impacts.
+                          The timeline shows predicted threats for the next 3 months based on historical patterns.
                         </p>
+                      </div>
+                    </TabsContent>
+                    
+                    {/* Actions Tab - Intervention Planning */}
+                    <TabsContent value="actions" className="space-y-4 animate-in slide-in-from-left-2 duration-300">
+                      {districtInterventions.length === 0 ? (
+                        <div className="text-center py-8">
+                          <ClipboardList className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
+                          <h4 className="text-lg font-medium text-muted-foreground">No Action Plans</h4>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            No interventions have been created for this district yet.
+                          </p>
+                        </div>
+                      ) : (
+                        <>
+                          {/* Action Summary */}
+                          <div className="grid grid-cols-3 gap-2 mb-4">
+                            <div className="p-2 rounded-lg bg-gray-500/10 border border-gray-500/20 text-center">
+                              <div className="text-lg font-bold text-gray-400">
+                                {districtInterventions.filter(i => i.status === 'pending').length}
+                              </div>
+                              <div className="text-[10px] text-muted-foreground">Pending</div>
+                            </div>
+                            <div className="p-2 rounded-lg bg-blue-500/10 border border-blue-500/20 text-center">
+                              <div className="text-lg font-bold text-blue-400">
+                                {districtInterventions.filter(i => i.status === 'in_progress').length}
+                              </div>
+                              <div className="text-[10px] text-muted-foreground">In Progress</div>
+                            </div>
+                            <div className="p-2 rounded-lg bg-green-500/10 border border-green-500/20 text-center">
+                              <div className="text-lg font-bold text-green-400">
+                                {districtInterventions.filter(i => i.status === 'completed').length}
+                              </div>
+                              <div className="text-[10px] text-muted-foreground">Completed</div>
+                            </div>
+                          </div>
+
+                          {/* Intervention List */}
+                          <div className="space-y-3">
+                            {districtInterventions.map((intervention) => (
+                              <div 
+                                key={intervention.id}
+                                className={`p-3 rounded-lg border ${priorityConfig[intervention.priority].bg} ${priorityConfig[intervention.priority].border}`}
+                              >
+                                <div className="flex items-start gap-3">
+                                  <Target className={`h-5 w-5 mt-0.5 ${priorityConfig[intervention.priority].color}`} />
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                      <Badge variant="outline" className={`${priorityConfig[intervention.priority].color} border-current uppercase text-[10px]`}>
+                                        {intervention.priority}
+                                      </Badge>
+                                      <Badge variant="secondary" className="text-[10px]">
+                                        {intervention.category}
+                                      </Badge>
+                                      <Badge className={`${statusConfig[intervention.status].bg} ${statusConfig[intervention.status].color} text-[10px] ml-auto`}>
+                                        {statusConfig[intervention.status].label}
+                                      </Badge>
+                                    </div>
+                                    <h4 className="font-bold text-sm">{intervention.title}</h4>
+                                    <p className="text-xs text-muted-foreground mt-1">{intervention.description}</p>
+                                    
+                                    <div className="mt-2 grid grid-cols-2 gap-2 text-[10px]">
+                                      {intervention.assignedDepartment && (
+                                        <div className="p-1.5 rounded bg-background/50">
+                                          <span className="text-muted-foreground">Dept: </span>
+                                          <span className="font-medium">{intervention.assignedDepartment}</span>
+                                        </div>
+                                      )}
+                                      {intervention.dueDate && (
+                                        <div className="p-1.5 rounded bg-background/50">
+                                          <span className="text-muted-foreground">Due: </span>
+                                          <span className="font-medium">{new Date(intervention.dueDate).toLocaleDateString()}</span>
+                                        </div>
+                                      )}
+                                      {intervention.estimatedCost && (
+                                        <div className="p-1.5 rounded bg-background/50 col-span-2">
+                                          <span className="text-muted-foreground">Est. Cost: </span>
+                                          <span className="font-medium font-mono">₹{intervention.estimatedCost.toLocaleString()}</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                          
+                          {/* Download Report Button */}
+                          <Button variant="outline" className="w-full" size="sm" data-testid="button-download-report">
+                            <Download className="h-4 w-4 mr-2" />
+                            Download Action Plan Report
+                          </Button>
+                        </>
+                      )}
+                    </TabsContent>
+
+                    {/* Community Tab - Engagement & Reports */}
+                    <TabsContent value="community" className="space-y-4 animate-in slide-in-from-left-2 duration-300">
+                      {/* SMS Alert Panel (Dummy) */}
+                      <div className="p-4 rounded-lg bg-gradient-to-br from-purple-500/10 to-indigo-500/10 border border-purple-500/20">
+                        <h4 className="text-sm font-medium flex items-center gap-2 text-purple-400 mb-3">
+                          <Phone className="h-4 w-4" />
+                          SMS/WhatsApp Alerts
+                        </h4>
+                        <div className="space-y-2 text-xs">
+                          <div className="flex items-center justify-between p-2 bg-background/50 rounded">
+                            <span className="text-muted-foreground">Registered Numbers</span>
+                            <span className="font-mono font-bold">12,450</span>
+                          </div>
+                          <div className="flex items-center justify-between p-2 bg-background/50 rounded">
+                            <span className="text-muted-foreground">Alerts Sent (24h)</span>
+                            <span className="font-mono font-bold text-green-400">3,240</span>
+                          </div>
+                          <div className="flex items-center justify-between p-2 bg-background/50 rounded">
+                            <span className="text-muted-foreground">Delivery Rate</span>
+                            <span className="font-mono font-bold text-blue-400">94.2%</span>
+                          </div>
+                        </div>
+                        <Button variant="outline" size="sm" className="w-full mt-3" disabled>
+                          <MessageSquare className="h-3 w-3 mr-2" />
+                          Send Broadcast (Demo)
+                        </Button>
+                      </div>
+
+                      {/* Community Reports */}
+                      <div>
+                        <h4 className="text-xs uppercase text-muted-foreground font-bold tracking-wider mb-3 flex items-center gap-2">
+                          <FileText className="h-3 w-3" />
+                          Community Reports ({districtCommunityReports.length})
+                        </h4>
+                        
+                        {districtCommunityReports.length === 0 ? (
+                          <div className="text-center py-6 text-muted-foreground">
+                            <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                            <p className="text-sm">No community reports yet</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            {districtCommunityReports.slice(0, 5).map((report) => (
+                              <div 
+                                key={report.id}
+                                className="p-3 rounded-lg bg-secondary/30 border border-border"
+                              >
+                                <div className="flex items-start gap-2">
+                                  <div className={`w-2 h-2 rounded-full mt-1.5 ${
+                                    report.severity === 'high' ? 'bg-red-500' :
+                                    report.severity === 'medium' ? 'bg-yellow-500' : 'bg-green-500'
+                                  }`} />
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <Badge variant="outline" className="text-[10px]">
+                                        {report.reportType.replace('_', ' ')}
+                                      </Badge>
+                                      <Badge className={`text-[10px] ${
+                                        report.status === 'addressed' ? 'bg-green-500/20 text-green-400' :
+                                        report.status === 'verified' ? 'bg-blue-500/20 text-blue-400' :
+                                        'bg-gray-500/20 text-gray-400'
+                                      }`}>
+                                        {report.status}
+                                      </Badge>
+                                    </div>
+                                    <p className="text-xs text-foreground">{report.description}</p>
+                                    {report.location && (
+                                      <p className="text-[10px] text-muted-foreground mt-1">📍 {report.location}</p>
+                                    )}
+                                    <p className="text-[10px] text-muted-foreground mt-1">
+                                      {new Date(report.createdAt).toLocaleString()}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Participation Stats */}
+                      <div className="bg-secondary/50 p-3 rounded-lg border border-border">
+                        <h4 className="text-xs uppercase text-muted-foreground font-bold tracking-wider mb-2">Community Participation</h4>
+                        <div className="grid grid-cols-2 gap-2 text-center">
+                          <div className="p-2 rounded bg-background/50">
+                            <div className="text-lg font-mono font-bold text-primary">847</div>
+                            <div className="text-[10px] text-muted-foreground">Active Reporters</div>
+                          </div>
+                          <div className="p-2 rounded bg-background/50">
+                            <div className="text-lg font-mono font-bold text-green-400">92%</div>
+                            <div className="text-[10px] text-muted-foreground">Reports Verified</div>
+                          </div>
+                        </div>
                       </div>
                     </TabsContent>
 

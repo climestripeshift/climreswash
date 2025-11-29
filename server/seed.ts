@@ -1,8 +1,9 @@
 import { storage } from "./storage";
 import { getDistrictData } from "../client/src/lib/mockData";
 import { db } from "./db";
-import { districts, apiIntegrations, alerts, aqiObservations } from "@shared/schema";
+import { districts, apiIntegrations, alerts, aqiObservations, interventions, communityReports } from "@shared/schema";
 import { generateAlertsForDistrict, getAqiCategory } from "./earlyWarning";
+import type { InsertIntervention, InsertCommunityReport } from "@shared/schema";
 
 const districtNames = [
   "Ajmer", "Alwar", "Banswara", "Baran", "Barmer", "Bharatpur", "Bhilwara", "Bikaner",
@@ -81,12 +82,103 @@ function generateAqiForDistrict(districtId: string, districtName: string) {
   return observations;
 }
 
+const interventionTemplates: Record<string, { title: string; description: string; category: string }[]> = {
+  heatwave: [
+    { title: "Deploy cooling centers", description: "Set up temporary cooling stations with water and shade in affected areas", category: "shelter" },
+    { title: "Distribute ORS packets", description: "Provide oral rehydration supplies to vulnerable households", category: "health" },
+    { title: "Deploy medical teams", description: "Station emergency medical responders in high-risk areas", category: "health" }
+  ],
+  flood: [
+    { title: "Evacuate low-lying areas", description: "Coordinate evacuation of families from flood-prone zones", category: "shelter" },
+    { title: "Distribute emergency food kits", description: "Provide 7-day emergency food supplies to affected families", category: "food" },
+    { title: "Deploy water purification", description: "Set up temporary water treatment facilities", category: "water" }
+  ],
+  drought: [
+    { title: "Deploy water tankers", description: "Provide emergency water supply to affected villages", category: "water" },
+    { title: "Fodder distribution", description: "Distribute fodder for livestock in drought-affected areas", category: "food" },
+    { title: "Monitor groundwater", description: "Assess groundwater levels and implement extraction limits", category: "infrastructure" }
+  ],
+  health: [
+    { title: "Mobile health camps", description: "Organize health screening camps in affected areas", category: "health" },
+    { title: "Vaccination drive", description: "Conduct emergency vaccination for waterborne diseases", category: "health" },
+    { title: "Nutrition support", description: "Distribute nutrition supplements to children and pregnant women", category: "health" }
+  ],
+  air_quality: [
+    { title: "Distribute N95 masks", description: "Provide protective masks to vulnerable population", category: "health" },
+    { title: "School advisory", description: "Issue advisories for school closures during severe AQI", category: "health" },
+    { title: "Respiratory care units", description: "Set up respiratory treatment facilities", category: "health" }
+  ],
+  dust_storm: [
+    { title: "Issue travel advisory", description: "Warn against unnecessary travel during dust storms", category: "infrastructure" },
+    { title: "Emergency shelter", description: "Open public buildings as emergency shelters", category: "shelter" },
+    { title: "Power grid protection", description: "Secure power infrastructure from dust damage", category: "infrastructure" }
+  ]
+};
+
+const departments = ["Health Department", "Water Resources", "Revenue Department", "District Administration", "PWD", "Agriculture Department"];
+const statuses: Array<'pending' | 'in_progress' | 'completed'> = ['pending', 'in_progress', 'completed'];
+const priorities: Array<'critical' | 'high' | 'medium' | 'low'> = ['critical', 'high', 'medium', 'low'];
+
+function generateInterventionsForAlert(alertId: string, districtId: string, alertType: string): InsertIntervention[] {
+  const templates = interventionTemplates[alertType] || interventionTemplates.health;
+  const numInterventions = Math.min(templates.length, 1 + Math.floor(Math.random() * 2));
+  
+  return templates.slice(0, numInterventions).map((template, idx) => ({
+    id: `int-${alertId}-${idx}`,
+    alertId,
+    districtId,
+    title: template.title,
+    description: template.description,
+    priority: priorities[Math.floor(Math.random() * 3)],
+    category: template.category,
+    assignedTo: `Officer ${Math.floor(Math.random() * 100)}`,
+    assignedDepartment: departments[Math.floor(Math.random() * departments.length)],
+    status: statuses[Math.floor(Math.random() * 3)],
+    dueDate: new Date(Date.now() + Math.random() * 14 * 24 * 60 * 60 * 1000),
+    estimatedCost: Math.round((10000 + Math.random() * 500000) * 100) / 100,
+    resourcesRequired: "Personnel, vehicles, supplies as needed"
+  }));
+}
+
+const reportTypes = ['hazard_sighting', 'damage_report', 'resource_need', 'feedback'];
+const reportTemplates = [
+  { type: 'hazard_sighting', description: 'Observed flooding near the village well', severity: 'high' },
+  { type: 'damage_report', description: 'Roof damage to 3 houses due to strong winds', severity: 'medium' },
+  { type: 'resource_need', description: 'Need drinking water supply urgently', severity: 'high' },
+  { type: 'feedback', description: 'Water tanker arrived late but was helpful', severity: 'low' },
+  { type: 'hazard_sighting', description: 'Dust storm approaching from the west', severity: 'high' },
+  { type: 'damage_report', description: 'Crops affected by unexpected heatwave', severity: 'medium' }
+];
+
+function generateCommunityReports(districtId: string): InsertCommunityReport[] {
+  const numReports = 1 + Math.floor(Math.random() * 3);
+  const reports: InsertCommunityReport[] = [];
+  
+  for (let i = 0; i < numReports; i++) {
+    const template = reportTemplates[Math.floor(Math.random() * reportTemplates.length)];
+    reports.push({
+      id: `report-${districtId}-${Date.now()}-${i}`,
+      districtId,
+      reportType: template.type as any,
+      description: template.description,
+      location: `Village ${Math.floor(Math.random() * 100)}`,
+      reporterPhone: `+91 ${Math.floor(Math.random() * 9000000000 + 1000000000)}`,
+      status: ['pending', 'verified', 'addressed'][Math.floor(Math.random() * 3)] as any,
+      severity: template.severity as any
+    });
+  }
+  
+  return reports;
+}
+
 async function seedDatabase() {
   console.log("🌱 Seeding database...");
 
   try {
     // Clear existing data
     console.log("🗑️ Clearing existing data...");
+    await db.delete(interventions);
+    await db.delete(communityReports);
     await db.delete(alerts);
     await db.delete(aqiObservations);
     await db.delete(districts);
@@ -158,9 +250,15 @@ async function seedDatabase() {
       const districtAlerts = await generateAlertsForDistrict(createdDistrict);
       for (const alert of districtAlerts) {
         await storage.createAlert(alert);
+        
+        // Create sample interventions for each alert
+        const interventionData = generateInterventionsForAlert(alert.id, createdDistrict.id, alert.type);
+        for (const intervention of interventionData) {
+          await storage.createIntervention(intervention);
+        }
       }
       if (districtAlerts.length > 0) {
-        console.log(`   ⚠️ Created ${districtAlerts.length} alerts`);
+        console.log(`   ⚠️ Created ${districtAlerts.length} alerts with interventions`);
       }
 
       // Generate AQI data for this district
@@ -169,6 +267,15 @@ async function seedDatabase() {
         await storage.createAqiObservation(aqi);
       }
       console.log(`   🌬️ Created ${aqiData.length} AQI observations`);
+
+      // Generate sample community reports for some districts
+      if (Math.random() > 0.6) {
+        const reports = generateCommunityReports(createdDistrict.id);
+        for (const report of reports) {
+          await storage.createCommunityReport(report);
+        }
+        console.log(`   📱 Created ${reports.length} community reports`);
+      }
     }
 
     console.log("🎉 Database seeded successfully!");

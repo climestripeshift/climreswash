@@ -9,11 +9,17 @@ import {
   type InsertAlert,
   type AqiObservation,
   type InsertAqiObservation,
+  type Intervention,
+  type InsertIntervention,
+  type CommunityReport,
+  type InsertCommunityReport,
   users,
   districts,
   apiIntegrations,
   alerts,
-  aqiObservations
+  aqiObservations,
+  interventions,
+  communityReports
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, desc } from "drizzle-orm";
@@ -44,6 +50,18 @@ export interface IStorage {
   getAqiHistory(districtId: string, days: number): Promise<AqiObservation[]>;
   createAqiObservation(observation: InsertAqiObservation): Promise<AqiObservation>;
   getAllLatestAqi(): Promise<AqiObservation[]>;
+  
+  getAllInterventions(): Promise<Intervention[]>;
+  getInterventionsByAlert(alertId: string): Promise<Intervention[]>;
+  getInterventionsByDistrict(districtId: string): Promise<Intervention[]>;
+  createIntervention(intervention: InsertIntervention): Promise<Intervention>;
+  updateIntervention(id: string, intervention: Partial<InsertIntervention>): Promise<Intervention | undefined>;
+  deleteIntervention(id: string): Promise<boolean>;
+  
+  getAllCommunityReports(): Promise<CommunityReport[]>;
+  getCommunityReportsByDistrict(districtId: string): Promise<CommunityReport[]>;
+  createCommunityReport(report: InsertCommunityReport): Promise<CommunityReport>;
+  updateCommunityReportStatus(id: string, status: string): Promise<CommunityReport | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -74,7 +92,7 @@ export class DatabaseStorage implements IStorage {
   async createDistrict(district: InsertDistrict): Promise<District> {
     const [created] = await db
       .insert(districts)
-      .values({ ...district, createdAt: new Date(), updatedAt: new Date() })
+      .values(district as any)
       .returning();
     return created;
   }
@@ -82,7 +100,7 @@ export class DatabaseStorage implements IStorage {
   async updateDistrict(id: string, district: Partial<InsertDistrict>): Promise<District | undefined> {
     const [updated] = await db
       .update(districts)
-      .set({ ...district, updatedAt: new Date() })
+      .set(district as any)
       .where(eq(districts.id, id))
       .returning();
     return updated || undefined;
@@ -176,6 +194,67 @@ export class DatabaseStorage implements IStorage {
       if (aqi) latest.push(aqi);
     }
     return latest;
+  }
+
+  async getAllInterventions(): Promise<Intervention[]> {
+    return await db.select().from(interventions).orderBy(desc(interventions.createdAt));
+  }
+
+  async getInterventionsByAlert(alertId: string): Promise<Intervention[]> {
+    return await db.select().from(interventions)
+      .where(eq(interventions.alertId, alertId))
+      .orderBy(desc(interventions.createdAt));
+  }
+
+  async getInterventionsByDistrict(districtId: string): Promise<Intervention[]> {
+    return await db.select().from(interventions)
+      .where(eq(interventions.districtId, districtId))
+      .orderBy(desc(interventions.createdAt));
+  }
+
+  async createIntervention(intervention: InsertIntervention): Promise<Intervention> {
+    const [created] = await db.insert(interventions)
+      .values({ ...intervention, createdAt: new Date(), updatedAt: new Date() })
+      .returning();
+    return created;
+  }
+
+  async updateIntervention(id: string, intervention: Partial<InsertIntervention>): Promise<Intervention | undefined> {
+    const [updated] = await db
+      .update(interventions)
+      .set({ ...intervention, updatedAt: new Date() })
+      .where(eq(interventions.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteIntervention(id: string): Promise<boolean> {
+    const result = await db.delete(interventions).where(eq(interventions.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async getAllCommunityReports(): Promise<CommunityReport[]> {
+    return await db.select().from(communityReports).orderBy(desc(communityReports.createdAt));
+  }
+
+  async getCommunityReportsByDistrict(districtId: string): Promise<CommunityReport[]> {
+    return await db.select().from(communityReports)
+      .where(eq(communityReports.districtId, districtId))
+      .orderBy(desc(communityReports.createdAt));
+  }
+
+  async createCommunityReport(report: InsertCommunityReport): Promise<CommunityReport> {
+    const [created] = await db.insert(communityReports).values(report).returning();
+    return created;
+  }
+
+  async updateCommunityReportStatus(id: string, status: string): Promise<CommunityReport | undefined> {
+    const [updated] = await db
+      .update(communityReports)
+      .set({ status })
+      .where(eq(communityReports.id, id))
+      .returning();
+    return updated || undefined;
   }
 }
 

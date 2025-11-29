@@ -56,6 +56,8 @@ export interface Alert {
   type: 'heatwave' | 'flood' | 'drought' | 'air_quality' | 'health' | 'dust_storm';
   title: string;
   description: string;
+  forecastMonth?: string | null;
+  riskScore: number;
   impactedPopulation: number;
   recommendedActions: string[];
   drivers: string[];
@@ -82,5 +84,37 @@ export interface AqiObservation {
   respiratoryRiskMultiplier: number;
   source: string;
   observedAt: string;
+  createdAt: string;
+}
+
+export interface Intervention {
+  id: string;
+  alertId: string;
+  districtId: string;
+  title: string;
+  description: string;
+  priority: 'critical' | 'high' | 'medium' | 'low';
+  category: 'health' | 'infrastructure' | 'water' | 'shelter' | 'food';
+  assignedTo: string | null;
+  assignedDepartment: string | null;
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  dueDate: string | null;
+  completedAt: string | null;
+  resourcesRequired: string | null;
+  estimatedCost: number | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CommunityReport {
+  id: string;
+  districtId: string;
+  reportType: 'hazard_sighting' | 'damage_report' | 'resource_need' | 'feedback';
+  description: string;
+  location: string | null;
+  reporterPhone: string | null;
+  status: 'pending' | 'verified' | 'addressed';
+  severity: 'low' | 'medium' | 'high' | null;
   createdAt: string;
 }
