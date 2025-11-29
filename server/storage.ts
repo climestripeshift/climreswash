@@ -1,8 +1,14 @@
 import { 
   type User, 
   type InsertUser, 
+  type Country,
+  type InsertCountry,
+  type State,
+  type InsertState,
   type District, 
   type InsertDistrict,
+  type Block,
+  type InsertBlock,
   type ApiIntegration,
   type InsertApiIntegration,
   type Alert,
@@ -14,7 +20,10 @@ import {
   type CommunityReport,
   type InsertCommunityReport,
   users,
+  countries,
+  states,
   districts,
+  blocks,
   apiIntegrations,
   alerts,
   aqiObservations,
@@ -29,11 +38,31 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   
+  // Geographic Hierarchy
+  getAllCountries(): Promise<Country[]>;
+  getCountry(id: string): Promise<Country | undefined>;
+  createCountry(country: InsertCountry): Promise<Country>;
+  updateCountry(id: string, country: Partial<InsertCountry>): Promise<Country | undefined>;
+  
+  getAllStates(): Promise<State[]>;
+  getStatesByCountry(countryId: string): Promise<State[]>;
+  getState(id: string): Promise<State | undefined>;
+  createState(state: InsertState): Promise<State>;
+  updateState(id: string, state: Partial<InsertState>): Promise<State | undefined>;
+  
   getAllDistricts(): Promise<District[]>;
+  getDistrictsByState(stateId: string): Promise<District[]>;
   getDistrict(id: string): Promise<District | undefined>;
   createDistrict(district: InsertDistrict): Promise<District>;
   updateDistrict(id: string, district: Partial<InsertDistrict>): Promise<District | undefined>;
   deleteDistrict(id: string): Promise<boolean>;
+  
+  getAllBlocks(): Promise<Block[]>;
+  getBlocksByDistrict(districtId: string): Promise<Block[]>;
+  getBlock(id: string): Promise<Block | undefined>;
+  createBlock(block: InsertBlock): Promise<Block>;
+  updateBlock(id: string, block: Partial<InsertBlock>): Promise<Block | undefined>;
+  deleteBlock(id: string): Promise<boolean>;
   
   getAllIntegrations(): Promise<ApiIntegration[]>;
   getIntegration(id: string): Promise<ApiIntegration | undefined>;
@@ -80,8 +109,65 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  // Countries
+  async getAllCountries(): Promise<Country[]> {
+    return await db.select().from(countries);
+  }
+
+  async getCountry(id: string): Promise<Country | undefined> {
+    const [country] = await db.select().from(countries).where(eq(countries.id, id));
+    return country || undefined;
+  }
+
+  async createCountry(country: InsertCountry): Promise<Country> {
+    const [created] = await db.insert(countries).values(country).returning();
+    return created;
+  }
+
+  async updateCountry(id: string, country: Partial<InsertCountry>): Promise<Country | undefined> {
+    const [updated] = await db
+      .update(countries)
+      .set({ ...country, updatedAt: new Date() })
+      .where(eq(countries.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  // States
+  async getAllStates(): Promise<State[]> {
+    return await db.select().from(states);
+  }
+
+  async getStatesByCountry(countryId: string): Promise<State[]> {
+    return await db.select().from(states).where(eq(states.countryId, countryId));
+  }
+
+  async getState(id: string): Promise<State | undefined> {
+    const [state] = await db.select().from(states).where(eq(states.id, id));
+    return state || undefined;
+  }
+
+  async createState(state: InsertState): Promise<State> {
+    const [created] = await db.insert(states).values(state).returning();
+    return created;
+  }
+
+  async updateState(id: string, state: Partial<InsertState>): Promise<State | undefined> {
+    const [updated] = await db
+      .update(states)
+      .set({ ...state, updatedAt: new Date() })
+      .where(eq(states.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  // Districts
   async getAllDistricts(): Promise<District[]> {
     return await db.select().from(districts);
+  }
+
+  async getDistrictsByState(stateId: string): Promise<District[]> {
+    return await db.select().from(districts).where(eq(districts.stateId, stateId));
   }
 
   async getDistrict(id: string): Promise<District | undefined> {
@@ -108,6 +194,39 @@ export class DatabaseStorage implements IStorage {
 
   async deleteDistrict(id: string): Promise<boolean> {
     const result = await db.delete(districts).where(eq(districts.id, id)).returning();
+    return result.length > 0;
+  }
+
+  // Blocks
+  async getAllBlocks(): Promise<Block[]> {
+    return await db.select().from(blocks);
+  }
+
+  async getBlocksByDistrict(districtId: string): Promise<Block[]> {
+    return await db.select().from(blocks).where(eq(blocks.districtId, districtId));
+  }
+
+  async getBlock(id: string): Promise<Block | undefined> {
+    const [block] = await db.select().from(blocks).where(eq(blocks.id, id));
+    return block || undefined;
+  }
+
+  async createBlock(block: InsertBlock): Promise<Block> {
+    const [created] = await db.insert(blocks).values(block).returning();
+    return created;
+  }
+
+  async updateBlock(id: string, block: Partial<InsertBlock>): Promise<Block | undefined> {
+    const [updated] = await db
+      .update(blocks)
+      .set({ ...block, updatedAt: new Date() })
+      .where(eq(blocks.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteBlock(id: string): Promise<boolean> {
+    const result = await db.delete(blocks).where(eq(blocks.id, id)).returning();
     return result.length > 0;
   }
 
