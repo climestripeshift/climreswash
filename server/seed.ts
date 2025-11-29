@@ -1,9 +1,9 @@
 import { storage } from "./storage";
 import { getDistrictData } from "../client/src/lib/mockData";
 import { db } from "./db";
-import { districts, apiIntegrations, alerts, aqiObservations, interventions, communityReports } from "@shared/schema";
+import { countries, states, districts, blocks, apiIntegrations, alerts, aqiObservations, interventions, communityReports } from "@shared/schema";
 import { generateAlertsForDistrict, getAqiCategory } from "./earlyWarning";
-import type { InsertIntervention, InsertCommunityReport } from "@shared/schema";
+import type { InsertIntervention, InsertCommunityReport, InsertBlock } from "@shared/schema";
 
 const districtNames = [
   "Ajmer", "Alwar", "Banswara", "Baran", "Barmer", "Bharatpur", "Bhilwara", "Bikaner",
@@ -171,6 +171,48 @@ function generateCommunityReports(districtId: string): InsertCommunityReport[] {
   return reports;
 }
 
+// Sample block names for each district (2-3 per district for demo)
+const blockTemplates = [
+  { suffix: "East", popMult: 0.3 },
+  { suffix: "West", popMult: 0.25 },
+  { suffix: "North", popMult: 0.25 },
+  { suffix: "South", popMult: 0.2 }
+];
+
+function generateBlocksForDistrict(districtId: string, districtName: string, districtData: any): InsertBlock[] {
+  const numBlocks = 2 + Math.floor(Math.random() * 2); // 2-3 blocks per district
+  const blocksList: InsertBlock[] = [];
+  
+  for (let i = 0; i < numBlocks; i++) {
+    const template = blockTemplates[i];
+    const vulnerabilityVariance = (Math.random() - 0.5) * 20;
+    const adaptationVariance = (Math.random() - 0.5) * 15;
+    
+    blocksList.push({
+      id: `BLK-${districtId.replace('IND-ADM2-', '')}-${template.suffix.toUpperCase()}`,
+      districtId,
+      name: `${districtName} ${template.suffix}`,
+      population: Math.round(districtData.population * template.popMult),
+      vulnerabilityScore: Math.max(20, Math.min(95, districtData.vulnerabilityScore + vulnerabilityVariance)),
+      adaptationScore: Math.max(15, Math.min(90, districtData.adaptationScore + adaptationVariance)),
+      childrenAtRisk: Math.round(districtData.childrenAtRisk * template.popMult),
+      elderlyAtRisk: Math.round(districtData.elderlyAtRisk * template.popMult),
+      climateRisks: districtData.climateRisks.slice(0, 2),
+      adaptationStrategies: districtData.adaptationStrategies.slice(0, 2),
+      waterAccessPercent: Math.max(40, Math.min(95, districtData.waterAccessPercent + (Math.random() - 0.5) * 10)),
+      toiletCoveragePercent: Math.max(30, Math.min(95, districtData.toiletCoveragePercent + (Math.random() - 0.5) * 10)),
+      handwashingFacilityPercent: Math.max(20, Math.min(90, districtData.handwashingFacilityPercent + (Math.random() - 0.5) * 10)),
+      malnutritionStunting: Math.max(15, Math.min(50, districtData.malnutritionStunting + (Math.random() - 0.5) * 5)),
+      infantMortalityRate: Math.max(20, Math.min(70, districtData.infantMortalityRate + (Math.random() - 0.5) * 10)),
+      activeAlerts: Math.floor(Math.random() * 3),
+      gramPanchayats: 20 + Math.floor(Math.random() * 30),
+      villages: 50 + Math.floor(Math.random() * 100)
+    });
+  }
+  
+  return blocksList;
+}
+
 async function seedDatabase() {
   console.log("🌱 Seeding database...");
 
@@ -181,7 +223,10 @@ async function seedDatabase() {
     await db.delete(communityReports);
     await db.delete(alerts);
     await db.delete(aqiObservations);
+    await db.delete(blocks);
     await db.delete(districts);
+    await db.delete(states);
+    await db.delete(countries);
     await db.delete(apiIntegrations);
     
     // Seed API integrations
@@ -210,6 +255,52 @@ async function seedDatabase() {
       await storage.createIntegration(integration);
       console.log(`✅ Created integration: ${integration.name}`);
     }
+
+    // Seed country (India)
+    console.log("🌍 Creating country...");
+    await storage.createCountry({
+      id: "IND",
+      name: "India",
+      population: 1400000000,
+      totalStates: 1, // Just Rajasthan for demo
+      totalDistricts: 33,
+      avgVulnerabilityScore: 55,
+      avgAdaptationScore: 45,
+      totalChildrenAtRisk: 2500000,
+      totalElderlyAtRisk: 1800000,
+      activeAlerts: 0,
+      criticalDistricts: 0
+    });
+    console.log("✅ Created country: India");
+
+    // Seed state (Rajasthan)
+    console.log("🏛️ Creating state...");
+    await storage.createState({
+      id: "RJ",
+      countryId: "IND",
+      name: "Rajasthan",
+      code: "RJ",
+      population: 68000000,
+      totalDistricts: 33,
+      totalBlocks: 0, // Will update after blocks are created
+      avgVulnerabilityScore: 58,
+      avgAdaptationScore: 42,
+      totalChildrenAtRisk: 850000,
+      totalElderlyAtRisk: 620000,
+      activeAlerts: 0,
+      criticalDistricts: 0,
+      topClimateRisks: ["Drought", "Heatwave", "Groundwater Depletion", "Dust Storms"]
+    });
+    console.log("✅ Created state: Rajasthan");
+
+    // Track aggregate values
+    let totalBlocks = 0;
+    let totalAlerts = 0;
+    let criticalDistricts = 0;
+    let sumVulnerability = 0;
+    let sumAdaptation = 0;
+    let sumChildrenAtRisk = 0;
+    let sumElderlyAtRisk = 0;
 
     // Seed districts
     for (const districtName of districtNames) {
@@ -276,9 +367,55 @@ async function seedDatabase() {
         }
         console.log(`   📱 Created ${reports.length} community reports`);
       }
+
+      // Generate blocks for this district
+      const districtBlocks = generateBlocksForDistrict(createdDistrict.id, districtName, {
+        ...districtData,
+        childrenAtRisk: districtData.childrenAtRisk,
+        elderlyAtRisk: districtData.elderlyAtRisk
+      });
+      for (const block of districtBlocks) {
+        await storage.createBlock(block);
+      }
+      console.log(`   🏘️ Created ${districtBlocks.length} blocks`);
+      totalBlocks += districtBlocks.length;
+
+      // Update aggregates
+      totalAlerts += districtAlerts.length;
+      if (mockData.vulnerabilityScore >= 70) criticalDistricts++;
+      sumVulnerability += mockData.vulnerabilityScore;
+      sumAdaptation += mockData.adaptationScore;
+      sumChildrenAtRisk += mockData.vulnerablePopulation.children;
+      sumElderlyAtRisk += mockData.vulnerablePopulation.elderly;
     }
 
+    // Update state with aggregates
+    await storage.updateState("RJ", {
+      totalBlocks,
+      activeAlerts: totalAlerts,
+      criticalDistricts,
+      avgVulnerabilityScore: Math.round((sumVulnerability / districtNames.length) * 10) / 10,
+      avgAdaptationScore: Math.round((sumAdaptation / districtNames.length) * 10) / 10,
+      totalChildrenAtRisk: sumChildrenAtRisk,
+      totalElderlyAtRisk: sumElderlyAtRisk
+    });
+    console.log("📊 Updated state aggregates");
+
+    // Update country with aggregates
+    await storage.updateCountry("IND", {
+      activeAlerts: totalAlerts,
+      criticalDistricts,
+      avgVulnerabilityScore: Math.round((sumVulnerability / districtNames.length) * 10) / 10,
+      avgAdaptationScore: Math.round((sumAdaptation / districtNames.length) * 10) / 10,
+      totalChildrenAtRisk: sumChildrenAtRisk,
+      totalElderlyAtRisk: sumElderlyAtRisk
+    });
+    console.log("📊 Updated country aggregates");
+
     console.log("🎉 Database seeded successfully!");
+    console.log(`   Total blocks: ${totalBlocks}`);
+    console.log(`   Total alerts: ${totalAlerts}`);
+    console.log(`   Critical districts: ${criticalDistricts}`);
     process.exit(0);
   } catch (error) {
     console.error("❌ Error seeding database:", error);

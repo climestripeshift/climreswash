@@ -1,3 +1,61 @@
+export type GeographicLevel = 'country' | 'state' | 'district' | 'block';
+
+export interface CountryData {
+  id: string;
+  name: string;
+  population: number;
+  totalStates: number;
+  totalDistricts: number;
+  avgVulnerabilityScore: number;
+  avgAdaptationScore: number;
+  totalChildrenAtRisk: number;
+  totalElderlyAtRisk: number;
+  activeAlerts: number;
+  criticalDistricts: number;
+  updatedAt: string;
+}
+
+export interface StateData {
+  id: string;
+  countryId: string;
+  name: string;
+  code: string;
+  population: number;
+  totalDistricts: number;
+  totalBlocks: number;
+  avgVulnerabilityScore: number;
+  avgAdaptationScore: number;
+  totalChildrenAtRisk: number;
+  totalElderlyAtRisk: number;
+  activeAlerts: number;
+  criticalDistricts: number;
+  topClimateRisks: string[];
+  updatedAt: string;
+}
+
+export interface BlockData {
+  id: string;
+  districtId: string;
+  name: string;
+  population: number;
+  vulnerabilityScore: number;
+  adaptationScore: number;
+  childrenAtRisk: number;
+  elderlyAtRisk: number;
+  climateRisks: string[];
+  adaptationStrategies: string[];
+  waterAccessPercent: number;
+  toiletCoveragePercent: number;
+  handwashingFacilityPercent: number;
+  malnutritionStunting: number;
+  infantMortalityRate: number;
+  activeAlerts: number;
+  gramPanchayats: number;
+  villages: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface VulnerablePopulation {
   children: number;
   elderly: number;
@@ -13,6 +71,7 @@ export interface SeasonalImpact {
 }
 
 export interface DistrictData {
+  stateId?: string;
   id: string;
   name: string;
   vulnerabilityScore: number;
