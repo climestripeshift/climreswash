@@ -1,9 +1,9 @@
-import { DistrictData, MapViewMode, Alert, AqiObservation, Intervention, CommunityReport } from "@/lib/types";
+import { DistrictData, MapViewMode, Alert, AqiObservation, Intervention, CommunityReport, GeographicLevel, BlockData } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Shield, Users, ThermometerSun, Droplets, Zap, Activity, Sprout, Bath, TrendingUp, Calendar, Heart, Baby, HeartPulse, GraduationCap, Hand, Wind, Bell, CheckCircle, ChevronRight, ClipboardList, MessageSquare, Phone, Clock, Target, FileText, Download } from "lucide-react";
+import { AlertTriangle, Shield, Users, ThermometerSun, Droplets, Zap, Activity, Sprout, Bath, TrendingUp, Calendar, Heart, Baby, HeartPulse, GraduationCap, Hand, Wind, Bell, CheckCircle, ChevronRight, ClipboardList, MessageSquare, Phone, Clock, Target, FileText, Download, Home, Building2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,10 +13,18 @@ interface SidebarProps {
   mode: MapViewMode;
   setMode: (mode: MapViewMode) => void;
   selectedDistrict: DistrictData | null;
+  selectedBlock?: BlockData | null;
+  blocks?: BlockData[];
+  onBlockSelect?: (block: BlockData) => void;
   districtAlerts?: Alert[];
   districtAqi?: { latest: AqiObservation | null; history: AqiObservation[] } | null;
   districtInterventions?: Intervention[];
   districtCommunityReports?: CommunityReport[];
+  currentLevel?: GeographicLevel;
+  countryData?: { name: string; population: number; totalStates: number; totalDistricts: number; avgVulnerabilityScore: number; avgAdaptationScore: number; totalChildrenAtRisk: number; totalElderlyAtRisk: number; activeAlerts: number; criticalDistricts: number; } | null;
+  stateData?: { name: string; population: number; totalDistricts: number; totalBlocks: number; avgVulnerabilityScore: number; avgAdaptationScore: number; totalChildrenAtRisk: number; totalElderlyAtRisk: number; activeAlerts: number; criticalDistricts: number; topClimateRisks: string[]; } | null;
+  allDistricts?: DistrictData[];
+  allAlerts?: Alert[];
 }
 
 const severityConfig = {
@@ -53,9 +61,11 @@ const statusConfig = {
   cancelled: { color: 'text-red-400', bg: 'bg-red-500/10', label: 'Cancelled' }
 };
 
-export function Sidebar({ mode, setMode, selectedDistrict, districtAlerts = [], districtAqi, districtInterventions = [], districtCommunityReports = [] }: SidebarProps) {
+export function Sidebar({ mode, setMode, selectedDistrict, selectedBlock, blocks = [], onBlockSelect, districtAlerts = [], districtAqi, districtInterventions = [], districtCommunityReports = [], currentLevel = 'state', countryData, stateData, allDistricts = [], allAlerts = [] }: SidebarProps) {
   const activeAlerts = districtAlerts.filter(a => a.isActive === 1);
   const pendingInterventions = districtInterventions.filter(i => i.status !== 'completed');
+  
+  const sortedDistricts = [...allDistricts].sort((a, b) => b.vulnerabilityScore - a.vulnerabilityScore);
   
   const alertsByMonth = activeAlerts.reduce((acc, alert) => {
     const month = alert.forecastMonth || 'Current';
@@ -908,15 +918,316 @@ export function Sidebar({ mode, setMode, selectedDistrict, districtAlerts = [], 
 
                 </CardContent>
               </Card>
+
+              {blocks.length > 0 && (
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <Home className="h-4 w-4 text-primary" />
+                      Drill Down to Block Level
+                    </CardTitle>
+                    <CardDescription>
+                      {blocks.length} blocks in {selectedDistrict.name}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {blocks.map((block) => (
+                        <button
+                          key={block.id}
+                          onClick={() => onBlockSelect?.(block)}
+                          className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all ${
+                            selectedBlock?.id === block.id
+                              ? "bg-primary/10 border-primary"
+                              : "bg-secondary/30 border-border hover:bg-secondary/50"
+                          }`}
+                          data-testid={`block-select-${block.id}`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Building2 className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-medium text-sm">{block.name}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {block.activeAlerts > 0 && (
+                              <Badge variant="destructive" className="text-xs px-1.5 py-0">
+                                {block.activeAlerts}
+                              </Badge>
+                            )}
+                            <Badge
+                              variant="outline"
+                              className={`text-xs px-1.5 py-0 ${
+                                block.vulnerabilityScore >= 70
+                                  ? "text-red-500 border-red-500"
+                                  : block.vulnerabilityScore >= 50
+                                  ? "text-yellow-500 border-yellow-500"
+                                  : "text-green-500 border-green-500"
+                              }`}
+                            >
+                              {block.vulnerabilityScore.toFixed(0)}%
+                            </Badge>
+                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {selectedBlock && (
+                <Card className="border-l-4 border-l-primary">
+                  <CardHeader className="pb-2">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <Home className="h-4 w-4" />
+                          {selectedBlock.name}
+                        </CardTitle>
+                        <CardDescription className="mt-1">
+                          {selectedBlock.gramPanchayats} Gram Panchayats | {selectedBlock.villages} Villages
+                        </CardDescription>
+                      </div>
+                      <Badge variant="outline" className="text-xs font-mono">
+                        POP: {(selectedBlock.population / 1000).toFixed(1)}K
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-secondary/50 p-3 rounded-lg">
+                        <div className="text-xs text-muted-foreground mb-1">Vulnerability</div>
+                        <div className="text-lg font-mono font-bold text-destructive">
+                          {selectedBlock.vulnerabilityScore.toFixed(1)}%
+                        </div>
+                        <Progress value={selectedBlock.vulnerabilityScore} className="h-1.5 mt-1 bg-secondary" indicatorClassName="bg-destructive" />
+                      </div>
+                      <div className="bg-secondary/50 p-3 rounded-lg">
+                        <div className="text-xs text-muted-foreground mb-1">Adaptation</div>
+                        <div className="text-lg font-mono font-bold text-primary">
+                          {selectedBlock.adaptationScore.toFixed(1)}%
+                        </div>
+                        <Progress value={selectedBlock.adaptationScore} className="h-1.5 mt-1 bg-secondary" indicatorClassName="bg-primary" />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div className="flex items-center gap-2 p-2 bg-secondary/30 rounded">
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <div className="text-xs text-muted-foreground">Children</div>
+                          <div className="font-mono">{selectedBlock.childrenAtRisk.toLocaleString()}</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 p-2 bg-secondary/30 rounded">
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <div className="text-xs text-muted-foreground">Elderly</div>
+                          <div className="font-mono">{selectedBlock.elderlyAtRisk.toLocaleString()}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    <div className="space-y-2">
+                      <h4 className="text-xs uppercase text-muted-foreground font-bold">WASH Indicators</h4>
+                      <div className="space-y-2">
+                        <div>
+                          <div className="flex justify-between text-xs mb-1">
+                            <span className="text-muted-foreground">Water Access</span>
+                            <span className="font-mono">{selectedBlock.waterAccessPercent.toFixed(0)}%</span>
+                          </div>
+                          <Progress value={selectedBlock.waterAccessPercent} className="h-1.5 bg-secondary" indicatorClassName="bg-blue-500" />
+                        </div>
+                        <div>
+                          <div className="flex justify-between text-xs mb-1">
+                            <span className="text-muted-foreground">Toilet Coverage</span>
+                            <span className="font-mono">{selectedBlock.toiletCoveragePercent.toFixed(0)}%</span>
+                          </div>
+                          <Progress value={selectedBlock.toiletCoveragePercent} className="h-1.5 bg-secondary" indicatorClassName="bg-green-500" />
+                        </div>
+                        <div>
+                          <div className="flex justify-between text-xs mb-1">
+                            <span className="text-muted-foreground">Handwashing</span>
+                            <span className="font-mono">{selectedBlock.handwashingFacilityPercent.toFixed(0)}%</span>
+                          </div>
+                          <Progress value={selectedBlock.handwashingFacilityPercent} className="h-1.5 bg-secondary" indicatorClassName="bg-purple-500" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1">
+                      {selectedBlock.climateRisks.map((risk, i) => (
+                        <Badge key={i} variant="destructive" className="text-xs">
+                          {risk}
+                        </Badge>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </motion.div>
           ) : (
-            <div className="h-full flex flex-col items-center justify-center text-muted-foreground p-8 text-center border-2 border-dashed border-border rounded-lg">
-              <Droplets className="h-12 w-12 mb-4 opacity-20" />
-              <h3 className="text-lg font-medium mb-2">Select a District</h3>
-              <p className="text-sm max-w-[200px]">
-                Click on any district in the map to view detailed climate analytics.
-              </p>
-            </div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-4"
+            >
+              {(currentLevel === 'state' || currentLevel === 'country') && stateData && (
+                <Card className="border-l-4 border-l-primary">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xl flex items-center gap-2">
+                      <Activity className="h-5 w-5" />
+                      {stateData.name} Overview
+                    </CardTitle>
+                    <CardDescription>
+                      {stateData.totalDistricts} Districts | {stateData.totalBlocks} Blocks
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-3">
+                      <div>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span className="text-muted-foreground">Avg. Vulnerability</span>
+                          <span className="font-mono font-bold text-destructive">{stateData.avgVulnerabilityScore.toFixed(1)}/100</span>
+                        </div>
+                        <Progress value={stateData.avgVulnerabilityScore} className="h-2 bg-secondary" indicatorClassName="bg-destructive" />
+                      </div>
+                      <div>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span className="text-muted-foreground">Avg. Adaptation</span>
+                          <span className="font-mono font-bold text-primary">{stateData.avgAdaptationScore.toFixed(1)}/100</span>
+                        </div>
+                        <Progress value={stateData.avgAdaptationScore} className="h-2 bg-secondary" indicatorClassName="bg-primary" />
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-secondary/50 p-3 rounded-lg">
+                        <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                          <Users className="h-4 w-4" />
+                          <span className="text-xs uppercase">Population</span>
+                        </div>
+                        <div className="text-lg font-mono font-bold">
+                          {(stateData.population / 1000000).toFixed(1)}M
+                        </div>
+                      </div>
+                      <div className="bg-secondary/50 p-3 rounded-lg">
+                        <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                          <AlertTriangle className="h-4 w-4" />
+                          <span className="text-xs uppercase">Critical</span>
+                        </div>
+                        <div className="text-lg font-mono font-bold text-destructive">
+                          {stateData.criticalDistricts} Districts
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-secondary/50 p-3 rounded-lg">
+                        <div className="text-xs text-muted-foreground mb-1">Children at Risk</div>
+                        <div className="text-lg font-mono font-bold">{stateData.totalChildrenAtRisk.toLocaleString()}</div>
+                      </div>
+                      <div className="bg-secondary/50 p-3 rounded-lg">
+                        <div className="text-xs text-muted-foreground mb-1">Elderly at Risk</div>
+                        <div className="text-lg font-mono font-bold">{stateData.totalElderlyAtRisk.toLocaleString()}</div>
+                      </div>
+                    </div>
+
+                    {stateData.topClimateRisks && stateData.topClimateRisks.length > 0 && (
+                      <>
+                        <Separator />
+                        <div>
+                          <h4 className="text-xs uppercase text-muted-foreground font-bold mb-2">Top Climate Risks</h4>
+                          <div className="flex flex-wrap gap-1">
+                            {stateData.topClimateRisks.map((risk, i) => (
+                              <Badge key={i} variant="destructive" className="text-xs">
+                                {risk}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {sortedDistricts.length > 0 && (
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Building2 className="h-4 w-4 text-primary" />
+                      Districts by Vulnerability
+                    </CardTitle>
+                    <CardDescription>Click map to view district details</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                      {sortedDistricts.slice(0, 10).map((district) => (
+                        <div
+                          key={district.id}
+                          className="flex items-center justify-between p-2 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors"
+                        >
+                          <span className="font-medium text-sm">{district.name}</span>
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              variant="outline"
+                              className={`text-xs ${
+                                district.vulnerabilityScore >= 70
+                                  ? "text-red-500 border-red-500"
+                                  : district.vulnerabilityScore >= 50
+                                  ? "text-yellow-500 border-yellow-500"
+                                  : "text-green-500 border-green-500"
+                              }`}
+                            >
+                              {district.vulnerabilityScore}%
+                            </Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {allAlerts.length > 0 && (
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Bell className="h-4 w-4 text-destructive" />
+                      Active Alerts ({allAlerts.filter(a => a.isActive).length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {allAlerts.filter(a => a.isActive).slice(0, 5).map((alert) => (
+                        <div key={alert.id} className={`p-2 rounded-lg ${severityConfig[alert.severity].bg} border ${severityConfig[alert.severity].border}`}>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className={`${severityConfig[alert.severity].color} border-current text-xs`}>
+                              {alert.severity}
+                            </Badge>
+                            <span className="text-sm font-medium">{alert.title}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {(!stateData && sortedDistricts.length === 0) && (
+                <div className="h-full flex flex-col items-center justify-center text-muted-foreground p-8 text-center border-2 border-dashed border-border rounded-lg">
+                  <Droplets className="h-12 w-12 mb-4 opacity-20" />
+                  <h3 className="text-lg font-medium mb-2">Select a District</h3>
+                  <p className="text-sm max-w-[200px]">
+                    Click on any district in the map to view detailed climate analytics.
+                  </p>
+                </div>
+              )}
+            </motion.div>
           )}
         </AnimatePresence>
       </div>

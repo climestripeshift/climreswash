@@ -2,12 +2,11 @@ import { useState, useEffect } from "react";
 import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { DistrictData, MapViewMode } from "@/lib/types";
+import { DistrictData, MapViewMode, GeographicLevel } from "@/lib/types";
 import { fetchDistricts } from "@/lib/api";
 import { Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
-// Fix for default marker icons in React Leaflet
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 
@@ -21,8 +20,9 @@ L.Marker.prototype.options.icon = DefaultIcon;
 
 interface MapComponentProps {
   mode: MapViewMode;
-  onDistrictSelect: (data: DistrictData) => void;
+  onDistrictSelect: (data: DistrictData | null) => void;
   selectedDistrictId: string | null;
+  currentLevel?: GeographicLevel;
 }
 
 const getColor = (score: number, mode: MapViewMode) => {
@@ -41,7 +41,7 @@ const getColor = (score: number, mode: MapViewMode) => {
   }
 };
 
-export function MapComponent({ mode, onDistrictSelect, selectedDistrictId }: MapComponentProps) {
+export function MapComponent({ mode, onDistrictSelect, selectedDistrictId, currentLevel = 'state' }: MapComponentProps) {
   const [geoJsonData, setGeoJsonData] = useState<any>(null);
   const [districtDataMap, setDistrictDataMap] = useState<Map<string, DistrictData>>(new Map());
 

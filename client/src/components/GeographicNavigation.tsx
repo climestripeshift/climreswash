@@ -1,0 +1,150 @@
+import { ChevronRight, MapPin, Globe, Building2, Landmark, Home } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { GeographicLevel, CountryData, StateData, DistrictData, BlockData } from "@/lib/types";
+
+interface GeographicBreadcrumb {
+  level: GeographicLevel;
+  id: string;
+  name: string;
+}
+
+interface GeographicNavigationProps {
+  currentLevel: GeographicLevel;
+  breadcrumbs: GeographicBreadcrumb[];
+  onNavigate: (level: GeographicLevel, id?: string) => void;
+  stats?: {
+    activeAlerts?: number;
+    criticalAreas?: number;
+    totalPopulation?: number;
+  };
+}
+
+const levelIcons: Record<GeographicLevel, React.ReactNode> = {
+  country: <Globe className="h-4 w-4" />,
+  state: <Landmark className="h-4 w-4" />,
+  district: <Building2 className="h-4 w-4" />,
+  block: <Home className="h-4 w-4" />
+};
+
+const levelLabels: Record<GeographicLevel, string> = {
+  country: "Country",
+  state: "State",
+  district: "District",
+  block: "Block"
+};
+
+export function GeographicNavigation({
+  currentLevel,
+  breadcrumbs,
+  onNavigate,
+  stats
+}: GeographicNavigationProps) {
+  return (
+    <div className="flex items-center justify-between px-4 py-2 bg-card/50 backdrop-blur-sm border-b border-border/50">
+      <div className="flex items-center gap-1">
+        <MapPin className="h-4 w-4 text-muted-foreground mr-2" />
+        
+        {breadcrumbs.map((crumb, index) => (
+          <div key={crumb.level} className="flex items-center">
+            {index > 0 && (
+              <ChevronRight className="h-4 w-4 text-muted-foreground mx-1" />
+            )}
+            <Button
+              variant={index === breadcrumbs.length - 1 ? "secondary" : "ghost"}
+              size="sm"
+              className="h-7 px-2 gap-1.5"
+              onClick={() => onNavigate(crumb.level, crumb.id)}
+              data-testid={`nav-${crumb.level}-${crumb.id}`}
+            >
+              {levelIcons[crumb.level]}
+              <span className="text-xs font-medium">{crumb.name}</span>
+            </Button>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex items-center gap-3">
+        {stats?.activeAlerts !== undefined && stats.activeAlerts > 0 && (
+          <Badge variant="destructive" className="gap-1" data-testid="stat-alerts">
+            <span className="animate-pulse">●</span>
+            {stats.activeAlerts} Active Alerts
+          </Badge>
+        )}
+        {stats?.criticalAreas !== undefined && stats.criticalAreas > 0 && (
+          <Badge variant="outline" className="text-orange-500 border-orange-500" data-testid="stat-critical">
+            {stats.criticalAreas} Critical Areas
+          </Badge>
+        )}
+        <div className="text-xs text-muted-foreground" data-testid="stat-level">
+          Viewing: <span className="font-medium text-foreground">{levelLabels[currentLevel]} Level</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface GeographicSelectorProps {
+  level: GeographicLevel;
+  items: Array<{ id: string; name: string; vulnerabilityScore?: number; activeAlerts?: number }>;
+  onSelect: (id: string) => void;
+  selectedId?: string;
+}
+
+export function GeographicSelector({
+  level,
+  items,
+  onSelect,
+  selectedId
+}: GeographicSelectorProps) {
+  if (items.length === 0) return null;
+
+  return (
+    <div className="p-3 bg-card/80 backdrop-blur-sm rounded-lg border border-border/50 shadow-lg">
+      <div className="flex items-center gap-2 mb-2 pb-2 border-b border-border/50">
+        {levelIcons[level]}
+        <span className="text-sm font-medium">Select {levelLabels[level]}</span>
+        <Badge variant="secondary" className="ml-auto text-xs">
+          {items.length} available
+        </Badge>
+      </div>
+      <div className="max-h-64 overflow-y-auto space-y-1">
+        {items.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => onSelect(item.id)}
+            className={`w-full flex items-center justify-between p-2 rounded-md text-sm transition-colors ${
+              selectedId === item.id
+                ? "bg-primary text-primary-foreground"
+                : "hover:bg-accent"
+            }`}
+            data-testid={`select-${level}-${item.id}`}
+          >
+            <span className="font-medium truncate">{item.name}</span>
+            <div className="flex items-center gap-2">
+              {item.activeAlerts !== undefined && item.activeAlerts > 0 && (
+                <Badge variant="destructive" className="text-xs px-1.5 py-0">
+                  {item.activeAlerts}
+                </Badge>
+              )}
+              {item.vulnerabilityScore !== undefined && (
+                <Badge
+                  variant="outline"
+                  className={`text-xs px-1.5 py-0 ${
+                    item.vulnerabilityScore >= 70
+                      ? "text-red-500 border-red-500"
+                      : item.vulnerabilityScore >= 50
+                      ? "text-yellow-500 border-yellow-500"
+                      : "text-green-500 border-green-500"
+                  }`}
+                >
+                  {item.vulnerabilityScore}%
+                </Badge>
+              )}
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
