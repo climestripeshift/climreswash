@@ -9,8 +9,43 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
 });
 
+// Geographic Hierarchy: Country → State → District → Block
+export const countries = pgTable("countries", {
+  id: varchar("id", { length: 50 }).primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  population: integer("population").notNull(),
+  totalStates: integer("total_states").notNull().default(0),
+  totalDistricts: integer("total_districts").notNull().default(0),
+  avgVulnerabilityScore: real("avg_vulnerability_score").notNull().default(0),
+  avgAdaptationScore: real("avg_adaptation_score").notNull().default(0),
+  totalChildrenAtRisk: integer("total_children_at_risk").notNull().default(0),
+  totalElderlyAtRisk: integer("total_elderly_at_risk").notNull().default(0),
+  activeAlerts: integer("active_alerts").notNull().default(0),
+  criticalDistricts: integer("critical_districts").notNull().default(0),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const states = pgTable("states", {
+  id: varchar("id", { length: 50 }).primaryKey(),
+  countryId: varchar("country_id", { length: 50 }).notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  code: varchar("code", { length: 10 }).notNull(),
+  population: integer("population").notNull(),
+  totalDistricts: integer("total_districts").notNull().default(0),
+  totalBlocks: integer("total_blocks").notNull().default(0),
+  avgVulnerabilityScore: real("avg_vulnerability_score").notNull().default(0),
+  avgAdaptationScore: real("avg_adaptation_score").notNull().default(0),
+  totalChildrenAtRisk: integer("total_children_at_risk").notNull().default(0),
+  totalElderlyAtRisk: integer("total_elderly_at_risk").notNull().default(0),
+  activeAlerts: integer("active_alerts").notNull().default(0),
+  criticalDistricts: integer("critical_districts").notNull().default(0),
+  topClimateRisks: text("top_climate_risks").array().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export const districts = pgTable("districts", {
   id: varchar("id", { length: 100 }).primaryKey(),
+  stateId: varchar("state_id", { length: 50 }).notNull().default('RJ'),
   name: varchar("name", { length: 255 }).notNull(),
   population: integer("population").notNull(),
   vulnerabilityScore: real("vulnerability_score").notNull(),
@@ -55,6 +90,30 @@ export const districts = pgTable("districts", {
     description: string;
   }>>(),
   
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Blocks (sub-district level)
+export const blocks = pgTable("blocks", {
+  id: varchar("id", { length: 100 }).primaryKey(),
+  districtId: varchar("district_id", { length: 100 }).notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  population: integer("population").notNull(),
+  vulnerabilityScore: real("vulnerability_score").notNull(),
+  adaptationScore: real("adaptation_score").notNull(),
+  childrenAtRisk: integer("children_at_risk").notNull(),
+  elderlyAtRisk: integer("elderly_at_risk").notNull(),
+  climateRisks: text("climate_risks").array().notNull(),
+  adaptationStrategies: text("adaptation_strategies").array().notNull(),
+  waterAccessPercent: real("water_access_percent").notNull().default(0),
+  toiletCoveragePercent: real("toilet_coverage_percent").notNull().default(0),
+  handwashingFacilityPercent: real("handwashing_facility_percent").notNull().default(0),
+  malnutritionStunting: real("malnutrition_stunting").notNull().default(0),
+  infantMortalityRate: real("infant_mortality_rate").notNull().default(0),
+  activeAlerts: integer("active_alerts").notNull().default(0),
+  gramPanchayats: integer("gram_panchayats").notNull().default(0),
+  villages: integer("villages").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -149,8 +208,24 @@ export const insertUserSchema = createInsertSchema(users).pick({
   password: true,
 });
 
+// Country schemas
+export const insertCountrySchema = createInsertSchema(countries).omit({
+  updatedAt: true,
+});
+
+// State schemas
+export const insertStateSchema = createInsertSchema(states).omit({
+  updatedAt: true,
+});
+
 // District schemas
 export const insertDistrictSchema = createInsertSchema(districts).omit({
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Block schemas
+export const insertBlockSchema = createInsertSchema(blocks).omit({
   createdAt: true,
   updatedAt: true,
 });
@@ -182,8 +257,14 @@ export const insertCommunityReportSchema = createInsertSchema(communityReports).
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+export type Country = typeof countries.$inferSelect;
+export type InsertCountry = z.infer<typeof insertCountrySchema>;
+export type State = typeof states.$inferSelect;
+export type InsertState = z.infer<typeof insertStateSchema>;
 export type District = typeof districts.$inferSelect;
 export type InsertDistrict = z.infer<typeof insertDistrictSchema>;
+export type Block = typeof blocks.$inferSelect;
+export type InsertBlock = z.infer<typeof insertBlockSchema>;
 export type ApiIntegration = typeof apiIntegrations.$inferSelect;
 export type InsertApiIntegration = z.infer<typeof insertApiIntegrationSchema>;
 export type Alert = typeof alerts.$inferSelect;
