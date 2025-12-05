@@ -82,10 +82,10 @@ export function Sidebar({ mode, setMode, selectedDistrict, selectedBlock, blocks
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2">
             <Activity className="h-5 w-5 text-primary" />
-            Climate Watch
+            ClimateAdapt
           </CardTitle>
           <CardDescription>
-            Rajasthan Climate Vulnerability & Adaptation Monitor
+            Rajasthan Climate Vulnerability & Early Warning System
           </CardDescription>
         </CardHeader>
         <CardContent>
