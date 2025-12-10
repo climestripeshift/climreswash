@@ -100,7 +100,9 @@ export function MapComponent({ mode, onDistrictSelect, selectedDistrictId, curre
     const districtId = feature.properties.ID;
     const districtName = feature.properties.DISTRICT;
     const data = districtDataMap.get(districtId) || districtDataMap.get(districtName?.toUpperCase());
-    if (!data) return { fillColor: '#666', weight: 1, opacity: 1, color: '#1e293b', fillOpacity: 0.3 };
+    if (!data) {
+      return { fillColor: '#666', weight: 1, opacity: 1, color: '#1e293b', fillOpacity: 0.3 };
+    }
     
     const isSelected = selectedDistrictId === data.id;
 
@@ -145,7 +147,7 @@ export function MapComponent({ mode, onDistrictSelect, selectedDistrictId, curre
     });
   };
 
-  if (!geoJsonData || districtsLoading) {
+  if (!geoJsonData || districtsLoading || districtDataMap.size === 0) {
     return (
       <div className="h-full w-full flex items-center justify-center bg-slate-950 text-white">
         <Loader2 className="h-8 w-8 animate-spin mr-2" />
