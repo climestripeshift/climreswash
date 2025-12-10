@@ -25,28 +25,52 @@ interface MapComponentProps {
   currentLevel?: GeographicLevel;
 }
 
-const getNormalizedColor = (score: number, min: number, max: number): string => {
-  const normalized = (score - min) / (max - min);
-  if (normalized >= 0.8) return '#ef4444';
-  if (normalized >= 0.6) return '#f97316';
-  if (normalized >= 0.4) return '#eab308';
-  if (normalized >= 0.2) return '#22c55e';
+const getHazardColor = (score: number): string => {
+  if (score > 0.45) return '#ef4444';
+  if (score > 0.35) return '#f97316';
+  if (score > 0.25) return '#eab308';
+  if (score > 0.15) return '#22c55e';
+  return '#16a34a';
+};
+
+const getExposureColor = (score: number): string => {
+  if (score > 0.55) return '#ef4444';
+  if (score > 0.45) return '#f97316';
+  if (score > 0.35) return '#eab308';
+  if (score > 0.25) return '#22c55e';
+  return '#16a34a';
+};
+
+const getVulnerabilityColor = (score: number): string => {
+  if (score > 0.8) return '#ef4444';
+  if (score > 0.6) return '#f97316';
+  if (score > 0.4) return '#eab308';
+  if (score > 0.2) return '#22c55e';
+  return '#16a34a';
+};
+
+const getRiskColor = (score: number): string => {
+  if (score > 0.07) return '#ef4444';
+  if (score > 0.05) return '#f97316';
+  if (score > 0.03) return '#eab308';
+  if (score > 0.015) return '#22c55e';
   return '#16a34a';
 };
 
 const getAdaptationColor = (score: number): string => {
-  return score > 70 ? '#22c55e' :
-         score > 50 ? '#3b82f6' :
-         score > 30 ? '#eab308' :
-                      '#ef4444';
+  if (score >= 80) return '#16a34a';
+  if (score >= 60) return '#22c55e';
+  if (score >= 40) return '#eab308';
+  if (score >= 20) return '#f97316';
+  return '#ef4444';
 };
 
 const getColorForMode = (data: DistrictData, mode: MapViewMode): string => {
   switch (mode) {
-    case 'hazard': return getNormalizedColor(data.hazardScore ?? 0, 0.02, 0.52);
-    case 'exposure': return getNormalizedColor(data.exposureScore ?? 0, 0.20, 0.58);
-    case 'risk': return getNormalizedColor(data.riskScore ?? 0, 0, 0.10);
-    case 'vulnerability': return getNormalizedColor(data.vulnerabilityScore, 0, 1);
+    case 'hazard': return getHazardColor(data.hazardScore ?? 0);
+    case 'exposure': return getExposureColor(data.exposureScore ?? 0);
+    case 'risk': return getRiskColor(data.riskScore ?? 0);
+    case 'vulnerability': return getVulnerabilityColor(data.vulnerabilityScore);
     case 'adaptation': return getAdaptationColor(data.adaptationScore);
     default: return '#666';
   }
