@@ -198,6 +198,29 @@ export function Sidebar({ mode, setMode, selectedDistrict, selectedBlock, blocks
                     </TabsList>
 
                     <TabsContent value="overview" className="space-y-6 animate-in slide-in-from-left-2 duration-300">
+                      {/* H/E/V/R Scores from CSV */}
+                      <div className="bg-secondary/30 p-3 rounded-lg border border-border">
+                        <h4 className="text-xs font-medium uppercase text-muted-foreground mb-3">Climate Risk Metrics (from CSV)</h4>
+                        <div className="grid grid-cols-4 gap-2 text-center">
+                          <div className="bg-background p-2 rounded">
+                            <div className="text-xs text-muted-foreground">Hazard</div>
+                            <div className="text-lg font-mono font-bold text-orange-500">{selectedDistrict.hazardScore?.toFixed(3) ?? 'N/A'}</div>
+                          </div>
+                          <div className="bg-background p-2 rounded">
+                            <div className="text-xs text-muted-foreground">Exposure</div>
+                            <div className="text-lg font-mono font-bold text-blue-500">{selectedDistrict.exposureScore?.toFixed(3) ?? 'N/A'}</div>
+                          </div>
+                          <div className="bg-background p-2 rounded">
+                            <div className="text-xs text-muted-foreground">Vuln.</div>
+                            <div className="text-lg font-mono font-bold text-red-500">{(selectedDistrict.vulnerabilityScore / 100).toFixed(3)}</div>
+                          </div>
+                          <div className="bg-background p-2 rounded">
+                            <div className="text-xs text-muted-foreground">Risk</div>
+                            <div className="text-lg font-mono font-bold text-purple-500">{selectedDistrict.riskScore?.toFixed(4) ?? 'N/A'}</div>
+                          </div>
+                        </div>
+                      </div>
+
                       {/* Scores */}
                       <div className="space-y-4">
                         <div>
