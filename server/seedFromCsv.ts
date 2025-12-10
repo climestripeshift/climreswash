@@ -82,7 +82,7 @@ function generateGeoJSON(rows: DistrictRow[]) {
     return {
       type: "Feature",
       properties: {
-        DISTRICT: row.nameCapitalized,
+        DISTRICT: row.name.toUpperCase(),
         NAME: row.name,
         ID: row.uniqueId,
         HAZARD_SCORE: row.hazardScore,
