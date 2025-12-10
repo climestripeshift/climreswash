@@ -144,7 +144,7 @@ function generateAqiForDistrict(districtId: string) {
     const aqiInfo = getAqiCategory(aqiValue);
     
     observations.push({
-      id: `aqi-${districtId}-${observedAt.toISOString().split('T')[0]}`,
+      id: `aqi-${districtId}-${observedAt.toISOString().split('T')[0]}-${Math.random().toString(36).substring(2, 8)}`,
       districtId,
       aqiValue,
       aqiCategory: aqiInfo.category,
@@ -179,7 +179,7 @@ async function seedFromCsv() {
     await db.delete(apiIntegrations);
     
     console.log("📖 Reading CSV file...");
-    const csvContent = fs.readFileSync('attached_assets/data_sheet_-_Sheet3_1765363383360.csv', 'utf-8');
+    const csvContent = fs.readFileSync('attached_assets/data_sheet_-_Sheet3_1765365535049.csv', 'utf-8');
     const rows = parseCSV(csvContent);
     console.log(`Found ${rows.length} districts in CSV`);
     
