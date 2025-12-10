@@ -39,13 +39,20 @@ const getColor = (score: number, mode: MapViewMode) => {
   }
 };
 
+const normalizeScore = (score: number | null | undefined, fallback: number): number => {
+  if (score === null || score === undefined) return fallback;
+  // If score is in 0-1 range (decimal), convert to 0-100
+  return score <= 1 ? score * 100 : score;
+};
+
 const getScoreForMode = (data: DistrictData, mode: MapViewMode): number => {
+  const vulnNormalized = normalizeScore(data.vulnerabilityScore, 50);
   switch (mode) {
-    case 'hazard': return data.hazardScore ?? data.vulnerabilityScore;
-    case 'exposure': return data.exposureScore ?? data.vulnerabilityScore;
-    case 'risk': return data.riskScore ?? data.vulnerabilityScore;
+    case 'hazard': return normalizeScore(data.hazardScore, vulnNormalized);
+    case 'exposure': return normalizeScore(data.exposureScore, vulnNormalized);
+    case 'risk': return normalizeScore(data.riskScore, vulnNormalized);
     case 'adaptation': return data.adaptationScore;
-    default: return data.vulnerabilityScore;
+    default: return vulnNormalized;
   }
 };
 
