@@ -117,7 +117,12 @@ export function MapComponent({ mode, onDistrictSelect, selectedDistrictId, curre
     }
   }, [districts]);
 
-  // Memoized style function for GeoJSON - match by district name only
+  const [renderKey, setRenderKey] = useState(Date.now());
+  
+  useEffect(() => {
+    setRenderKey(Date.now());
+  }, [mode]);
+
   const style = useCallback((feature: any) => {
     const districtName = feature.properties.DISTRICT?.toUpperCase();
     const data = districtDataMap.get(districtName);
@@ -126,9 +131,10 @@ export function MapComponent({ mode, onDistrictSelect, selectedDistrictId, curre
     }
     
     const isSelected = selectedDistrictId === data.id;
+    const color = getColorForMode(data, mode);
 
     return {
-      fillColor: getColorForMode(data, mode),
+      fillColor: color,
       weight: isSelected ? 3 : 1,
       opacity: 1,
       color: isSelected ? 'white' : '#1e293b',
