@@ -41,43 +41,44 @@ export function GeographicNavigation({
   stats
 }: GeographicNavigationProps) {
   return (
-    <div className="flex items-center justify-between px-4 py-2 bg-card/50 backdrop-blur-sm border-b border-border/50">
-      <div className="flex items-center gap-1">
-        <MapPin className="h-4 w-4 text-muted-foreground mr-2" />
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-2 sm:px-4 py-2 bg-card/50 backdrop-blur-sm border-b border-border/50 gap-2 sm:gap-0">
+      <div className="flex items-center gap-1 overflow-x-auto w-full sm:w-auto scrollbar-hide">
+        <MapPin className="h-4 w-4 text-muted-foreground mr-1 sm:mr-2 shrink-0" />
         
         {breadcrumbs.map((crumb, index) => (
-          <div key={crumb.level} className="flex items-center">
+          <div key={crumb.level} className="flex items-center shrink-0">
             {index > 0 && (
-              <ChevronRight className="h-4 w-4 text-muted-foreground mx-1" />
+              <ChevronRight className="h-3 sm:h-4 w-3 sm:w-4 text-muted-foreground mx-0.5 sm:mx-1" />
             )}
             <Button
               variant={index === breadcrumbs.length - 1 ? "secondary" : "ghost"}
               size="sm"
-              className="h-7 px-2 gap-1.5"
+              className="h-6 sm:h-7 px-1.5 sm:px-2 gap-1 sm:gap-1.5"
               onClick={() => onNavigate(crumb.level, crumb.id)}
               data-testid={`nav-${crumb.level}-${crumb.id}`}
             >
               {levelIcons[crumb.level]}
-              <span className="text-xs font-medium">{crumb.name}</span>
+              <span className="text-[10px] sm:text-xs font-medium">{crumb.name}</span>
             </Button>
           </div>
         ))}
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="hidden sm:flex items-center gap-2 sm:gap-3 shrink-0">
         {stats?.activeAlerts !== undefined && stats.activeAlerts > 0 && (
-          <Badge variant="destructive" className="gap-1" data-testid="stat-alerts">
+          <Badge variant="destructive" className="gap-1 text-xs" data-testid="stat-alerts">
             <span className="animate-pulse">●</span>
-            {stats.activeAlerts} Active Alerts
+            <span className="hidden md:inline">{stats.activeAlerts} Active</span>
+            <span className="md:hidden">{stats.activeAlerts}</span>
           </Badge>
         )}
         {stats?.criticalAreas !== undefined && stats.criticalAreas > 0 && (
-          <Badge variant="outline" className="text-orange-500 border-orange-500" data-testid="stat-critical">
-            {stats.criticalAreas} Critical Areas
+          <Badge variant="outline" className="text-orange-500 border-orange-500 text-xs hidden md:flex" data-testid="stat-critical">
+            {stats.criticalAreas} Critical
           </Badge>
         )}
-        <div className="text-xs text-muted-foreground" data-testid="stat-level">
-          Viewing: <span className="font-medium text-foreground">{levelLabels[currentLevel]} Level</span>
+        <div className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block" data-testid="stat-level">
+          <span className="font-medium text-foreground">{levelLabels[currentLevel]}</span>
         </div>
       </div>
     </div>

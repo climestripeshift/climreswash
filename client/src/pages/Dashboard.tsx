@@ -4,12 +4,13 @@ import { Sidebar } from "@/components/Sidebar";
 import { GeographicNavigation } from "@/components/GeographicNavigation";
 import { DistrictData, MapViewMode, Alert, AqiObservation, Intervention, CommunityReport, GeographicLevel, CountryData, StateData, BlockData } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { Settings, AlertTriangle, Bell, X, Wind, ChevronRight } from "lucide-react";
+import { Settings, AlertTriangle, Bell, X, Wind, ChevronRight, Menu, MapPin } from "lucide-react";
 import { Link } from "wouter";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
 import { fetchDistricts } from "@/lib/api";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const severityColors = {
   advisory: { bg: 'bg-blue-500/20', border: 'border-blue-500', text: 'text-blue-400', badge: 'bg-blue-500' },
@@ -33,6 +34,7 @@ export default function Dashboard() {
   const [interventions, setInterventions] = useState<Record<string, Intervention[]>>({});
   const [communityReports, setCommunityReports] = useState<Record<string, CommunityReport[]>>({});
   const [showAlertBanner, setShowAlertBanner] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   const [currentLevel, setCurrentLevel] = useState<GeographicLevel>('state');
   const [countryData, setCountryData] = useState<CountryData | null>(null);
@@ -265,13 +267,47 @@ export default function Dashboard() {
         )}
       </AnimatePresence>
 
-      <div className="flex-1 p-4 flex flex-col lg:flex-row gap-4 overflow-hidden relative">
-        <div className="absolute top-2 right-2 z-[50] flex items-center gap-2">
+      <div className="flex-1 p-2 sm:p-4 flex flex-col lg:flex-row gap-2 sm:gap-4 overflow-hidden relative">
+        <div className="absolute top-2 right-2 z-[50] flex items-center gap-1 sm:gap-2">
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="lg:hidden gap-2"
+                data-testid="button-mobile-menu"
+              >
+                <Menu className="h-4 w-4" />
+                <span className="hidden sm:inline">Menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-full sm:w-[400px] p-0 overflow-y-auto">
+              <div className="p-4">
+                <Sidebar 
+                  mode={mode} 
+                  setMode={setMode} 
+                  selectedDistrict={selectedDistrict}
+                  selectedBlock={selectedBlock}
+                  blocks={blocks}
+                  onBlockSelect={handleBlockSelect}
+                  districtAlerts={districtAlerts}
+                  districtAqi={currentAqi}
+                  districtInterventions={districtInterventions}
+                  districtCommunityReports={districtCommunityReports}
+                  currentLevel={currentLevel}
+                  countryData={countryData}
+                  stateData={stateData}
+                  allDistricts={allDistricts}
+                  allAlerts={alerts}
+                />
+              </div>
+            </SheetContent>
+          </Sheet>
           {alerts.length > 0 && (
             <Button 
               variant="outline" 
               size="sm" 
-              className="gap-2 relative"
+              className="gap-1 sm:gap-2 relative px-2 sm:px-3"
               data-testid="button-alerts-indicator"
             >
               <Bell className="h-4 w-4" />
@@ -283,31 +319,54 @@ export default function Dashboard() {
           )}
           <ThemeToggle />
           <Link href="/admin">
-            <Button variant="outline" size="sm" className="gap-2" data-testid="link-admin">
+            <Button variant="outline" size="sm" className="gap-1 sm:gap-2 px-2 sm:px-3" data-testid="link-admin">
               <Settings className="h-4 w-4" />
-              Admin
+              <span className="hidden sm:inline">Admin</span>
             </Button>
           </Link>
         </div>
 
-        <Sidebar 
-          mode={mode} 
-          setMode={setMode} 
-          selectedDistrict={selectedDistrict}
-          selectedBlock={selectedBlock}
-          blocks={blocks}
-          onBlockSelect={handleBlockSelect}
-          districtAlerts={districtAlerts}
-          districtAqi={currentAqi}
-          districtInterventions={districtInterventions}
-          districtCommunityReports={districtCommunityReports}
-          currentLevel={currentLevel}
-          countryData={countryData}
-          stateData={stateData}
-          allDistricts={allDistricts}
-          allAlerts={alerts}
-        />
-        <div className="flex-1 h-full min-h-[400px]">
+        {selectedDistrict && (
+          <div className="lg:hidden absolute bottom-4 left-2 right-2 z-[40] bg-background/95 backdrop-blur border rounded-lg p-3 shadow-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-primary" />
+                <span className="font-medium text-sm">{selectedDistrict.name}</span>
+                <Badge variant="secondary" className="text-xs">
+                  Risk: {(selectedDistrict.riskScore ?? 0).toFixed(3)}
+                </Badge>
+              </div>
+              <Button 
+                size="sm" 
+                onClick={() => setMobileMenuOpen(true)}
+                data-testid="button-view-details"
+              >
+                Details
+              </Button>
+            </div>
+          </div>
+        )}
+
+        <div className="hidden lg:block">
+          <Sidebar 
+            mode={mode} 
+            setMode={setMode} 
+            selectedDistrict={selectedDistrict}
+            selectedBlock={selectedBlock}
+            blocks={blocks}
+            onBlockSelect={handleBlockSelect}
+            districtAlerts={districtAlerts}
+            districtAqi={currentAqi}
+            districtInterventions={districtInterventions}
+            districtCommunityReports={districtCommunityReports}
+            currentLevel={currentLevel}
+            countryData={countryData}
+            stateData={stateData}
+            allDistricts={allDistricts}
+            allAlerts={alerts}
+          />
+        </div>
+        <div className="flex-1 h-full min-h-[300px] sm:min-h-[400px]">
           <MapComponent 
             mode={mode} 
             onDistrictSelect={handleDistrictSelect} 
