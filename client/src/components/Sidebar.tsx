@@ -82,10 +82,10 @@ export function Sidebar({ mode, setMode, selectedDistrict, selectedBlock, blocks
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2">
             <Activity className="h-5 w-5 text-primary" />
-            ClimateAdapt
+            ClimateAdapt India
           </CardTitle>
           <CardDescription>
-            Rajasthan Climate Vulnerability & Early Warning System
+            National Climate Vulnerability & Early Warning System
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -1078,10 +1078,10 @@ export function Sidebar({ mode, setMode, selectedDistrict, selectedBlock, blocks
                   <CardHeader className="pb-2">
                     <CardTitle className="text-xl flex items-center gap-2">
                       <Activity className="h-5 w-5" />
-                      {stateData.name} Overview
+                      India Overview
                     </CardTitle>
                     <CardDescription>
-                      {stateData.totalDistricts} Districts | {stateData.totalBlocks} Blocks
+                      {stateData.totalDistricts} Districts across 28 States & 8 UTs
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">

@@ -51,7 +51,7 @@ export function MapComponent({ mode, onDistrictSelect, selectedDistrictId, curre
   });
 
   useEffect(() => {
-    fetch('/data/rajasthan.json')
+    fetch('/data/india.json')
       .then(res => res.json())
       .then(data => {
         setGeoJsonData(data);
@@ -132,8 +132,8 @@ export function MapComponent({ mode, onDistrictSelect, selectedDistrictId, curre
   return (
     <div className="h-full w-full rounded-lg overflow-hidden border border-border shadow-lg relative z-0">
       <MapContainer 
-        center={[26.5, 74.0]} // Approximate center of Rajasthan
-        zoom={7} 
+        center={[22.5, 82.0]} // Center of India
+        zoom={5} 
         className="h-full w-full bg-slate-950"
         zoomControl={false}
       >
