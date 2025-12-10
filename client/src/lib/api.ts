@@ -21,6 +21,15 @@ export async function fetchDistricts(): Promise<DistrictData[]> {
     climateRisks: d.climateRisks,
     adaptationStrategies: d.adaptationStrategies,
     impactIfNoAction: d.impactIfNoAction,
+    // Climate Risk Scores from CSV
+    hazardScore: d.hazardScore,
+    hazardCategory: d.hazardCategory,
+    exposureScore: d.exposureScore,
+    exposureCategory: d.exposureCategory,
+    vulnerabilityCategory: d.vulnerabilityCategory,
+    riskScore: d.riskScore,
+    riskCategory: d.riskCategory,
+    // Infrastructure
     soilType: d.soilType,
     rockType: d.rockType,
     toiletTechnology: d.toiletTechnology,
