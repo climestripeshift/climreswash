@@ -25,34 +25,32 @@ interface MapComponentProps {
   currentLevel?: GeographicLevel;
 }
 
-const getColor = (score: number, mode: MapViewMode) => {
-  if (mode === 'adaptation') {
-    return score > 70 ? '#22c55e' :
-           score > 50 ? '#3b82f6' :
-           score > 30 ? '#eab308' :
-                        '#ef4444';
-  } else {
-    return score > 80 ? '#ef4444' :
-           score > 60 ? '#f97316' :
-           score > 40 ? '#eab308' :
-                        '#22c55e';
-  }
+const getCategoryColor = (category: string | null | undefined): string => {
+  if (!category) return '#666';
+  const cat = category.toLowerCase();
+  if (cat.includes('very high')) return '#ef4444';
+  if (cat.includes('high')) return '#f97316';
+  if (cat.includes('moderate')) return '#eab308';
+  if (cat.includes('low')) return '#22c55e';
+  if (cat.includes('very low')) return '#16a34a';
+  return '#666';
 };
 
-const normalizeScore = (score: number | null | undefined, fallback: number): number => {
-  if (score === null || score === undefined) return fallback;
-  // If score is in 0-1 range (decimal), convert to 0-100
-  return score <= 1 ? score * 100 : score;
+const getAdaptationColor = (score: number): string => {
+  return score > 70 ? '#22c55e' :
+         score > 50 ? '#3b82f6' :
+         score > 30 ? '#eab308' :
+                      '#ef4444';
 };
 
-const getScoreForMode = (data: DistrictData, mode: MapViewMode): number => {
-  const vulnNormalized = normalizeScore(data.vulnerabilityScore, 50);
+const getColorForMode = (data: DistrictData, mode: MapViewMode): string => {
   switch (mode) {
-    case 'hazard': return normalizeScore(data.hazardScore, vulnNormalized);
-    case 'exposure': return normalizeScore(data.exposureScore, vulnNormalized);
-    case 'risk': return normalizeScore(data.riskScore, vulnNormalized);
-    case 'adaptation': return data.adaptationScore;
-    default: return vulnNormalized;
+    case 'hazard': return getCategoryColor(data.hazardCategory);
+    case 'exposure': return getCategoryColor(data.exposureCategory);
+    case 'risk': return getCategoryColor(data.riskCategory);
+    case 'vulnerability': return getCategoryColor(data.vulnerabilityCategory);
+    case 'adaptation': return getAdaptationColor(data.adaptationScore);
+    default: return '#666';
   }
 };
 
@@ -104,12 +102,10 @@ export function MapComponent({ mode, onDistrictSelect, selectedDistrictId, curre
     const data = districtDataMap.get(districtId) || districtDataMap.get(districtName?.toUpperCase());
     if (!data) return { fillColor: '#666', weight: 1, opacity: 1, color: '#1e293b', fillOpacity: 0.3 };
     
-    const score = getScoreForMode(data, mode);
-    
     const isSelected = selectedDistrictId === data.id;
 
     return {
-      fillColor: getColor(score, mode),
+      fillColor: getColorForMode(data, mode),
       weight: isSelected ? 3 : 1,
       opacity: 1,
       color: isSelected ? 'white' : '#1e293b',
@@ -190,38 +186,42 @@ export function MapComponent({ mode, onDistrictSelect, selectedDistrictId, curre
             <>
               <div className="flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full" style={{ background: '#22c55e' }}></span>
-                <span>High Readiness (&gt;70)</span>
+                <span>High Readiness</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full" style={{ background: '#3b82f6' }}></span>
-                <span>Moderate (&gt;50)</span>
+                <span>Moderate</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full" style={{ background: '#eab308' }}></span>
-                <span>Low (&gt;30)</span>
+                <span>Low</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full" style={{ background: '#ef4444' }}></span>
-                <span>Critical Gap (&lt;30)</span>
+                <span>Critical Gap</span>
               </div>
             </>
           ) : (
             <>
               <div className="flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full" style={{ background: '#ef4444' }}></span>
-                <span>Very High (&gt;80)</span>
+                <span>Very High</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full" style={{ background: '#f97316' }}></span>
-                <span>High (60-80)</span>
+                <span>High</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full" style={{ background: '#eab308' }}></span>
-                <span>Moderate (40-60)</span>
+                <span>Moderate</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full" style={{ background: '#22c55e' }}></span>
-                <span>Low (&lt;40)</span>
+                <span>Low</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full" style={{ background: '#16a34a' }}></span>
+                <span>Very Low</span>
               </div>
             </>
           )}
