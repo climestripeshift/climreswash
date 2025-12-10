@@ -66,7 +66,7 @@ const getModeLabel = (mode: MapViewMode): string => {
 
 export function MapComponent({ mode, onDistrictSelect, selectedDistrictId, currentLevel = 'state' }: MapComponentProps) {
   const [geoJsonData, setGeoJsonData] = useState<any>(null);
-  const [districtDataMap, setDistrictDataMap] = useState<Map<number | string, DistrictData>>(new Map());
+  const [districtDataMap, setDistrictDataMap] = useState<Map<string, DistrictData>>(new Map());
 
   const { data: districts, isLoading: districtsLoading } = useQuery({
     queryKey: ['districts'],
@@ -86,24 +86,19 @@ export function MapComponent({ mode, onDistrictSelect, selectedDistrictId, curre
 
   useEffect(() => {
     if (districts) {
-      const map = new Map<number | string, DistrictData>();
+      const map = new Map<string, DistrictData>();
       districts.forEach(d => {
-        const numericId = parseInt(d.id, 10);
-        if (!isNaN(numericId)) {
-          map.set(numericId, d);
-        }
         map.set(d.name.toUpperCase(), d);
       });
+      console.log('District data map built with', map.size, 'entries');
       setDistrictDataMap(map);
     }
   }, [districts]);
 
-  // Style function for GeoJSON
+  // Style function for GeoJSON - match by district name only
   const style = (feature: any) => {
-    const rawId = feature.properties.ID;
-    const numericId = typeof rawId === 'string' ? parseInt(rawId, 10) : rawId;
-    const districtName = feature.properties.DISTRICT;
-    const data = districtDataMap.get(numericId) || districtDataMap.get(districtName?.toUpperCase());
+    const districtName = feature.properties.DISTRICT?.toUpperCase();
+    const data = districtDataMap.get(districtName);
     if (!data) {
       return { fillColor: '#666', weight: 1, opacity: 1, color: '#1e293b', fillOpacity: 0.3 };
     }
@@ -121,10 +116,8 @@ export function MapComponent({ mode, onDistrictSelect, selectedDistrictId, curre
   };
 
   const onEachFeature = (feature: any, layer: L.Layer) => {
-    const rawId = feature.properties.ID;
-    const numericId = typeof rawId === 'string' ? parseInt(rawId, 10) : rawId;
-    const districtName = feature.properties.DISTRICT;
-    const data = districtDataMap.get(numericId) || districtDataMap.get(districtName?.toUpperCase());
+    const districtName = feature.properties.DISTRICT?.toUpperCase();
+    const data = districtDataMap.get(districtName);
     if (!data) return;
 
     layer.on({
