@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -95,8 +95,8 @@ export function MapComponent({ mode, onDistrictSelect, selectedDistrictId, curre
     }
   }, [districts]);
 
-  // Style function for GeoJSON - match by district name only
-  const style = (feature: any) => {
+  // Memoized style function for GeoJSON - match by district name only
+  const style = useCallback((feature: any) => {
     const districtName = feature.properties.DISTRICT?.toUpperCase();
     const data = districtDataMap.get(districtName);
     if (!data) {
@@ -113,9 +113,9 @@ export function MapComponent({ mode, onDistrictSelect, selectedDistrictId, curre
       dashArray: '',
       fillOpacity: isSelected ? 0.8 : 0.6
     };
-  };
+  }, [districtDataMap, mode, selectedDistrictId]);
 
-  const onEachFeature = (feature: any, layer: L.Layer) => {
+  const onEachFeature = useCallback((feature: any, layer: L.Layer) => {
     const districtName = feature.properties.DISTRICT?.toUpperCase();
     const data = districtDataMap.get(districtName);
     if (!data) return;
@@ -143,7 +143,7 @@ export function MapComponent({ mode, onDistrictSelect, selectedDistrictId, curre
         onDistrictSelect(data);
       }
     });
-  };
+  }, [districtDataMap, selectedDistrictId, onDistrictSelect]);
 
   if (!geoJsonData || districtsLoading || districtDataMap.size === 0) {
     return (
