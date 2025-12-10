@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/hooks/use-theme";
 import NotFound from "@/pages/not-found";
+import HomePage from "@/pages/HomePage";
 import Dashboard from "@/pages/Dashboard";
 import AdminDashboard from "@/pages/AdminDashboard";
 import TechnologyPage from "@/pages/TechnologyPage";
@@ -12,7 +13,8 @@ import TechnologyPage from "@/pages/TechnologyPage";
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Dashboard} />
+      <Route path="/" component={HomePage} />
+      <Route path="/dashboard" component={Dashboard} />
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/technology" component={TechnologyPage} />
       <Route path="/technology/:slug" component={TechnologyPage} />

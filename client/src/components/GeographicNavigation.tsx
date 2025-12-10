@@ -1,7 +1,8 @@
-import { ChevronRight, MapPin, Globe, Building2, Landmark, Home } from "lucide-react";
+import { ChevronRight, MapPin, Globe, Building2, Landmark, Home, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { GeographicLevel, CountryData, StateData, DistrictData, BlockData } from "@/lib/types";
+import { Link } from "wouter";
 
 interface GeographicBreadcrumb {
   level: GeographicLevel;
@@ -43,6 +44,13 @@ export function GeographicNavigation({
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-2 sm:px-4 py-2 bg-card/50 backdrop-blur-sm border-b border-border/50 gap-2 sm:gap-0">
       <div className="flex items-center gap-1 overflow-x-auto w-full sm:w-auto scrollbar-hide">
+        <Link href="/">
+          <Button variant="ghost" size="sm" className="h-6 sm:h-7 px-1.5 sm:px-2 gap-1 mr-1" data-testid="link-home">
+            <ArrowLeft className="h-3 sm:h-4 w-3 sm:w-4" />
+            <span className="text-[10px] sm:text-xs hidden sm:inline">Home</span>
+          </Button>
+        </Link>
+        <div className="w-px h-4 bg-border/50 mx-1 hidden sm:block" />
         <MapPin className="h-4 w-4 text-muted-foreground mr-1 sm:mr-2 shrink-0" />
         
         {breadcrumbs.map((crumb, index) => (
