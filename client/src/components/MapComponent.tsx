@@ -25,15 +25,12 @@ interface MapComponentProps {
   currentLevel?: GeographicLevel;
 }
 
-const getCategoryColor = (category: string | null | undefined): string => {
-  if (!category) return '#666';
-  const cat = category.toLowerCase();
-  if (cat.includes('very high')) return '#ef4444';
-  if (cat.includes('high')) return '#f97316';
-  if (cat.includes('moderate')) return '#eab308';
-  if (cat.includes('low')) return '#22c55e';
-  if (cat.includes('very low')) return '#16a34a';
-  return '#666';
+const getScoreColor = (score: number): string => {
+  if (score >= 0.8) return '#ef4444';
+  if (score >= 0.6) return '#f97316';
+  if (score >= 0.4) return '#eab308';
+  if (score >= 0.2) return '#22c55e';
+  return '#16a34a';
 };
 
 const getAdaptationColor = (score: number): string => {
@@ -45,10 +42,10 @@ const getAdaptationColor = (score: number): string => {
 
 const getColorForMode = (data: DistrictData, mode: MapViewMode): string => {
   switch (mode) {
-    case 'hazard': return getCategoryColor(data.hazardCategory);
-    case 'exposure': return getCategoryColor(data.exposureCategory);
-    case 'risk': return getCategoryColor(data.riskCategory);
-    case 'vulnerability': return getCategoryColor(data.vulnerabilityCategory);
+    case 'hazard': return getScoreColor(data.hazardScore ?? 0);
+    case 'exposure': return getScoreColor(data.exposureScore ?? 0);
+    case 'risk': return getScoreColor(data.riskScore ?? 0);
+    case 'vulnerability': return getScoreColor(data.vulnerabilityScore);
     case 'adaptation': return getAdaptationColor(data.adaptationScore);
     default: return '#666';
   }

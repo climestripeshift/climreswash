@@ -7,17 +7,12 @@ interface DistrictRow {
   geometry: string;
   name: string;
   nameCapitalized: string;
+  state: string;
   uniqueId: string;
-  shapeLength: number;
-  shapeArea: number;
-  hazardScore: number;
-  hazardCategory: string;
-  exposureScore: number;
-  exposureCategory: string;
-  vulnerabilityScore: number;
-  vulnerabilityCategory: string;
-  riskScore: number;
-  riskCategory: string;
+  hazard: number;
+  exposure: number;
+  vulnerability: number;
+  risk: number;
 }
 
 function parseCSV(content: string): DistrictRow[] {
@@ -46,27 +41,30 @@ function parseCSV(content: string): DistrictRow[] {
     if (!rest) continue;
     
     const parts = rest.split(',');
-    if (parts.length < 14) continue;
+    if (parts.length < 11) continue;
     
     rows.push({
       geometry: geometry.replace(/""/g, '"'),
       name: parts[0]?.trim() || '',
       nameCapitalized: parts[1]?.trim() || '',
-      uniqueId: parts[2]?.trim() || '',
-      shapeLength: parseFloat(parts[3]) || 0,
-      shapeArea: parseFloat(parts[4]) || 0,
-      hazardScore: parseFloat(parts[6]) || 0,
-      hazardCategory: parts[7]?.trim() || 'Low',
-      exposureScore: parseFloat(parts[8]) || 0,
-      exposureCategory: parts[9]?.trim() || 'Low',
-      vulnerabilityScore: parseFloat(parts[10]) || 0,
-      vulnerabilityCategory: parts[11]?.trim() || 'Low',
-      riskScore: parseFloat(parts[12]) || 0,
-      riskCategory: parts[13]?.trim().replace('\r', '') || 'Low'
+      state: parts[2]?.trim() || '',
+      uniqueId: parts[3]?.trim() || '',
+      hazard: parseFloat(parts[7]) || 0,
+      exposure: parseFloat(parts[8]) || 0,
+      vulnerability: parseFloat(parts[9]) || 0,
+      risk: parseFloat(parts[10]?.replace('\r', '')) || 0
     });
   }
   
   return rows;
+}
+
+function getCategory(score: number): string {
+  if (score >= 0.8) return "Very High";
+  if (score >= 0.6) return "High";
+  if (score >= 0.4) return "Moderate";
+  if (score >= 0.2) return "Low";
+  return "Very Low";
 }
 
 function generateGeoJSON(rows: DistrictRow[]) {
@@ -84,15 +82,12 @@ function generateGeoJSON(rows: DistrictRow[]) {
       properties: {
         DISTRICT: row.name.toUpperCase(),
         NAME: row.name,
+        STATE: row.state,
         ID: row.uniqueId,
-        HAZARD_SCORE: row.hazardScore,
-        HAZARD_CATEGORY: row.hazardCategory,
-        EXPOSURE_SCORE: row.exposureScore,
-        EXPOSURE_CATEGORY: row.exposureCategory,
-        VULNERABILITY_SCORE: row.vulnerabilityScore,
-        VULNERABILITY_CATEGORY: row.vulnerabilityCategory,
-        RISK_SCORE: row.riskScore,
-        RISK_CATEGORY: row.riskCategory
+        HAZARD: row.hazard,
+        EXPOSURE: row.exposure,
+        VULNERABILITY: row.vulnerability,
+        RISK: row.risk
       },
       geometry
     };
@@ -123,7 +118,7 @@ function generateSeasonalData(vulnScore: number) {
   return months.map((month, i) => ({
     month,
     hazard: hazards[i],
-    hazardIntensity: Math.round(30 + Math.random() * 60 * (vulnScore / 100)),
+    hazardIntensity: Math.round(30 + Math.random() * 60 * vulnScore),
     impactMetric: "Dropout Rate",
     impactValue: Math.round(5 + Math.random() * 15),
     description: hazards[i] === "None" ? "Normal conditions" : `${hazards[i]} risk period`
@@ -179,30 +174,26 @@ async function seedFromCsv() {
     await db.delete(apiIntegrations);
     
     console.log("📖 Reading CSV file...");
-    const csvContent = fs.readFileSync('attached_assets/data_sheet_-_Sheet3_1765365535049.csv', 'utf-8');
+    const csvContent = fs.readFileSync('attached_assets/crisp_country_sheet_1765370671108.csv', 'utf-8');
     const rows = parseCSV(csvContent);
     console.log(`Found ${rows.length} districts in CSV`);
     
     console.log("🗺️ Generating GeoJSON...");
-    const geojson = generateGeoJSON(rows);
-    fs.writeFileSync('client/public/data/india.json', JSON.stringify(geojson));
-    console.log(`Generated GeoJSON with ${geojson.features.length} features`);
-
+    const geoJson = generateGeoJSON(rows);
+    console.log(`Generated GeoJSON with ${geoJson.features.length} features`);
+    
+    fs.writeFileSync('client/public/data/india.json', JSON.stringify(geoJson));
+    console.log("✅ GeoJSON saved to client/public/data/india.json");
+    
     console.log("🌍 Creating country...");
     await db.insert(countries).values({
       id: "IND",
       name: "India",
       population: 1400000000,
-      totalStates: 28,
-      totalDistricts: rows.length,
-      avgVulnerabilityScore: 0,
-      avgAdaptationScore: 0,
-      totalChildrenAtRisk: 0,
-      totalElderlyAtRisk: 0,
-      activeAlerts: 0,
-      criticalDistricts: 0
+      totalStates: 36,
+      totalDistricts: 735
     });
-
+    
     console.log("🏛️ Creating state placeholder...");
     await db.insert(states).values({
       id: "ALL",
@@ -210,111 +201,82 @@ async function seedFromCsv() {
       name: "All States",
       code: "ALL",
       population: 1400000000,
-      totalDistricts: rows.length,
-      totalBlocks: 0,
-      avgVulnerabilityScore: 0,
-      avgAdaptationScore: 0,
-      totalChildrenAtRisk: 0,
-      totalElderlyAtRisk: 0,
-      activeAlerts: 0,
-      criticalDistricts: 0,
-      topClimateRisks: ["Drought", "Flood", "Heatwave", "Cyclone", "Cold Wave"]
+      totalDistricts: 735,
+      topClimateRisks: ["Flood", "Drought", "Heatwave", "Cyclone", "Cold Wave"]
     });
-
-    let totalAlerts = 0;
-    let criticalCount = 0;
-    let sumVuln = 0;
-    let sumRisk = 0;
-
-    console.log("📊 Creating districts...");
     
-    for (let i = 0; i < rows.length; i++) {
-      const row = rows[i];
-      const population = Math.round(500000 + Math.random() * 3000000);
-      const vulnScore = row.vulnerabilityScore || Math.round(30 + Math.random() * 60);
-      const adaptScore = Math.round(20 + Math.random() * 50);
+    console.log("📊 Creating districts...");
+    let createdCount = 0;
+    
+    for (const row of rows) {
+      const hazardCategory = getCategory(row.hazard);
+      const exposureCategory = getCategory(row.exposure);
+      const vulnerabilityCategory = getCategory(row.vulnerability);
+      const riskCategory = getCategory(row.risk);
       
-      const districtData = {
+      const population = Math.round(500000 + Math.random() * 3000000);
+      const adaptationScore = Math.round(25 + Math.random() * 50);
+      
+      await db.insert(districts).values({
         id: row.uniqueId,
         stateId: "ALL",
         name: row.name,
         population,
-        vulnerabilityScore: vulnScore,
-        adaptationScore: adaptScore,
-        hazardScore: row.hazardScore,
-        hazardCategory: row.hazardCategory,
-        exposureScore: row.exposureScore,
-        exposureCategory: row.exposureCategory,
-        vulnerabilityCategory: row.vulnerabilityCategory,
-        riskScore: row.riskScore,
-        riskCategory: row.riskCategory,
-        childrenAtRisk: Math.round(population * 0.05 * (vulnScore / 100)),
-        elderlyAtRisk: Math.round(population * 0.03 * (vulnScore / 100)),
+        vulnerabilityScore: row.vulnerability,
+        adaptationScore,
+        hazardScore: row.hazard,
+        hazardCategory,
+        exposureScore: row.exposure,
+        exposureCategory,
+        vulnerabilityCategory,
+        riskScore: row.risk,
+        riskCategory,
+        childrenAtRisk: Math.round(population * 0.12 * row.vulnerability / 10),
+        elderlyAtRisk: Math.round(population * 0.08 * row.vulnerability / 10),
         climateRisks: randomFromArray(climateRisksPool, 3),
         adaptationStrategies: randomFromArray(adaptationStrategiesPool, 2),
-        impactIfNoAction: `Risk level: ${row.riskCategory}. Without intervention, ${row.name} faces significant climate challenges.`,
+        impactIfNoAction: `Risk level: ${riskCategory}. Without intervention, ${row.name} faces significant climate challenges.`,
         soilType: soilTypes[Math.floor(Math.random() * soilTypes.length)],
         rockType: rockTypes[Math.floor(Math.random() * rockTypes.length)],
         toiletTechnology: toiletTypes[Math.floor(Math.random() * toiletTypes.length)],
         waterSupplyStrategy: waterStrategies[Math.floor(Math.random() * waterStrategies.length)],
         dropoutRate: Math.round(5 + Math.random() * 15),
         waterAccessPercent: Math.round(50 + Math.random() * 45),
-        toiletCoveragePercent: Math.round(40 + Math.random() * 55),
+        toiletCoveragePercent: Math.round(45 + Math.random() * 50),
         handwashingFacilityPercent: Math.round(30 + Math.random() * 50),
-        childMarriageRate: Math.round(5 + Math.random() * 30),
+        childMarriageRate: Math.round(5 + Math.random() * 25),
         malnutritionStunting: Math.round(20 + Math.random() * 30),
         malnutritionWasting: Math.round(10 + Math.random() * 20),
         malnutritionUnderweight: Math.round(15 + Math.random() * 25),
-        infantMortalityRate: Math.round(25 + Math.random() * 35),
+        infantMortalityRate: Math.round(20 + Math.random() * 40),
         maternalMortalityRatio: Math.round(80 + Math.random() * 120),
-        seasonalData: generateSeasonalData(vulnScore)
-      };
+        seasonalData: generateSeasonalData(row.vulnerability)
+      });
       
-      const [createdDistrict] = await db.insert(districts).values(districtData).returning();
-      
-      if (row.riskCategory === 'Very High' || row.riskCategory === 'High') {
-        criticalCount++;
-      }
-      sumVuln += vulnScore;
-      sumRisk += row.riskScore || 0;
-
-      const districtAlerts = await generateAlertsForDistrict(createdDistrict);
-      for (const alert of districtAlerts) {
-        await db.insert(alerts).values(alert);
-      }
-      totalAlerts += districtAlerts.length;
-
       const aqiData = generateAqiForDistrict(row.uniqueId);
       for (const aqi of aqiData) {
         await db.insert(aqiObservations).values(aqi);
       }
-
-      if ((i + 1) % 50 === 0 || i === rows.length - 1) {
-        console.log(`   ✅ Created ${i + 1}/${rows.length} districts`);
+      
+      createdCount++;
+      if (createdCount % 50 === 0) {
+        console.log(`   ✅ Created ${createdCount}/${rows.length} districts`);
       }
     }
+    
+    console.log(`   ✅ Created ${createdCount}/${rows.length} districts`);
+    
+    const districtCount = rows.length;
+    const alertCount = 0;
+    
+    console.log(`🎉 Database seeded successfully from CSV!`);
+    console.log(`   Total districts: ${districtCount}`);
+    console.log(`   Total alerts: ${alertCount}`);
 
-    await db.update(states).set({
-      activeAlerts: totalAlerts,
-      criticalDistricts: criticalCount,
-      avgVulnerabilityScore: Math.round(sumVuln / rows.length)
-    });
-
-    await db.update(countries).set({
-      activeAlerts: totalAlerts,
-      criticalDistricts: criticalCount,
-      avgVulnerabilityScore: Math.round(sumVuln / rows.length)
-    });
-
-    console.log("🎉 Database seeded successfully from CSV!");
-    console.log(`   Total districts: ${rows.length}`);
-    console.log(`   Total alerts: ${totalAlerts}`);
-    console.log(`   Critical districts: ${criticalCount}`);
-    process.exit(0);
   } catch (error) {
     console.error("❌ Error seeding database:", error);
-    process.exit(1);
+    throw error;
   }
 }
 
-seedFromCsv();
+seedFromCsv().then(() => process.exit(0)).catch(() => process.exit(1));
