@@ -51,6 +51,15 @@ export const districts = pgTable("districts", {
   vulnerabilityScore: real("vulnerability_score").notNull(),
   adaptationScore: real("adaptation_score").notNull(),
   
+  // Climate Risk Scores & Categories (from official data)
+  hazardScore: real("hazard_score"),
+  hazardCategory: varchar("hazard_category", { length: 50 }),
+  exposureScore: real("exposure_score"),
+  exposureCategory: varchar("exposure_category", { length: 50 }),
+  vulnerabilityCategory: varchar("vulnerability_category", { length: 50 }),
+  riskScore: real("risk_score"),
+  riskCategory: varchar("risk_category", { length: 50 }),
+  
   // Vulnerable Population
   childrenAtRisk: integer("children_at_risk").notNull(),
   elderlyAtRisk: integer("elderly_at_risk").notNull(),

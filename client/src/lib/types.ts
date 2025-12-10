@@ -82,6 +82,15 @@ export interface DistrictData {
   adaptationStrategies: string[];
   impactIfNoAction: string;
   
+  // Climate Risk Scores & Categories
+  hazardScore?: number | null;
+  hazardCategory?: string | null;
+  exposureScore?: number | null;
+  exposureCategory?: string | null;
+  vulnerabilityCategory?: string | null;
+  riskScore?: number | null;
+  riskCategory?: string | null;
+  
   // Infrastructure Indicators
   soilType: string;
   rockType: string;
@@ -106,7 +115,7 @@ export interface DistrictData {
   seasonalData: SeasonalImpact[];
 }
 
-export type MapViewMode = 'vulnerability' | 'adaptation';
+export type MapViewMode = 'vulnerability' | 'adaptation' | 'hazard' | 'exposure' | 'risk';
 
 export interface Alert {
   id: string;

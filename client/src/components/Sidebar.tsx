@@ -89,22 +89,46 @@ export function Sidebar({ mode, setMode, selectedDistrict, selectedBlock, blocks
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-5 gap-1">
+            <Button 
+              variant={mode === 'hazard' ? "default" : "outline"}
+              onClick={() => setMode('hazard')}
+              size="sm"
+              className={mode === 'hazard' ? "bg-orange-600 text-white hover:bg-orange-700" : ""}
+            >
+              Hazard
+            </Button>
+            <Button 
+              variant={mode === 'exposure' ? "default" : "outline"}
+              onClick={() => setMode('exposure')}
+              size="sm"
+              className={mode === 'exposure' ? "bg-purple-600 text-white hover:bg-purple-700" : ""}
+            >
+              Exposure
+            </Button>
             <Button 
               variant={mode === 'vulnerability' ? "default" : "outline"}
               onClick={() => setMode('vulnerability')}
+              size="sm"
               className={mode === 'vulnerability' ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : ""}
             >
-              <AlertTriangle className="mr-2 h-4 w-4" />
-              Vulnerability
+              Vuln.
+            </Button>
+            <Button 
+              variant={mode === 'risk' ? "default" : "outline"}
+              onClick={() => setMode('risk')}
+              size="sm"
+              className={mode === 'risk' ? "bg-red-700 text-white hover:bg-red-800" : ""}
+            >
+              Risk
             </Button>
             <Button 
               variant={mode === 'adaptation' ? "default" : "outline"}
               onClick={() => setMode('adaptation')}
+              size="sm"
               className={mode === 'adaptation' ? "bg-primary text-primary-foreground hover:bg-primary/90" : ""}
             >
-              <Shield className="mr-2 h-4 w-4" />
-              Adaptation
+              Adapt.
             </Button>
           </div>
         </CardContent>
