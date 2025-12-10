@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>ClimateAdapt India – WASH Climate Risk Dashboard (MVP)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta
+    name="description"
+    content="ClimateAdapt India is an MVP dashboard based on UNICEF–CEEW climate extremes work, showing district-level WASH climate risk, technology guidance, and early warning signals."
+  />
+  <style>
+    /* Basic layout – let Replit AI improve styling later */
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+      background: #f5f7fb;
+      color: #1f2933;
+      line-height: 1.5;
+    }
+
+    header {
+      background: #0f172a;
+      color: #f9fafb;
+      padding: 1rem 1.5rem;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .nav-container {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .nav-title {
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+
+    .nav-links a {
+      color: #e5e7eb;
+      text-decoration: none;
+      margin-left: 1rem;
+      font-size: 0.9rem;
+    }
+
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 1.5rem;
+    }
+
+    section {
+      margin-bottom: 2.5rem;
+    }
+
+    h1,
+    h2,
+    h3 {
+      color: #111827;
+      margin-top: 0;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(0, 1.2fr);
+      gap: 2rem;
+      align-items: center;
+    }
+
+    .hero-title {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .hero-subtitle {
+      font-size: 1rem;
+      max-width: 36rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #e0f2fe;
+      color: #0369a1;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 999px;
+      margin-bottom: 0.6rem;
+    }
+
+    .hero-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .btn {
+      padding: 0.6rem 1.2rem;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.9rem;
+      text-decoration: none;
+      display: inline-block;
+      text-align: center;
+    }
+
+    .btn-primary {
+      background: #0369a1;
+      color: #f9fafb;
+    }
+
+    .btn-secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    .hero-side-box {
+      background: #ffffff;
+      border-radius: 0.75rem;
+      padding: 1rem 1.25rem;
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+      font-size: 0.9rem;
+    }
+
+    .hero-side-box ul {
+      padding-left: 1.1rem;
+      margin: 0.5rem 0 0;
+    }
+
+    .muted {
+      color: #6b7280;
+      font-size: 0.85rem;
+    }
+
+    .grid-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 0.75rem;
+      padding: 1rem 1.1rem;
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.06);
+      font-size: 0.9rem;
+    }
+
+    .card h3 {
+      font-size: 1rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .two-column {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .pill-heading {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #6b7280;
+      margin-bottom: 0.3rem;
+    }
+
+    .map-container {
+      background: #ffffff;
+      border-radius: 0.75rem;
+      min-height: 420px;
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: stretch;
+    }
+
+    #map {
+      flex: 1;
+      border-radius: 0.5rem;
+      border: 1px dashed #cbd5f5;
+      background: repeating-linear-gradient(
+          45deg,
+          #f3f4f6,
+          #f3f4f6 10px,
+          #e5e7eb 10px,
+          #e5e7eb 20px
+        );
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #6b7280;
+      font-size: 0.9rem;
+      text-align: center;
+      padding: 1.5rem;
+    }
+
+    .disclaimer {
+      font-size: 0.8rem;
+      color: #6b7280;
+      border-left: 3px solid #9ca3af;
+      padding-left: 0.75rem;
+    }
+
+    @media (max-width: 768px) {
+      .hero {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="nav-container">
+      <div class="nav-title">ClimateAdapt India</div>
+      <nav class="nav-links">
+        <a href="#about">About</a>
+        <a href="#features">Features</a>
+        <a href="#methodology">Methodology</a>
+        <a href="#map">Map</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- HERO SECTION -->
+    <section class="hero" id="top">
+      <div>
+        <div class="badge">MVP · Internal Prototype</div>
+        <h1 class="hero-title">
+          ClimateAdapt India – WASH Climate Risk & Technology Guidance
+        </h1>
+        <p class="hero-subtitle">
+          A district-level dashboard based on UNICEF–CEEW climate extremes and
+          WASH risk assessment. It helps identify where drinking water and
+          sanitation systems are most exposed to climate extremes – and which
+          technologies are better suited to those conditions.
+        </p>
+        <div class="hero-buttons">
+          <a href="#map" class="btn btn-primary">View District Risk Map</a>
+          <a href="#methodology" class="btn btn-secondary"
+            >Read Methodology</a
+          >
+        </div>
+        <p class="muted" style="margin-top: 0.75rem">
+          Prototype for internal discussion. Not for public release.
+        </p>
+      </div>
+
+      <aside class="hero-side-box">
+        <div class="pill-heading">Built On</div>
+        <strong>UNICEF–CEEW Climate Extremes & WASH Risk Study</strong>
+        <p style="margin-top: 0.4rem">
+          Translates a national assessment of climate risks to drinking water,
+          sanitation and hygiene systems into a simple, interactive tool for
+          planners and programme teams.
+        </p>
+        <ul>
+          <li>District-level WASH climate risk index</li>
+          <li>Hazard–Exposure–Vulnerability framework (IPCC AR5)</li>
+          <li>Technology guidance by climate & typology</li>
+          <li>Structure for early warning and mitigation planning</li>
+        </ul>
+      </aside>
+    </section>
+
+    <!-- BACKGROUND / ABOUT -->
+    <section id="about">
+      <h2>Why This Dashboard?</h2>
+      <p>
+        India’s drinking water and sanitation systems are increasingly exposed
+        to climate extremes – heatwaves, floods, droughts, intense rainfall and
+        cyclones. These events disrupt water supply, damage infrastructure and
+        weaken service delivery for households, schools and health facilities.
+      </p>
+      <p>
+        ClimateAdapt India is a decision-support MVP that converts the
+        UNICEF–CEEW WASH climate risk assessment into a visual, district-level
+        dashboard. It is designed for government departments, UNICEF and other
+        development partners, and NGOs working on climate-resilient WASH.
+      </p>
+    </section>
+
+    <!-- KEY FEATURES -->
+    <section id="features">
+      <h2>Key Features</h2>
+      <div class="grid-cards">
+        <div class="card">
+          <h3>District-Level WASH Climate Risk</h3>
+          <p>
+            Each district is assigned a composite WASH climate risk category
+            (Low, Medium, High, Very High) based on hazard, exposure and
+            vulnerability indicators.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Hazard–Exposure–Vulnerability Framework</h3>
+          <p>
+            Uses the IPCC AR5 risk framing and the underlying UNICEF–CEEW
+            methodology to reflect climate extremes, population and system
+            fragility.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Technology Guidance by Climate & Typology</h3>
+          <p>
+            Links district risk and typology to potential technology choices –
+            for example, which water supply and sanitation options are more
+            resilient in flood-prone, drought-prone or heat-stressed areas.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Early Warning Structure for Mitigation</h3>
+          <p>
+            Provides a structure to integrate heat, flood, drought and heavy
+            rainfall alerts so that WASH systems can be prepared in advance and
+            mitigation measures can be planned.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- TECHNOLOGY & EARLY WARNING SECTION -->
+    <section>
+      <h2>How It Helps Technology Choice & Mitigation</h2>
+      <div class="two-column">
+        <div class="card">
+          <div class="pill-heading">Identify Technology by Climate & Typology</div>
+          <p>
+            Different districts need different solutions. By combining climate
+            risk with basic typology, this dashboard helps users:
+          </p>
+          <ul>
+            <li>See where groundwater-reliant systems may be stressed.</li>
+            <li>
+              Understand where flood-resilient sanitation options are needed.
+            </li>
+            <li>
+              Consider dual-source systems, storage and recharge where climate
+              variability is high.
+            </li>
+            <li>
+              Prioritise low-maintenance, robust technologies in high-risk
+              areas.
+            </li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="pill-heading">
+            Early Warning Signals for Mitigation Planning
+          </div>
+          <p>
+            The dashboard is structured to link with climate and hazard
+            information systems so that:
+          </p>
+          <ul>
+            <li>Upcoming heat, flood or drought warnings can flag at-risk districts.</li>
+            <li>
+              WASH engineers and local governments can activate preparedness
+              measures early.
+            </li>
+            <li>
+              Contingency planning and mitigation (tankering, storage, alternate
+              sources) can be triggered in a timely way.
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- METHODOLOGY -->
+    <section id="methodology">
+      <h2>Methodology – Aligned with UNICEF–CEEW Study</h2>
+      <p>
+        This MVP follows the approach used in the UNICEF–CEEW study on climate
+        risks to WASH systems in India.
+      </p>
+      <ul>
+        <li>
+          <strong>Framework:</strong> IPCC AR5 risk framing –
+          <em>Risk = f(Hazard, Exposure, Vulnerability)</em>.
+        </li>
+        <li>
+          <strong>Indicators:</strong> A set of indicators representing climate
+          extremes, WASH coverage and infrastructure, and socio-economic
+          conditions, shortlisted through expert consultation.
+        </li>
+        <li>
+          <strong>Index Creation:</strong> Indicators are normalised, weighted
+          and combined into a composite district-level risk score, then grouped
+          into categories (Low, Medium, High, Very High).
+        </li>
+        <li>
+          <strong>Geographic Scale:</strong> District-level analysis for all
+          districts in India, with potential to extend to block/ULB level in
+          future phases.
+        </li>
+      </ul>
+      <p class="muted">
+        Detailed indicator lists, weights and data sources will be refined and
+        documented with WASH and climate experts as this prototype evolves.
+      </p>
+    </section>
+
+    <!-- USE CASES -->
+    <section>
+      <h2>Who Can Use This Dashboard?</h2>
+      <div class="grid-cards">
+        <div class="card">
+          <h3>Government & Line Departments</h3>
+          <ul>
+            <li>Identify high-risk districts for climate-resilient WASH.</li>
+            <li>
+              Support planning under Jal Jeevan Mission, SBM and state climate
+              action plans.
+            </li>
+            <li>
+              Strengthen convergence between WASH, DRR and climate programmes.
+            </li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>UNICEF & Development Partners</h3>
+          <ul>
+            <li>
+              Prioritise geographies for child-centred climate adaptation
+              programming.
+            </li>
+            <li>
+              Use district profiles in programme design and donor proposals.
+            </li>
+            <li>
+              Track climate risk evolution over time as data improves.
+            </li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>NGOs & Practitioners</h3>
+          <ul>
+            <li>Target high-risk districts for field interventions.</li>
+            <li>
+              Choose technologies and approaches suited to local climate
+              typology.
+            </li>
+            <li>
+              Support local advocacy with visual evidence of climate risk.
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- HOW TO USE -->
+    <section>
+      <h2>How to Use This Dashboard</h2>
+      <ol>
+        <li>Select a state and district from the map or list.</li>
+        <li>View the district’s WASH climate risk category (Low–Very High).</li>
+        <li>
+          Check key drivers of risk and the broad technology suitability
+          considerations.
+        </li>
+        <li>
+          Use these insights to inform planning, discussions with states and
+          partners, and the design of climate-resilient WASH interventions.
+        </li>
+      </ol>
+    </section>
+
+    <!-- MAP SECTION -->
+    <section>
+      <h2>District-Level WASH Climate Risk Map</h2>
+      <p>
+        Use the interactive map below to explore climate risk levels and
+        technology guidance across districts. High and very high risk districts
+        can be prioritised for climate-resilient WASH investments and
+        mitigation planning.
+      </p>
+
+      <div class="map-container">
+        <!-- Replace this with your actual map implementation (Leaflet, Mapbox, etc.). -->
+        <div id="map">
+          Map placeholder – integrate your interactive district map here.
+        </div>
+      </div>
+    </section>
+
+    <!-- DISCLAIMER -->
+    <section>
+      <h2>Disclaimer & MVP Status</h2>
+      <p class="disclaimer">
+        This dashboard is an internal prototype (MVP) developed for discussion
+        and learning. It does not represent an official public-facing UNICEF
+        product at this stage. Indicators, weights, scores and visualisations
+        are subject to refinement and technical review. Please do not share
+        externally without prior approval.
+      </p>
+    </section>
+  </main>
+</body>
+</html>
