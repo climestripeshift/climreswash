@@ -3,7 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Shield, Users, ThermometerSun, Droplets, Zap, Activity, Sprout, Bath, TrendingUp, Calendar, Heart, Baby, HeartPulse, GraduationCap, Hand, Wind, Bell, CheckCircle, ChevronRight, ClipboardList, MessageSquare, Phone, Clock, Target, FileText, Download, Home, Building2 } from "lucide-react";
+import { AlertTriangle, Shield, Users, ThermometerSun, Droplets, Zap, Activity, Sprout, Bath, TrendingUp, Calendar, Heart, Baby, HeartPulse, GraduationCap, Hand, Wind, Bell, CheckCircle, ChevronRight, ClipboardList, MessageSquare, Phone, Clock, Target, FileText, Download, Home, Building2, ExternalLink, Trash2 } from "lucide-react";
+import { Link } from "wouter";
+import { getTechnologySlugFromName } from "@/lib/technologyContent";
 import { motion, AnimatePresence } from "framer-motion";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -848,20 +850,60 @@ export function Sidebar({ mode, setMode, selectedDistrict, selectedBlock, blocks
                             <div>
                               <span className="block text-xs text-muted-foreground mb-1">Water Supply Strategy</span>
                               <div className="flex items-center gap-2">
-                                <Badge variant="outline" className="bg-blue-500/10 text-blue-400 border-blue-500/20">
-                                  {selectedDistrict.waterSupplyStrategy}
-                                </Badge>
+                                {getTechnologySlugFromName(selectedDistrict.waterSupplyStrategy) ? (
+                                  <Link href={`/technology/${getTechnologySlugFromName(selectedDistrict.waterSupplyStrategy)}`} data-testid="link-water-tech">
+                                    <Badge variant="outline" className="bg-blue-500/10 text-blue-400 border-blue-500/20 cursor-pointer hover:bg-blue-500/20">
+                                      {selectedDistrict.waterSupplyStrategy}
+                                      <ExternalLink className="h-3 w-3 ml-1" />
+                                    </Badge>
+                                  </Link>
+                                ) : (
+                                  <Badge variant="outline" className="bg-blue-500/10 text-blue-400 border-blue-500/20">
+                                    {selectedDistrict.waterSupplyStrategy}
+                                  </Badge>
+                                )}
                               </div>
                             </div>
                             <div>
                               <span className="block text-xs text-muted-foreground mb-1">Toilet Technology</span>
                               <div className="flex items-center gap-2">
-                                <Badge variant="outline" className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
-                                  <Bath className="h-3 w-3 mr-1" />
-                                  {selectedDistrict.toiletTechnology}
-                                </Badge>
+                                {getTechnologySlugFromName(selectedDistrict.toiletTechnology) ? (
+                                  <Link href={`/technology/${getTechnologySlugFromName(selectedDistrict.toiletTechnology)}`} data-testid="link-toilet-tech">
+                                    <Badge variant="outline" className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 cursor-pointer hover:bg-emerald-500/20">
+                                      <Bath className="h-3 w-3 mr-1" />
+                                      {selectedDistrict.toiletTechnology}
+                                      <ExternalLink className="h-3 w-3 ml-1" />
+                                    </Badge>
+                                  </Link>
+                                ) : (
+                                  <Badge variant="outline" className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                                    <Bath className="h-3 w-3 mr-1" />
+                                    {selectedDistrict.toiletTechnology}
+                                  </Badge>
+                                )}
                               </div>
                             </div>
+                          </div>
+                        </div>
+
+                        <div className="p-4 rounded-lg bg-secondary/30 border border-border space-y-3">
+                          <h4 className="text-sm font-medium flex items-center gap-2 text-orange-400">
+                            <Trash2 className="h-4 w-4" />
+                            Waste Management Technologies
+                          </h4>
+                          <div className="flex flex-wrap gap-2">
+                            <Link href="/technology/solid-waste" data-testid="link-solid-waste">
+                              <Badge variant="outline" className="bg-orange-500/10 text-orange-400 border-orange-500/20 cursor-pointer hover:bg-orange-500/20">
+                                Solid Waste
+                                <ExternalLink className="h-3 w-3 ml-1" />
+                              </Badge>
+                            </Link>
+                            <Link href="/technology/dewats" data-testid="link-dewats">
+                              <Badge variant="outline" className="bg-purple-500/10 text-purple-400 border-purple-500/20 cursor-pointer hover:bg-purple-500/20">
+                                DEWATS (Liquid Waste)
+                                <ExternalLink className="h-3 w-3 ml-1" />
+                              </Badge>
+                            </Link>
                           </div>
                         </div>
 
@@ -879,6 +921,13 @@ export function Sidebar({ mode, setMode, selectedDistrict, selectedBlock, blocks
                             ))}
                           </div>
                         </div>
+
+                        <Link href="/technology" className="block" data-testid="link-all-technologies">
+                          <Button variant="outline" className="w-full">
+                            <ExternalLink className="h-4 w-4 mr-2" />
+                            View All Technologies
+                          </Button>
+                        </Link>
 
                       </div>
                     </TabsContent>
