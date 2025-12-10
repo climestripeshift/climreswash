@@ -199,7 +199,7 @@ export function MapComponent({ mode, onDistrictSelect, selectedDistrictId, curre
             data={geoJsonData} 
             style={style} 
             onEachFeature={onEachFeature}
-            key={`${mode}-${selectedDistrictId}-${districtDataMap.size}`}
+            key={`${mode}-${selectedDistrictId}-${districtDataMap.size}-${renderKey}`}
           />
         )}
       </MapContainer>
