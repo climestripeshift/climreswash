@@ -140,7 +140,7 @@ async function seedIndiaDatabase() {
     await db.delete(apiIntegrations);
     
     console.log("📖 Reading GeoJSON...");
-    const geojsonContent = fs.readFileSync('public/data/india.json', 'utf-8');
+    const geojsonContent = fs.readFileSync('client/public/data/india.json', 'utf-8');
     const geojson = JSON.parse(geojsonContent);
     
     const districtFeatures = geojson.features;
