@@ -26,17 +26,17 @@ interface MapComponentProps {
 }
 
 const getHazardColor = (score: number): string => {
-  if (score > 0.45) return '#ef4444';
-  if (score > 0.35) return '#f97316';
-  if (score > 0.25) return '#eab308';
-  if (score > 0.15) return '#22c55e';
+  if (score > 0.30) return '#ef4444';
+  if (score > 0.22) return '#f97316';
+  if (score > 0.15) return '#eab308';
+  if (score > 0.10) return '#22c55e';
   return '#16a34a';
 };
 
 const getExposureColor = (score: number): string => {
-  if (score > 0.55) return '#ef4444';
-  if (score > 0.45) return '#f97316';
-  if (score > 0.35) return '#eab308';
+  if (score > 0.48) return '#ef4444';
+  if (score > 0.40) return '#f97316';
+  if (score > 0.32) return '#eab308';
   if (score > 0.25) return '#22c55e';
   return '#16a34a';
 };
