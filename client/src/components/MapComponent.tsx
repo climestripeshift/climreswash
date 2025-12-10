@@ -64,34 +64,39 @@ export function MapComponent({ mode, onDistrictSelect, selectedDistrictId, curre
   useEffect(() => {
     if (districts) {
       const map = new Map<string, DistrictData>();
-      districts.forEach(d => map.set(d.name.toUpperCase(), d));
+      districts.forEach(d => {
+        map.set(d.id, d);
+        map.set(d.name.toUpperCase(), d);
+      });
       setDistrictDataMap(map);
     }
   }, [districts]);
 
   // Style function for GeoJSON
   const style = (feature: any) => {
+    const districtId = feature.properties.ID;
     const districtName = feature.properties.DISTRICT;
-    const data = districtDataMap.get(districtName.toUpperCase());
+    const data = districtDataMap.get(districtId) || districtDataMap.get(districtName?.toUpperCase());
     if (!data) return { fillColor: '#666', weight: 1, opacity: 1, color: '#1e293b', fillOpacity: 0.3 };
     
     const score = mode === 'vulnerability' ? data.vulnerabilityScore : data.adaptationScore;
     
-    const isSelected = selectedDistrictId === districtName;
+    const isSelected = selectedDistrictId === data.id;
 
     return {
       fillColor: getColor(score, mode),
       weight: isSelected ? 3 : 1,
       opacity: 1,
-      color: isSelected ? 'white' : '#1e293b', // Slate-800 border
+      color: isSelected ? 'white' : '#1e293b',
       dashArray: '',
       fillOpacity: isSelected ? 0.8 : 0.6
     };
   };
 
   const onEachFeature = (feature: any, layer: L.Layer) => {
+    const districtId = feature.properties.ID;
     const districtName = feature.properties.DISTRICT;
-    const data = districtDataMap.get(districtName.toUpperCase());
+    const data = districtDataMap.get(districtId) || districtDataMap.get(districtName?.toUpperCase());
     if (!data) return;
 
     layer.on({
@@ -106,12 +111,11 @@ export function MapComponent({ mode, onDistrictSelect, selectedDistrictId, curre
       },
       mouseout: (e) => {
         const layer = e.target;
-        // We rely on the main style function to reset, but simple reset here:
-        // Ideally we call a resetStyle method if we had reference to the GeoJSON layer
+        const isSelected = selectedDistrictId === data.id;
         layer.setStyle({
-          weight: selectedDistrictId === districtName ? 3 : 1,
-          color: selectedDistrictId === districtName ? 'white' : '#1e293b',
-          fillOpacity: selectedDistrictId === districtName ? 0.8 : 0.6
+          weight: isSelected ? 3 : 1,
+          color: isSelected ? 'white' : '#1e293b',
+          fillOpacity: isSelected ? 0.8 : 0.6
         });
       },
       click: () => {
@@ -146,7 +150,7 @@ export function MapComponent({ mode, onDistrictSelect, selectedDistrictId, curre
             data={geoJsonData} 
             style={style} 
             onEachFeature={onEachFeature}
-            key={mode} // Force re-render when mode changes to update colors immediately
+            key={`${mode}-${selectedDistrictId}-${districtDataMap.size}`}
           />
         )}
       </MapContainer>
