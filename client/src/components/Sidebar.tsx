@@ -18,6 +18,7 @@ interface SidebarProps {
   selectedBlock?: BlockData | null;
   blocks?: BlockData[];
   onBlockSelect?: (block: BlockData) => void;
+  onDistrictSelect?: (district: DistrictData) => void;
   districtAlerts?: Alert[];
   districtAqi?: { latest: AqiObservation | null; history: AqiObservation[] } | null;
   districtInterventions?: Intervention[];
@@ -63,11 +64,55 @@ const statusConfig = {
   cancelled: { color: 'text-red-400', bg: 'bg-red-500/10', label: 'Cancelled' }
 };
 
-export function Sidebar({ mode, setMode, selectedDistrict, selectedBlock, blocks = [], onBlockSelect, districtAlerts = [], districtAqi, districtInterventions = [], districtCommunityReports = [], currentLevel = 'state', countryData, stateData, allDistricts = [], allAlerts = [] }: SidebarProps) {
+const modeConfig: Record<MapViewMode, { label: string; color: string; bgColor: string; getValue: (d: DistrictData) => number | null }> = {
+  hazard: { 
+    label: 'Hazard', 
+    color: 'text-orange-500', 
+    bgColor: 'bg-orange-500',
+    getValue: (d) => (d.hazardScore !== undefined && d.hazardScore !== null) ? d.hazardScore : null 
+  },
+  exposure: { 
+    label: 'Exposure', 
+    color: 'text-purple-500', 
+    bgColor: 'bg-purple-500',
+    getValue: (d) => (d.exposureScore !== undefined && d.exposureScore !== null) ? d.exposureScore : null 
+  },
+  vulnerability: { 
+    label: 'Vulnerability', 
+    color: 'text-red-500', 
+    bgColor: 'bg-red-500',
+    getValue: (d) => (d.vulnerabilityScore !== undefined && d.vulnerabilityScore !== null) ? d.vulnerabilityScore : null 
+  },
+  risk: { 
+    label: 'Risk', 
+    color: 'text-red-700', 
+    bgColor: 'bg-red-700',
+    getValue: (d) => (d.riskScore !== undefined && d.riskScore !== null) ? d.riskScore : null 
+  },
+  adaptation: { 
+    label: 'Adaptation', 
+    color: 'text-green-500', 
+    bgColor: 'bg-green-500',
+    getValue: (d) => (d.adaptationScore !== undefined && d.adaptationScore !== null) ? d.adaptationScore : null 
+  }
+};
+
+export function Sidebar({ mode, setMode, selectedDistrict, selectedBlock, blocks = [], onBlockSelect, onDistrictSelect, districtAlerts = [], districtAqi, districtInterventions = [], districtCommunityReports = [], currentLevel = 'state', countryData, stateData, allDistricts = [], allAlerts = [] }: SidebarProps) {
   const activeAlerts = districtAlerts.filter(a => a.isActive === 1);
   const pendingInterventions = districtInterventions.filter(i => i.status !== 'completed');
   
   const sortedDistricts = [...allDistricts].sort((a, b) => b.vulnerabilityScore - a.vulnerabilityScore);
+
+  const rankedDistricts = [...allDistricts]
+    .filter(d => modeConfig[mode].getValue(d) !== null)
+    .sort((a, b) => {
+      const aVal = modeConfig[mode].getValue(a) ?? 0;
+      const bVal = modeConfig[mode].getValue(b) ?? 0;
+      return bVal - aVal;
+    });
+  
+  const top5Districts = rankedDistricts.slice(0, 5);
+  const bottom5Districts = rankedDistricts.slice(-5).reverse();
   
   const alertsByMonth = activeAlerts.reduce((acc, alert) => {
     const month = alert.forecastMonth || 'Current';
@@ -133,6 +178,91 @@ export function Sidebar({ mode, setMode, selectedDistrict, selectedBlock, blocks
               Adapt.
             </Button>
           </div>
+          
+          {/* District Rankings by Current Filter */}
+          {allDistricts.length > 0 && (
+            <div className="mt-4 pt-3 border-t border-border">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-xs font-medium uppercase text-muted-foreground">
+                  Districts by {modeConfig[mode].label}
+                </h4>
+                <Badge variant="outline" className={`text-xs ${modeConfig[mode].color}`}>
+                  {rankedDistricts.length} districts
+                </Badge>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3">
+                {/* Top 5 - Highest */}
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1 mb-2">
+                    <TrendingUp className="h-3 w-3 text-red-500" />
+                    <span className="text-xs font-medium text-red-500">Top 5 (Highest)</span>
+                  </div>
+                  {top5Districts.map((district, index) => {
+                    const value = modeConfig[mode].getValue(district);
+                    const isSelected = selectedDistrict?.id === district.id;
+                    return (
+                      <button
+                        key={district.id}
+                        onClick={() => onDistrictSelect?.(district)}
+                        className={`w-full flex items-center justify-between p-1.5 rounded text-xs transition-colors ${
+                          isSelected 
+                            ? 'bg-primary text-primary-foreground' 
+                            : 'hover:bg-accent'
+                        }`}
+                        data-testid={`rank-top-${index + 1}-${district.id}`}
+                      >
+                        <span className="flex items-center gap-1.5 truncate">
+                          <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold ${isSelected ? 'bg-primary-foreground text-primary' : 'bg-red-500/20 text-red-500'}`}>
+                            {index + 1}
+                          </span>
+                          <span className="truncate">{district.name}</span>
+                        </span>
+                        <span className={`font-mono font-medium ${isSelected ? '' : modeConfig[mode].color}`}>
+                          {value !== null ? (mode === 'adaptation' ? value.toFixed(0) : value.toFixed(3)) : 'N/A'}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                
+                {/* Bottom 5 - Lowest */}
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1 mb-2">
+                    <TrendingUp className="h-3 w-3 text-green-500 rotate-180" />
+                    <span className="text-xs font-medium text-green-500">Bottom 5 (Lowest)</span>
+                  </div>
+                  {bottom5Districts.map((district, index) => {
+                    const value = modeConfig[mode].getValue(district);
+                    const isSelected = selectedDistrict?.id === district.id;
+                    const rank = rankedDistricts.length - (bottom5Districts.length - 1 - index);
+                    return (
+                      <button
+                        key={district.id}
+                        onClick={() => onDistrictSelect?.(district)}
+                        className={`w-full flex items-center justify-between p-1.5 rounded text-xs transition-colors ${
+                          isSelected 
+                            ? 'bg-primary text-primary-foreground' 
+                            : 'hover:bg-accent'
+                        }`}
+                        data-testid={`rank-bottom-${index + 1}-${district.id}`}
+                      >
+                        <span className="flex items-center gap-1.5 truncate">
+                          <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold ${isSelected ? 'bg-primary-foreground text-primary' : 'bg-green-500/20 text-green-500'}`}>
+                            {rank > 0 ? rank : 1}
+                          </span>
+                          <span className="truncate">{district.name}</span>
+                        </span>
+                        <span className={`font-mono font-medium ${isSelected ? '' : modeConfig[mode].color}`}>
+                          {value !== null ? (mode === 'adaptation' ? value.toFixed(0) : value.toFixed(3)) : 'N/A'}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

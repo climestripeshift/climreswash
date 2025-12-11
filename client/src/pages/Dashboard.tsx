@@ -290,6 +290,7 @@ export default function Dashboard() {
                   selectedBlock={selectedBlock}
                   blocks={blocks}
                   onBlockSelect={handleBlockSelect}
+                  onDistrictSelect={(d) => { handleDistrictSelect(d); setMobileMenuOpen(false); }}
                   districtAlerts={districtAlerts}
                   districtAqi={currentAqi}
                   districtInterventions={districtInterventions}
@@ -355,6 +356,7 @@ export default function Dashboard() {
             selectedBlock={selectedBlock}
             blocks={blocks}
             onBlockSelect={handleBlockSelect}
+            onDistrictSelect={handleDistrictSelect}
             districtAlerts={districtAlerts}
             districtAqi={currentAqi}
             districtInterventions={districtInterventions}
