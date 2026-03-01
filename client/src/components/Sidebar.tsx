@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Shield, Users, ThermometerSun, Droplets, Zap, Activity, Sprout, Bath, TrendingUp, Calendar, Heart, Baby, HeartPulse, GraduationCap, Hand, Wind, Bell, CheckCircle, ChevronRight, ClipboardList, MessageSquare, Phone, Clock, Target, FileText, Download, Home, Building2, ExternalLink, Trash2 } from "lucide-react";
+import { AlertTriangle, Shield, Users, ThermometerSun, Droplets, Zap, Activity, Sprout, Bath, TrendingUp, Calendar, Heart, Baby, HeartPulse, GraduationCap, Hand, Wind, Bell, CheckCircle, ChevronRight, ClipboardList, MessageSquare, Phone, Clock, Target, FileText, Download, Home, Building2, ExternalLink, Trash2, IndianRupee, PieChart } from "lucide-react";
+import { estimateDistrictFunding, aggregateFunding, formatIndianCurrency } from "@/lib/fundingEstimates";
 import { Link } from "wouter";
 import { getTechnologySlugFromName } from "@/lib/technologyContent";
 import { motion, AnimatePresence } from "framer-motion";
@@ -370,6 +371,50 @@ export function Sidebar({ mode, setMode, selectedDistrict, selectedBlock, blocks
                           <Progress value={selectedDistrict.adaptationScore} className="h-2 bg-secondary" indicatorClassName="bg-primary" />
                         </div>
                       </div>
+
+                      <Separator />
+
+                      {/* Funding Requirements */}
+                      {(() => {
+                        const funding = estimateDistrictFunding(selectedDistrict);
+                        const mitigationPercent = funding.totalFunding > 0 ? Math.round((funding.mitigationFunding / funding.totalFunding) * 100) : 50;
+                        const adaptationPercent = 100 - mitigationPercent;
+                        return (
+                          <div className="bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20 p-4 rounded-lg" data-testid="funding-district">
+                            <h4 className="text-sm font-bold mb-3 flex items-center gap-2">
+                              <IndianRupee className="h-4 w-4 text-emerald-500" />
+                              Estimated Funding Required
+                            </h4>
+                            <div className="text-2xl font-mono font-bold text-emerald-500 mb-3" data-testid="funding-total">
+                              {formatIndianCurrency(funding.totalFunding)}
+                            </div>
+                            <div className="space-y-2">
+                              <div>
+                                <div className="flex justify-between text-xs mb-1">
+                                  <span className="text-muted-foreground flex items-center gap-1">
+                                    <Shield className="h-3 w-3" /> Mitigation
+                                  </span>
+                                  <span className="font-mono font-medium text-blue-400" data-testid="funding-mitigation">{formatIndianCurrency(funding.mitigationFunding)}</span>
+                                </div>
+                                <Progress value={mitigationPercent} className="h-1.5 bg-secondary" indicatorClassName="bg-blue-500" />
+                              </div>
+                              <div>
+                                <div className="flex justify-between text-xs mb-1">
+                                  <span className="text-muted-foreground flex items-center gap-1">
+                                    <Sprout className="h-3 w-3" /> Adaptation
+                                  </span>
+                                  <span className="font-mono font-medium text-emerald-400" data-testid="funding-adaptation">{formatIndianCurrency(funding.adaptationFunding)}</span>
+                                </div>
+                                <Progress value={adaptationPercent} className="h-1.5 bg-secondary" indicatorClassName="bg-emerald-500" />
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1.5 mt-3">
+                              <PieChart className="h-3 w-3 text-muted-foreground" />
+                              <span className="text-[10px] text-muted-foreground">Based on risk, vulnerability, population & WASH gaps</span>
+                            </div>
+                          </div>
+                        );
+                      })()}
 
                       <Separator />
 
@@ -1377,6 +1422,52 @@ export function Sidebar({ mode, setMode, selectedDistrict, selectedBlock, blocks
                         </div>
                       </>
                     )}
+
+                    {allDistricts.length > 0 && (() => {
+                      const nationalFunding = aggregateFunding(allDistricts);
+                      const mitigationPercent = nationalFunding.totalFunding > 0 ? Math.round((nationalFunding.mitigationFunding / nationalFunding.totalFunding) * 100) : 50;
+                      const adaptationPercent = 100 - mitigationPercent;
+                      return (
+                        <>
+                          <Separator />
+                          <div className="bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20 p-4 rounded-lg" data-testid="funding-national">
+                            <h4 className="text-xs uppercase text-muted-foreground font-bold mb-2 flex items-center gap-1.5">
+                              <IndianRupee className="h-3.5 w-3.5 text-emerald-500" />
+                              National Funding Requirements
+                            </h4>
+                            <div className="text-xl font-mono font-bold text-emerald-500 mb-3" data-testid="funding-national-total">
+                              {formatIndianCurrency(nationalFunding.totalFunding)}
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 mb-2">
+                              <div className="bg-background/60 p-2 rounded">
+                                <div className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                  <Shield className="h-2.5 w-2.5" /> Mitigation
+                                </div>
+                                <div className="text-sm font-mono font-bold text-blue-400" data-testid="funding-national-mitigation">
+                                  {formatIndianCurrency(nationalFunding.mitigationFunding)}
+                                </div>
+                              </div>
+                              <div className="bg-background/60 p-2 rounded">
+                                <div className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                  <Sprout className="h-2.5 w-2.5" /> Adaptation
+                                </div>
+                                <div className="text-sm font-mono font-bold text-emerald-400" data-testid="funding-national-adaptation">
+                                  {formatIndianCurrency(nationalFunding.adaptationFunding)}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex w-full h-2 rounded-full overflow-hidden bg-secondary">
+                              <div className="bg-blue-500 transition-all" style={{ width: `${mitigationPercent}%` }} />
+                              <div className="bg-emerald-500 transition-all" style={{ width: `${adaptationPercent}%` }} />
+                            </div>
+                            <div className="flex justify-between mt-1">
+                              <span className="text-[10px] text-blue-400">{mitigationPercent}% Mitigation</span>
+                              <span className="text-[10px] text-emerald-400">{adaptationPercent}% Adaptation</span>
+                            </div>
+                          </div>
+                        </>
+                      );
+                    })()}
                   </CardContent>
                 </Card>
               )}

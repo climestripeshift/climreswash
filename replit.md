@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is an interactive climate vulnerability and adaptation assessment dashboard for Rajasthan, India. The application visualizes district-level climate risks, adaptation strategies, health indicators, and air quality data through an interactive map interface. It provides early warning systems for climate hazards and tracks various social and environmental metrics to support climate action planning.
+This is an interactive climate vulnerability and adaptation assessment dashboard for India (735 districts). The application visualizes district-level climate risks, adaptation strategies, health indicators, and air quality data through an interactive map interface. It provides early warning systems for climate hazards, tracks various social and environmental metrics, and displays estimated mitigation and adaptation funding requirements at district and national levels to support climate action planning.
 
 ## User Preferences
 
