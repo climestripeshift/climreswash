@@ -9,7 +9,7 @@ import { Link } from "wouter";
 import { getTechnologySlugFromName } from "@/lib/technologyContent";
 import { motion, AnimatePresence } from "framer-motion";
 import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid, Legend, AreaChart, Area } from 'recharts';
 
 interface SidebarProps {
@@ -301,36 +301,16 @@ export function Sidebar({ mode, setMode, selectedDistrict, selectedBlock, blocks
                 </CardHeader>
                 <CardContent className="space-y-0">
                   
-                  <Tabs defaultValue="overview" className="w-full">
-                    <TabsList className="w-full grid grid-cols-4 mb-2">
-                      <TabsTrigger value="overview">Overview</TabsTrigger>
-                      <TabsTrigger value="alerts" className="relative">
-                        Alerts
-                        {activeAlerts.length > 0 && (
-                          <span className="absolute -top-1 -right-1 h-4 w-4 bg-destructive text-destructive-foreground text-[10px] rounded-full flex items-center justify-center">
-                            {activeAlerts.length}
-                          </span>
-                        )}
-                      </TabsTrigger>
-                      <TabsTrigger value="actions" className="relative">
-                        Actions
-                        {pendingInterventions.length > 0 && (
-                          <span className="absolute -top-1 -right-1 h-4 w-4 bg-orange-500 text-white text-[10px] rounded-full flex items-center justify-center">
-                            {pendingInterventions.length}
-                          </span>
-                        )}
-                      </TabsTrigger>
-                      <TabsTrigger value="community">
-                        Community
-                      </TabsTrigger>
-                    </TabsList>
-                    <TabsList className="w-full grid grid-cols-3 mb-4">
-                      <TabsTrigger value="health">Health</TabsTrigger>
-                      <TabsTrigger value="infra">Infra</TabsTrigger>
-                      <TabsTrigger value="seasonal">Trends</TabsTrigger>
-                    </TabsList>
+                  <Accordion type="multiple" defaultValue={["overview"]} className="w-full">
 
-                    <TabsContent value="overview" className="space-y-6 animate-in slide-in-from-left-2 duration-300">
+                    <AccordionItem value="overview" className="border-b border-border/50">
+                      <AccordionTrigger className="py-3 text-sm font-semibold hover:no-underline">
+                        <div className="flex items-center gap-2">
+                          <Shield className="h-4 w-4 text-primary" />
+                          Overview
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="space-y-6 pb-4">
                       {/* H/E/V/R Scores from CSV */}
                       <div className="bg-secondary/30 p-3 rounded-lg border border-border">
                         <h4 className="text-xs font-medium uppercase text-muted-foreground mb-3">Climate Risk Metrics (from CSV)</h4>
@@ -530,10 +510,22 @@ export function Sidebar({ mode, setMode, selectedDistrict, selectedBlock, blocks
                           {selectedDistrict.impactIfNoAction}
                         </p>
                       </div>
-                    </TabsContent>
+                      </AccordionContent>
+                    </AccordionItem>
 
-                    {/* Alerts Tab with Multi-Month Timeline */}
-                    <TabsContent value="alerts" className="space-y-4 animate-in slide-in-from-left-2 duration-300">
+                    <AccordionItem value="alerts" className="border-b border-border/50">
+                      <AccordionTrigger className="py-3 text-sm font-semibold hover:no-underline">
+                        <div className="flex items-center gap-2">
+                          <Bell className="h-4 w-4 text-destructive" />
+                          Alerts
+                          {activeAlerts.length > 0 && (
+                            <span className="ml-1 h-5 w-5 bg-destructive text-destructive-foreground text-[10px] rounded-full flex items-center justify-center font-bold">
+                              {activeAlerts.length}
+                            </span>
+                          )}
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="space-y-4 pb-4">
                       {activeAlerts.length === 0 ? (
                         <div className="text-center py-8">
                           <CheckCircle className="h-12 w-12 mx-auto text-green-500 mb-3" />
@@ -658,10 +650,22 @@ export function Sidebar({ mode, setMode, selectedDistrict, selectedBlock, blocks
                           The timeline shows predicted threats for the next 3 months based on historical patterns.
                         </p>
                       </div>
-                    </TabsContent>
-                    
-                    {/* Actions Tab - Intervention Planning */}
-                    <TabsContent value="actions" className="space-y-4 animate-in slide-in-from-left-2 duration-300">
+                      </AccordionContent>
+                    </AccordionItem>
+
+                    <AccordionItem value="actions" className="border-b border-border/50">
+                      <AccordionTrigger className="py-3 text-sm font-semibold hover:no-underline">
+                        <div className="flex items-center gap-2">
+                          <Target className="h-4 w-4 text-orange-400" />
+                          Actions
+                          {pendingInterventions.length > 0 && (
+                            <span className="ml-1 h-5 w-5 bg-orange-500 text-white text-[10px] rounded-full flex items-center justify-center font-bold">
+                              {pendingInterventions.length}
+                            </span>
+                          )}
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="space-y-4 pb-4">
                       {districtInterventions.length === 0 ? (
                         <div className="text-center py-8">
                           <ClipboardList className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
@@ -751,10 +755,17 @@ export function Sidebar({ mode, setMode, selectedDistrict, selectedBlock, blocks
                           </Button>
                         </>
                       )}
-                    </TabsContent>
+                      </AccordionContent>
+                    </AccordionItem>
 
-                    {/* Community Tab - Engagement & Reports */}
-                    <TabsContent value="community" className="space-y-4 animate-in slide-in-from-left-2 duration-300">
+                    <AccordionItem value="community" className="border-b border-border/50">
+                      <AccordionTrigger className="py-3 text-sm font-semibold hover:no-underline">
+                        <div className="flex items-center gap-2">
+                          <Users className="h-4 w-4 text-purple-400" />
+                          Community
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="space-y-4 pb-4">
                       {/* SMS Alert Panel (Dummy) */}
                       <div className="p-4 rounded-lg bg-gradient-to-br from-purple-500/10 to-indigo-500/10 border border-purple-500/20">
                         <h4 className="text-sm font-medium flex items-center gap-2 text-purple-400 mb-3">
@@ -847,9 +858,17 @@ export function Sidebar({ mode, setMode, selectedDistrict, selectedBlock, blocks
                           </div>
                         </div>
                       </div>
-                    </TabsContent>
+                      </AccordionContent>
+                    </AccordionItem>
 
-                    <TabsContent value="health" className="space-y-4 animate-in slide-in-from-left-2 duration-300">
+                    <AccordionItem value="health" className="border-b border-border/50">
+                      <AccordionTrigger className="py-3 text-sm font-semibold hover:no-underline">
+                        <div className="flex items-center gap-2">
+                          <HeartPulse className="h-4 w-4 text-rose-400" />
+                          Health & Air Quality
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="space-y-4 pb-4">
                       {/* AQI Display */}
                       {districtAqi?.latest && (
                         <div 
@@ -1047,9 +1066,17 @@ export function Sidebar({ mode, setMode, selectedDistrict, selectedBlock, blocks
                           }
                         </p>
                       </div>
-                    </TabsContent>
+                      </AccordionContent>
+                    </AccordionItem>
 
-                    <TabsContent value="infra" className="space-y-4 animate-in slide-in-from-right-2 duration-300">
+                    <AccordionItem value="infra" className="border-b border-border/50">
+                      <AccordionTrigger className="py-3 text-sm font-semibold hover:no-underline">
+                        <div className="flex items-center gap-2">
+                          <Building2 className="h-4 w-4 text-cyan-400" />
+                          Infrastructure
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="space-y-4 pb-4">
                       <div className="grid grid-cols-1 gap-4">
                         
                         <div className="p-4 rounded-lg bg-secondary/30 border border-border space-y-3">
@@ -1158,9 +1185,17 @@ export function Sidebar({ mode, setMode, selectedDistrict, selectedBlock, blocks
                         </Link>
 
                       </div>
-                    </TabsContent>
+                      </AccordionContent>
+                    </AccordionItem>
 
-                    <TabsContent value="seasonal" className="space-y-4 animate-in slide-in-from-bottom-2 duration-300">
+                    <AccordionItem value="seasonal" className="border-b-0">
+                      <AccordionTrigger className="py-3 text-sm font-semibold hover:no-underline">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-orange-400" />
+                          Seasonal Trends
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="space-y-4 pb-4">
                        <div className="p-3 bg-secondary/30 rounded-lg border border-border">
                           <h4 className="text-sm font-medium mb-4 flex items-center gap-2">
                             <Calendar className="h-4 w-4 text-orange-500" />
@@ -1237,8 +1272,9 @@ export function Sidebar({ mode, setMode, selectedDistrict, selectedBlock, blocks
                             </div>
                           ))}
                        </div>
-                    </TabsContent>
-                  </Tabs>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
 
                 </CardContent>
               </Card>

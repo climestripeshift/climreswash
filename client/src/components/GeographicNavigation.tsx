@@ -1,4 +1,4 @@
-import { ChevronRight, MapPin, Globe, Building2, Landmark, Home, ArrowLeft } from "lucide-react";
+import { ChevronRight, MapPin, Globe, Building2, Landmark, Home, ArrowLeft, FlaskConical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { GeographicLevel, CountryData, StateData, DistrictData, BlockData } from "@/lib/types";
@@ -88,6 +88,13 @@ export function GeographicNavigation({
         <div className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block" data-testid="stat-level">
           <span className="font-medium text-foreground">{levelLabels[currentLevel]}</span>
         </div>
+        <div className="w-px h-4 bg-border/50 mx-1" />
+        <Link href="/technology">
+          <Button variant="outline" size="sm" className="h-7 px-2 gap-1.5 text-xs" data-testid="link-technology-nav">
+            <FlaskConical className="h-3.5 w-3.5 text-[#00AEEF]" />
+            <span>Technologies</span>
+          </Button>
+        </Link>
       </div>
     </div>
   );
