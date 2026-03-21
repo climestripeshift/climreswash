@@ -1,9 +1,10 @@
+import { useState } from "react";
 import { DistrictData, MapViewMode, Alert, AqiObservation, Intervention, CommunityReport, GeographicLevel, BlockData } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Shield, Users, ThermometerSun, Droplets, Zap, Activity, Sprout, Bath, TrendingUp, Calendar, Heart, Baby, HeartPulse, GraduationCap, Hand, Wind, Bell, CheckCircle, ChevronRight, ClipboardList, MessageSquare, Phone, Clock, Target, FileText, Download, Home, Building2, ExternalLink, Trash2, IndianRupee, PieChart } from "lucide-react";
+import { AlertTriangle, Shield, Users, ThermometerSun, Droplets, Zap, Activity, Sprout, Bath, TrendingUp, Calendar, Heart, Baby, HeartPulse, GraduationCap, Hand, Wind, Bell, CheckCircle, ChevronRight, ChevronDown, ClipboardList, MessageSquare, Phone, Clock, Target, FileText, Download, Home, Building2, ExternalLink, Trash2, IndianRupee, PieChart } from "lucide-react";
 import { estimateDistrictFunding, aggregateFunding, formatIndianCurrency } from "@/lib/fundingEstimates";
 import { Link } from "wouter";
 import { getTechnologySlugFromName } from "@/lib/technologyContent";
@@ -99,6 +100,7 @@ const modeConfig: Record<MapViewMode, { label: string; color: string; bgColor: s
 };
 
 export function Sidebar({ mode, setMode, selectedDistrict, selectedBlock, blocks = [], onBlockSelect, onDistrictSelect, districtAlerts = [], districtAqi, districtInterventions = [], districtCommunityReports = [], currentLevel = 'state', countryData, stateData, allDistricts = [], allAlerts = [] }: SidebarProps) {
+  const [isPanelOpen, setIsPanelOpen] = useState(true);
   const activeAlerts = districtAlerts.filter(a => a.isActive === 1);
   const pendingInterventions = districtInterventions.filter(i => i.status !== 'completed');
   
@@ -128,15 +130,27 @@ export function Sidebar({ mode, setMode, selectedDistrict, selectedBlock, blocks
       {/* Control Panel */}
       <Card className="shrink-0">
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2">
-            <Activity className="h-5 w-5 text-primary" />
-            ClimateAdapt India
-          </CardTitle>
-          <CardDescription>
-            National Climate Vulnerability & Early Warning System
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5 text-primary" />
+              ClimateAdapt India
+            </CardTitle>
+            <button
+              onClick={() => setIsPanelOpen(v => !v)}
+              className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              data-testid="toggle-control-panel"
+              aria-label={isPanelOpen ? "Collapse panel" : "Expand panel"}
+            >
+              <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isPanelOpen ? '' : '-rotate-90'}`} />
+            </button>
+          </div>
+          {isPanelOpen && (
+            <CardDescription>
+              National Climate Vulnerability & Early Warning System
+            </CardDescription>
+          )}
         </CardHeader>
-        <CardContent>
+        <CardContent className={isPanelOpen ? "" : "hidden"}>
           <div className="grid grid-cols-5 gap-1">
             <Button 
               variant={mode === 'hazard' ? "default" : "outline"}
