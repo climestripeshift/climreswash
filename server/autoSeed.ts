@@ -121,74 +121,72 @@ export async function seedIfEmpty(): Promise<void> {
       topClimateRisks: ["Flood", "Drought", "Heatwave", "Cyclone", "Cold Wave"]
     }).onConflictDoNothing();
 
-    let created = 0;
-    const BATCH_SIZE = 50;
+    const CHUNK = 100;
 
-    for (let i = 0; i < features.length; i++) {
-      const props = features[i].properties;
+    // Build all district rows in memory
+    const allDistricts = features.map(f => {
+      const props = f.properties;
       const id = props.ID;
       const name = props.NAME;
       const hazard = props.HAZARD ?? Math.random() * 0.8;
       const exposure = props.EXPOSURE ?? Math.random() * 0.8;
       const vulnerability = props.VULNERABILITY ?? Math.random() * 0.8;
       const risk = props.RISK ?? Math.random() * 0.8;
-
       const population = Math.round(500000 + Math.random() * 3000000);
-      const adaptationScore = Math.round(25 + Math.random() * 50);
+      return {
+        id,
+        stateId: "ALL",
+        name,
+        population,
+        vulnerabilityScore: vulnerability,
+        adaptationScore: Math.round(25 + Math.random() * 50),
+        hazardScore: hazard,
+        hazardCategory: getCategory(hazard),
+        exposureScore: exposure,
+        exposureCategory: getCategory(exposure),
+        vulnerabilityCategory: getCategory(vulnerability),
+        riskScore: risk,
+        riskCategory: getCategory(risk),
+        childrenAtRisk: Math.round(population * 0.12 * vulnerability),
+        elderlyAtRisk: Math.round(population * 0.08 * vulnerability),
+        climateRisks: randomFromArray(climateRisksPool, 3),
+        adaptationStrategies: randomFromArray(adaptationStrategiesPool, 2),
+        impactIfNoAction: `Risk level: ${getCategory(risk)}. Without intervention, ${name} faces significant climate challenges.`,
+        soilType: soilTypes[Math.floor(Math.random() * soilTypes.length)],
+        rockType: rockTypes[Math.floor(Math.random() * rockTypes.length)],
+        toiletTechnology: toiletTypes[Math.floor(Math.random() * toiletTypes.length)],
+        waterSupplyStrategy: waterStrategies[Math.floor(Math.random() * waterStrategies.length)],
+        dropoutRate: Math.round(5 + Math.random() * 15),
+        waterAccessPercent: Math.round(50 + Math.random() * 45),
+        toiletCoveragePercent: Math.round(45 + Math.random() * 50),
+        handwashingFacilityPercent: Math.round(30 + Math.random() * 50),
+        childMarriageRate: Math.round(5 + Math.random() * 25),
+        malnutritionStunting: Math.round(20 + Math.random() * 30),
+        malnutritionWasting: Math.round(10 + Math.random() * 20),
+        malnutritionUnderweight: Math.round(15 + Math.random() * 25),
+        infantMortalityRate: Math.round(20 + Math.random() * 40),
+        maternalMortalityRatio: Math.round(80 + Math.random() * 120),
+        seasonalData: generateSeasonalData(vulnerability)
+      };
+    });
 
-      try {
-        await db.insert(districts).values({
-          id,
-          stateId: "ALL",
-          name,
-          population,
-          vulnerabilityScore: vulnerability,
-          adaptationScore,
-          hazardScore: hazard,
-          hazardCategory: getCategory(hazard),
-          exposureScore: exposure,
-          exposureCategory: getCategory(exposure),
-          vulnerabilityCategory: getCategory(vulnerability),
-          riskScore: risk,
-          riskCategory: getCategory(risk),
-          childrenAtRisk: Math.round(population * 0.12 * vulnerability),
-          elderlyAtRisk: Math.round(population * 0.08 * vulnerability),
-          climateRisks: randomFromArray(climateRisksPool, 3),
-          adaptationStrategies: randomFromArray(adaptationStrategiesPool, 2),
-          impactIfNoAction: `Risk level: ${getCategory(risk)}. Without intervention, ${name} faces significant climate challenges.`,
-          soilType: soilTypes[Math.floor(Math.random() * soilTypes.length)],
-          rockType: rockTypes[Math.floor(Math.random() * rockTypes.length)],
-          toiletTechnology: toiletTypes[Math.floor(Math.random() * toiletTypes.length)],
-          waterSupplyStrategy: waterStrategies[Math.floor(Math.random() * waterStrategies.length)],
-          dropoutRate: Math.round(5 + Math.random() * 15),
-          waterAccessPercent: Math.round(50 + Math.random() * 45),
-          toiletCoveragePercent: Math.round(45 + Math.random() * 50),
-          handwashingFacilityPercent: Math.round(30 + Math.random() * 50),
-          childMarriageRate: Math.round(5 + Math.random() * 25),
-          malnutritionStunting: Math.round(20 + Math.random() * 30),
-          malnutritionWasting: Math.round(10 + Math.random() * 20),
-          malnutritionUnderweight: Math.round(15 + Math.random() * 25),
-          infantMortalityRate: Math.round(20 + Math.random() * 40),
-          maternalMortalityRatio: Math.round(80 + Math.random() * 120),
-          seasonalData: generateSeasonalData(vulnerability)
-        }).onConflictDoNothing();
-
-        const aqiData = generateAqiObservations(id);
-        for (const aqi of aqiData) {
-          await db.insert(aqiObservations).values(aqi).onConflictDoNothing();
-        }
-
-        created++;
-      } catch (err) {
-        console.warn(`[autoSeed] Skipping district ${name} (${id}):`, err);
-      }
-
-      if ((i + 1) % BATCH_SIZE === 0 || i === features.length - 1) {
-        console.log(`[autoSeed] ✅ ${i + 1}/${features.length} districts processed`);
-      }
+    // Bulk insert districts in chunks
+    for (let i = 0; i < allDistricts.length; i += CHUNK) {
+      const chunk = allDistricts.slice(i, i + CHUNK);
+      await db.insert(districts).values(chunk).onConflictDoNothing();
+      console.log(`[autoSeed] ✅ Districts ${i + 1}–${Math.min(i + CHUNK, allDistricts.length)}/${allDistricts.length} done`);
     }
 
-    console.log(`[autoSeed] 🎉 Seeding complete! Created ${created} districts.`);
+    // Build all AQI rows in memory
+    const allAqi = allDistricts.flatMap(d => generateAqiObservations(d.id));
+
+    // Bulk insert AQI in chunks
+    for (let i = 0; i < allAqi.length; i += CHUNK) {
+      await db.insert(aqiObservations).values(allAqi.slice(i, i + CHUNK)).onConflictDoNothing();
+    }
+    console.log(`[autoSeed] ✅ AQI observations inserted (${allAqi.length} total)`);
+
+    console.log(`[autoSeed] 🎉 Seeding complete! ${allDistricts.length} districts, ${allAqi.length} AQI records.`);
   } catch (error) {
     console.error("[autoSeed] Failed to seed database:", error);
   }
