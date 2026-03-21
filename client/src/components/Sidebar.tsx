@@ -466,7 +466,60 @@ export function Sidebar({ mode, setMode, selectedDistrict, selectedBlock, blocks
                           ))}
                         </div>
                       </div>
-                      
+
+                      {/* Seasonal Hazard Calendar */}
+                      {selectedDistrict.seasonalData && selectedDistrict.seasonalData.length > 0 && (
+                        <div className="bg-secondary/30 border border-border rounded-lg p-3">
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
+                            <Calendar className="h-3 w-3" />
+                            Monthly Hazard Calendar
+                          </h4>
+                          <div className="grid grid-cols-6 gap-1 mb-2">
+                            {selectedDistrict.seasonalData.map((month, i) => {
+                              const hazardColors: Record<string, { bg: string; text: string; dot: string }> = {
+                                'Heatwave': { bg: 'bg-orange-500/20', text: 'text-orange-600', dot: 'bg-orange-500' },
+                                'Flood': { bg: 'bg-blue-500/20', text: 'text-blue-600', dot: 'bg-blue-500' },
+                                'Drought': { bg: 'bg-amber-500/20', text: 'text-amber-600', dot: 'bg-amber-500' },
+                                'Cold Wave': { bg: 'bg-sky-500/20', text: 'text-sky-600', dot: 'bg-sky-400' },
+                                'Dust Storm': { bg: 'bg-stone-400/20', text: 'text-stone-600', dot: 'bg-stone-400' },
+                                'Cyclone': { bg: 'bg-purple-500/20', text: 'text-purple-600', dot: 'bg-purple-500' },
+                                'None': { bg: 'bg-green-500/10', text: 'text-green-600', dot: 'bg-green-400' },
+                              };
+                              const colors = hazardColors[month.hazard] || { bg: 'bg-secondary', text: 'text-muted-foreground', dot: 'bg-muted-foreground' };
+                              return (
+                                <div
+                                  key={i}
+                                  className={`${colors.bg} rounded p-1.5 text-center cursor-default group relative`}
+                                  title={`${month.month}: ${month.hazard} — ${month.description}`}
+                                >
+                                  <div className="text-[9px] font-bold text-muted-foreground">{month.month.slice(0, 3)}</div>
+                                  <div className={`w-2.5 h-2.5 rounded-full ${colors.dot} mx-auto mt-0.5`}></div>
+                                  <div className={`text-[8px] font-semibold ${colors.text} mt-0.5 leading-tight`}>{month.hazard === 'None' ? '—' : month.hazard.split(' ')[0]}</div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                          {/* Legend */}
+                          <div className="flex flex-wrap gap-2 pt-2 border-t border-border/50">
+                            {Object.entries({
+                              'Heatwave': 'bg-orange-500',
+                              'Flood': 'bg-blue-500',
+                              'Drought': 'bg-amber-500',
+                              'Cold Wave': 'bg-sky-400',
+                              'Dust Storm': 'bg-stone-400',
+                              'Cyclone': 'bg-purple-500',
+                            }).filter(([hazard]) =>
+                              selectedDistrict.seasonalData.some(m => m.hazard === hazard)
+                            ).map(([hazard, dotClass]) => (
+                              <div key={hazard} className="flex items-center gap-1">
+                                <span className={`w-2 h-2 rounded-full ${dotClass} shrink-0`}></span>
+                                <span className="text-[9px] text-muted-foreground">{hazard}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
                        {/* Impact Warning */}
                       <div className="bg-destructive/10 border border-destructive/20 p-4 rounded-lg">
                         <h4 className="text-sm font-bold text-destructive mb-1 flex items-center gap-2">

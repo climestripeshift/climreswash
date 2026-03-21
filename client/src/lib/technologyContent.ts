@@ -1,7 +1,7 @@
 export interface TechnologyInfo {
   slug: string;
   title: string;
-  category: 'sanitation' | 'water' | 'waste';
+  category: 'sanitation' | 'water' | 'waste' | 'adaptation';
   description: string;
   climateResilience: string;
   suitableConditions: string[];
@@ -10,6 +10,7 @@ export interface TechnologyInfo {
   maintenanceLevel: 'Low' | 'Medium' | 'High';
   costLevel: 'Low' | 'Medium' | 'High';
   relatedHazards: string[];
+  typology: string[];
 }
 
 export const technologyContent: Record<string, TechnologyInfo> = {
@@ -40,7 +41,8 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     ],
     maintenanceLevel: 'Low',
     costLevel: 'Low',
-    relatedHazards: ['Flood', 'High Rainfall', 'Waterlogging']
+    relatedHazards: ['Flood', 'Drought'],
+    typology: ['Plains / Alluvial', 'Desert / Arid', 'Rocky / Hilly']
   },
   'septic-tank': {
     slug: 'septic-tank',
@@ -68,7 +70,37 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     ],
     maintenanceLevel: 'Medium',
     costLevel: 'Medium',
-    relatedHazards: ['Flood', 'Drought', 'Groundwater Contamination']
+    relatedHazards: ['Flood', 'Drought', 'Groundwater Depletion'],
+    typology: ['Plains / Alluvial', 'Coastal', 'Rain Intensive']
+  },
+  'soak-pit': {
+    slug: 'soak-pit',
+    title: 'Soak Pit / Leach Pit',
+    category: 'sanitation',
+    description: 'A soak pit is a covered, porous-walled chamber that allows wastewater to slowly seep into surrounding soil. Used primarily for greywater disposal in semi-arid and arid regions with good soil permeability.',
+    climateResilience: 'Well-adapted to low-rainfall environments where soil has high permeability. Poor performance in flooded or saturated conditions. Ideal for hot, dry climates with sandy or loamy soils.',
+    suitableConditions: [
+      'Semi-arid and arid regions',
+      'Areas with sandy or loamy permeable soils',
+      'Low rainfall and low water table areas',
+      'Rural homesteads and small institutions'
+    ],
+    advantages: [
+      'Very low cost and simple to construct',
+      'No water supply needed',
+      'Effective in dry climates',
+      'Easy to build with local materials'
+    ],
+    limitations: [
+      'Not suitable for clay soils or rocky terrain',
+      'Fails in high rainfall or flood conditions',
+      'Risk of groundwater contamination',
+      'Short lifespan in heavy-use settings'
+    ],
+    maintenanceLevel: 'Low',
+    costLevel: 'Low',
+    relatedHazards: ['Drought', 'Dust Storm', 'Heatwave'],
+    typology: ['Desert / Arid', 'Plains / Alluvial']
   },
   'dewats': {
     slug: 'dewats',
@@ -97,7 +129,8 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     ],
     maintenanceLevel: 'Medium',
     costLevel: 'High',
-    relatedHazards: ['Drought', 'Water Scarcity', 'Heat Stress']
+    relatedHazards: ['Drought', 'Heatwave'],
+    typology: ['Plains / Alluvial', 'Rain Intensive', 'Coastal']
   },
   'solid-waste': {
     slug: 'solid-waste',
@@ -126,7 +159,8 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     ],
     maintenanceLevel: 'Medium',
     costLevel: 'Medium',
-    relatedHazards: ['Flood', 'Heavy Rainfall', 'Heat Wave', 'Vector-borne Disease']
+    relatedHazards: ['Flood', 'Heatwave', 'Cyclone'],
+    typology: ['Plains / Alluvial', 'Coastal', 'Rain Intensive']
   },
   'rainwater-harvesting': {
     slug: 'rainwater-harvesting',
@@ -155,7 +189,186 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     ],
     maintenanceLevel: 'Low',
     costLevel: 'Medium',
-    relatedHazards: ['Drought', 'Water Scarcity', 'Groundwater Depletion']
+    relatedHazards: ['Drought', 'Groundwater Depletion'],
+    typology: ['Rain Intensive', 'Plains / Alluvial', 'Rocky / Hilly']
+  },
+  'bore-well': {
+    slug: 'bore-well',
+    title: 'Bore Well with Hand Pump',
+    category: 'water',
+    description: 'Bore wells access deep groundwater through drilled shafts fitted with hand pumps or motorized pumps. They provide reliable water supply in areas where surface water is scarce or contaminated.',
+    climateResilience: 'Reliable during drought and dry spells if groundwater levels are stable. Vulnerable to aquifer depletion in regions with overextraction. Deep bore wells (>100m) are more resilient to seasonal variability.',
+    suitableConditions: [
+      'Areas with stable deep aquifers',
+      'Drought-prone and semi-arid regions',
+      'Remote rural communities',
+      'Rocky and hard-soil terrain'
+    ],
+    advantages: [
+      'Reliable water source independent of rainfall',
+      'Suitable for remote areas',
+      'Long lifespan with proper maintenance',
+      'Can serve multiple households'
+    ],
+    limitations: [
+      'High drilling cost in hard rock areas',
+      'Groundwater depletion risk with overuse',
+      'Requires electricity for motorized pumps',
+      'Risk of fluoride or arsenic contamination'
+    ],
+    maintenanceLevel: 'Medium',
+    costLevel: 'Medium',
+    relatedHazards: ['Drought', 'Groundwater Depletion', 'Heatwave'],
+    typology: ['Desert / Arid', 'Rocky / Hilly', 'Plains / Alluvial']
+  },
+  'flood-resilient-sanitation': {
+    slug: 'flood-resilient-sanitation',
+    title: 'Flood-Resilient Elevated Sanitation',
+    category: 'sanitation',
+    description: 'Elevated or flood-adapted sanitation systems including raised latrines, sealed superstructures, waterproof chambers, and container-based systems designed to remain functional during flood events.',
+    climateResilience: 'Specifically engineered for flood resilience. Raised structure prevents inundation of pits and chambers. Sealed design prevents fecal contamination of floodwaters — critical for disease prevention during and after floods.',
+    suitableConditions: [
+      'Flood plains and river delta regions',
+      'Coastal and low-lying areas',
+      'Areas with annual monsoon flooding',
+      'Communities with cyclone risk'
+    ],
+    advantages: [
+      'Operational during flood events',
+      'Prevents fecal-oral disease outbreaks',
+      'Protects groundwater quality during floods',
+      'Durable against strong currents when anchored'
+    ],
+    limitations: [
+      'Higher construction cost than standard pit',
+      'Requires site-specific engineering',
+      'Container-based systems need frequent emptying',
+      'Community acceptance can be challenging'
+    ],
+    maintenanceLevel: 'Medium',
+    costLevel: 'High',
+    relatedHazards: ['Flood', 'Cyclone'],
+    typology: ['Flood Prone', 'Coastal', 'Rain Intensive']
+  },
+  'solar-water-pump': {
+    slug: 'solar-water-pump',
+    title: 'Solar-Powered Water Pump',
+    category: 'water',
+    description: 'Solar pumps use photovoltaic panels to power water extraction from wells, bore holes, or surface water sources. They provide reliable, off-grid water supply for drinking and irrigation with zero fuel cost after installation.',
+    climateResilience: 'Excellent resilience in sunny, arid regions. Not dependent on grid electricity, making them functional during flood-related power outages. High irradiance in desert regions maximizes efficiency. Works best in areas with >4 peak sun hours/day.',
+    suitableConditions: [
+      'Sunny, arid and semi-arid regions',
+      'Off-grid remote communities',
+      'Areas with frequent power outages',
+      'Irrigation-dependent farming communities'
+    ],
+    advantages: [
+      'Zero fuel cost after installation',
+      'Functions during power outages and disasters',
+      'Long lifespan (20-25 years for panels)',
+      'Low carbon footprint',
+      'Scalable from household to community level'
+    ],
+    limitations: [
+      'High upfront capital cost',
+      'Performance drops in cloudy/dusty conditions',
+      'Requires technical expertise for maintenance',
+      'Battery backup needed for night/cloudy use'
+    ],
+    maintenanceLevel: 'Low',
+    costLevel: 'High',
+    relatedHazards: ['Drought', 'Heatwave', 'Dust Storm'],
+    typology: ['Desert / Arid', 'Plains / Alluvial', 'Rocky / Hilly']
+  },
+  'watershed-management': {
+    slug: 'watershed-management',
+    title: 'Watershed Management & Check Dams',
+    category: 'adaptation',
+    description: 'Watershed management uses a combination of check dams, contour bunding, farm ponds, and vegetation restoration to manage water flow, reduce erosion, and recharge groundwater across a catchment area.',
+    climateResilience: 'Highly resilient nature-based solution. Reduces both flood peaks and drought severity by regulating water flow. Effective against soil erosion during heavy rainfall. Improves groundwater recharge for drought resilience.',
+    suitableConditions: [
+      'Hilly and undulating terrain',
+      'Watersheds with degraded vegetation',
+      'Rain-shadow and drought-prone regions',
+      'Areas with soil erosion problems'
+    ],
+    advantages: [
+      'Addresses both flood and drought simultaneously',
+      'Low-cost with high community co-benefit',
+      'Improves groundwater recharge',
+      'Reduces soil erosion and sedimentation',
+      'Enhances local biodiversity'
+    ],
+    limitations: [
+      'Requires community ownership and governance',
+      'Benefits accrue over 3-5 year timescale',
+      'Needs technical survey for optimal siting',
+      'May alter downstream water flows'
+    ],
+    maintenanceLevel: 'Low',
+    costLevel: 'Medium',
+    relatedHazards: ['Drought', 'Flood', 'Groundwater Depletion'],
+    typology: ['Rocky / Hilly', 'Desert / Arid', 'Plains / Alluvial']
+  },
+  'early-warning-system': {
+    slug: 'early-warning-system',
+    title: 'Community Early Warning Systems',
+    category: 'adaptation',
+    description: 'Community-based early warning systems for climate hazards integrate meteorological data, local sensors, community networks, and mobile alerts to provide 24-72 hour advance warning for heatwaves, floods, cyclones, and air quality events.',
+    climateResilience: 'Universal climate resilience tool applicable to all hazard types. Shifts response from reactive to proactive, enabling pre-positioning of WASH supplies, evacuation of vulnerable populations, and health system preparedness.',
+    suitableConditions: [
+      'All climate hazard contexts',
+      'Communities with mobile phone penetration',
+      'Areas with recurring seasonal hazards',
+      'Flood plains, cyclone coasts, and heat-stressed urban areas'
+    ],
+    advantages: [
+      'Works for all hazard types (flood, heat, cyclone)',
+      'Reduces mortality and morbidity significantly',
+      'Enables pre-positioning of water and hygiene supplies',
+      'Empowers community self-protection',
+      '10:1 cost-benefit ratio documented by WMO'
+    ],
+    limitations: [
+      'Requires sustained institutional coordination',
+      'Effectiveness depends on last-mile communication',
+      'Alert fatigue can reduce community response',
+      'Needs regular testing and updating'
+    ],
+    maintenanceLevel: 'Medium',
+    costLevel: 'Medium',
+    relatedHazards: ['Flood', 'Heatwave', 'Cyclone', 'Cold Wave', 'Dust Storm', 'Drought'],
+    typology: ['Flood Prone', 'Coastal', 'Desert / Arid', 'Plains / Alluvial', 'Rocky / Hilly', 'Rain Intensive']
+  },
+  'drought-resistant-crops': {
+    slug: 'drought-resistant-crops',
+    title: 'Drought-Resistant Crops & WASH Integration',
+    category: 'adaptation',
+    description: 'Integration of drought-tolerant crop varieties with water-efficient WASH practices reduces household water demand during dry spells. Includes drip irrigation for handwashing stations, greywater reuse for kitchen gardens, and nutrition-WASH linkages.',
+    climateResilience: 'Directly addresses drought vulnerability by reducing water dependency in food production. Greywater reuse extends scarce water resources. Improves nutrition outcomes which are climate-sensitive indicators for children.',
+    suitableConditions: [
+      'Drought-prone and semi-arid regions',
+      'Agricultural communities',
+      'Areas with seasonal water stress',
+      'Communities with child malnutrition burden'
+    ],
+    advantages: [
+      'Reduces food and water insecurity simultaneously',
+      'Improves child nutrition outcomes',
+      'Low-cost greywater reuse',
+      'Builds community resilience to climate shocks',
+      'Compatible with existing farming practices'
+    ],
+    limitations: [
+      'Requires behavior change and training',
+      'Depends on seed availability and extension services',
+      'Greywater reuse needs hygiene management',
+      'Benefits vary with soil type and agro-climate zone'
+    ],
+    maintenanceLevel: 'Low',
+    costLevel: 'Low',
+    relatedHazards: ['Drought', 'Heatwave', 'Groundwater Depletion'],
+    typology: ['Desert / Arid', 'Plains / Alluvial', 'Rocky / Hilly']
   }
 };
 
@@ -163,9 +376,16 @@ export function getTechnologyBySlug(slug: string): TechnologyInfo | undefined {
   return technologyContent[slug];
 }
 
-export function getTechnologiesByCategory(category: 'sanitation' | 'water' | 'waste'): TechnologyInfo[] {
+export function getTechnologiesByCategory(category: 'sanitation' | 'water' | 'waste' | 'adaptation'): TechnologyInfo[] {
   return Object.values(technologyContent).filter(t => t.category === category);
 }
+
+export function getAllTechnologies(): TechnologyInfo[] {
+  return Object.values(technologyContent);
+}
+
+export const ALL_HAZARDS = ['Drought', 'Flood', 'Heatwave', 'Cyclone', 'Cold Wave', 'Dust Storm', 'Groundwater Depletion'] as const;
+export const ALL_TYPOLOGIES = ['Desert / Arid', 'Rain Intensive', 'Flood Prone', 'Rocky / Hilly', 'Plains / Alluvial', 'Coastal'] as const;
 
 export const technologyNameToSlug: Record<string, string> = {
   'Twin Pit': 'twin-pit',
@@ -173,6 +393,8 @@ export const technologyNameToSlug: Record<string, string> = {
   'twin pit': 'twin-pit',
   'Septic Tank': 'septic-tank',
   'septic tank': 'septic-tank',
+  'Soak Pit': 'soak-pit',
+  'soak pit': 'soak-pit',
   'DEWATS': 'dewats',
   'Dewats': 'dewats',
   'dewats': 'dewats',
@@ -182,10 +404,20 @@ export const technologyNameToSlug: Record<string, string> = {
   'Rainwater Harvesting': 'rainwater-harvesting',
   'rainwater harvesting': 'rainwater-harvesting',
   'RWH': 'rainwater-harvesting',
-  'Groundwater': 'rainwater-harvesting',
-  'groundwater': 'rainwater-harvesting',
+  'Groundwater': 'bore-well',
+  'groundwater': 'bore-well',
+  'Bore Well': 'bore-well',
+  'bore well': 'bore-well',
   'Dual Source': 'rainwater-harvesting',
   'dual source': 'rainwater-harvesting',
+  'Solar': 'solar-water-pump',
+  'solar': 'solar-water-pump',
+  'Watershed': 'watershed-management',
+  'watershed': 'watershed-management',
+  'Early Warning': 'early-warning-system',
+  'early warning': 'early-warning-system',
+  'Drought-resistant': 'drought-resistant-crops',
+  'drought-resistant': 'drought-resistant-crops',
 };
 
 export function getTechnologySlugFromName(name: string): string | null {
