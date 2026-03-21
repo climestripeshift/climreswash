@@ -81,26 +81,26 @@ function findGeoJsonPath(): string | null {
 
 export async function seedIfEmpty(): Promise<void> {
   try {
-    const result = await db.select({ value: count() }).from(districts);
-    const districtCount = result[0]?.value ?? 0;
-
-    if (districtCount > 0) {
-      console.log(`[autoSeed] Database already has ${districtCount} districts — skipping seed.`);
-      return;
-    }
-
-    console.log("[autoSeed] Database is empty — starting seed from GeoJSON...");
-
     const geoJsonPath = findGeoJsonPath();
     if (!geoJsonPath) {
       console.error("[autoSeed] Could not find india.json — cannot seed database.");
       return;
     }
 
-    console.log(`[autoSeed] Reading GeoJSON from: ${geoJsonPath}`);
     const geojson = JSON.parse(fs.readFileSync(geoJsonPath, 'utf-8'));
     const features = geojson.features as Array<{ properties: { NAME: string; ID: string; HAZARD?: number; EXPOSURE?: number; VULNERABILITY?: number; RISK?: number; STATE?: string } }>;
+    const expectedCount = features.length;
 
+    const result = await db.select({ value: count() }).from(districts);
+    const districtCount = result[0]?.value ?? 0;
+
+    if (districtCount >= expectedCount) {
+      console.log(`[autoSeed] Database already has ${districtCount}/${expectedCount} districts — skipping seed.`);
+      return;
+    }
+
+    console.log(`[autoSeed] Database has ${districtCount}/${expectedCount} districts — seeding missing rows from GeoJSON...`);
+    console.log(`[autoSeed] Reading GeoJSON from: ${geoJsonPath}`);
     console.log(`[autoSeed] Found ${features.length} districts in GeoJSON`);
 
     await db.insert(countries).values({
