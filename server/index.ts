@@ -61,8 +61,6 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  await seedIfEmpty();
-
   await registerRoutes(httpServer, app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -96,6 +94,7 @@ app.use((req, res, next) => {
     },
     () => {
       log(`serving on port ${port}`);
+      seedIfEmpty().catch((err) => console.error("[autoSeed] Background seed failed:", err));
     },
   );
 })();
