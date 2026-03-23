@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRoute, Link } from "wouter";
 import { getTechnologyBySlug, getAllTechnologies, ALL_HAZARDS, ALL_TYPOLOGIES, TechnologyInfo } from "@/lib/technologyContent";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -64,6 +64,7 @@ interface ClickedDistrict {
   name: string;
   state: string;
   hazards: string[];
+  typologies: string[];
   vulnerabilityScore: number;
 }
 
@@ -194,6 +195,7 @@ function HazardDistrictMap({ selectedHazards, selectedTypologies, onDistrictClic
           name: data.name,
           state: data.state || '',
           hazards: risks,
+          typologies: getDistrictTypologies(data),
           vulnerabilityScore: data.vulnerabilityScore ?? 0,
         });
       },
@@ -554,6 +556,18 @@ function TechnologyIndex() {
   const [selectedTypologies, setSelectedTypologies] = useState<string[]>([]);
   const [showMap, setShowMap] = useState(false);
   const [clickedDistrict, setClickedDistrict] = useState<ClickedDistrict | null>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
+
+  const handleDistrictClick = (d: ClickedDistrict) => {
+    setClickedDistrict(d);
+    // Auto-apply hazard and typology filters from the district
+    if (d.hazards.length > 0) setSelectedHazards(d.hazards);
+    if (d.typologies.length > 0) setSelectedTypologies(d.typologies);
+    // Scroll to the technology results
+    setTimeout(() => {
+      resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 120);
+  };
 
   const toggleHazard = (h: string) => {
     setSelectedHazards(prev => prev.includes(h) ? prev.filter(x => x !== h) : [...prev, h]);
@@ -727,7 +741,7 @@ function TechnologyIndex() {
               <HazardDistrictMap
                 selectedHazards={selectedHazards}
                 selectedTypologies={selectedTypologies}
-                onDistrictClick={setClickedDistrict}
+                onDistrictClick={handleDistrictClick}
               />
             </div>
 
@@ -777,10 +791,23 @@ function TechnologyIndex() {
           </div>
         )}
 
-        {/* Results count */}
-        <div className="flex items-center justify-between mb-4">
+        {/* Results count + district filter banner */}
+        <div ref={resultsRef} className="flex items-center justify-between mb-4 scroll-mt-6">
           <p className="text-sm text-muted-foreground">
             Showing <span className="font-semibold text-foreground">{filtered.length}</span> of {allTech.length} technologies
+            {clickedDistrict && (
+              <span className="ml-2 inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-[#00AEEF]/10 text-[#00AEEF] border border-[#00AEEF]/25">
+                <Map className="h-3 w-3" />
+                Auto-filtered for {clickedDistrict.name}
+                <button
+                  onClick={clearFilters}
+                  className="ml-1 hover:text-foreground transition-colors"
+                  title="Clear district filter"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            )}
           </p>
         </div>
 
