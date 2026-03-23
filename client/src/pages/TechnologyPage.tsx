@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRoute, Link } from "wouter";
 import { getTechnologyBySlug, getAllTechnologies, ALL_HAZARDS, ALL_TYPOLOGIES, TechnologyInfo } from "@/lib/technologyContent";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,8 +21,16 @@ import {
   Search,
   X,
   Filter,
-  Sprout
+  Sprout,
+  Map,
+  ChevronDown,
+  Info,
+  Loader2
 } from "lucide-react";
+import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import { useQuery } from "@tanstack/react-query";
 
 const HAZARD_ICONS: Record<string, string> = {
   'Drought': '☀️',
@@ -42,6 +50,202 @@ const TYPOLOGY_ICONS: Record<string, string> = {
   'Plains / Alluvial': '🌾',
   'Coastal': '🏖️',
 };
+
+const HAZARD_COLORS: Record<string, string> = {
+  'Drought': '#f97316',
+  'Flood': '#3b82f6',
+  'Heatwave': '#ef4444',
+  'Cyclone': '#a855f7',
+  'Cold Wave': '#06b6d4',
+  'Dust Storm': '#eab308',
+  'Groundwater Depletion': '#14b8a6',
+};
+
+interface ClickedDistrict {
+  name: string;
+  state: string;
+  hazards: string[];
+  vulnerabilityScore: number;
+}
+
+function HazardDistrictMap({ selectedHazards, onDistrictClick }: {
+  selectedHazards: string[];
+  onDistrictClick: (d: ClickedDistrict) => void;
+}) {
+  const [geoJsonData, setGeoJsonData] = useState<any>(null);
+  const [districtDataMap, setDistrictDataMap] = useState<Record<string, any>>({});
+
+  const { data: districts } = useQuery<any[]>({
+    queryKey: ['districts'],
+    queryFn: () => fetch('/api/districts').then(r => r.json()),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  useEffect(() => {
+    fetch('/data/india.json')
+      .then(r => r.json())
+      .then(setGeoJsonData)
+      .catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    if (districts) {
+      const rec: Record<string, any> = {};
+      districts.forEach((d: any) => { rec[d.name.toUpperCase()] = d; });
+      setDistrictDataMap(rec);
+    }
+  }, [districts]);
+
+  const style = useCallback((feature: any) => {
+    const name = feature.properties.DISTRICT?.toUpperCase();
+    const data = name ? districtDataMap[name] : undefined;
+    if (!data) return { fillColor: '#334155', weight: 0.5, opacity: 1, color: '#1e293b', fillOpacity: 0.25 };
+
+    if (selectedHazards.length === 0) {
+      const v = data.vulnerabilityScore ?? 0;
+      let fillColor = '#16a34a';
+      if (v > 0.8) fillColor = '#ef4444';
+      else if (v > 0.6) fillColor = '#f97316';
+      else if (v > 0.4) fillColor = '#eab308';
+      else if (v > 0.2) fillColor = '#22c55e';
+      return { fillColor, weight: 0.5, opacity: 1, color: '#1e293b', fillOpacity: 0.55 };
+    }
+
+    const risks: string[] = data.climateRisks || [];
+    const matchingHazard = selectedHazards.find(h => risks.includes(h));
+    if (!matchingHazard) {
+      return { fillColor: '#334155', weight: 0.5, opacity: 1, color: '#0f172a', fillOpacity: 0.2 };
+    }
+    return {
+      fillColor: HAZARD_COLORS[matchingHazard] || '#888',
+      weight: 1,
+      opacity: 1,
+      color: '#1e293b',
+      fillOpacity: 0.8,
+    };
+  }, [districtDataMap, selectedHazards]);
+
+  const onEachFeature = useCallback((feature: any, layer: L.Layer) => {
+    const name = feature.properties.DISTRICT?.toUpperCase();
+    const data = name ? districtDataMap[name] : undefined;
+    if (!data) return;
+
+    const risks: string[] = data.climateRisks || [];
+    const isAffected = selectedHazards.length === 0 || selectedHazards.some(h => risks.includes(h));
+
+    (layer as any).on({
+      mouseover: (e: any) => {
+        e.target.setStyle({ weight: 2, color: '#ffffff', fillOpacity: 0.95 });
+        e.target.bringToFront();
+      },
+      mouseout: (e: any) => {
+        e.target.setStyle({
+          weight: isAffected ? 1 : 0.5,
+          color: isAffected ? '#1e293b' : '#0f172a',
+          fillOpacity: isAffected ? (selectedHazards.length === 0 ? 0.55 : 0.8) : 0.2,
+        });
+      },
+      click: () => {
+        onDistrictClick({
+          name: data.name,
+          state: data.state || '',
+          hazards: risks,
+          vulnerabilityScore: data.vulnerabilityScore ?? 0,
+        });
+      },
+    });
+
+    const matchCount = selectedHazards.length > 0
+      ? selectedHazards.filter(h => risks.includes(h)).length
+      : 0;
+
+    (layer as any).bindTooltip(
+      `<div style="font-size:12px;line-height:1.5">
+        <strong>${data.name}</strong>${data.state ? `, ${data.state}` : ''}<br/>
+        ${risks.length > 0 ? risks.map((r: string) => `<span style="color:${HAZARD_COLORS[r] || '#aaa'}">${HAZARD_ICONS[r] || '⚠️'} ${r}</span>`).join(' · ') : 'No risk data'}
+        ${matchCount > 0 ? `<br/><span style="color:#86efac;font-size:11px">${matchCount} selected hazard${matchCount > 1 ? 's' : ''} match</span>` : ''}
+      </div>`,
+      { sticky: true, className: 'leaflet-hazard-tooltip' }
+    );
+  }, [districtDataMap, selectedHazards, onDistrictClick]);
+
+  if (!geoJsonData || Object.keys(districtDataMap).length === 0) {
+    return (
+      <div className="h-full w-full flex items-center justify-center bg-slate-950 rounded-lg text-white">
+        <Loader2 className="h-5 w-5 animate-spin mr-2" />
+        <span className="text-sm">Loading district map...</span>
+      </div>
+    );
+  }
+
+  const affectedCount = selectedHazards.length > 0
+    ? Object.values(districtDataMap).filter(d => {
+        const risks: string[] = d.climateRisks || [];
+        return selectedHazards.some(h => risks.includes(h));
+      }).length
+    : 0;
+
+  return (
+    <div className="relative h-full w-full rounded-lg overflow-hidden border border-border">
+      <MapContainer
+        center={[22.5, 82.0]}
+        zoom={4}
+        className="h-full w-full bg-slate-950"
+        zoomControl={true}
+      >
+        <TileLayer
+          attribution='&copy; OpenStreetMap contributors &copy; CARTO'
+          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+        />
+        {geoJsonData && (
+          <GeoJSON
+            data={geoJsonData}
+            style={style}
+            onEachFeature={onEachFeature}
+            key={`hazard-${selectedHazards.join(',')}-${Object.keys(districtDataMap).length}`}
+          />
+        )}
+      </MapContainer>
+
+      {/* Stats overlay */}
+      {selectedHazards.length > 0 && (
+        <div className="absolute top-3 left-3 z-[1000] bg-card/95 backdrop-blur border border-border px-3 py-2 rounded-md text-xs">
+          <div className="font-semibold text-foreground">{affectedCount} districts affected</div>
+          <div className="text-muted-foreground">by {selectedHazards.join(' or ')}</div>
+        </div>
+      )}
+
+      {/* Legend */}
+      <div className="absolute bottom-3 right-3 z-[1000] bg-card/95 backdrop-blur border border-border p-2.5 rounded-md text-xs space-y-1.5 max-w-[170px]">
+        {selectedHazards.length > 0 ? (
+          <>
+            <div className="font-semibold text-muted-foreground uppercase tracking-wider text-[10px] mb-1">Selected Hazards</div>
+            {selectedHazards.map(h => (
+              <div key={h} className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: HAZARD_COLORS[h] }} />
+                <span>{HAZARD_ICONS[h]} {h}</span>
+              </div>
+            ))}
+            <div className="flex items-center gap-1.5 pt-1 border-t border-border">
+              <span className="w-2.5 h-2.5 rounded-full shrink-0 bg-slate-600" />
+              <span className="text-muted-foreground">Not affected</span>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="font-semibold text-muted-foreground uppercase tracking-wider text-[10px] mb-1">Vulnerability Index</div>
+            {[['#ef4444','Very High'],['#f97316','High'],['#eab308','Moderate'],['#22c55e','Low'],['#16a34a','Very Low']].map(([c,l]) => (
+              <div key={l} className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: c }} />
+                <span>{l}</span>
+              </div>
+            ))}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function TechnologyPage() {
   const [match, params] = useRoute("/technology/:slug");
@@ -268,9 +472,12 @@ function TechnologyIndex() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedHazards, setSelectedHazards] = useState<string[]>([]);
   const [selectedTypologies, setSelectedTypologies] = useState<string[]>([]);
+  const [showMap, setShowMap] = useState(false);
+  const [clickedDistrict, setClickedDistrict] = useState<ClickedDistrict | null>(null);
 
   const toggleHazard = (h: string) => {
     setSelectedHazards(prev => prev.includes(h) ? prev.filter(x => x !== h) : [...prev, h]);
+    setClickedDistrict(null);
   };
 
   const toggleTypology = (t: string) => {
@@ -281,6 +488,7 @@ function TechnologyIndex() {
     setSelectedHazards([]);
     setSelectedTypologies([]);
     setSearchQuery('');
+    setClickedDistrict(null);
   };
 
   const filtered = allTech.filter(tech => {
@@ -335,6 +543,18 @@ function TechnologyIndex() {
                 <X className="h-3 w-3" /> Clear all ({activeFilterCount})
               </Button>
             )}
+            <div className="ml-auto">
+              <Button
+                variant={showMap ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowMap(v => !v)}
+                className={`h-7 px-3 text-xs gap-1.5 ${showMap ? 'bg-[#00AEEF] text-white hover:bg-[#0097d1]' : ''}`}
+                data-testid="button-toggle-map"
+              >
+                <Map className="h-3 w-3" />
+                {showMap ? 'Hide Map' : 'Show District Map'}
+              </Button>
+            </div>
           </div>
 
           {/* Search */}
@@ -395,6 +615,76 @@ function TechnologyIndex() {
             </div>
           </div>
         </div>
+
+        {/* District Hazard Map */}
+        {showMap && (
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h2 className="text-base font-semibold flex items-center gap-2">
+                  <Map className="h-4 w-4 text-[#00AEEF]" />
+                  District Hazard Map
+                </h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {selectedHazards.length > 0
+                    ? `Showing districts affected by: ${selectedHazards.join(', ')}. Click any district for details.`
+                    : 'Select a hazard filter above to highlight affected districts. Click a district for details.'}
+                </p>
+              </div>
+            </div>
+
+            <div className="h-[420px] w-full rounded-xl overflow-hidden shadow-md">
+              <HazardDistrictMap
+                selectedHazards={selectedHazards}
+                onDistrictClick={setClickedDistrict}
+              />
+            </div>
+
+            {/* Clicked district info panel */}
+            {clickedDistrict && (
+              <div className="mt-3 p-4 bg-card border border-border rounded-lg flex flex-col sm:flex-row sm:items-start gap-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Info className="h-4 w-4 text-[#00AEEF]" />
+                    <h3 className="font-semibold text-base">{clickedDistrict.name}</h3>
+                    {clickedDistrict.state && (
+                      <span className="text-xs text-muted-foreground">{clickedDistrict.state}</span>
+                    )}
+                    <button onClick={() => setClickedDistrict(null)} className="ml-auto text-muted-foreground hover:text-foreground">
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {clickedDistrict.hazards.map(h => (
+                      <span
+                        key={h}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold text-white"
+                        style={{ background: HAZARD_COLORS[h] || '#888' }}
+                      >
+                        {HAZARD_ICONS[h]} {h}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Vulnerability score: <span className="font-medium text-foreground">{(clickedDistrict.vulnerabilityScore * 100).toFixed(0)}/100</span>
+                  </p>
+                </div>
+                <div className="shrink-0">
+                  <p className="text-xs text-muted-foreground mb-1.5">Recommended for this district:</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {allTech.filter(t => t.relatedHazards.some(h => clickedDistrict.hazards.includes(h))).slice(0, 6).map(t => (
+                      <Link key={t.slug} href={`/technology/${t.slug}`}>
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-[#00AEEF]/10 text-[#00AEEF] border border-[#00AEEF]/20 hover:bg-[#00AEEF]/20 cursor-pointer transition-colors">
+                          {t.title}
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Results count */}
         <div className="flex items-center justify-between mb-4">
