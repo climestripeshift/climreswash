@@ -112,16 +112,19 @@ function HazardDistrictMap({ selectedHazards, onDistrictClick }: {
     }
 
     const risks: string[] = data.climateRisks || [];
+    const intensities: Record<string, number> = data.hazardIntensities || {};
     const matchingHazard = selectedHazards.find(h => risks.includes(h));
     if (!matchingHazard) {
       return { fillColor: '#334155', weight: 0.5, opacity: 1, color: '#0f172a', fillOpacity: 0.2 };
     }
+    const intensity = intensities[matchingHazard] ?? null;
+    const fillOpacity = intensity !== null ? 0.25 + intensity * 0.7 : 0.75;
     return {
       fillColor: HAZARD_COLORS[matchingHazard] || '#888',
       weight: 1,
       opacity: 1,
       color: '#1e293b',
-      fillOpacity: 0.8,
+      fillOpacity,
     };
   }, [districtDataMap, selectedHazards]);
 
@@ -158,12 +161,19 @@ function HazardDistrictMap({ selectedHazards, onDistrictClick }: {
     const matchCount = selectedHazards.length > 0
       ? selectedHazards.filter(h => risks.includes(h)).length
       : 0;
+    const intensities: Record<string, number> = data.hazardIntensities || {};
+
+    const intensityLines = selectedHazards
+      .filter(h => risks.includes(h) && intensities[h] != null)
+      .map(h => `<span style="color:${HAZARD_COLORS[h]}">${HAZARD_ICONS[h]} ${h}: <strong>${Math.round(intensities[h] * 100)}%</strong></span>`)
+      .join('<br/>');
 
     (layer as any).bindTooltip(
-      `<div style="font-size:12px;line-height:1.5">
+      `<div style="font-size:12px;line-height:1.6">
         <strong>${data.name}</strong>${data.state ? `, ${data.state}` : ''}<br/>
         ${risks.length > 0 ? risks.map((r: string) => `<span style="color:${HAZARD_COLORS[r] || '#aaa'}">${HAZARD_ICONS[r] || '⚠️'} ${r}</span>`).join(' · ') : 'No risk data'}
-        ${matchCount > 0 ? `<br/><span style="color:#86efac;font-size:11px">${matchCount} selected hazard${matchCount > 1 ? 's' : ''} match</span>` : ''}
+        ${intensityLines ? `<br/><span style="font-size:11px;color:#94a3b8">Intensity:</span><br/>${intensityLines}` : ''}
+        ${matchCount > 0 && !intensityLines ? `<br/><span style="color:#86efac;font-size:11px">${matchCount} hazard${matchCount > 1 ? 's' : ''} match</span>` : ''}
       </div>`,
       { sticky: true, className: 'leaflet-hazard-tooltip' }
     );
@@ -594,10 +604,17 @@ function TechnologyIndex() {
 
           {/* Typology Filter */}
           <div>
-            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2.5">
-              By Landscape Typology
+            <div className="flex items-center justify-between mb-2.5">
+              <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                By Landscape Typology
+              </div>
+              {selectedTypologies.length > 0 && (
+                <span className="text-xs text-[#00AEEF] font-medium">
+                  {filtered.length} tech{filtered.length !== 1 ? 's' : ''} match
+                </span>
+              )}
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 mb-2">
               {ALL_TYPOLOGIES.map(t => (
                 <button
                   key={t}
@@ -613,6 +630,9 @@ function TechnologyIndex() {
                 </button>
               ))}
             </div>
+            <p className="text-[11px] text-muted-foreground">
+              Typology filters the <strong>technology list below</strong>. The district map (above) responds to climate hazard filters.
+            </p>
           </div>
         </div>
 

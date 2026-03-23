@@ -113,6 +113,9 @@ export interface DistrictData {
   
   // Seasonality
   seasonalData: SeasonalImpact[];
+
+  // Per-hazard intensity (0–1), editable in admin
+  hazardIntensities?: Record<string, number> | null;
 }
 
 export type MapViewMode = 'vulnerability' | 'adaptation' | 'hazard' | 'exposure' | 'risk';

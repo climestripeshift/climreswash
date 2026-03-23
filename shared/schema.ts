@@ -68,6 +68,9 @@ export const districts = pgTable("districts", {
   climateRisks: text("climate_risks").array().notNull(),
   adaptationStrategies: text("adaptation_strategies").array().notNull(),
   impactIfNoAction: text("impact_if_no_action").notNull(),
+
+  // Per-hazard intensity scores (0–1 scale), editable in admin
+  hazardIntensities: jsonb("hazard_intensities").$type<Record<string, number>>().default({}),
   
   // Infrastructure Indicators
   soilType: varchar("soil_type", { length: 100 }).notNull(),
