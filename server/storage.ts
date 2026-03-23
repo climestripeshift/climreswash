@@ -19,6 +19,8 @@ import {
   type InsertIntervention,
   type CommunityReport,
   type InsertCommunityReport,
+  type Technology,
+  type InsertTechnology,
   users,
   countries,
   states,
@@ -28,7 +30,8 @@ import {
   alerts,
   aqiObservations,
   interventions,
-  communityReports
+  communityReports,
+  technologies,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, desc } from "drizzle-orm";
@@ -60,6 +63,13 @@ export interface IStorage {
   getAllBlocks(): Promise<Block[]>;
   getBlocksByDistrict(districtId: string): Promise<Block[]>;
   getBlock(id: string): Promise<Block | undefined>;
+  
+  // Technology Library
+  getAllTechnologies(): Promise<Technology[]>;
+  getTechnology(id: string): Promise<Technology | undefined>;
+  createTechnology(tech: InsertTechnology): Promise<Technology>;
+  updateTechnology(id: string, tech: Partial<InsertTechnology>): Promise<Technology | undefined>;
+  deleteTechnology(id: string): Promise<boolean>;
   createBlock(block: InsertBlock): Promise<Block>;
   updateBlock(id: string, block: Partial<InsertBlock>): Promise<Block | undefined>;
   deleteBlock(id: string): Promise<boolean>;
@@ -374,6 +384,36 @@ export class DatabaseStorage implements IStorage {
       .where(eq(communityReports.id, id))
       .returning();
     return updated || undefined;
+  }
+
+  async getAllTechnologies(): Promise<Technology[]> {
+    return await db.select().from(technologies).orderBy(technologies.category, technologies.title);
+  }
+
+  async getTechnology(id: string): Promise<Technology | undefined> {
+    const [tech] = await db.select().from(technologies).where(eq(technologies.id, id));
+    return tech || undefined;
+  }
+
+  async createTechnology(tech: InsertTechnology): Promise<Technology> {
+    const [created] = await db.insert(technologies)
+      .values({ ...tech, createdAt: new Date(), updatedAt: new Date() })
+      .returning();
+    return created;
+  }
+
+  async updateTechnology(id: string, tech: Partial<InsertTechnology>): Promise<Technology | undefined> {
+    const [updated] = await db
+      .update(technologies)
+      .set({ ...tech, updatedAt: new Date() })
+      .where(eq(technologies.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteTechnology(id: string): Promise<boolean> {
+    const result = await db.delete(technologies).where(eq(technologies.id, id)).returning();
+    return result.length > 0;
   }
 }
 

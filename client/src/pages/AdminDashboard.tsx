@@ -9,7 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Trash2, Save, RefreshCw, Database, CloudRain, Droplets, ArrowLeft, Search, CheckCircle, Edit3 } from "lucide-react";
+import { Plus, Trash2, Save, RefreshCw, Database, CloudRain, Droplets, ArrowLeft, Search, CheckCircle, Edit3, X, BookOpen } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -38,6 +40,201 @@ const HAZARD_COLORS: Record<string, string> = {
   'Dust Storm': 'bg-yellow-500',
   'Groundwater Depletion': 'bg-teal-500',
 };
+
+const ALL_TYPOLOGIES_LIST = ['Desert / Arid', 'Rain Intensive', 'Flood Prone', 'Rocky / Hilly', 'Plains / Alluvial', 'Coastal'];
+const ALL_HAZARDS_LIST = ['Drought', 'Flood', 'Heatwave', 'Cyclone', 'Cold Wave', 'Dust Storm', 'Groundwater Depletion'];
+
+const CATEGORY_COLORS: Record<string, string> = {
+  sanitation: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
+  water: 'bg-cyan-500/10 text-cyan-600 border-cyan-500/20',
+  waste: 'bg-purple-500/10 text-purple-600 border-purple-500/20',
+  adaptation: 'bg-green-500/10 text-green-600 border-green-500/20',
+};
+
+async function fetchTechnologies() {
+  const res = await fetch('/api/technologies');
+  return res.json();
+}
+
+async function saveTechnology(id: string | null, data: any) {
+  const url = id ? `/api/technologies/${id}` : '/api/technologies';
+  const method = id ? 'PATCH' : 'POST';
+  const res = await fetch(url, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Save failed');
+  return res.json();
+}
+
+async function deleteTech(id: string) {
+  const res = await fetch(`/api/technologies/${id}`, { method: 'DELETE' });
+  if (!res.ok && res.status !== 204) throw new Error('Delete failed');
+}
+
+function ArrayInput({ label, value, onChange }: { label: string; value: string[]; onChange: (v: string[]) => void }) {
+  const [raw, setRaw] = useState(value.join('\n'));
+  return (
+    <div className="space-y-1">
+      <Label className="text-xs">{label}</Label>
+      <Textarea
+        value={raw}
+        onChange={e => { setRaw(e.target.value); onChange(e.target.value.split('\n').map(s => s.trim()).filter(Boolean)); }}
+        rows={3}
+        className="text-xs font-mono resize-none"
+        placeholder={`One per line`}
+      />
+    </div>
+  );
+}
+
+function TechEditor({ tech, onClose }: { tech: any | null; onClose: () => void }) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const isNew = !tech?.id;
+
+  const [form, setForm] = useState(() => ({
+    id: tech?.id || tech?.slug || '',
+    slug: tech?.slug || '',
+    title: tech?.title || '',
+    category: tech?.category || 'sanitation',
+    description: tech?.description || '',
+    climateResilience: tech?.climateResilience || '',
+    suitableConditions: tech?.suitableConditions || [],
+    advantages: tech?.advantages || [],
+    limitations: tech?.limitations || [],
+    maintenanceLevel: tech?.maintenanceLevel || 'Low',
+    costLevel: tech?.costLevel || 'Low',
+    relatedHazards: tech?.relatedHazards || [],
+    typology: tech?.typology || [],
+  }));
+
+  const set = (k: string, v: any) => setForm(prev => ({ ...prev, [k]: v }));
+
+  const saveMutation = useMutation({
+    mutationFn: () => {
+      const payload = { ...form, id: form.slug, slug: form.slug };
+      return saveTechnology(isNew ? null : tech.id, payload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['technologies'] });
+      toast({ title: isNew ? 'Technology Created' : 'Technology Updated', description: `${form.title} saved successfully.` });
+      onClose();
+    },
+    onError: () => toast({ title: 'Error', description: 'Failed to save technology.', variant: 'destructive' }),
+  });
+
+  const toggleArr = (key: 'relatedHazards' | 'typology', val: string) => {
+    setForm(prev => ({
+      ...prev,
+      [key]: prev[key].includes(val) ? prev[key].filter((x: string) => x !== val) : [...prev[key], val],
+    }));
+  };
+
+  return (
+    <div className="space-y-5">
+      <div className="flex items-center justify-between">
+        <h3 className="text-base font-semibold">{isNew ? 'Add New Technology' : `Edit: ${tech.title}`}</h3>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={onClose}>Cancel</Button>
+          <Button size="sm" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
+            <Save className="h-3.5 w-3.5 mr-1.5" />
+            {saveMutation.isPending ? 'Saving...' : 'Save'}
+          </Button>
+        </div>
+      </div>
+      <Separator />
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-1">
+          <Label className="text-xs">Title</Label>
+          <Input value={form.title} onChange={e => set('title', e.target.value)} placeholder="Technology name" className="h-8 text-sm" />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">Slug / ID</Label>
+          <Input value={form.slug} onChange={e => { set('slug', e.target.value); set('id', e.target.value); }} placeholder="e.g. twin-pit" className="h-8 text-sm font-mono" disabled={!isNew} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-4">
+        <div className="space-y-1">
+          <Label className="text-xs">Category</Label>
+          <Select value={form.category} onValueChange={v => set('category', v)}>
+            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="sanitation">Sanitation</SelectItem>
+              <SelectItem value="water">Water</SelectItem>
+              <SelectItem value="waste">Waste</SelectItem>
+              <SelectItem value="adaptation">Adaptation</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">Maintenance Level</Label>
+          <Select value={form.maintenanceLevel} onValueChange={v => set('maintenanceLevel', v)}>
+            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Low">Low</SelectItem>
+              <SelectItem value="Medium">Medium</SelectItem>
+              <SelectItem value="High">High</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">Cost Level</Label>
+          <Select value={form.costLevel} onValueChange={v => set('costLevel', v)}>
+            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Low">Low</SelectItem>
+              <SelectItem value="Medium">Medium</SelectItem>
+              <SelectItem value="High">High</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="space-y-1">
+        <Label className="text-xs">Description</Label>
+        <Textarea value={form.description} onChange={e => set('description', e.target.value)} rows={3} className="text-sm resize-none" />
+      </div>
+      <div className="space-y-1">
+        <Label className="text-xs">Climate Resilience</Label>
+        <Textarea value={form.climateResilience} onChange={e => set('climateResilience', e.target.value)} rows={2} className="text-sm resize-none" />
+      </div>
+
+      <div className="grid grid-cols-3 gap-4">
+        <ArrayInput label="Suitable Conditions (one per line)" value={form.suitableConditions} onChange={v => set('suitableConditions', v)} />
+        <ArrayInput label="Advantages (one per line)" value={form.advantages} onChange={v => set('advantages', v)} />
+        <ArrayInput label="Limitations (one per line)" value={form.limitations} onChange={v => set('limitations', v)} />
+      </div>
+
+      <div className="space-y-2">
+        <Label className="text-xs font-semibold">Related Hazards</Label>
+        <div className="flex flex-wrap gap-2">
+          {ALL_HAZARDS_LIST.map(h => (
+            <label key={h} className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs border cursor-pointer transition-all ${form.relatedHazards.includes(h) ? 'bg-orange-500/15 border-orange-500/40 text-orange-600' : 'border-border hover:bg-secondary/50'}`}>
+              <Checkbox checked={form.relatedHazards.includes(h)} onCheckedChange={() => toggleArr('relatedHazards', h)} className="h-3 w-3" />
+              {h}
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label className="text-xs font-semibold">Landscape Typologies</Label>
+        <div className="flex flex-wrap gap-2">
+          {ALL_TYPOLOGIES_LIST.map(t => (
+            <label key={t} className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs border cursor-pointer transition-all ${form.typology.includes(t) ? 'bg-green-500/15 border-green-500/40 text-green-600' : 'border-border hover:bg-secondary/50'}`}>
+              <Checkbox checked={form.typology.includes(t)} onCheckedChange={() => toggleArr('typology', t)} className="h-3 w-3" />
+              {t}
+            </label>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 async function patchDistrict(id: string, data: Partial<DistrictData>) {
   const res = await fetch(`/api/districts/${id}`, {
@@ -184,6 +381,136 @@ function DistrictEditor({ district, onClose }: { district: DistrictData; onClose
   );
 }
 
+function TechnologyManagerTab() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [editingTech, setEditingTech] = useState<any | null>(null);
+  const [addingNew, setAddingNew] = useState(false);
+  const [searchTech, setSearchTech] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+
+  const { data: techs = [], isLoading } = useQuery({
+    queryKey: ['technologies'],
+    queryFn: fetchTechnologies,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteTech(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['technologies'] });
+      toast({ title: 'Technology Removed', variant: 'destructive' });
+    },
+  });
+
+  const filtered = (techs as any[]).filter(t => {
+    const q = searchTech.toLowerCase();
+    const matchQ = !q || t.title.toLowerCase().includes(q) || t.category.toLowerCase().includes(q);
+    const matchCat = categoryFilter === 'all' || t.category === categoryFilter;
+    return matchQ && matchCat;
+  });
+
+  if (addingNew) {
+    return (
+      <Card><CardContent className="pt-6">
+        <TechEditor tech={null} onClose={() => setAddingNew(false)} />
+      </CardContent></Card>
+    );
+  }
+
+  if (editingTech) {
+    return (
+      <Card><CardContent className="pt-6">
+        <TechEditor tech={editingTech} onClose={() => setEditingTech(null)} />
+      </CardContent></Card>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              placeholder="Search technologies..."
+              value={searchTech}
+              onChange={e => setSearchTech(e.target.value)}
+              className="pl-8 h-8 text-sm w-48"
+            />
+          </div>
+          <div className="flex gap-1.5">
+            {['all', 'sanitation', 'water', 'waste', 'adaptation'].map(c => (
+              <button
+                key={c}
+                onClick={() => setCategoryFilter(c)}
+                className={`px-3 py-1 rounded-full text-xs font-medium border transition-all capitalize ${categoryFilter === c ? 'bg-primary text-primary-foreground border-primary' : 'border-border hover:bg-secondary/50'}`}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+        </div>
+        <Button size="sm" onClick={() => setAddingNew(true)}>
+          <Plus className="h-3.5 w-3.5 mr-1.5" />
+          Add Technology
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {isLoading ? (
+          <div className="col-span-3 flex items-center justify-center py-12">
+            <RefreshCw className="h-5 w-5 animate-spin text-muted-foreground" />
+          </div>
+        ) : filtered.map((t: any) => (
+          <Card key={t.id} className="hover:border-primary/50 transition-colors">
+            <CardHeader className="pb-2 pt-4 px-4">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <CardTitle className="text-sm leading-tight">{t.title}</CardTitle>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium capitalize ${CATEGORY_COLORS[t.category] || ''}`}>
+                      {t.category}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">Cost: {t.costLevel}</span>
+                    <span className="text-[10px] text-muted-foreground">Maint: {t.maintenanceLevel}</span>
+                  </div>
+                </div>
+                <div className="flex gap-1 shrink-0">
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditingTech(t)}>
+                    <Edit3 className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => deleteMutation.mutate(t.id)}>
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="px-4 pb-4 space-y-2">
+              <p className="text-xs text-muted-foreground line-clamp-2">{t.description}</p>
+              <div className="flex flex-wrap gap-1">
+                {(t.relatedHazards || []).map((h: string) => (
+                  <span key={h} className="text-[10px] px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-600 border border-orange-500/20">{h}</span>
+                ))}
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {(t.typology || []).map((tp: string) => (
+                  <span key={tp} className="text-[10px] px-1.5 py-0.5 rounded bg-green-500/10 text-green-600 border border-green-500/20">{tp}</span>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+        {!isLoading && filtered.length === 0 && (
+          <div className="col-span-3 text-center py-12 text-muted-foreground">
+            <BookOpen className="h-8 w-8 mx-auto mb-2 opacity-40" />
+            <p className="text-sm">No technologies found</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function AdminDashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -248,6 +575,9 @@ export default function AdminDashboard() {
         <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent space-x-6">
           <TabsTrigger value="data" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3">
             District Data Editor
+          </TabsTrigger>
+          <TabsTrigger value="technologies" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3">
+            Technology Library
           </TabsTrigger>
           <TabsTrigger value="integrations" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3">
             API Integrations
@@ -348,6 +678,11 @@ export default function AdminDashboard() {
               )}
             </div>
           </div>
+        </TabsContent>
+
+        {/* Technology Library Tab */}
+        <TabsContent value="technologies" className="pt-6">
+          <TechnologyManagerTab />
         </TabsContent>
 
         {/* API Integrations Tab */}

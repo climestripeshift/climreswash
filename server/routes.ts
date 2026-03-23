@@ -463,5 +463,54 @@ export async function registerRoutes(
     }
   });
 
+  // Technology Library CRUD
+  app.get("/api/technologies", async (_req, res) => {
+    try {
+      const techs = await storage.getAllTechnologies();
+      res.json(techs);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/technologies/:id", async (req, res) => {
+    try {
+      const tech = await storage.getTechnology(req.params.id);
+      if (!tech) return res.status(404).json({ error: "Not found" });
+      res.json(tech);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/technologies", async (req, res) => {
+    try {
+      const tech = await storage.createTechnology(req.body);
+      res.status(201).json(tech);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.patch("/api/technologies/:id", async (req, res) => {
+    try {
+      const tech = await storage.updateTechnology(req.params.id, req.body);
+      if (!tech) return res.status(404).json({ error: "Not found" });
+      res.json(tech);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.delete("/api/technologies/:id", async (req, res) => {
+    try {
+      const deleted = await storage.deleteTechnology(req.params.id);
+      if (!deleted) return res.status(404).json({ error: "Not found" });
+      res.status(204).send();
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   return httpServer;
 }

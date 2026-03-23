@@ -68,8 +68,32 @@ interface ClickedDistrict {
   vulnerabilityScore: number;
 }
 
-function HazardDistrictMap({ selectedHazards, onDistrictClick }: {
+const TYPOLOGY_MAP_COLORS: Record<string, string> = {
+  'Plains / Alluvial': '#4ade80',
+  'Desert / Arid': '#fb923c',
+  'Rocky / Hilly': '#a78bfa',
+  'Coastal': '#38bdf8',
+  'Rain Intensive': '#22d3ee',
+  'Flood Prone': '#60a5fa',
+};
+
+function getDistrictTypologies(d: any): string[] {
+  const soil: string = d.soilType || '';
+  const rock: string = d.rockType || '';
+  const risks: string[] = d.climateRisks || [];
+  const result: string[] = [];
+  if (['Alluvial', 'Loamy', 'Black Cotton'].includes(soil)) result.push('Plains / Alluvial');
+  if (soil === 'Sandy') result.push('Desert / Arid');
+  if (['Granite', 'Basalt', 'Limestone', 'Shale', 'Sandstone'].includes(rock) && soil !== 'Alluvial') result.push('Rocky / Hilly');
+  if (risks.includes('Cyclone')) result.push('Coastal');
+  if (risks.includes('Flood') && ['Alluvial', 'Loamy'].includes(soil)) result.push('Rain Intensive');
+  if (risks.includes('Flood')) result.push('Flood Prone');
+  return result;
+}
+
+function HazardDistrictMap({ selectedHazards, selectedTypologies, onDistrictClick }: {
   selectedHazards: string[];
+  selectedTypologies: string[];
   onDistrictClick: (d: ClickedDistrict) => void;
 }) {
   const [geoJsonData, setGeoJsonData] = useState<any>(null);
@@ -101,6 +125,23 @@ function HazardDistrictMap({ selectedHazards, onDistrictClick }: {
     const data = name ? districtDataMap[name] : undefined;
     if (!data) return { fillColor: '#334155', weight: 0.5, opacity: 1, color: '#1e293b', fillOpacity: 0.25 };
 
+    // Typology mode: when typologies are selected and no hazards
+    if (selectedHazards.length === 0 && selectedTypologies.length > 0) {
+      const districtTypologies = getDistrictTypologies(data);
+      const matchingTypology = selectedTypologies.find(t => districtTypologies.includes(t));
+      if (!matchingTypology) {
+        return { fillColor: '#334155', weight: 0.5, opacity: 1, color: '#0f172a', fillOpacity: 0.15 };
+      }
+      return {
+        fillColor: TYPOLOGY_MAP_COLORS[matchingTypology] || '#94a3b8',
+        weight: 1,
+        opacity: 1,
+        color: '#1e293b',
+        fillOpacity: 0.8,
+      };
+    }
+
+    // No filters: color by vulnerability
     if (selectedHazards.length === 0) {
       const v = data.vulnerabilityScore ?? 0;
       let fillColor = '#16a34a';
@@ -111,6 +152,7 @@ function HazardDistrictMap({ selectedHazards, onDistrictClick }: {
       return { fillColor, weight: 0.5, opacity: 1, color: '#1e293b', fillOpacity: 0.55 };
     }
 
+    // Hazard mode
     const risks: string[] = data.climateRisks || [];
     const intensities: Record<string, number> = data.hazardIntensities || {};
     const matchingHazard = selectedHazards.find(h => risks.includes(h));
@@ -126,7 +168,7 @@ function HazardDistrictMap({ selectedHazards, onDistrictClick }: {
       color: '#1e293b',
       fillOpacity,
     };
-  }, [districtDataMap, selectedHazards]);
+  }, [districtDataMap, selectedHazards, selectedTypologies]);
 
   const onEachFeature = useCallback((feature: any, layer: L.Layer) => {
     const name = feature.properties.DISTRICT?.toUpperCase();
@@ -168,16 +210,23 @@ function HazardDistrictMap({ selectedHazards, onDistrictClick }: {
       .map(h => `<span style="color:${HAZARD_COLORS[h]}">${HAZARD_ICONS[h]} ${h}: <strong>${Math.round(intensities[h] * 100)}%</strong></span>`)
       .join('<br/>');
 
+    const districtTypologies = getDistrictTypologies(data);
+    const matchingTypologies = selectedTypologies.filter(t => districtTypologies.includes(t));
+    const typologyLine = matchingTypologies.length > 0
+      ? `<br/><span style="color:#94a3b8;font-size:11px">Landscape: </span>${matchingTypologies.map(t => `<span style="color:${TYPOLOGY_MAP_COLORS[t]}">${t}</span>`).join(', ')}`
+      : '';
+
     (layer as any).bindTooltip(
       `<div style="font-size:12px;line-height:1.6">
         <strong>${data.name}</strong>${data.state ? `, ${data.state}` : ''}<br/>
         ${risks.length > 0 ? risks.map((r: string) => `<span style="color:${HAZARD_COLORS[r] || '#aaa'}">${HAZARD_ICONS[r] || '⚠️'} ${r}</span>`).join(' · ') : 'No risk data'}
+        ${typologyLine}
         ${intensityLines ? `<br/><span style="font-size:11px;color:#94a3b8">Intensity:</span><br/>${intensityLines}` : ''}
         ${matchCount > 0 && !intensityLines ? `<br/><span style="color:#86efac;font-size:11px">${matchCount} hazard${matchCount > 1 ? 's' : ''} match</span>` : ''}
       </div>`,
       { sticky: true, className: 'leaflet-hazard-tooltip' }
     );
-  }, [districtDataMap, selectedHazards, onDistrictClick]);
+  }, [districtDataMap, selectedHazards, selectedTypologies, onDistrictClick]);
 
   if (!geoJsonData || Object.keys(districtDataMap).length === 0) {
     return (
@@ -212,7 +261,7 @@ function HazardDistrictMap({ selectedHazards, onDistrictClick }: {
             data={geoJsonData}
             style={style}
             onEachFeature={onEachFeature}
-            key={`hazard-${selectedHazards.join(',')}-${Object.keys(districtDataMap).length}`}
+            key={`map-${selectedHazards.join(',')}-${selectedTypologies.join(',')}-${Object.keys(districtDataMap).length}`}
           />
         )}
       </MapContainer>
@@ -224,9 +273,17 @@ function HazardDistrictMap({ selectedHazards, onDistrictClick }: {
           <div className="text-muted-foreground">by {selectedHazards.join(' or ')}</div>
         </div>
       )}
+      {selectedHazards.length === 0 && selectedTypologies.length > 0 && (
+        <div className="absolute top-3 left-3 z-[1000] bg-card/95 backdrop-blur border border-border px-3 py-2 rounded-md text-xs">
+          <div className="font-semibold text-foreground">
+            {Object.values(districtDataMap).filter(d => selectedTypologies.some(t => getDistrictTypologies(d).includes(t))).length} districts match
+          </div>
+          <div className="text-muted-foreground">{selectedTypologies.join(', ')}</div>
+        </div>
+      )}
 
       {/* Legend */}
-      <div className="absolute bottom-3 right-3 z-[1000] bg-card/95 backdrop-blur border border-border p-2.5 rounded-md text-xs space-y-1.5 max-w-[170px]">
+      <div className="absolute bottom-3 right-3 z-[1000] bg-card/95 backdrop-blur border border-border p-2.5 rounded-md text-xs space-y-1.5 max-w-[180px]">
         {selectedHazards.length > 0 ? (
           <>
             <div className="font-semibold text-muted-foreground uppercase tracking-wider text-[10px] mb-1">Selected Hazards</div>
@@ -239,6 +296,20 @@ function HazardDistrictMap({ selectedHazards, onDistrictClick }: {
             <div className="flex items-center gap-1.5 pt-1 border-t border-border">
               <span className="w-2.5 h-2.5 rounded-full shrink-0 bg-slate-600" />
               <span className="text-muted-foreground">Not affected</span>
+            </div>
+          </>
+        ) : selectedTypologies.length > 0 ? (
+          <>
+            <div className="font-semibold text-muted-foreground uppercase tracking-wider text-[10px] mb-1">Landscape Typology</div>
+            {selectedTypologies.map(t => (
+              <div key={t} className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: TYPOLOGY_MAP_COLORS[t] || '#888' }} />
+                <span>{t}</span>
+              </div>
+            ))}
+            <div className="flex items-center gap-1.5 pt-1 border-t border-border">
+              <span className="w-2.5 h-2.5 rounded-full shrink-0 bg-slate-600 opacity-50" />
+              <span className="text-muted-foreground">Not matching</span>
             </div>
           </>
         ) : (
@@ -631,7 +702,7 @@ function TechnologyIndex() {
               ))}
             </div>
             <p className="text-[11px] text-muted-foreground">
-              Typology filters the <strong>technology list below</strong>. The district map (above) responds to climate hazard filters.
+              Typology filters the <strong>technology list</strong> and <strong>highlights matching districts on the map</strong> (when no hazard is selected).
             </p>
           </div>
         </div>
@@ -656,6 +727,7 @@ function TechnologyIndex() {
             <div className="h-[420px] w-full rounded-xl overflow-hidden shadow-md">
               <HazardDistrictMap
                 selectedHazards={selectedHazards}
+                selectedTypologies={selectedTypologies}
                 onDistrictClick={setClickedDistrict}
               />
             </div>

@@ -214,6 +214,25 @@ export const aqiObservations = pgTable("aqi_observations", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Technologies Library
+export const technologies = pgTable("technologies", {
+  id: varchar("id", { length: 100 }).primaryKey(), // same as slug
+  slug: varchar("slug", { length: 100 }).notNull().unique(),
+  title: varchar("title", { length: 255 }).notNull(),
+  category: varchar("category", { length: 50 }).notNull(), // sanitation | water | waste | adaptation
+  description: text("description").notNull(),
+  climateResilience: text("climate_resilience").notNull(),
+  suitableConditions: text("suitable_conditions").array().notNull(),
+  advantages: text("advantages").array().notNull(),
+  limitations: text("limitations").array().notNull(),
+  maintenanceLevel: varchar("maintenance_level", { length: 20 }).notNull(),
+  costLevel: varchar("cost_level", { length: 20 }).notNull(),
+  relatedHazards: text("related_hazards").array().notNull(),
+  typology: text("typology").array().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // User schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -287,3 +306,11 @@ export type Intervention = typeof interventions.$inferSelect;
 export type InsertIntervention = z.infer<typeof insertInterventionSchema>;
 export type CommunityReport = typeof communityReports.$inferSelect;
 export type InsertCommunityReport = z.infer<typeof insertCommunityReportSchema>;
+
+// Technology schemas
+export const insertTechnologySchema = createInsertSchema(technologies).omit({
+  createdAt: true,
+  updatedAt: true,
+});
+export type Technology = typeof technologies.$inferSelect;
+export type InsertTechnology = z.infer<typeof insertTechnologySchema>;
