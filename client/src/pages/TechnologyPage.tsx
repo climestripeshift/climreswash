@@ -29,7 +29,6 @@ import {
 } from "lucide-react";
 import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
 import L from "leaflet";
-import "leaflet/dist/leaflet.css";
 import { useQuery } from "@tanstack/react-query";
 
 const HAZARD_ICONS: Record<string, string> = {
