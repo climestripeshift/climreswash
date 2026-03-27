@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,10 +9,10 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Trash2, Save, RefreshCw, Database, CloudRain, Droplets, ArrowLeft, Search, CheckCircle, Edit3, X, BookOpen } from "lucide-react";
+import { Plus, Trash2, Save, RefreshCw, Database, CloudRain, Droplets, ArrowLeft, Search, CheckCircle, Edit3, X, BookOpen, LogOut, Upload, AlertCircle } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchDistricts, deleteDistrict, fetchIntegrations, updateIntegration } from "@/lib/api";
@@ -514,12 +514,51 @@ function TechnologyManagerTab() {
 export default function AdminDashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, navigate] = useLocation();
   const [search, setSearch] = useState('');
   const [editingDistrict, setEditingDistrict] = useState<DistrictData | null>(null);
+  const [importingCVI, setImportingCVI] = useState(false);
+
+  const { data: authUser, isLoading: authLoading, isError: authError } = useQuery({
+    queryKey: ['auth-me'],
+    queryFn: () => fetch('/api/auth/me', { credentials: 'include' }).then(r => r.ok ? r.json() : Promise.reject()),
+    retry: false,
+  });
+
+  useEffect(() => {
+    if (!authLoading && authError) {
+      navigate('/admin/login');
+    }
+  }, [authLoading, authError, navigate]);
+
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+    queryClient.clear();
+    navigate('/admin/login');
+  };
+
+  const handleImportCVI = async () => {
+    setImportingCVI(true);
+    try {
+      const res = await fetch('/api/admin/import-cvi', { method: 'POST', credentials: 'include' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Import failed');
+      queryClient.invalidateQueries({ queryKey: ['districts'] });
+      toast({
+        title: `CVI Import Complete`,
+        description: `Updated ${data.updated} of ${data.total} districts. ${data.notFound.length} not matched.`,
+      });
+    } catch (e: any) {
+      toast({ title: 'Import Failed', description: e.message, variant: 'destructive' });
+    } finally {
+      setImportingCVI(false);
+    }
+  };
 
   const { data: districts = [], isLoading: districtsLoading } = useQuery({
     queryKey: ['districts'],
-    queryFn: fetchDistricts
+    queryFn: fetchDistricts,
+    enabled: !!authUser,
   });
 
   const { data: integrations = [] } = useQuery({
@@ -556,6 +595,16 @@ export default function AdminDashboard() {
     );
   }, [districts, search]);
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (authError || !authUser) return null;
+
   return (
     <div className="min-h-screen bg-background p-6 space-y-8">
       <div className="flex items-center justify-between">
@@ -566,9 +615,28 @@ export default function AdminDashboard() {
             </Link>
             <h1 className="text-3xl font-mono font-bold tracking-tight">Admin Console</h1>
           </div>
-          <p className="text-muted-foreground ml-14">Manage data sources, hazard intensities, and API integrations.</p>
+          <p className="text-muted-foreground ml-14">
+            Signed in as <span className="font-medium text-foreground">{authUser.username}</span>
+            {" · "}Manage data sources, hazard intensities, and API integrations.
+          </p>
         </div>
-        <ThemeToggle />
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleImportCVI}
+            disabled={importingCVI}
+            title="Import CEEW CVI Excel data into districts"
+          >
+            {importingCVI ? <RefreshCw className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Upload className="h-3.5 w-3.5 mr-1.5" />}
+            {importingCVI ? "Importing..." : "Import CVI Data"}
+          </Button>
+          <ThemeToggle />
+          <Button variant="ghost" size="sm" onClick={handleLogout} className="text-muted-foreground">
+            <LogOut className="h-4 w-4 mr-1.5" />
+            Logout
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="data" className="w-full">

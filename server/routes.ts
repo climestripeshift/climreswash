@@ -4,6 +4,8 @@ import { storage } from "./storage";
 import { insertDistrictSchema, insertAlertSchema, insertAqiObservationSchema, insertInterventionSchema, insertCommunityReportSchema, insertCountrySchema, insertStateSchema, insertBlockSchema } from "@shared/schema";
 import { fromError } from "zod-validation-error";
 import { recomputeAllAlerts } from "./earlyWarning";
+import { loginHandler, logoutHandler, meHandler, requireAdmin } from "./auth";
+import { importCVIData } from "./importCVI";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -94,7 +96,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/districts", async (req, res) => {
+  app.post("/api/districts", requireAdmin, async (req, res) => {
     try {
       const validated = insertDistrictSchema.parse(req.body);
       const district = await storage.createDistrict(validated);
@@ -107,7 +109,7 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/districts/:id", async (req, res) => {
+  app.patch("/api/districts/:id", requireAdmin, async (req, res) => {
     try {
       const district = await storage.updateDistrict(req.params.id, req.body);
       if (!district) {
@@ -119,7 +121,7 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/districts/:id", async (req, res) => {
+  app.delete("/api/districts/:id", requireAdmin, async (req, res) => {
     try {
       const deleted = await storage.deleteDistrict(req.params.id);
       if (!deleted) {
@@ -483,7 +485,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/technologies", async (req, res) => {
+  app.post("/api/technologies", requireAdmin, async (req, res) => {
     try {
       const tech = await storage.createTechnology(req.body);
       res.status(201).json(tech);
@@ -492,7 +494,7 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/technologies/:id", async (req, res) => {
+  app.patch("/api/technologies/:id", requireAdmin, async (req, res) => {
     try {
       const tech = await storage.updateTechnology(req.params.id, req.body);
       if (!tech) return res.status(404).json({ error: "Not found" });
@@ -502,11 +504,26 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/technologies/:id", async (req, res) => {
+  app.delete("/api/technologies/:id", requireAdmin, async (req, res) => {
     try {
       const deleted = await storage.deleteTechnology(req.params.id);
       if (!deleted) return res.status(404).json({ error: "Not found" });
       res.status(204).send();
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // ── Auth routes ───────────────────────────────────────────────────────────
+  app.post("/api/auth/login", loginHandler);
+  app.post("/api/auth/logout", logoutHandler);
+  app.get("/api/auth/me", meHandler);
+
+  // ── Admin: CVI Data Import ─────────────────────────────────────────────────
+  app.post("/api/admin/import-cvi", requireAdmin, async (_req, res) => {
+    try {
+      const result = await importCVIData();
+      res.json(result);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }

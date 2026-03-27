@@ -1,9 +1,10 @@
 import { db } from "./db";
-import { countries, states, districts, aqiObservations, technologies } from "@shared/schema";
+import { countries, states, districts, aqiObservations, technologies, users } from "@shared/schema";
 import { getAqiCategory } from "./earlyWarning";
 import { count } from "drizzle-orm";
 import * as fs from "fs";
 import * as path from "path";
+import bcrypt from "bcryptjs";
 
 const TECH_SEED_DATA = [
   { id: 'twin-pit', slug: 'twin-pit', title: 'Twin Pit Toilet', category: 'sanitation', description: 'Twin pit toilets consist of two alternating pits that allow safe decomposition of human waste. When one pit fills up, it is sealed and the other pit is used. After 1-2 years, the sealed pit contents are safely composted and can be removed.', climateResilience: 'Moderate resilience to climate extremes. Works well in areas with variable rainfall but may be vulnerable in high water table or flood-prone regions. Requires careful siting in areas with seasonal flooding.', suitableConditions: ['Areas with stable soil conditions', 'Regions with low to medium water table', 'Rural and peri-urban settings', 'Areas with space for two pits'], advantages: ['Low cost and simple construction', 'No water required for operation', 'Produces safe, reusable compost', 'Minimal maintenance between pit switches', 'Long operational life (15-20 years)'], limitations: ['Not suitable for high water table areas', 'Requires space for two pits', 'May require desludging after 10+ years', 'Vulnerable to flooding if not elevated'], maintenanceLevel: 'Low', costLevel: 'Low', relatedHazards: ['Flood', 'Drought'], typology: ['Plains / Alluvial', 'Desert / Arid', 'Rocky / Hilly'] },
@@ -226,5 +227,25 @@ async function seedTechnologiesIfEmpty(): Promise<void> {
     }
   } catch (e) {
     console.error("[autoSeed] Tech seeding failed:", e);
+  }
+  await seedAdminUserIfEmpty();
+}
+
+async function seedAdminUserIfEmpty(): Promise<void> {
+  try {
+    const userCountResult = await db.select({ value: count() }).from(users);
+    const userCount = userCountResult[0]?.value ?? 0;
+    if (userCount === 0) {
+      const hashed = await bcrypt.hash("admin123", 10);
+      await db.insert(users).values({
+        username: "admin",
+        password: hashed,
+      }).onConflictDoNothing();
+      console.log(`[autoSeed] ✅ Admin user created — username: admin, password: admin123`);
+    } else {
+      console.log(`[autoSeed] Admin user already exists — skipping.`);
+    }
+  } catch (e) {
+    console.error("[autoSeed] Admin user seeding failed:", e);
   }
 }
