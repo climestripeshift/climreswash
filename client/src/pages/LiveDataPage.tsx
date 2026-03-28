@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef, createContext, useContext } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ChevronDown, ChevronUp, TrendingUp, Users, AlertTriangle,
   Droplets, Activity, Shield, Zap, Wind, Heart, ArrowLeft, ExternalLink,
-  Wrench, Droplet, FlaskConical, Leaf, ArrowRight
+  Wrench, Droplet, FlaskConical, Leaf, ArrowRight, MapPin, X
 } from "lucide-react";
 import { getRecommendedTechnologies } from "@/lib/technologyContent";
 
@@ -210,6 +210,43 @@ const IMPROVE_TIPS: Record<string, { title: string; tips: string[]; impact: stri
   }
 };
 
+// ── Mappable indicator config ─────────────────────────────────────────────────
+const INDICATOR_CONFIG: Record<string, { label: string; inverse?: boolean; min: number; max: number; unit?: string }> = {
+  waterAccessPercent:          { label: "Safe Water Access",          min: 0, max: 100, unit: "%" },
+  toiletCoveragePercent:       { label: "Toilet Coverage (ODF)",      min: 0, max: 100, unit: "%" },
+  handwashingFacilityPercent:  { label: "Handwashing Facility",       min: 0, max: 100, unit: "%" },
+  schoolToiletPercent:         { label: "School Toilet Coverage",     min: 0, max: 100, unit: "%" },
+  schoolWaterPercent:          { label: "School Water Access",        min: 0, max: 100, unit: "%" },
+  anganwadiToiletPercent:      { label: "Anganwadi Toilet Coverage",  min: 0, max: 100, unit: "%" },
+  anganwadiWaterPercent:       { label: "Anganwadi Water Access",     min: 0, max: 100, unit: "%" },
+  malnutritionStunting:        { label: "Stunting %",    inverse: true, min: 0, max: 60, unit: "%" },
+  malnutritionWasting:         { label: "Wasting %",     inverse: true, min: 0, max: 30, unit: "%" },
+  malnutritionUnderweight:     { label: "Underweight %", inverse: true, min: 0, max: 60, unit: "%" },
+  infantMortalityRate:         { label: "Infant Mortality",  inverse: true, min: 0, max: 80,  unit: "/1k" },
+  maternalMortalityRatio:      { label: "Maternal Mortality", inverse: true, min: 0, max: 500, unit: "/100k" },
+  vulnerabilityScore:          { label: "Vulnerability Score", inverse: true, min: 0, max: 1 },
+  adaptationScore:             { label: "Adaptation Score",           min: 0, max: 1 },
+};
+
+// 5-tier color scale: low→high coverage = red→green; inverted for "lower is better"
+function getIndicatorColor(pct: number, inverse?: boolean): string {
+  const v = inverse ? 100 - pct : pct;
+  if (v < 20) return '#ef4444';
+  if (v < 40) return '#f97316';
+  if (v < 60) return '#eab308';
+  if (v < 80) return '#22c55e';
+  return '#16a34a';
+}
+
+// Available hazards for filter pills
+const HAZARD_PILLS = ['Flood', 'Drought', 'Heatwave', 'Cyclone', 'Dust Storm', 'Heavy Rainfall'];
+
+// ── MapIt Context ─────────────────────────────────────────────────────────────
+const MapItContext = createContext<{
+  activeIndicator: string | null;
+  onMapIt: (key: string) => void;
+}>({ activeIndicator: null, onMapIt: () => {} });
+
 // ── Score status helper ──────────────────────────────────────────────────────
 function getStatus(value: number, inverse = false, thresholds = [25, 50, 75]): {
   label: string; color: string; bg: string;
@@ -237,26 +274,33 @@ function IndicatorRow({
   inverse?: boolean; tipKey?: string; description?: string;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const { activeIndicator, onMapIt } = useContext(MapItContext);
+  const isMappable = tipKey && INDICATOR_CONFIG[tipKey];
+  const isActiveOnMap = isMappable && activeIndicator === tipKey;
+
   const tip = tipKey ? IMPROVE_TIPS[tipKey] : null;
   const displayMax = max ?? 100;
   const pct = value != null ? Math.min(100, (value / displayMax) * 100) : 0;
   const status = value != null ? getStatus(pct, inverse) : { label: "N/A", color: "#94a3b8", bg: "#f8fafc" };
 
   return (
-    <div className="border border-border rounded-lg overflow-hidden mb-2">
+    <div
+      className="border rounded-lg overflow-hidden mb-2 transition-all"
+      style={{ borderColor: isActiveOnMap ? U : undefined, boxShadow: isActiveOnMap ? `0 0 0 2px ${U}33` : undefined }}
+    >
       <div className="px-4 py-3 flex items-center gap-3 flex-wrap">
         <div className="flex-1 min-w-[160px]">
           <div className="text-sm font-medium text-foreground">{label}</div>
           {description && <div className="text-xs text-muted-foreground mt-0.5">{description}</div>}
         </div>
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
           <div className="text-right min-w-[80px]">
             <span className="text-lg font-bold text-foreground">
               {value != null ? (Number.isInteger(value) || value > 10 ? Math.round(value) : value.toFixed(3)) : "—"}
             </span>
             {unit && <span className="text-xs text-muted-foreground ml-1">{unit}</span>}
           </div>
-          <div className="w-32 h-2 bg-muted rounded-full overflow-hidden">
+          <div className="w-28 h-2 bg-muted rounded-full overflow-hidden">
             <div
               className="h-full rounded-full transition-all duration-700"
               style={{ width: `${pct}%`, background: status.color }}
@@ -268,6 +312,22 @@ function IndicatorRow({
           >
             {status.label}
           </Badge>
+          {isMappable && (
+            <Button
+              variant={isActiveOnMap ? "default" : "outline"}
+              size="sm"
+              className="text-xs h-7 gap-1 shrink-0"
+              style={isActiveOnMap
+                ? { background: U, color: 'white', borderColor: U }
+                : { borderColor: U, color: U }}
+              onClick={() => onMapIt(tipKey!)}
+              data-testid={`mapit-${tipKey}`}
+              title={isActiveOnMap ? "Clear map filter" : "Show on map"}
+            >
+              <MapPin className="h-3 w-3" />
+              {isActiveOnMap ? "On Map" : "Map It"}
+            </Button>
+          )}
           {tip && (
             <Button
               variant="outline"
@@ -278,7 +338,7 @@ function IndicatorRow({
               data-testid={`improve-${tipKey}`}
             >
               <TrendingUp className="h-3 w-3" />
-              Improve Score
+              Improve
               {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
             </Button>
           )}
@@ -382,7 +442,8 @@ function fmtN(n: number) {
 // ── Main Component ────────────────────────────────────────────────────────────
 // ── Live Map Component ────────────────────────────────────────────────────────
 function LiveMap({
-  geoJsonData, districtDataMap, idStateMap, selState, selDistrict, onSelectDistrict
+  geoJsonData, districtDataMap, idStateMap, selState, selDistrict, onSelectDistrict,
+  activeIndicator, activeHazardFilter
 }: {
   geoJsonData: any;
   districtDataMap: Record<string, any>;
@@ -390,6 +451,8 @@ function LiveMap({
   selState: string;
   selDistrict: string;
   onSelectDistrict: (stateName: string, districtId: string) => void;
+  activeIndicator: string | null;
+  activeHazardFilter: string | null;
 }) {
   const getVulnColor = (score: number) => {
     if (score > 0.7) return '#ef4444';
@@ -397,6 +460,17 @@ function LiveMap({
     if (score > 0.3) return '#eab308';
     if (score > 0.15) return '#22c55e';
     return '#16a34a';
+  };
+
+  const indCfg = activeIndicator ? INDICATOR_CONFIG[activeIndicator] : null;
+
+  const getDistrictIndicatorColor = (data: any): string => {
+    if (!indCfg || !activeIndicator) return getVulnColor(data.vulnerabilityScore ?? 0);
+    const raw = data[activeIndicator];
+    if (raw == null) return '#475569';
+    const span = indCfg.max - indCfg.min;
+    const pct = span > 0 ? Math.min(100, Math.max(0, ((raw - indCfg.min) / span) * 100)) : 0;
+    return getIndicatorColor(pct, indCfg.inverse);
   };
 
   const getFeatureState = useCallback((feature: any) => {
@@ -409,10 +483,10 @@ function LiveMap({
     const featureState = getFeatureState(feature);
     const data = name ? districtDataMap[name] : undefined;
 
-    const isSelectedDistrict = data && data.id === selDistrict;
-    const isInSelectedState = selState ? featureState === selState : true;
+    if (!data) return { fillColor: '#1e293b', weight: 0.3, opacity: 0.5, color: '#0f172a', fillOpacity: 0.3 };
 
-    if (!data) return { fillColor: '#475569', weight: 0.5, opacity: 1, color: '#1e293b', fillOpacity: 0.2 };
+    const isSelectedDistrict = data.id === selDistrict;
+    const isInSelectedState = selState ? featureState === selState : true;
 
     if (isSelectedDistrict) {
       return { fillColor: U, weight: 3, opacity: 1, color: '#fff', fillOpacity: 0.95 };
@@ -421,10 +495,20 @@ function LiveMap({
       return { fillColor: '#334155', weight: 0.3, opacity: 0.5, color: '#1e293b', fillOpacity: 0.12 };
     }
 
-    const color = getVulnColor(data.vulnerabilityScore ?? 0);
-    const opacity = selState && isInSelectedState ? 0.85 : selState ? 0.2 : 0.65;
+    // Hazard filter: dim districts that don't have the active hazard
+    const hasHazard = !activeHazardFilter ||
+      (data.climateRisks || []).some((r: string) => r.toLowerCase() === activeHazardFilter.toLowerCase());
+
+    if (!hasHazard) {
+      return { fillColor: '#1e293b', weight: 0.3, opacity: 0.5, color: '#0f172a', fillOpacity: 0.15 };
+    }
+
+    const color = getDistrictIndicatorColor(data);
+    const baseOpacity = selState && isInSelectedState ? 0.88 : selState ? 0.2 : 0.72;
+    // Boost opacity for hazard-filtered districts (so they stand out from dimmed ones)
+    const opacity = activeHazardFilter ? 0.9 : baseOpacity;
     return { fillColor: color, weight: isInSelectedState && selState ? 1 : 0.5, opacity: 1, color: '#1e293b', fillOpacity: opacity };
-  }, [districtDataMap, idStateMap, selState, selDistrict, getFeatureState]);
+  }, [districtDataMap, idStateMap, selState, selDistrict, getFeatureState, activeIndicator, activeHazardFilter, indCfg]);
 
   const onEachFeature = useCallback((feature: any, layer: L.Layer) => {
     const name = feature.properties.DISTRICT?.toUpperCase();
@@ -440,10 +524,12 @@ function LiveMap({
       mouseout: (e: any) => {
         const isSelectedDistrict = data.id === selDistrict;
         const isInSelectedState = selState ? featureState === selState : true;
+        const hasHazard = !activeHazardFilter ||
+          (data.climateRisks || []).some((r: string) => r.toLowerCase() === activeHazardFilter.toLowerCase());
         e.target.setStyle({
           weight: isSelectedDistrict ? 3 : isInSelectedState && selState ? 1 : 0.5,
           color: isSelectedDistrict ? '#fff' : '#1e293b',
-          fillOpacity: isSelectedDistrict ? 0.95 : isInSelectedState ? 0.75 : selState ? 0.12 : 0.65,
+          fillOpacity: isSelectedDistrict ? 0.95 : !hasHazard ? 0.15 : isInSelectedState ? 0.75 : selState ? 0.12 : 0.65,
         });
       },
       click: () => {
@@ -451,15 +537,26 @@ function LiveMap({
       },
     });
 
+    // Build tooltip — show indicator value when active
+    const vulnLine = `Vulnerability: <strong style="color:${getVulnColor(data.vulnerabilityScore)}">${data.vulnerabilityCategory || (data.vulnerabilityScore * 100).toFixed(0) + '%'}</strong>`;
+    const indLine = indCfg && activeIndicator
+      ? `${indCfg.label}: <strong style="color:${getDistrictIndicatorColor(data)}">${data[activeIndicator] != null ? Math.round(data[activeIndicator]) + (indCfg.unit || '') : 'No data'}</strong>`
+      : null;
+    const hazLine = activeHazardFilter
+      ? `Hazard filter: <span style="color:${(data.climateRisks || []).some((r: string) => r.toLowerCase() === activeHazardFilter.toLowerCase()) ? '#22c55e' : '#ef4444'}">${activeHazardFilter}</span>`
+      : null;
+
     (layer as any).bindTooltip(
-      `<div style="font-size:12px;line-height:1.5">
+      `<div style="font-size:12px;line-height:1.6">
         <strong>${data.name}</strong><br/>
         <span style="color:#94a3b8">${featureState}</span><br/>
-        Vulnerability: <strong style="color:${getVulnColor(data.vulnerabilityScore)}">${data.vulnerabilityCategory || (data.vulnerabilityScore * 100).toFixed(0) + '%'}</strong>
+        ${vulnLine}
+        ${indLine ? '<br/>' + indLine : ''}
+        ${hazLine ? '<br/>' + hazLine : ''}
       </div>`,
       { sticky: true, className: 'leaflet-hazard-tooltip' }
     );
-  }, [districtDataMap, idStateMap, selState, selDistrict, onSelectDistrict, getFeatureState]);
+  }, [districtDataMap, idStateMap, selState, selDistrict, onSelectDistrict, getFeatureState, activeIndicator, activeHazardFilter, indCfg]);
 
   if (!geoJsonData || Object.keys(districtDataMap).length === 0) {
     return (
@@ -470,10 +567,18 @@ function LiveMap({
     );
   }
 
+  // Dynamic legend
+  const legendTitle = indCfg ? indCfg.label : "Vulnerability";
+  const legendItems = indCfg
+    ? (indCfg.inverse
+        ? [['#16a34a','Very Low (best)'],['#22c55e','Low'],['#eab308','Moderate'],['#f97316','High'],['#ef4444','Very High (worst)']]
+        : [['#ef4444','Poor (<20%)'],['#f97316','Low (20–40%)'],['#eab308','Moderate (40–60%)'],['#22c55e','Good (60–80%)'],['#16a34a','High (80%+)']])
+    : [['#ef4444','Very High'],['#f97316','High'],['#eab308','Moderate'],['#22c55e','Low'],['#16a34a','Very Low']];
+
   return (
     <div className="relative w-full h-full rounded-xl overflow-hidden">
       <MapContainer
-        key={`${selState}-${selDistrict}`}
+        key={`${selState}-${selDistrict}-${activeIndicator}-${activeHazardFilter}`}
         center={[22.5, 82.5]}
         zoom={selState ? 6 : 5}
         style={{ height: '100%', width: '100%', background: '#0f172a' }}
@@ -485,31 +590,57 @@ function LiveMap({
           attribution="© CartoDB"
         />
         <GeoJSON
-          key={`geo-${selState}-${selDistrict}-${Object.keys(districtDataMap).length}`}
+          key={`geo-${selState}-${selDistrict}-${activeIndicator}-${activeHazardFilter}-${Object.keys(districtDataMap).length}`}
           data={geoJsonData}
           style={style}
           onEachFeature={onEachFeature}
         />
       </MapContainer>
+
+      {/* Active filter chips on the map */}
+      {(activeIndicator || activeHazardFilter) && (
+        <div className="absolute top-3 left-3 z-[1000] flex flex-col gap-1.5">
+          {activeIndicator && indCfg && (
+            <div className="flex items-center gap-1 bg-black/80 backdrop-blur border px-2 py-1 rounded-full text-xs text-white" style={{ borderColor: U }}>
+              <MapPin className="h-3 w-3 shrink-0" style={{ color: U }} />
+              <span style={{ color: U }}>{indCfg.label}</span>
+            </div>
+          )}
+          {activeHazardFilter && (
+            <div className="flex items-center gap-1 bg-black/80 backdrop-blur border border-orange-400/60 px-2 py-1 rounded-full text-xs text-white">
+              <Wind className="h-3 w-3 shrink-0 text-orange-400" />
+              <span className="text-orange-300">{activeHazardFilter} filter</span>
+            </div>
+          )}
+        </div>
+      )}
+      {!activeIndicator && !activeHazardFilter && (
+        <div className="absolute top-3 left-3 z-[1000] bg-black/60 backdrop-blur px-2 py-1 rounded text-xs text-white/70">
+          Click district to filter · Use "Map It" to change coloring
+        </div>
+      )}
+
       {/* Legend */}
-      <div className="absolute bottom-3 right-3 z-[1000] bg-black/70 backdrop-blur border border-white/10 p-2 rounded-lg text-xs space-y-1 text-white">
-        <div className="font-semibold text-[10px] uppercase tracking-wider text-white/60 mb-1">Vulnerability</div>
-        {[['#ef4444','Very High'],['#f97316','High'],['#eab308','Moderate'],['#22c55e','Low'],['#16a34a','Very Low']].map(([c,l]) => (
+      <div className="absolute bottom-3 right-3 z-[1000] bg-black/70 backdrop-blur border border-white/10 p-2 rounded-lg text-xs space-y-1 text-white max-w-[140px]">
+        <div className="font-semibold text-[10px] uppercase tracking-wider text-white/60 mb-1 truncate">{legendTitle}</div>
+        {legendItems.map(([c, l]) => (
           <div key={l} className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full shrink-0" style={{ background: c }} />
-            <span className="text-white/80">{l}</span>
+            <span className="text-white/80 text-[10px]">{l}</span>
           </div>
         ))}
-        {selState && (
+        {activeHazardFilter && (
           <div className="flex items-center gap-1.5 pt-1 border-t border-white/10">
-            <span className="w-2 h-2 rounded-full shrink-0" style={{ background: U }} />
-            <span className="text-white/80">Selected</span>
+            <span className="w-2 h-2 rounded-full shrink-0 bg-slate-600" />
+            <span className="text-white/50 text-[10px]">No {activeHazardFilter}</span>
           </div>
         )}
-      </div>
-      {/* Hint */}
-      <div className="absolute top-3 left-3 z-[1000] bg-black/60 backdrop-blur px-2 py-1 rounded text-xs text-white/70">
-        Click district to filter
+        {selDistrict && (
+          <div className="flex items-center gap-1.5 pt-1 border-t border-white/10">
+            <span className="w-2 h-2 rounded-full shrink-0" style={{ background: U }} />
+            <span className="text-white/80 text-[10px]">Selected</span>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -521,7 +652,13 @@ export default function LiveDataPage() {
   const [idStateMap, setIdStateMap] = useState<Record<string, { state: string; name: string }>>({});
   const [selState, setSelState] = useState<string>("");
   const [selDistrict, setSelDistrict] = useState<string>("");
+  const [activeIndicator, setActiveIndicator] = useState<string | null>(null);
+  const [activeHazardFilter, setActiveHazardFilter] = useState<string | null>(null);
   const mapClickRef = useRef(false);
+
+  const handleMapIt = useCallback((key: string) => {
+    setActiveIndicator(prev => prev === key ? null : key);
+  }, []);
 
   const { data: allDistricts = [], isLoading } = useQuery<any[]>({
     queryKey: ["districts"],
@@ -784,19 +921,50 @@ export default function LiveDataPage() {
         <div className="flex gap-4 items-start">
 
           {/* Left: Map (sticky) — hidden on small screens */}
-          <div className="hidden lg:block w-[42%] sticky top-14" style={{ height: 'calc(100vh - 3.6rem)' }}>
-            <LiveMap
-              geoJsonData={geoJsonData}
-              districtDataMap={districtDataMap}
-              idStateMap={idStateMap}
-              selState={selState}
-              selDistrict={selDistrict}
-              onSelectDistrict={onSelectDistrict}
-            />
+          <div className="hidden lg:flex lg:flex-col w-[42%] sticky top-14 gap-2" style={{ height: 'calc(100vh - 3.6rem)' }}>
+            {/* Hazard filter pills */}
+            <div className="flex flex-wrap gap-1.5 px-1">
+              <span className="text-xs text-muted-foreground self-center mr-1">Hazard:</span>
+              {HAZARD_PILLS.map(h => (
+                <button
+                  key={h}
+                  onClick={() => setActiveHazardFilter(prev => prev === h ? null : h)}
+                  data-testid={`hazard-pill-${h}`}
+                  className="text-xs px-2.5 py-1 rounded-full border transition-all"
+                  style={activeHazardFilter === h
+                    ? { background: '#f97316', borderColor: '#f97316', color: 'white', fontWeight: 600 }
+                    : { borderColor: 'var(--border)', color: 'var(--muted-foreground)', background: 'transparent' }
+                  }
+                >
+                  {h}
+                </button>
+              ))}
+              {(activeIndicator || activeHazardFilter) && (
+                <button
+                  onClick={() => { setActiveIndicator(null); setActiveHazardFilter(null); }}
+                  className="text-xs px-2 py-1 rounded-full border border-dashed border-red-400/60 text-red-400 flex items-center gap-1"
+                >
+                  <X className="h-3 w-3" /> Clear all
+                </button>
+              )}
+            </div>
+            <div className="flex-1 min-h-0">
+              <LiveMap
+                geoJsonData={geoJsonData}
+                districtDataMap={districtDataMap}
+                idStateMap={idStateMap}
+                selState={selState}
+                selDistrict={selDistrict}
+                onSelectDistrict={onSelectDistrict}
+                activeIndicator={activeIndicator}
+                activeHazardFilter={activeHazardFilter}
+              />
+            </div>
           </div>
 
           {/* Right: Indicators */}
           <div className="flex-1 space-y-4 pb-6">
+        <MapItContext.Provider value={{ activeIndicator, onMapIt: handleMapIt }}>
         {isLoading ? (
           <div className="flex items-center justify-center h-64 text-muted-foreground">
             <div className="animate-spin rounded-full h-8 w-8 border-2 border-t-transparent mr-3" style={{ borderColor: U, borderTopColor: "transparent" }} />
@@ -1234,6 +1402,7 @@ export default function LiveDataPage() {
             </div>
           </>
         )}
+        </MapItContext.Provider>
           </div>
         </div>
       </div>
