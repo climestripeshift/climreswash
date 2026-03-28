@@ -152,17 +152,26 @@ function HazardDistrictMap({ selectedHazards, selectedTypologies, onDistrictClic
       return { fillColor, weight: 0.5, opacity: 1, color: '#1e293b', fillOpacity: 0.55 };
     }
 
-    // Hazard mode
+    // Hazard mode — color by number of matching hazards
     const risks: string[] = data.climateRisks || [];
     const intensities: Record<string, number> = data.hazardIntensities || {};
-    const matchingHazard = selectedHazards.find(h => risks.includes(h));
-    if (!matchingHazard) {
+    const matchingHazards = selectedHazards.filter(h => risks.includes(h));
+    if (matchingHazards.length === 0) {
       return { fillColor: '#334155', weight: 0.5, opacity: 1, color: '#0f172a', fillOpacity: 0.2 };
     }
-    const intensity = intensities[matchingHazard] ?? null;
+    if (matchingHazards.length >= 3) {
+      // 3+ hazards: critical multi-hazard — violet
+      return { fillColor: '#7c3aed', weight: 1.5, opacity: 1, color: '#1e293b', fillOpacity: 0.9 };
+    }
+    if (matchingHazards.length === 2) {
+      // 2 hazards: compound risk — rose/red
+      return { fillColor: '#f43f5e', weight: 1.5, opacity: 1, color: '#1e293b', fillOpacity: 0.85 };
+    }
+    // Exactly 1 matching hazard — use that hazard's specific color
+    const intensity = intensities[matchingHazards[0]] ?? null;
     const fillOpacity = intensity !== null ? 0.25 + intensity * 0.7 : 0.75;
     return {
-      fillColor: HAZARD_COLORS[matchingHazard] || '#888',
+      fillColor: HAZARD_COLORS[matchingHazards[0]] || '#888',
       weight: 1,
       opacity: 1,
       color: '#1e293b',
@@ -223,7 +232,7 @@ function HazardDistrictMap({ selectedHazards, selectedTypologies, onDistrictClic
         ${risks.length > 0 ? risks.map((r: string) => `<span style="color:${HAZARD_COLORS[r] || '#aaa'}">${HAZARD_ICONS[r] || '⚠️'} ${r}</span>`).join(' · ') : 'No risk data'}
         ${typologyLine}
         ${intensityLines ? `<br/><span style="font-size:11px;color:#94a3b8">Intensity:</span><br/>${intensityLines}` : ''}
-        ${matchCount > 0 && !intensityLines ? `<br/><span style="color:#86efac;font-size:11px">${matchCount} hazard${matchCount > 1 ? 's' : ''} match</span>` : ''}
+        ${matchCount >= 3 && !intensityLines ? `<br/><span style="color:#a78bfa;font-size:11px;font-weight:600">⚠ ${matchCount} hazards — Critical Multi-Hazard</span>` : matchCount === 2 && !intensityLines ? `<br/><span style="color:#f43f5e;font-size:11px;font-weight:600">⚠ 2 hazards — Compound Risk</span>` : matchCount === 1 && !intensityLines ? `<br/><span style="color:#86efac;font-size:11px">1 hazard match</span>` : ''}
       </div>`,
       { sticky: true, className: 'leaflet-hazard-tooltip' }
     );
@@ -287,13 +296,29 @@ function HazardDistrictMap({ selectedHazards, selectedTypologies, onDistrictClic
       <div className="absolute bottom-3 right-3 z-[1000] bg-card/95 backdrop-blur border border-border p-2.5 rounded-md text-xs space-y-1.5 max-w-[180px]">
         {selectedHazards.length > 0 ? (
           <>
-            <div className="font-semibold text-muted-foreground uppercase tracking-wider text-[10px] mb-1">Selected Hazards</div>
+            <div className="font-semibold text-muted-foreground uppercase tracking-wider text-[10px] mb-1">Hazard Filter</div>
             {selectedHazards.map(h => (
               <div key={h} className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: HAZARD_COLORS[h] }} />
-                <span>{HAZARD_ICONS[h]} {h}</span>
+                <span>{HAZARD_ICONS[h]} {h} only</span>
               </div>
             ))}
+            {selectedHazards.length > 1 && (
+              <>
+                <div className="border-t border-border my-1" />
+                <div className="font-semibold text-muted-foreground uppercase tracking-wider text-[10px] mb-1">Multi-Hazard</div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: '#f43f5e' }} />
+                  <span>2 hazards</span>
+                </div>
+                {selectedHazards.length > 2 && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: '#7c3aed' }} />
+                    <span>3+ hazards</span>
+                  </div>
+                )}
+              </>
+            )}
             <div className="flex items-center gap-1.5 pt-1 border-t border-border">
               <span className="w-2.5 h-2.5 rounded-full shrink-0 bg-slate-600" />
               <span className="text-muted-foreground">Not affected</span>
