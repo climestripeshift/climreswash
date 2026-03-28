@@ -262,9 +262,18 @@ function DistrictEditor({ district, onClose }: { district: DistrictData; onClose
   );
 
   const [risks, setRisks] = useState<string[]>(district.climateRisks || []);
-  const [vulnScore, setVulnScore] = useState(
-    Math.round(district.vulnerabilityScore * 100)
-  );
+  const [vulnScore, setVulnScore] = useState(Math.round(district.vulnerabilityScore * 100));
+
+  // Household WASH
+  const [waterAccess, setWaterAccess] = useState(Math.round(district.waterAccessPercent ?? 0));
+  const [toiletCoverage, setToiletCoverage] = useState(Math.round(district.toiletCoveragePercent ?? 0));
+  const [handwashing, setHandwashing] = useState(Math.round(district.handwashingFacilityPercent ?? 0));
+  // School WASH
+  const [schoolToilet, setSchoolToilet] = useState(Math.round(district.schoolToiletPercent ?? 0));
+  const [schoolWater, setSchoolWater] = useState(Math.round(district.schoolWaterPercent ?? 0));
+  // Anganwadi WASH
+  const [awcToilet, setAwcToilet] = useState(Math.round(district.anganwadiToiletPercent ?? 0));
+  const [awcWater, setAwcWater] = useState(Math.round(district.anganwadiWaterPercent ?? 0));
 
   const saveMutation = useMutation({
     mutationFn: () => {
@@ -276,6 +285,13 @@ function DistrictEditor({ district, onClose }: { district: DistrictData; onClose
         hazardIntensities: normalizedIntensities,
         climateRisks: risks,
         vulnerabilityScore: vulnScore / 100,
+        waterAccessPercent: waterAccess,
+        toiletCoveragePercent: toiletCoverage,
+        handwashingFacilityPercent: handwashing,
+        schoolToiletPercent: schoolToilet,
+        schoolWaterPercent: schoolWater,
+        anganwadiToiletPercent: awcToilet,
+        anganwadiWaterPercent: awcWater,
       });
     },
     onSuccess: () => {
@@ -376,6 +392,62 @@ function DistrictEditor({ district, onClose }: { district: DistrictData; onClose
             </div>
           ))}
         </div>
+      </div>
+
+      <Separator />
+
+      {/* WASH Indicators */}
+      <div className="space-y-4">
+        <div>
+          <Label className="text-sm font-semibold">WASH Coverage Indicators</Label>
+          <p className="text-xs text-muted-foreground mt-0.5">Set coverage percentages for household, school, and anganwadi WASH access.</p>
+        </div>
+
+        {/* Household */}
+        <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Household</div>
+        {[
+          { label: "Safe Water Access", value: waterAccess, set: setWaterAccess, color: "#3b82f6" },
+          { label: "Toilet Coverage (ODF)", value: toiletCoverage, set: setToiletCoverage, color: "#f97316" },
+          { label: "Handwashing Facility", value: handwashing, set: setHandwashing, color: "#22c55e" },
+        ].map(({ label, value, set, color }) => (
+          <div key={label} className="space-y-2 p-3 rounded-lg border border-border">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">{label}</span>
+              <span className="text-sm font-bold font-mono w-12 text-right" style={{ color }}>{value}%</span>
+            </div>
+            <Slider value={[value]} onValueChange={([v]) => set(v)} min={0} max={100} step={1} />
+          </div>
+        ))}
+
+        {/* Schools */}
+        <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pt-2">Schools</div>
+        {[
+          { label: "School Toilet Coverage", value: schoolToilet, set: setSchoolToilet, color: "#7c3aed" },
+          { label: "School Water Access", value: schoolWater, set: setSchoolWater, color: "#0ea5e9" },
+        ].map(({ label, value, set, color }) => (
+          <div key={label} className="space-y-2 p-3 rounded-lg border border-border">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">{label}</span>
+              <span className="text-sm font-bold font-mono w-12 text-right" style={{ color }}>{value}%</span>
+            </div>
+            <Slider value={[value]} onValueChange={([v]) => set(v)} min={0} max={100} step={1} />
+          </div>
+        ))}
+
+        {/* Anganwadis */}
+        <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pt-2">Anganwadis (ICDS Centres)</div>
+        {[
+          { label: "Anganwadi Toilet Coverage", value: awcToilet, set: setAwcToilet, color: "#ef4444" },
+          { label: "Anganwadi Water Access", value: awcWater, set: setAwcWater, color: "#14b8a6" },
+        ].map(({ label, value, set, color }) => (
+          <div key={label} className="space-y-2 p-3 rounded-lg border border-border">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">{label}</span>
+              <span className="text-sm font-bold font-mono w-12 text-right" style={{ color }}>{value}%</span>
+            </div>
+            <Slider value={[value]} onValueChange={([v]) => set(v)} min={0} max={100} step={1} />
+          </div>
+        ))}
       </div>
     </div>
   );

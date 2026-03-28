@@ -56,7 +56,9 @@ Preferred communication style: Simple, everyday language.
 - Vulnerability and adaptation scores
 - Population and at-risk demographics (children, elderly)
 - Climate risks and adaptation strategies
-- WASH indicators (water access, sanitation, hygiene)
+- WASH indicators — Household (water access, toilet coverage, handwashing)
+- WASH indicators — Schools (school_toilet_percent, school_water_percent)
+- WASH indicators — Anganwadis/ICDS (anganwadi_toilet_percent, anganwadi_water_percent)
 - Health metrics (infant/maternal mortality, malnutrition)
 - Infrastructure data (soil type, water supply, toilet technology)
 - Seasonal hazard data (monthly climate impacts)

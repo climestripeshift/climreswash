@@ -148,6 +148,46 @@ const IMPROVE_TIPS: Record<string, { title: string; tips: string[]; impact: stri
     ],
     impact: "20–30% increase in households with soap and water within 12 months"
   },
+  schoolToiletPercent: {
+    title: "Improve School Sanitation",
+    tips: [
+      "Prioritise construction of gender-separated, lockable toilets in all government schools under SBMG-Phase 2",
+      "Ensure all school toilets have running water, soap and are maintained daily by Swachh Bharat Swachh Vidyalaya (SBSV) norms",
+      "Link school toilet coverage to midday meal access — functional toilets improve attendance, especially for girls",
+      "Conduct biannual WASH in Schools (WinS) audits with School Management Committees (SMCs)"
+    ],
+    impact: "5–10 point drop in school dropout rate with fully functional, gender-separated school toilets"
+  },
+  schoolWaterPercent: {
+    title: "Improve School Water Access",
+    tips: [
+      "Install piped water connections or overhead tanks in all schools under Jal Jeevan Mission (JJM) — school priority category",
+      "Set up school-level water quality testing committees and display results publicly",
+      "Provide safe drinking water stations (ceramic/candle filters) in schools lacking piped supply",
+      "Integrate school water access data into district education planning dashboards"
+    ],
+    impact: "Improved learning outcomes and attendance for 100% of enrolled children with clean water in classrooms"
+  },
+  anganwadiToiletPercent: {
+    title: "Improve Anganwadi Sanitation",
+    tips: [
+      "Construct toilets in all ICDS Anganwadi Centres (AWCs) — target 100% coverage under Mission Poshan 2.0",
+      "Ensure AWC toilets are child-friendly (low height, easy flush) and cleaned daily by Anganwadi Workers (AWWs)",
+      "Provide hygiene kits (soap, disinfectant) to all AWCs on a monthly basis through the district ICDS office",
+      "Link AWC sanitation data with malnutrition programme monitoring — safe sanitation reduces diarrhoeal disease burden"
+    ],
+    impact: "3–5 point reduction in child malnutrition rates with clean, functional Anganwadi WASH facilities"
+  },
+  anganwadiWaterPercent: {
+    title: "Improve Anganwadi Water Access",
+    tips: [
+      "Ensure piped water connections in all AWCs under JJM institutional connections programme",
+      "Install food-grade water storage containers (50-litre minimum) in AWCs without piped connections",
+      "Train AWWs on safe water handling, boiling and chlorination protocols for infant feeding areas",
+      "Prioritise AWCs with children under 2 for emergency water supply during drought and heatwave periods"
+    ],
+    impact: "10–15% reduction in childhood diarrhoea incidence with safe water in all Anganwadi feeding centres"
+  },
   adaptationScore: {
     title: "Strengthen Adaptive Capacity",
     tips: [
@@ -581,6 +621,10 @@ export default function LiveDataPage() {
       maternalMortalityRatio: get("maternalMortalityRatio"),
       childMarriageRate: get("childMarriageRate"),
       dropoutRate: get("dropoutRate"),
+      schoolToiletPercent: get("schoolToiletPercent"),
+      schoolWaterPercent: get("schoolWaterPercent"),
+      anganwadiToiletPercent: get("anganwadiToiletPercent"),
+      anganwadiWaterPercent: get("anganwadiWaterPercent"),
       topHazards,
       hazardIntensities,
       adaptationStrategies: isSingle ? (d.adaptationStrategies || []) : [],
@@ -1007,7 +1051,7 @@ export default function LiveDataPage() {
                 tipKey="adaptationScore"
                 description="Composite score of WASH infrastructure and social resilience indicators"
               />
-              <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-1 mt-4 mb-2">WASH Coverage</div>
+              <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-1 mt-4 mb-2">WASH Coverage — Household</div>
               <IndicatorRow
                 label="Safe Water Access"
                 value={metrics.waterAccessPercent}
@@ -1031,6 +1075,40 @@ export default function LiveDataPage() {
                 max={100}
                 tipKey="handwashingFacilityPercent"
                 description="Households with soap and water available for handwashing"
+              />
+              <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-1 mt-4 mb-2">WASH Coverage — Schools</div>
+              <IndicatorRow
+                label="School Toilet Coverage"
+                value={metrics.schoolToiletPercent}
+                unit="%"
+                max={100}
+                tipKey="schoolToiletPercent"
+                description="Government schools with functional, gender-separated toilet facilities (SBSV norms)"
+              />
+              <IndicatorRow
+                label="School Water Access"
+                value={metrics.schoolWaterPercent}
+                unit="%"
+                max={100}
+                tipKey="schoolWaterPercent"
+                description="Government schools with safe drinking water available for students (JJM school priority)"
+              />
+              <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-1 mt-4 mb-2">WASH Coverage — Anganwadis (ICDS)</div>
+              <IndicatorRow
+                label="Anganwadi Toilet Coverage"
+                value={metrics.anganwadiToiletPercent}
+                unit="%"
+                max={100}
+                tipKey="anganwadiToiletPercent"
+                description="ICDS Anganwadi Centres with child-friendly, functional toilet facilities (Mission Poshan 2.0)"
+              />
+              <IndicatorRow
+                label="Anganwadi Water Access"
+                value={metrics.anganwadiWaterPercent}
+                unit="%"
+                max={100}
+                tipKey="anganwadiWaterPercent"
+                description="Anganwadi Centres with safe piped water for child feeding and food preparation (JJM AWC connections)"
               />
               {metrics.adaptationStrategies.length > 0 && (
                 <div className="mt-3 px-4 py-3 rounded-lg border border-border">

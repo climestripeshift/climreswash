@@ -98,10 +98,18 @@ export interface DistrictData {
   waterSupplyStrategy: string;
   dropoutRate: number;
   
-  // WASH Indicators
+  // WASH Indicators — Household
   waterAccessPercent: number;
   toiletCoveragePercent: number;
   handwashingFacilityPercent: number;
+
+  // WASH Indicators — Schools
+  schoolToiletPercent?: number | null;
+  schoolWaterPercent?: number | null;
+
+  // WASH Indicators — Anganwadis (ICDS)
+  anganwadiToiletPercent?: number | null;
+  anganwadiWaterPercent?: number | null;
   
   // Health & Social Indicators
   childMarriageRate: number;

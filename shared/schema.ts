@@ -79,10 +79,18 @@ export const districts = pgTable("districts", {
   waterSupplyStrategy: varchar("water_supply_strategy", { length: 150 }).notNull(),
   dropoutRate: real("dropout_rate").notNull(),
   
-  // WASH Indicators (Water, Sanitation, Hygiene)
+  // WASH Indicators — Household
   waterAccessPercent: real("water_access_percent").notNull().default(0),
   toiletCoveragePercent: real("toilet_coverage_percent").notNull().default(0),
   handwashingFacilityPercent: real("handwashing_facility_percent").notNull().default(0),
+
+  // WASH Indicators — Schools
+  schoolToiletPercent: real("school_toilet_percent").default(0),
+  schoolWaterPercent: real("school_water_percent").default(0),
+
+  // WASH Indicators — Anganwadis (ICDS Centres)
+  anganwadiToiletPercent: real("anganwadi_toilet_percent").default(0),
+  anganwadiWaterPercent: real("anganwadi_water_percent").default(0),
   
   // Health & Social Indicators
   childMarriageRate: real("child_marriage_rate").notNull().default(0),
