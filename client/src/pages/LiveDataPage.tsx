@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
@@ -340,11 +340,11 @@ function fmtN(n: number) {
 // ── Main Component ────────────────────────────────────────────────────────────
 // ── Live Map Component ────────────────────────────────────────────────────────
 function LiveMap({
-  geoJsonData, districtDataMap, geoData, selState, selDistrict, onSelectDistrict
+  geoJsonData, districtDataMap, idStateMap, selState, selDistrict, onSelectDistrict
 }: {
   geoJsonData: any;
   districtDataMap: Record<string, any>;
-  geoData: Record<string, string>;
+  idStateMap: Record<string, { state: string; name: string }>;
   selState: string;
   selDistrict: string;
   onSelectDistrict: (stateName: string, districtId: string) => void;
@@ -357,9 +357,14 @@ function LiveMap({
     return '#16a34a';
   };
 
+  const getFeatureState = useCallback((feature: any) => {
+    const id = feature.properties.ID;
+    return idStateMap[String(id)]?.state || feature.properties.STATE || '';
+  }, [idStateMap]);
+
   const style = useCallback((feature: any) => {
     const name = feature.properties.DISTRICT?.toUpperCase();
-    const featureState = geoData[name] || feature.properties.STATE || '';
+    const featureState = getFeatureState(feature);
     const data = name ? districtDataMap[name] : undefined;
 
     const isSelectedDistrict = data && data.id === selDistrict;
@@ -377,11 +382,11 @@ function LiveMap({
     const color = getVulnColor(data.vulnerabilityScore ?? 0);
     const opacity = selState && isInSelectedState ? 0.85 : selState ? 0.2 : 0.65;
     return { fillColor: color, weight: isInSelectedState && selState ? 1 : 0.5, opacity: 1, color: '#1e293b', fillOpacity: opacity };
-  }, [districtDataMap, geoData, selState, selDistrict]);
+  }, [districtDataMap, idStateMap, selState, selDistrict, getFeatureState]);
 
   const onEachFeature = useCallback((feature: any, layer: L.Layer) => {
     const name = feature.properties.DISTRICT?.toUpperCase();
-    const featureState = geoData[name] || feature.properties.STATE || '';
+    const featureState = getFeatureState(feature);
     const data = name ? districtDataMap[name] : undefined;
     if (!data) return;
 
@@ -412,7 +417,7 @@ function LiveMap({
       </div>`,
       { sticky: true, className: 'leaflet-hazard-tooltip' }
     );
-  }, [districtDataMap, geoData, selState, selDistrict, onSelectDistrict]);
+  }, [districtDataMap, idStateMap, selState, selDistrict, onSelectDistrict, getFeatureState]);
 
   if (!geoJsonData || Object.keys(districtDataMap).length === 0) {
     return (
@@ -471,8 +476,10 @@ function LiveMap({
 export default function LiveDataPage() {
   const [geoData, setGeoData] = useState<Record<string, string>>({});
   const [geoJsonData, setGeoJsonData] = useState<any>(null);
+  const [idStateMap, setIdStateMap] = useState<Record<string, { state: string; name: string }>>({});
   const [selState, setSelState] = useState<string>("");
   const [selDistrict, setSelDistrict] = useState<string>("");
+  const mapClickRef = useRef(false);
 
   const { data: allDistricts = [], isLoading } = useQuery<any[]>({
     queryKey: ["districts"],
@@ -480,30 +487,33 @@ export default function LiveDataPage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Load GeoJSON and build state mapping
+  // Load GeoJSON and reliable district-state map
   useEffect(() => {
-    fetch("/data/india.json")
-      .then(r => r.json())
-      .then((geo: any) => {
-        setGeoJsonData(geo);
-        const map: Record<string, string> = {};
-        geo.features.forEach((f: any) => {
-          const name = f.properties.NAME || f.properties.DISTRICT;
-          const state = f.properties.STATE;
-          if (name && state) map[name.toUpperCase()] = state;
-        });
-        setGeoData(map);
-      })
-      .catch(console.error);
+    Promise.all([
+      fetch("/data/india.json").then(r => r.json()),
+      fetch("/data/districtStateMap.json").then(r => r.json()),
+    ]).then(([geo, stateMap]: [any, any]) => {
+      setGeoJsonData(geo);
+      setIdStateMap(stateMap);
+      // Also build a name-based fallback for districts not in idStateMap
+      const map: Record<string, string> = {};
+      geo.features.forEach((f: any) => {
+        const name = f.properties.NAME || f.properties.DISTRICT;
+        const id = f.properties.ID;
+        const state = stateMap[String(id)]?.state || f.properties.STATE;
+        if (name && state) map[name.toUpperCase()] = state;
+      });
+      setGeoData(map);
+    }).catch(console.error);
   }, []);
 
-  // Enrich districts with state
+  // Enrich districts with state (use idStateMap first, fall back to geoData name-lookup)
   const enriched = useMemo(() =>
     allDistricts.map(d => ({
       ...d,
-      stateName: geoData[d.name?.toUpperCase()] || "Unknown"
+      stateName: idStateMap[d.id]?.state || geoData[d.name?.toUpperCase()] || "Unknown"
     })),
-    [allDistricts, geoData]
+    [allDistricts, idStateMap, geoData]
   );
 
   const stateList = useMemo(() =>
@@ -518,8 +528,11 @@ export default function LiveDataPage() {
     [enriched, selState]
   );
 
-  // When state changes, reset district
-  useEffect(() => { setSelDistrict(""); }, [selState]);
+  // When state changes via DROPDOWN, reset district (but not when a map click sets both together)
+  useEffect(() => {
+    if (mapClickRef.current) { mapClickRef.current = false; return; }
+    setSelDistrict("");
+  }, [selState]);
 
   // Filtered dataset for aggregation
   const filtered = useMemo(() => {
@@ -586,8 +599,9 @@ export default function LiveDataPage() {
     return map;
   }, [enriched]);
 
-  // Map click handler — set state & district
+  // Map click handler — set state & district (prevents the useEffect from resetting district)
   const onSelectDistrict = useCallback((stateName: string, districtId: string) => {
+    mapClickRef.current = true;
     setSelState(stateName);
     setSelDistrict(districtId);
   }, []);
@@ -720,7 +734,7 @@ export default function LiveDataPage() {
             <LiveMap
               geoJsonData={geoJsonData}
               districtDataMap={districtDataMap}
-              geoData={geoData}
+              idStateMap={idStateMap}
               selState={selState}
               selDistrict={selDistrict}
               onSelectDistrict={onSelectDistrict}
