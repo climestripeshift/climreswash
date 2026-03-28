@@ -113,7 +113,7 @@ const PILLARS = [
     headline: "\u20B94.09 Trillion",
     sub: "in climate investment needs identified",
     cite: "Platform model, IPCC AR5 risk framing across 735 districts",
-    body: "Without subnational intelligence, climate finance flows to the loudest voices \u2014 not the most vulnerable children. This platform quantifies investment gaps at district level, enabling governments, UNICEF country teams and development partners to build evidence-based funding proposals.",
+    body: "Without subnational intelligence, climate finance flows to the loudest voices \u2014 not the most vulnerable children. This platform quantifies investment gaps at district level, enabling governments and development partners to build evidence-based funding proposals.",
     stats: [
       { n: 61, suffix: "%", label: "Investment need concentrated in top 20% highest-risk districts" },
       { n: 39, suffix: "%", label: "Mitigation requirement share" },
@@ -433,7 +433,7 @@ export default function HomePage() {
               <h2 style={{ fontFamily: "'Nunito', sans-serif", fontSize: 36, fontWeight: 900, color: "#1A1A2E" }}>Platform Capabilities</h2>
             </div>
             <p style={{ fontSize: 15, color: "#6B7280", lineHeight: 1.75, fontWeight: 300 }}>
-              Built for UNICEF country teams, government departments and development partners who need district-level intelligence to design climate-resilient WASH interventions.
+              Built for government departments and development partners who need district-level intelligence to design climate-resilient WASH interventions.
             </p>
           </div>
           <div className="hp-features-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
@@ -489,7 +489,7 @@ export default function HomePage() {
           <div className="hp-who-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
             {[
               { icon: "\uD83C\uDFDB\uFE0F", who: "Government & Line Departments", points: ["Identify high-risk districts for climate-resilient WASH investment", "Support Jal Jeevan Mission, SBM and state climate action plans", "Strengthen convergence between WASH, DRR and climate programmes"] },
-              { icon: "\uD83C\uDF0D", who: "UNICEF & Development Partners", points: ["Prioritise geographies for child-centred climate adaptation programming", "Use district profiles in programme design and donor proposals", "Track climate risk evolution as data improves over time"] },
+              { icon: "\uD83C\uDF0D", who: "Development Partners", points: ["Prioritise geographies for child-centred climate adaptation programming", "Use district profiles in programme design and donor proposals", "Track climate risk evolution as data improves over time"] },
               { icon: "\uD83E\uDD1D", who: "NGOs & Practitioners", points: ["Target high-risk districts for field interventions", "Choose technologies suited to local climate typology", "Support advocacy with visual evidence of climate risk"] },
             ].map((c, i) => (
               <div key={i} style={{ border: `1px solid rgba(0,174,239,0.15)`, borderTop: `4px solid ${U}`, borderRadius: 10, padding: 24, background: "white" }}>
