@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRoute, Link } from "wouter";
-import { getTechnologyBySlug, getAllTechnologies, ALL_HAZARDS, ALL_TYPOLOGIES, TechnologyInfo } from "@/lib/technologyContent";
+import { getTechnologyBySlug, getAllTechnologies, ALL_HAZARDS, ALL_TYPOLOGIES, TechnologyInfo, getRecommendedTechnologies } from "@/lib/technologyContent";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -66,6 +66,9 @@ interface ClickedDistrict {
   hazards: string[];
   typologies: string[];
   vulnerabilityScore: number;
+  soilType?: string;
+  waterAccessPercent?: number;
+  toiletCoveragePercent?: number;
 }
 
 const TYPOLOGY_MAP_COLORS: Record<string, string> = {
@@ -206,6 +209,9 @@ function HazardDistrictMap({ selectedHazards, selectedTypologies, onDistrictClic
           hazards: risks,
           typologies: getDistrictTypologies(data),
           vulnerabilityScore: data.vulnerabilityScore ?? 0,
+          soilType: data.soilType,
+          waterAccessPercent: data.waterAccessPercent,
+          toiletCoveragePercent: data.toiletCoveragePercent,
         });
       },
     });
@@ -799,16 +805,34 @@ function TechnologyIndex() {
                     Vulnerability score: <span className="font-medium text-foreground">{(clickedDistrict.vulnerabilityScore * 100).toFixed(0)}/100</span>
                   </p>
                 </div>
-                <div className="shrink-0">
-                  <p className="text-xs text-muted-foreground mb-1.5">Recommended for this district:</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {allTech.filter(t => t.relatedHazards.some(h => clickedDistrict.hazards.includes(h))).slice(0, 6).map(t => (
-                      <Link key={t.slug} href={`/technology/${t.slug}`}>
-                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-[#00AEEF]/10 text-[#00AEEF] border border-[#00AEEF]/20 hover:bg-[#00AEEF]/20 cursor-pointer transition-colors">
-                          {t.title}
-                        </span>
-                      </Link>
-                    ))}
+                <div className="shrink-0 min-w-0 w-full sm:w-auto">
+                  <p className="text-xs text-muted-foreground mb-1.5">Context-matched recommendations:</p>
+                  <div className="flex flex-col gap-1.5">
+                    {getRecommendedTechnologies({
+                      climateRisks: clickedDistrict.hazards,
+                      soilType: clickedDistrict.soilType,
+                      waterAccessPercent: clickedDistrict.waterAccessPercent,
+                      toiletCoveragePercent: clickedDistrict.toiletCoveragePercent,
+                      vulnerabilityScore: clickedDistrict.vulnerabilityScore,
+                    }).slice(0, 5).map(({ tech, reason, priority }) => {
+                      const priColor = priority === 'High' ? '#ef4444' : priority === 'Medium' ? '#f97316' : '#22c55e';
+                      return (
+                        <Link key={tech.slug} href={`/technology/${tech.slug}`}>
+                          <div className="flex items-start gap-2 px-2 py-1.5 rounded-md border border-border hover:bg-accent cursor-pointer transition-colors">
+                            <span
+                              className="text-[10px] font-bold px-1 py-0.5 rounded shrink-0 mt-0.5 uppercase"
+                              style={{ background: priColor + '20', color: priColor }}
+                            >
+                              {priority[0]}
+                            </span>
+                            <div className="min-w-0">
+                              <div className="text-xs font-medium text-foreground leading-tight">{tech.title}</div>
+                              <div className="text-[10px] text-muted-foreground leading-snug line-clamp-1 mt-0.5">{reason}</div>
+                            </div>
+                          </div>
+                        </Link>
+                      );
+                    })}
                   </div>
                 </div>
               </div>

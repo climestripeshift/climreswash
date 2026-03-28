@@ -9,8 +9,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ChevronDown, ChevronUp, TrendingUp, Users, AlertTriangle,
-  Droplets, Activity, Shield, Zap, Wind, Heart, ArrowLeft, ExternalLink
+  Droplets, Activity, Shield, Zap, Wind, Heart, ArrowLeft, ExternalLink,
+  Wrench, Droplet, FlaskConical, Leaf, ArrowRight
 } from "lucide-react";
+import { getRecommendedTechnologies } from "@/lib/technologyContent";
 
 const U = "#00AEEF";
 
@@ -590,6 +592,14 @@ export default function LiveDataPage() {
     ? districtList.find(d => d.id === selDistrict)?.name || "District"
     : selState || "All India";
 
+  // Technology recommendations for the selected single district
+  const recommendations = useMemo(() => {
+    if (!selDistrict) return [];
+    const d = enriched.find(x => x.id === selDistrict);
+    if (!d) return [];
+    return getRecommendedTechnologies(d);
+  }, [selDistrict, enriched]);
+
   // Build district data map keyed by uppercase name (for map lookup)
   const districtDataMap = useMemo(() => {
     const map: Record<string, any> = {};
@@ -1033,6 +1043,105 @@ export default function LiveDataPage() {
                 </div>
               )}
             </ScorePanel>
+
+            {/* ── RECOMMENDED TECHNOLOGIES PANEL ── */}
+            {selDistrict && recommendations.length > 0 && (
+              <Card className="border-2" style={{ borderColor: U + "40" }}>
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <div className="w-7 h-7 rounded flex items-center justify-center" style={{ background: U }}>
+                      <Wrench className="h-4 w-4 text-white" />
+                    </div>
+                    Recommended WASH Technologies
+                    <Badge variant="outline" className="ml-auto text-xs">{levelLabel}</Badge>
+                  </CardTitle>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Context-matched technologies based on hazard profile, soil type, and WASH coverage gaps
+                  </p>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {recommendations.map(({ tech, reason, priority }) => {
+                      const catIcon =
+                        tech.category === 'water' ? <Droplet className="h-3.5 w-3.5" /> :
+                        tech.category === 'adaptation' ? <Leaf className="h-3.5 w-3.5" /> :
+                        tech.category === 'waste' ? <FlaskConical className="h-3.5 w-3.5" /> :
+                        <Wrench className="h-3.5 w-3.5" />;
+                      const catColor =
+                        tech.category === 'water' ? '#3b82f6' :
+                        tech.category === 'adaptation' ? '#22c55e' :
+                        tech.category === 'waste' ? '#8b5cf6' : '#f97316';
+                      const priColor =
+                        priority === 'High' ? '#ef4444' :
+                        priority === 'Medium' ? '#f97316' : '#22c55e';
+                      return (
+                        <div
+                          key={tech.slug}
+                          className="rounded-lg border border-border p-3 flex flex-col gap-2 hover:border-blue-300 transition-colors"
+                          data-testid={`tech-rec-${tech.slug}`}
+                        >
+                          <div className="flex items-start gap-2">
+                            <div className="w-7 h-7 rounded flex items-center justify-center shrink-0 mt-0.5" style={{ background: catColor + "20" }}>
+                              <span style={{ color: catColor }}>{catIcon}</span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-sm leading-tight">{tech.title}</div>
+                              <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                                <Badge
+                                  variant="outline"
+                                  className="text-[10px] px-1.5 py-0 capitalize border-0"
+                                  style={{ background: catColor + "20", color: catColor }}
+                                >
+                                  {tech.category}
+                                </Badge>
+                                <Badge
+                                  variant="outline"
+                                  className="text-[10px] px-1.5 py-0 border-0"
+                                  style={{ background: priColor + "20", color: priColor }}
+                                >
+                                  {priority} Priority
+                                </Badge>
+                              </div>
+                            </div>
+                          </div>
+                          <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">{reason}</p>
+                          <div className="flex items-center justify-between pt-1">
+                            <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                              <span>Cost: <span className="font-medium text-foreground">{tech.costLevel}</span></span>
+                              <span>·</span>
+                              <span>Upkeep: <span className="font-medium text-foreground">{tech.maintenanceLevel}</span></span>
+                            </div>
+                            <Link href={`/technology/${tech.slug}`}>
+                              <button
+                                className="text-xs flex items-center gap-1 font-medium hover:underline"
+                                style={{ color: U }}
+                                data-testid={`tech-rec-link-${tech.slug}`}
+                              >
+                                Details <ArrowRight className="h-3 w-3" />
+                              </button>
+                            </Link>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-border flex items-center justify-between">
+                    <p className="text-xs text-muted-foreground">
+                      Recommendations are automatically generated from {levelLabel}&apos;s hazard profile and WASH gaps.
+                    </p>
+                    <Link href="/technology">
+                      <button
+                        className="text-xs flex items-center gap-1 font-medium hover:underline shrink-0"
+                        style={{ color: U }}
+                        data-testid="tech-library-link"
+                      >
+                        Full Library <ArrowRight className="h-3 w-3" />
+                      </button>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Admin edit note */}
             <div className="mt-4 p-4 rounded-lg border border-dashed border-border text-sm text-muted-foreground flex items-center gap-3">

@@ -429,3 +429,119 @@ export function getTechnologySlugFromName(name: string): string | null {
   }
   return null;
 }
+
+export interface TechRecommendation {
+  tech: TechnologyInfo;
+  reason: string;
+  priority: 'High' | 'Medium' | 'Low';
+}
+
+export function getRecommendedTechnologies(district: {
+  climateRisks?: string[];
+  soilType?: string;
+  toiletTechnology?: string;
+  waterSupplyStrategy?: string;
+  waterAccessPercent?: number;
+  toiletCoveragePercent?: number;
+  vulnerabilityScore?: number;
+}): TechRecommendation[] {
+  const hazards: string[] = district.climateRisks || [];
+  const soil = (district.soilType || '').toLowerCase();
+  const waterAccess = district.waterAccessPercent ?? 100;
+  const toiletCoverage = district.toiletCoveragePercent ?? 100;
+  const vulnScore = district.vulnerabilityScore ?? 0;
+
+  const isFlood = hazards.some(h => h === 'Flood' || h === 'Cyclone');
+  const isDrought = hazards.some(h => h === 'Drought');
+  const isHeat = hazards.some(h => h === 'Heatwave' || h === 'Dust Storm');
+  const isGW = hazards.some(h => h === 'Groundwater Depletion');
+  const isArid = soil.includes('sandy') || soil.includes('red') || isDrought;
+  const isLowWater = waterAccess < 70;
+  const isLowSanitation = toiletCoverage < 70;
+  const isHighVuln = vulnScore > 0.5;
+
+  const scored: Array<{ slug: string; reason: string; score: number; priority: 'High' | 'Medium' | 'Low' }> = [];
+
+  const add = (slug: string, reason: string, score: number, priority: 'High' | 'Medium' | 'Low') => {
+    if (!scored.find(s => s.slug === slug)) {
+      scored.push({ slug, reason, score, priority });
+    }
+  };
+
+  // SANITATION recommendations
+  if (isFlood && isLowSanitation) {
+    add('flood-resilient-sanitation', 'Flood risk detected — raised platform toilets prevent faecal contamination of floodwaters and remain operational during inundation.', 10, 'High');
+  } else if (isFlood) {
+    add('flood-resilient-sanitation', 'Flood/cyclone risk — elevated sealed toilet chambers protect groundwater quality during flood events.', 8, 'High');
+  }
+
+  if (isArid && isLowSanitation) {
+    add('soak-pit', 'Arid/sandy soil with low sanitation coverage — dry soak-pit latrines require no water and work well in low-rainfall conditions.', 9, 'High');
+  }
+
+  if (isLowSanitation && !isFlood) {
+    add('twin-pit', 'Low toilet coverage — twin-pit composting toilets need no water, produce safe compost, and are ideal for rural expansion.', 8, 'High');
+  }
+
+  if (hazards.some(h => h === 'Heatwave' || h === 'Drought') && !isFlood) {
+    add('dewats', 'Water-stressed region — DEWATS treats wastewater for safe reuse, reducing demand on scarce freshwater sources.', 6, 'Medium');
+  }
+
+  // WATER recommendations
+  if (isLowWater && isDrought) {
+    add('solar-water-pump', 'Drought-prone with low water access — solar pumps provide reliable off-grid water supply with zero fuel cost.', 10, 'High');
+  }
+
+  if (isLowWater || isGW) {
+    add('rainwater-harvesting', isGW
+      ? 'Groundwater depletion detected — rainwater harvesting recharges aquifers and provides a surface-water alternative.'
+      : 'Low water access — rooftop and community rainwater harvesting improves household water security in dry seasons.',
+      9, 'High');
+  }
+
+  if (isDrought || isGW) {
+    add('bore-well', 'Drought/groundwater stress — deep bore wells access stable aquifers unaffected by surface drought conditions.', 7, 'Medium');
+  }
+
+  if (isHeat && isLowWater) {
+    add('solar-water-pump', 'Heatwave + water scarcity — solar pumps maximise efficiency in high-irradiance arid regions without grid dependency.', 8, 'High');
+  }
+
+  // ADAPTATION recommendations
+  if (isHighVuln || hazards.length >= 2) {
+    add('early-warning-system', `${hazards.slice(0, 2).join(' + ')} risk — community early warning systems enable pre-positioning of WASH supplies and evacuation of vulnerable groups.`, 8, 'High');
+  }
+
+  if (isDrought || isGW) {
+    add('watershed-management', 'Drought/groundwater depletion — check dams and watershed restoration regulate water flow, reduce erosion, and recharge aquifers.', 7, 'Medium');
+  }
+
+  if (isDrought || isHeat) {
+    add('drought-resistant-crops', 'Drought/heat stress — integrating drought-tolerant crops with greywater reuse reduces household water demand and improves child nutrition.', 6, 'Medium');
+  }
+
+  // WASTE recommendations
+  if (isFlood || hazards.length >= 2) {
+    add('solid-waste', 'Multi-hazard district — climate-resilient solid waste management prevents disease vector breeding during flood and heat events.', 5, 'Low');
+  }
+
+  // Fallback: match remaining hazard-linked techs not yet added
+  for (const tech of Object.values(technologyContent)) {
+    if (scored.length >= 8) break;
+    const matchesHazard = tech.relatedHazards.some(h => hazards.includes(h));
+    if (matchesHazard && !scored.find(s => s.slug === tech.slug)) {
+      const matchedHazards = tech.relatedHazards.filter(h => hazards.includes(h));
+      add(tech.slug, `Relevant to ${matchedHazards.join(', ')} conditions present in this district.`, 3, 'Low');
+    }
+  }
+
+  return scored
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 6)
+    .map(({ slug, reason, priority }) => ({
+      tech: technologyContent[slug],
+      reason,
+      priority,
+    }))
+    .filter(r => r.tech != null);
+}
