@@ -1,6 +1,8 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
+import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
+import L from "leaflet";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -336,8 +338,139 @@ function fmtN(n: number) {
 }
 
 // ── Main Component ────────────────────────────────────────────────────────────
+// ── Live Map Component ────────────────────────────────────────────────────────
+function LiveMap({
+  geoJsonData, districtDataMap, geoData, selState, selDistrict, onSelectDistrict
+}: {
+  geoJsonData: any;
+  districtDataMap: Record<string, any>;
+  geoData: Record<string, string>;
+  selState: string;
+  selDistrict: string;
+  onSelectDistrict: (stateName: string, districtId: string) => void;
+}) {
+  const getVulnColor = (score: number) => {
+    if (score > 0.7) return '#ef4444';
+    if (score > 0.5) return '#f97316';
+    if (score > 0.3) return '#eab308';
+    if (score > 0.15) return '#22c55e';
+    return '#16a34a';
+  };
+
+  const style = useCallback((feature: any) => {
+    const name = feature.properties.DISTRICT?.toUpperCase();
+    const featureState = geoData[name] || feature.properties.STATE || '';
+    const data = name ? districtDataMap[name] : undefined;
+
+    const isSelectedDistrict = data && data.id === selDistrict;
+    const isInSelectedState = selState ? featureState === selState : true;
+
+    if (!data) return { fillColor: '#475569', weight: 0.5, opacity: 1, color: '#1e293b', fillOpacity: 0.2 };
+
+    if (isSelectedDistrict) {
+      return { fillColor: U, weight: 3, opacity: 1, color: '#fff', fillOpacity: 0.95 };
+    }
+    if (selState && !isInSelectedState) {
+      return { fillColor: '#334155', weight: 0.3, opacity: 0.5, color: '#1e293b', fillOpacity: 0.12 };
+    }
+
+    const color = getVulnColor(data.vulnerabilityScore ?? 0);
+    const opacity = selState && isInSelectedState ? 0.85 : selState ? 0.2 : 0.65;
+    return { fillColor: color, weight: isInSelectedState && selState ? 1 : 0.5, opacity: 1, color: '#1e293b', fillOpacity: opacity };
+  }, [districtDataMap, geoData, selState, selDistrict]);
+
+  const onEachFeature = useCallback((feature: any, layer: L.Layer) => {
+    const name = feature.properties.DISTRICT?.toUpperCase();
+    const featureState = geoData[name] || feature.properties.STATE || '';
+    const data = name ? districtDataMap[name] : undefined;
+    if (!data) return;
+
+    (layer as any).on({
+      mouseover: (e: any) => {
+        e.target.setStyle({ weight: 2, color: '#ffffff', fillOpacity: 0.95 });
+        e.target.bringToFront();
+      },
+      mouseout: (e: any) => {
+        const isSelectedDistrict = data.id === selDistrict;
+        const isInSelectedState = selState ? featureState === selState : true;
+        e.target.setStyle({
+          weight: isSelectedDistrict ? 3 : isInSelectedState && selState ? 1 : 0.5,
+          color: isSelectedDistrict ? '#fff' : '#1e293b',
+          fillOpacity: isSelectedDistrict ? 0.95 : isInSelectedState ? 0.75 : selState ? 0.12 : 0.65,
+        });
+      },
+      click: () => {
+        onSelectDistrict(featureState, data.id);
+      },
+    });
+
+    (layer as any).bindTooltip(
+      `<div style="font-size:12px;line-height:1.5">
+        <strong>${data.name}</strong><br/>
+        <span style="color:#94a3b8">${featureState}</span><br/>
+        Vulnerability: <strong style="color:${getVulnColor(data.vulnerabilityScore)}">${data.vulnerabilityCategory || (data.vulnerabilityScore * 100).toFixed(0) + '%'}</strong>
+      </div>`,
+      { sticky: true, className: 'leaflet-hazard-tooltip' }
+    );
+  }, [districtDataMap, geoData, selState, selDistrict, onSelectDistrict]);
+
+  if (!geoJsonData || Object.keys(districtDataMap).length === 0) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-slate-950 rounded-xl text-white text-sm">
+        <div className="animate-spin rounded-full h-6 w-6 border-2 mr-2" style={{ borderColor: U, borderTopColor: 'transparent' }} />
+        Loading map…
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative w-full h-full rounded-xl overflow-hidden">
+      <MapContainer
+        key={`${selState}-${selDistrict}`}
+        center={[22.5, 82.5]}
+        zoom={selState ? 6 : 5}
+        style={{ height: '100%', width: '100%', background: '#0f172a' }}
+        zoomControl={true}
+        scrollWheelZoom={true}
+      >
+        <TileLayer
+          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          attribution="© CartoDB"
+        />
+        <GeoJSON
+          key={`geo-${selState}-${selDistrict}-${Object.keys(districtDataMap).length}`}
+          data={geoJsonData}
+          style={style}
+          onEachFeature={onEachFeature}
+        />
+      </MapContainer>
+      {/* Legend */}
+      <div className="absolute bottom-3 right-3 z-[1000] bg-black/70 backdrop-blur border border-white/10 p-2 rounded-lg text-xs space-y-1 text-white">
+        <div className="font-semibold text-[10px] uppercase tracking-wider text-white/60 mb-1">Vulnerability</div>
+        {[['#ef4444','Very High'],['#f97316','High'],['#eab308','Moderate'],['#22c55e','Low'],['#16a34a','Very Low']].map(([c,l]) => (
+          <div key={l} className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full shrink-0" style={{ background: c }} />
+            <span className="text-white/80">{l}</span>
+          </div>
+        ))}
+        {selState && (
+          <div className="flex items-center gap-1.5 pt-1 border-t border-white/10">
+            <span className="w-2 h-2 rounded-full shrink-0" style={{ background: U }} />
+            <span className="text-white/80">Selected</span>
+          </div>
+        )}
+      </div>
+      {/* Hint */}
+      <div className="absolute top-3 left-3 z-[1000] bg-black/60 backdrop-blur px-2 py-1 rounded text-xs text-white/70">
+        Click district to filter
+      </div>
+    </div>
+  );
+}
+
 export default function LiveDataPage() {
   const [geoData, setGeoData] = useState<Record<string, string>>({});
+  const [geoJsonData, setGeoJsonData] = useState<any>(null);
   const [selState, setSelState] = useState<string>("");
   const [selDistrict, setSelDistrict] = useState<string>("");
 
@@ -347,11 +480,12 @@ export default function LiveDataPage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Load state→district mapping from GeoJSON
+  // Load GeoJSON and build state mapping
   useEffect(() => {
     fetch("/data/india.json")
       .then(r => r.json())
       .then((geo: any) => {
+        setGeoJsonData(geo);
         const map: Record<string, string> = {};
         geo.features.forEach((f: any) => {
           const name = f.properties.NAME || f.properties.DISTRICT;
@@ -443,6 +577,21 @@ export default function LiveDataPage() {
     ? districtList.find(d => d.id === selDistrict)?.name || "District"
     : selState || "All India";
 
+  // Build district data map keyed by uppercase name (for map lookup)
+  const districtDataMap = useMemo(() => {
+    const map: Record<string, any> = {};
+    enriched.forEach(d => {
+      if (d.name) map[d.name.toUpperCase()] = d;
+    });
+    return map;
+  }, [enriched]);
+
+  // Map click handler — set state & district
+  const onSelectDistrict = useCallback((stateName: string, districtId: string) => {
+    setSelState(stateName);
+    setSelDistrict(districtId);
+  }, []);
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
@@ -479,9 +628,9 @@ export default function LiveDataPage() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="max-w-7xl mx-auto px-4 pt-6">
         {/* Page Title */}
-        <div className="mb-6">
+        <div className="mb-4">
           <h1 className="text-2xl font-bold">Live Data Dashboard</h1>
           <p className="text-sm text-muted-foreground mt-1">
             District-level climate vulnerability indicators · India · IPCC AR5 Framework
@@ -489,7 +638,7 @@ export default function LiveDataPage() {
         </div>
 
         {/* Filter Bar */}
-        <Card className="mb-6">
+        <Card className="mb-0">
           <CardContent className="py-4">
             <div className="flex flex-wrap gap-4 items-end">
               <div className="flex-1 min-w-[140px]">
@@ -560,7 +709,26 @@ export default function LiveDataPage() {
             )}
           </CardContent>
         </Card>
+      </div>
 
+      {/* Two-column layout: map left, indicators right */}
+      <div className="max-w-7xl mx-auto px-4 pb-8 mt-4">
+        <div className="flex gap-4 items-start">
+
+          {/* Left: Map (sticky) — hidden on small screens */}
+          <div className="hidden lg:block w-[42%] sticky top-14" style={{ height: 'calc(100vh - 3.6rem)' }}>
+            <LiveMap
+              geoJsonData={geoJsonData}
+              districtDataMap={districtDataMap}
+              geoData={geoData}
+              selState={selState}
+              selDistrict={selDistrict}
+              onSelectDistrict={onSelectDistrict}
+            />
+          </div>
+
+          {/* Right: Indicators */}
+          <div className="flex-1 space-y-4 pb-6">
         {isLoading ? (
           <div className="flex items-center justify-center h-64 text-muted-foreground">
             <div className="animate-spin rounded-full h-8 w-8 border-2 border-t-transparent mr-3" style={{ borderColor: U, borderTopColor: "transparent" }} />
@@ -865,6 +1033,8 @@ export default function LiveDataPage() {
             </div>
           </>
         )}
+          </div>
+        </div>
       </div>
     </div>
   );
