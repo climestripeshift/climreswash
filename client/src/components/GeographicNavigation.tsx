@@ -95,6 +95,11 @@ export function GeographicNavigation({
             <span>Technologies</span>
           </Button>
         </Link>
+        <Link href="/live-data">
+          <Button size="sm" className="h-7 px-2 gap-1.5 text-xs text-white" style={{ background: "#00AEEF" }} data-testid="link-live-data-nav">
+            <span>⚡ Live Data</span>
+          </Button>
+        </Link>
       </div>
     </div>
   );

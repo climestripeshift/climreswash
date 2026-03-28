@@ -266,7 +266,8 @@ export default function HomePage() {
               </p>
 
               <div className="f4" style={{ display: "flex", gap: 12, marginBottom: 36, flexWrap: "wrap" }}>
-                <Link href="/dashboard" className="hp-btn-white" data-testid="hero-dashboard-link">{"\uD83D\uDCA7"} View District Risk Map</Link>
+                <Link href="/dashboard" className="hp-btn-white" data-testid="hero-dashboard-link">{"\uD83D\uDCA7"} Demo Map</Link>
+                <Link href="/live-data" className="hp-btn-outline-w" data-testid="hero-live-data-link" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>⚡ Live Data Dashboard</Link>
                 <a href="#methodology" className="hp-btn-outline-w">Read Methodology</a>
               </div>
 
@@ -517,8 +518,8 @@ export default function HomePage() {
             Built on UNICEF-CEEW methodology. 735 districts. 1.4 billion people. District-level intelligence to protect the most vulnerable.
           </p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-            <Link href="/dashboard" className="hp-btn-white" style={{ fontSize: 15, padding: "14px 32px" }} data-testid="cta-dashboard-link">{"\uD83D\uDCA7"} Explore District Risk Map</Link>
-            <a href="#methodology" className="hp-btn-outline-w" style={{ fontSize: 15, padding: "12px 24px" }}>Read Methodology</a>
+            <Link href="/dashboard" className="hp-btn-white" style={{ fontSize: 15, padding: "14px 32px" }} data-testid="cta-dashboard-link">{"\uD83D\uDCA7"} Demo Map</Link>
+            <Link href="/live-data" className="hp-btn-outline-w" style={{ fontSize: 15, padding: "12px 24px", display: "inline-flex", alignItems: "center", gap: 8 }} data-testid="cta-live-data-link">⚡ Live Data Dashboard</Link>
           </div>
         </div>
       </section>

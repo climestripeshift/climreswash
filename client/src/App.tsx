@@ -10,12 +10,14 @@ import Dashboard from "@/pages/Dashboard";
 import AdminDashboard from "@/pages/AdminDashboard";
 import AdminLogin from "@/pages/AdminLogin";
 import TechnologyPage from "@/pages/TechnologyPage";
+import LiveDataPage from "@/pages/LiveDataPage";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={HomePage} />
       <Route path="/dashboard" component={Dashboard} />
+      <Route path="/live-data" component={LiveDataPage} />
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/technology" component={TechnologyPage} />
