@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRoute, Link } from "wouter";
-import { getTechnologyBySlug, getAllTechnologies, ALL_HAZARDS, ALL_TYPOLOGIES, TechnologyInfo, getRecommendedTechnologies } from "@/lib/technologyContent";
+import { getTechnologyBySlug, getAllTechnologies, ALL_HAZARDS, ALL_TYPOLOGIES, TechnologyInfo, getRecommendedTechnologies, MATRIX_HAZARDS, MATRIX_HAZARD_ICONS, MATRIX_HAZARD_COLORS, HazardSuitability } from "@/lib/technologyContent";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -574,6 +574,52 @@ function TechnologyDetail({ tech }: { tech: TechnologyInfo }) {
               </div>
             </CardContent>
           </Card>
+
+          {/* Hazard Suitability Matrix */}
+          {tech.hazardSuitability && (
+            <Card data-testid="card-hazard-suitability-matrix">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <span className="text-lg">🗂️</span>
+                  Climate Hazard Suitability Matrix
+                </CardTitle>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Source: WASH Technology Climate Matrix (UNICEF / WHO). ✓ Recommended — deploy with standard design.&nbsp;
+                  ~ Conditional — use with design modifications. ✗ Not Suitable — select an alternative.
+                </p>
+                {tech.matrixContext && (
+                  <p className="text-xs italic text-muted-foreground mt-0.5">Context: {tech.matrixContext}</p>
+                )}
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                  {MATRIX_HAZARDS.map(hazard => {
+                    const rating = tech.hazardSuitability![hazard];
+                    if (!rating) return null;
+                    const cfg = {
+                      recommended: { label: '✓ Recommended', bg: 'bg-green-500/10 border-green-500/30', text: 'text-green-700 dark:text-green-400', icon: '✓' },
+                      conditional: { label: '~ Conditional', bg: 'bg-yellow-500/10 border-yellow-500/30', text: 'text-yellow-700 dark:text-yellow-400', icon: '~' },
+                      not_suitable: { label: '✗ Not Suitable', bg: 'bg-red-500/10 border-red-500/20', text: 'text-red-600/70 dark:text-red-400/70', icon: '✗' },
+                    }[rating];
+                    return (
+                      <div
+                        key={hazard}
+                        className={`flex flex-col gap-1 p-2.5 rounded-lg border ${cfg.bg} ${rating === 'not_suitable' ? 'opacity-60' : ''}`}
+                        data-testid={`suitability-${hazard.toLowerCase().replace(/[ /]/g, '-')}`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-base">{MATRIX_HAZARD_ICONS[hazard]}</span>
+                          <span className={`text-sm font-bold ${cfg.text}`}>{cfg.icon}</span>
+                        </div>
+                        <div className="text-xs font-semibold text-foreground leading-tight">{hazard}</div>
+                        <div className={`text-[10px] font-medium ${cfg.text}`}>{cfg.label}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </main>
     </div>
@@ -585,6 +631,7 @@ function TechnologyIndex() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedHazards, setSelectedHazards] = useState<string[]>([]);
   const [selectedTypologies, setSelectedTypologies] = useState<string[]>([]);
+  const [activeMatrixHazard, setActiveMatrixHazard] = useState<string | null>(null);
   const [showMap, setShowMap] = useState(false);
   const [clickedDistrict, setClickedDistrict] = useState<ClickedDistrict | null>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
@@ -614,6 +661,7 @@ function TechnologyIndex() {
     setSelectedTypologies([]);
     setSearchQuery('');
     setClickedDistrict(null);
+    setActiveMatrixHazard(null);
   };
 
   const filtered = allTech.filter(tech => {
@@ -627,10 +675,14 @@ function TechnologyIndex() {
     const matchesTypology = selectedTypologies.length === 0 ||
       selectedTypologies.some(t => tech.typology.includes(t));
 
-    return matchesSearch && matchesHazard && matchesTypology;
+    // Matrix suitability filter — show only recommended or conditional for the active hazard
+    const matchesSuitability = !activeMatrixHazard ||
+      (tech.hazardSuitability && tech.hazardSuitability[activeMatrixHazard] !== 'not_suitable');
+
+    return matchesSearch && matchesHazard && matchesTypology && matchesSuitability;
   });
 
-  const activeFilterCount = selectedHazards.length + selectedTypologies.length + (searchQuery ? 1 : 0);
+  const activeFilterCount = selectedHazards.length + selectedTypologies.length + (searchQuery ? 1 : 0) + (activeMatrixHazard ? 1 : 0);
 
   const categoryOrder = ['sanitation', 'water', 'waste', 'adaptation'] as const;
   const categoryLabels = {
@@ -748,6 +800,52 @@ function TechnologyIndex() {
             <p className="text-[11px] text-muted-foreground">
               Typology filters the <strong>technology list</strong> and <strong>highlights matching districts on the map</strong> (when no hazard is selected).
             </p>
+          </div>
+
+          {/* Hazard Suitability Matrix Filter */}
+          <div className="border-t border-border pt-4">
+            <div className="flex items-center justify-between mb-2.5">
+              <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <span>🗂️</span> Climate Hazard Suitability (Matrix)
+              </div>
+              {activeMatrixHazard && (
+                <button
+                  onClick={() => setActiveMatrixHazard(null)}
+                  className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+                >
+                  <X className="h-3 w-3" /> Clear
+                </button>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {MATRIX_HAZARDS.map(h => (
+                <button
+                  key={h}
+                  onClick={() => setActiveMatrixHazard(prev => prev === h ? null : h)}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                    activeMatrixHazard === h
+                      ? 'text-white shadow-sm border-transparent'
+                      : 'bg-background text-foreground border-border hover:border-current'
+                  }`}
+                  style={activeMatrixHazard === h ? { background: MATRIX_HAZARD_COLORS[h] } : {
+                    '--tw-ring-color': MATRIX_HAZARD_COLORS[h],
+                  } as React.CSSProperties}
+                  data-testid={`filter-matrix-hazard-${h.toLowerCase().replace(/[ /]/g, '-')}`}
+                >
+                  <span>{MATRIX_HAZARD_ICONS[h]}</span> {h}
+                </button>
+              ))}
+            </div>
+            {activeMatrixHazard ? (
+              <p className="text-[11px] text-muted-foreground">
+                Showing technologies <strong>Recommended ✓</strong> or <strong>Conditional ~</strong> for <strong>{activeMatrixHazard}</strong>.
+                Each card shows its suitability rating for this hazard.
+              </p>
+            ) : (
+              <p className="text-[11px] text-muted-foreground">
+                Select a hazard to filter by the <strong>WASH Technology Climate Matrix</strong> — shows ✓ Recommended, ~ Conditional, and hides ✗ Not Suitable technologies.
+              </p>
+            )}
           </div>
         </div>
 
@@ -881,7 +979,7 @@ function TechnologyIndex() {
                   </h2>
                   <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
                     {catTechs.map(tech => (
-                      <TechnologyCard key={tech.slug} tech={tech} selectedHazards={selectedHazards} selectedTypologies={selectedTypologies} />
+                      <TechnologyCard key={tech.slug} tech={tech} selectedHazards={selectedHazards} selectedTypologies={selectedTypologies} activeMatrixHazard={activeMatrixHazard} />
                     ))}
                   </div>
                   <Separator className="mt-10" />
@@ -895,10 +993,11 @@ function TechnologyIndex() {
   );
 }
 
-function TechnologyCard({ tech, selectedHazards, selectedTypologies }: {
+function TechnologyCard({ tech, selectedHazards, selectedTypologies, activeMatrixHazard }: {
   tech: TechnologyInfo;
   selectedHazards: string[];
   selectedTypologies: string[];
+  activeMatrixHazard?: string | null;
 }) {
   const getLevelDot = (level: string) => {
     switch (level) {
@@ -909,29 +1008,56 @@ function TechnologyCard({ tech, selectedHazards, selectedTypologies }: {
     }
   };
 
+  const suitability = activeMatrixHazard && tech.hazardSuitability
+    ? tech.hazardSuitability[activeMatrixHazard] as HazardSuitability | undefined
+    : undefined;
+
+  const suitabilityConfig = {
+    recommended: { label: '✓ Recommended', className: 'bg-green-500 text-white', border: 'border-green-400' },
+    conditional: { label: '~ Conditional', className: 'bg-yellow-500 text-white', border: 'border-yellow-400' },
+    not_suitable: { label: '✗ Not Suitable', className: 'bg-red-500 text-white', border: 'border-red-400' },
+  };
+
   return (
     <Link href={`/technology/${tech.slug}`} data-testid={`link-technology-${tech.slug}`}>
-      <Card className="h-full hover:shadow-lg transition-all cursor-pointer hover:border-[#00AEEF]/50 group">
+      <Card className={`h-full hover:shadow-lg transition-all cursor-pointer group ${
+        suitability === 'recommended' ? 'border-green-400/60 hover:border-green-400' :
+        suitability === 'conditional' ? 'border-yellow-400/60 hover:border-yellow-400' :
+        suitability === 'not_suitable' ? 'border-red-400/30 opacity-70 hover:border-red-400/50' :
+        'hover:border-[#00AEEF]/50'
+      }`}>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base group-hover:text-[#00AEEF] transition-colors">{tech.title}</CardTitle>
-          <CardDescription className="line-clamp-2 text-xs">{tech.description}</CardDescription>
+          <div className="flex items-start justify-between gap-2">
+            <CardTitle className="text-base group-hover:text-[#00AEEF] transition-colors leading-tight">{tech.title}</CardTitle>
+            {suitability && (
+              <span className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap ${suitabilityConfig[suitability].className}`}>
+                {suitabilityConfig[suitability].label}
+              </span>
+            )}
+          </div>
+          {activeMatrixHazard && tech.matrixContext && (
+            <p className="text-[10px] text-muted-foreground italic mt-0.5">{tech.matrixContext}</p>
+          )}
+          <CardDescription className="line-clamp-2 text-xs mt-1">{tech.description}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {/* Hazard badges - highlight matching ones */}
-          <div className="flex flex-wrap gap-1">
-            {tech.relatedHazards.map((h, i) => (
-              <span
-                key={i}
-                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                  selectedHazards.includes(h)
-                    ? 'bg-orange-500 text-white'
-                    : 'bg-orange-500/10 text-orange-600'
-                }`}
-              >
-                {HAZARD_ICONS[h]} {h}
-              </span>
-            ))}
-          </div>
+          {tech.relatedHazards.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {tech.relatedHazards.map((h, i) => (
+                <span
+                  key={i}
+                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                    selectedHazards.includes(h)
+                      ? 'bg-orange-500 text-white'
+                      : 'bg-orange-500/10 text-orange-600'
+                  }`}
+                >
+                  {HAZARD_ICONS[h]} {h}
+                </span>
+              ))}
+            </div>
+          )}
           {/* Typology badges */}
           <div className="flex flex-wrap gap-1">
             {tech.typology.map((t, i) => (
@@ -957,6 +1083,11 @@ function TechnologyCard({ tech, selectedHazards, selectedTypologies }: {
               <span className={`w-2 h-2 rounded-full ${getLevelDot(tech.costLevel)}`}></span>
               {tech.costLevel} Cost
             </span>
+            {tech.matrixCategory && (
+              <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">
+                {tech.matrixCategory}
+              </span>
+            )}
           </div>
         </CardContent>
       </Card>
