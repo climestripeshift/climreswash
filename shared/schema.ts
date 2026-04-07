@@ -101,6 +101,9 @@ export const districts = pgTable("districts", {
   infantMortalityRate: real("infant_mortality_rate").notNull().default(0),
   maternalMortalityRatio: real("maternal_mortality_ratio").notNull().default(0),
   
+  // Map boundary geometry (GeoJSON Polygon / MultiPolygon)
+  geometry: jsonb("geometry").$type<{ type: string; coordinates: any[] }>(),
+
   // Seasonal Data (stored as JSONB for flexibility)
   seasonalData: jsonb("seasonal_data").notNull().$type<Array<{
     month: string;

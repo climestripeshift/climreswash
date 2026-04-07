@@ -74,10 +74,31 @@ export async function registerRoutes(
     }
   });
 
-  // District Routes
-  app.get("/api/districts", async (_req, res) => {
+  // GeoJSON endpoint – serves district geometries from the DB
+  app.get("/api/districts/geojson", async (req, res) => {
     try {
-      const districts = await storage.getAllDistricts();
+      const { country } = req.query as { country?: string };
+      const rows = await storage.getDistrictGeometries(country);
+      const features = rows
+        .filter(r => r.geometry != null)
+        .map(r => ({
+          type: "Feature",
+          properties: { ID: r.id, DISTRICT: r.name, STATE: r.stateId, COUNTRY: r.countryId },
+          geometry: r.geometry
+        }));
+      res.json({ type: "FeatureCollection", features });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // District Routes
+  app.get("/api/districts", async (req, res) => {
+    try {
+      const { country } = req.query as { country?: string };
+      const districts = country
+        ? await storage.getDistrictsByCountry(country)
+        : await storage.getAllDistricts();
       res.json(districts);
     } catch (error: any) {
       res.status(500).json({ error: error.message });

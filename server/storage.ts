@@ -55,6 +55,8 @@ export interface IStorage {
   
   getAllDistricts(): Promise<District[]>;
   getDistrictsByState(stateId: string): Promise<District[]>;
+  getDistrictsByCountry(countryId: string): Promise<District[]>;
+  getDistrictGeometries(countryId?: string): Promise<Array<{ id: string; name: string; stateId: string; countryId: string; geometry: any }>>;
   getDistrict(id: string): Promise<District | undefined>;
   createDistrict(district: InsertDistrict): Promise<District>;
   updateDistrict(id: string, district: Partial<InsertDistrict>): Promise<District | undefined>;
@@ -178,6 +180,26 @@ export class DatabaseStorage implements IStorage {
 
   async getDistrictsByState(stateId: string): Promise<District[]> {
     return await db.select().from(districts).where(eq(districts.stateId, stateId));
+  }
+
+  async getDistrictsByCountry(countryId: string): Promise<District[]> {
+    return await db.select().from(districts).where(eq(districts.countryId, countryId));
+  }
+
+  async getDistrictGeometries(countryId?: string): Promise<Array<{ id: string; name: string; stateId: string; countryId: string; geometry: any }>> {
+    const base = db
+      .select({
+        id: districts.id,
+        name: districts.name,
+        stateId: districts.stateId,
+        countryId: districts.countryId,
+        geometry: districts.geometry,
+      })
+      .from(districts);
+    const rows = countryId
+      ? await base.where(eq(districts.countryId, countryId))
+      : await base;
+    return rows;
   }
 
   async getDistrict(id: string): Promise<District | undefined> {

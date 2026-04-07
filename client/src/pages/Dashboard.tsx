@@ -4,12 +4,12 @@ import { Sidebar } from "@/components/Sidebar";
 import { GeographicNavigation } from "@/components/GeographicNavigation";
 import { DistrictData, MapViewMode, Alert, AqiObservation, Intervention, CommunityReport, GeographicLevel, CountryData, StateData, BlockData } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { Settings, AlertTriangle, Bell, X, Wind, ChevronRight, Menu, MapPin } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Settings, AlertTriangle, Bell, X, Wind, ChevronRight, Menu, MapPin, Globe } from "lucide-react";
 import { Link } from "wouter";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
-import { fetchDistricts } from "@/lib/api";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const severityColors = {
@@ -41,11 +41,14 @@ export default function Dashboard() {
   const [stateData, setStateData] = useState<StateData | null>(null);
   const [blocks, setBlocks] = useState<BlockData[]>([]);
   const [allDistricts, setAllDistricts] = useState<DistrictData[]>([]);
+  const [selectedCountryId, setSelectedCountryId] = useState<string>('IND');
+  const [allCountries, setAllCountries] = useState<CountryData[]>([]);
 
   useEffect(() => {
     fetch('/api/countries')
       .then(res => res.json())
-      .then(data => {
+      .then((data: CountryData[]) => {
+        setAllCountries(data);
         if (data.length > 0) setCountryData(data[0]);
       })
       .catch(err => console.error('Failed to fetch countries:', err));
@@ -56,11 +59,19 @@ export default function Dashboard() {
         if (data.length > 0) setStateData(data[0]);
       })
       .catch(err => console.error('Failed to fetch states:', err));
-
-    fetchDistricts()
-      .then(data => setAllDistricts(data))
-      .catch(err => console.error('Failed to fetch all districts:', err));
   }, []);
+
+  // Reload districts when country changes
+  useEffect(() => {
+    fetch(`/api/districts?country=${selectedCountryId}`)
+      .then(res => res.json())
+      .then(data => setAllDistricts(data))
+      .catch(err => console.error('Failed to fetch districts:', err));
+
+    // Update countryData for the selected country
+    const found = allCountries.find(c => c.id === selectedCountryId);
+    if (found) setCountryData(found);
+  }, [selectedCountryId, allCountries]);
 
   useEffect(() => {
     fetch('/api/alerts')
@@ -318,6 +329,25 @@ export default function Dashboard() {
               </span>
             </Button>
           )}
+          {/* Country Selector */}
+          <div className="flex items-center gap-1">
+            <Globe className="h-4 w-4 text-muted-foreground hidden sm:block" />
+            <Select value={selectedCountryId} onValueChange={setSelectedCountryId}>
+              <SelectTrigger
+                className="h-8 w-[130px] sm:w-[160px] text-xs border-border"
+                data-testid="select-country"
+              >
+                <SelectValue placeholder="Select country" />
+              </SelectTrigger>
+              <SelectContent>
+                {allCountries.map(c => (
+                  <SelectItem key={c.id} value={c.id} data-testid={`option-country-${c.id}`}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <ThemeToggle />
           <Link href="/admin">
             <Button variant="outline" size="sm" className="gap-1 sm:gap-2 px-2 sm:px-3" data-testid="link-admin">
@@ -374,6 +404,7 @@ export default function Dashboard() {
             onDistrictSelect={handleDistrictSelect} 
             selectedDistrictId={selectedDistrict?.id || null}
             currentLevel={currentLevel}
+            countryId={selectedCountryId}
           />
         </div>
       </div>

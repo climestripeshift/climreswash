@@ -1,9 +1,8 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
-import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { MapContainer, TileLayer, GeoJSON, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { DistrictData, MapViewMode, GeographicLevel } from "@/lib/types";
-import { fetchDistricts } from "@/lib/api";
 import { Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
@@ -18,11 +17,28 @@ let DefaultIcon = L.icon({
 });
 L.Marker.prototype.options.icon = DefaultIcon;
 
+// Auto-fit map to GeoJSON bounds when data changes
+function FitBounds({ geoJsonData }: { geoJsonData: any }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!geoJsonData?.features?.length) return;
+    try {
+      const layer = L.geoJSON(geoJsonData);
+      const bounds = layer.getBounds();
+      if (bounds.isValid()) {
+        map.fitBounds(bounds, { padding: [20, 20], maxZoom: 8 });
+      }
+    } catch (_) {}
+  }, [geoJsonData, map]);
+  return null;
+}
+
 interface MapComponentProps {
   mode: MapViewMode;
   onDistrictSelect: (data: DistrictData | null) => void;
   selectedDistrictId: string | null;
   currentLevel?: GeographicLevel;
+  countryId?: string;
 }
 
 const getHazardColor = (score: number): string => {
@@ -86,107 +102,115 @@ const getModeLabel = (mode: MapViewMode): string => {
   }
 };
 
-export function MapComponent({ mode, onDistrictSelect, selectedDistrictId, currentLevel = 'state' }: MapComponentProps) {
+export function MapComponent({
+  mode,
+  onDistrictSelect,
+  selectedDistrictId,
+  currentLevel = 'state',
+  countryId = 'IND'
+}: MapComponentProps) {
   const [geoJsonData, setGeoJsonData] = useState<any>(null);
-  const [districtDataMap, setDistrictDataMap] = useState<Map<string, DistrictData>>(new Map());
+  const [geoLoading, setGeoLoading] = useState(true);
+  const prevCountryRef = useRef<string>('');
 
+  // Fetch districts for the selected country
   const { data: districts, isLoading: districtsLoading } = useQuery({
-    queryKey: ['districts'],
-    queryFn: fetchDistricts
+    queryKey: ['districts', countryId],
+    queryFn: async () => {
+      const res = await fetch(`/api/districts?country=${countryId}`);
+      if (!res.ok) throw new Error('Failed to fetch districts');
+      return res.json() as Promise<DistrictData[]>;
+    }
   });
 
+  // Load GeoJSON: static file for India, dynamic API for others
   useEffect(() => {
-    fetch('/data/india.json')
+    if (prevCountryRef.current === countryId) return;
+    prevCountryRef.current = countryId;
+    setGeoJsonData(null);
+    setGeoLoading(true);
+
+    const url = countryId === 'IND'
+      ? '/data/india.json'
+      : `/api/districts/geojson?country=${countryId}`;
+
+    fetch(url)
       .then(res => res.json())
       .then(data => {
         setGeoJsonData(data);
+        setGeoLoading(false);
       })
       .catch(err => {
-        console.error("Failed to load map data", err);
+        console.error("Failed to load GeoJSON", err);
+        setGeoLoading(false);
       });
-  }, []);
+  }, [countryId]);
 
-  useEffect(() => {
+  // Build districtDataMap keyed by district ID
+  const districtDataMap = useMemo(() => {
+    const map = new Map<string, DistrictData>();
     if (districts) {
-      const map = new Map<string, DistrictData>();
-      districts.forEach(d => {
-        map.set(d.name.toUpperCase(), d);
-      });
-      console.log('District data map built with', map.size, 'entries');
-      setDistrictDataMap(map);
+      districts.forEach(d => map.set(d.id, d));
     }
+    return map;
   }, [districts]);
 
   const [renderKey, setRenderKey] = useState(Date.now());
-  
-  useEffect(() => {
-    setRenderKey(Date.now());
-  }, [mode]);
+  useEffect(() => { setRenderKey(Date.now()); }, [mode, countryId]);
 
   const style = useCallback((feature: any) => {
-    const districtName = feature.properties.DISTRICT?.toUpperCase();
-    const data = districtDataMap.get(districtName);
+    const id = feature.properties?.ID || feature.properties?.id;
+    const data = districtDataMap.get(id);
     if (!data) {
-      return { fillColor: '#666', weight: 1, opacity: 1, color: '#1e293b', fillOpacity: 0.3 };
+      return { fillColor: '#444', weight: 1, opacity: 0.7, color: '#1e293b', fillOpacity: 0.25 };
     }
-    
     const isSelected = selectedDistrictId === data.id;
     const color = getColorForMode(data, mode);
-
     return {
       fillColor: color,
       weight: isSelected ? 3 : 1,
       opacity: 1,
       color: isSelected ? 'white' : '#1e293b',
       dashArray: '',
-      fillOpacity: isSelected ? 0.8 : 0.6
+      fillOpacity: isSelected ? 0.85 : 0.65
     };
   }, [districtDataMap, mode, selectedDistrictId]);
 
   const onEachFeature = useCallback((feature: any, layer: L.Layer) => {
-    const districtName = feature.properties.DISTRICT?.toUpperCase();
-    const data = districtDataMap.get(districtName);
+    const id = feature.properties?.ID || feature.properties?.id;
+    const data = districtDataMap.get(id);
     if (!data) return;
 
     layer.on({
       mouseover: (e) => {
-        const layer = e.target;
-        layer.setStyle({
-          weight: 3,
-          color: '#fff',
-          fillOpacity: 0.9
-        });
-        layer.bringToFront();
+        e.target.setStyle({ weight: 3, color: '#fff', fillOpacity: 0.9 });
+        e.target.bringToFront();
       },
       mouseout: (e) => {
-        const layer = e.target;
         const isSelected = selectedDistrictId === data.id;
-        layer.setStyle({
+        e.target.setStyle({
           weight: isSelected ? 3 : 1,
           color: isSelected ? 'white' : '#1e293b',
-          fillOpacity: isSelected ? 0.8 : 0.6
+          fillOpacity: isSelected ? 0.85 : 0.65
         });
       },
-      click: () => {
-        onDistrictSelect(data);
-      }
+      click: () => { onDistrictSelect(data); }
     });
   }, [districtDataMap, selectedDistrictId, onDistrictSelect]);
 
-  if (!geoJsonData || districtsLoading || districtDataMap.size === 0) {
-    return (
-      <div className="h-full w-full flex items-center justify-center bg-slate-950 text-white">
-        <Loader2 className="h-8 w-8 animate-spin mr-2" />
-        <span>Loading Map Data...</span>
-      </div>
-    );
-  }
+  const isLoading = geoLoading || districtsLoading || districtDataMap.size === 0;
 
   return (
     <div className="h-full w-full rounded-lg overflow-hidden border border-border shadow-lg relative z-0">
-      <MapContainer 
-        center={[22.5, 82.0]} // Center of India
-        zoom={5} 
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-slate-950/80 z-[999] text-white">
+          <Loader2 className="h-8 w-8 animate-spin mr-2" />
+          <span>Loading Map…</span>
+        </div>
+      )}
+      <MapContainer
+        center={[22.5, 82.0]}
+        zoom={5}
         className="h-full w-full bg-slate-950"
         zoomControl={false}
       >
@@ -195,62 +219,36 @@ export function MapComponent({ mode, onDistrictSelect, selectedDistrictId, curre
           url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
         />
         {geoJsonData && (
-          <GeoJSON 
-            data={geoJsonData} 
-            style={style} 
-            onEachFeature={onEachFeature}
-            key={`${mode}-${selectedDistrictId}-${districtDataMap.size}-${renderKey}`}
-          />
+          <>
+            <FitBounds geoJsonData={geoJsonData} />
+            <GeoJSON
+              data={geoJsonData}
+              style={style}
+              onEachFeature={onEachFeature}
+              key={`${countryId}-${mode}-${selectedDistrictId}-${districtDataMap.size}-${renderKey}`}
+            />
+          </>
         )}
       </MapContainer>
-      
-      {/* Legend Overlay */}
+
+      {/* Legend */}
       <div className="absolute bottom-4 right-4 bg-card/90 backdrop-blur border border-border p-3 rounded-md z-[1000] text-xs">
-        <h4 className="font-bold mb-2 text-foreground">
-          {getModeLabel(mode)}
-        </h4>
+        <h4 className="font-bold mb-2 text-foreground">{getModeLabel(mode)}</h4>
         <div className="flex flex-col gap-1">
           {mode === 'adaptation' ? (
             <>
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full" style={{ background: '#22c55e' }}></span>
-                <span>High Readiness</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full" style={{ background: '#3b82f6' }}></span>
-                <span>Moderate</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full" style={{ background: '#eab308' }}></span>
-                <span>Low</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full" style={{ background: '#ef4444' }}></span>
-                <span>Critical Gap</span>
-              </div>
+              <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-green-600"></span><span>High Readiness</span></div>
+              <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-green-500"></span><span>Moderate</span></div>
+              <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-yellow-500"></span><span>Low</span></div>
+              <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-red-500"></span><span>Critical Gap</span></div>
             </>
           ) : (
             <>
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full" style={{ background: '#ef4444' }}></span>
-                <span>Very High</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full" style={{ background: '#f97316' }}></span>
-                <span>High</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full" style={{ background: '#eab308' }}></span>
-                <span>Moderate</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full" style={{ background: '#22c55e' }}></span>
-                <span>Low</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full" style={{ background: '#16a34a' }}></span>
-                <span>Very Low</span>
-              </div>
+              <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-red-500"></span><span>Very High</span></div>
+              <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-orange-500"></span><span>High</span></div>
+              <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-yellow-500"></span><span>Moderate</span></div>
+              <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-green-500"></span><span>Low</span></div>
+              <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-green-700"></span><span>Very Low</span></div>
             </>
           )}
         </div>
