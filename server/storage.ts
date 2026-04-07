@@ -175,15 +175,18 @@ export class DatabaseStorage implements IStorage {
 
   // Districts
   async getAllDistricts(): Promise<District[]> {
-    return await db.select().from(districts);
+    const rows = await db.select().from(districts);
+    return rows.map(({ geometry: _g, seasonalData: _s, ...rest }) => rest as District);
   }
 
   async getDistrictsByState(stateId: string): Promise<District[]> {
-    return await db.select().from(districts).where(eq(districts.stateId, stateId));
+    const rows = await db.select().from(districts).where(eq(districts.stateId, stateId));
+    return rows.map(({ geometry: _g, seasonalData: _s, ...rest }) => rest as District);
   }
 
   async getDistrictsByCountry(countryId: string): Promise<District[]> {
-    return await db.select().from(districts).where(eq(districts.countryId, countryId));
+    const rows = await db.select().from(districts).where(eq(districts.countryId, countryId));
+    return rows.map(({ geometry: _g, seasonalData: _s, ...rest }) => rest as District);
   }
 
   async getDistrictGeometries(countryId?: string): Promise<Array<{ id: string; name: string; stateId: string; countryId: string; geometry: any }>> {

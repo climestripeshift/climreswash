@@ -165,6 +165,9 @@ export default function Dashboard() {
         const district = allDistricts.find(d => d.id === id);
         if (district) {
           setSelectedDistrict(district);
+          fetch(`/api/districts/${id}`).then(r => r.json()).then((full: DistrictData) => {
+            setSelectedDistrict(full);
+          }).catch(() => {});
         }
       }
     } else if (level === 'block' && id) {
@@ -179,6 +182,9 @@ export default function Dashboard() {
     setSelectedDistrict(district);
     if (district) {
       setCurrentLevel('district');
+      fetch(`/api/districts/${district.id}`).then(r => r.json()).then((full: DistrictData) => {
+        setSelectedDistrict(full);
+      }).catch(() => {});
     }
   };
 
