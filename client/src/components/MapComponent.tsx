@@ -117,21 +117,24 @@ export function MapComponent({
   const { data: districts, isLoading: districtsLoading } = useQuery({
     queryKey: ['districts', countryId],
     queryFn: async () => {
-      const res = await fetch(`/api/districts?country=${countryId}`);
+      const url = countryId === 'ALL'
+        ? '/api/districts'
+        : `/api/districts?country=${countryId}`;
+      const res = await fetch(url);
       if (!res.ok) throw new Error('Failed to fetch districts');
       return res.json() as Promise<DistrictData[]>;
     }
   });
 
-  // Load GeoJSON: static file for India, dynamic API for others
+  // Load GeoJSON: DB endpoint for all cases (now India has geometry too)
   useEffect(() => {
     if (prevCountryRef.current === countryId) return;
     prevCountryRef.current = countryId;
     setGeoJsonData(null);
     setGeoLoading(true);
 
-    const url = countryId === 'IND'
-      ? '/data/india.json'
+    const url = countryId === 'ALL'
+      ? '/api/districts/geojson'
       : `/api/districts/geojson?country=${countryId}`;
 
     fetch(url)
@@ -198,7 +201,9 @@ export function MapComponent({
     });
   }, [districtDataMap, selectedDistrictId, onDistrictSelect]);
 
-  const isLoading = geoLoading || districtsLoading || districtDataMap.size === 0;
+  // Show loading overlay while GeoJSON or districts are loading
+  // Don't block on districtDataMap.size since 'ALL' loads thousands of records
+  const isLoading = geoLoading || districtsLoading;
 
   return (
     <div className="h-full w-full rounded-lg overflow-hidden border border-border shadow-lg relative z-0">

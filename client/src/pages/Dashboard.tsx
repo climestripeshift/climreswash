@@ -41,7 +41,7 @@ export default function Dashboard() {
   const [stateData, setStateData] = useState<StateData | null>(null);
   const [blocks, setBlocks] = useState<BlockData[]>([]);
   const [allDistricts, setAllDistricts] = useState<DistrictData[]>([]);
-  const [selectedCountryId, setSelectedCountryId] = useState<string>('IND');
+  const [selectedCountryId, setSelectedCountryId] = useState<string>('ALL');
   const [allCountries, setAllCountries] = useState<CountryData[]>([]);
 
   useEffect(() => {
@@ -63,14 +63,21 @@ export default function Dashboard() {
 
   // Reload districts when country changes
   useEffect(() => {
-    fetch(`/api/districts?country=${selectedCountryId}`)
+    const url = selectedCountryId === 'ALL'
+      ? '/api/districts'
+      : `/api/districts?country=${selectedCountryId}`;
+    fetch(url)
       .then(res => res.json())
       .then(data => setAllDistricts(data))
       .catch(err => console.error('Failed to fetch districts:', err));
 
     // Update countryData for the selected country
-    const found = allCountries.find(c => c.id === selectedCountryId);
-    if (found) setCountryData(found);
+    if (selectedCountryId !== 'ALL') {
+      const found = allCountries.find(c => c.id === selectedCountryId);
+      if (found) setCountryData(found);
+    } else {
+      setCountryData(null);
+    }
   }, [selectedCountryId, allCountries]);
 
   useEffect(() => {
@@ -340,6 +347,9 @@ export default function Dashboard() {
                 <SelectValue placeholder="Select country" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="ALL" data-testid="option-country-ALL">
+                  🌍 All Countries
+                </SelectItem>
                 {allCountries.map(c => (
                   <SelectItem key={c.id} value={c.id} data-testid={`option-country-${c.id}`}>
                     {c.name}
