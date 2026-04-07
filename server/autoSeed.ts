@@ -1,7 +1,7 @@
 import { db } from "./db";
 import { countries, states, districts, aqiObservations, technologies, users } from "@shared/schema";
 import { getAqiCategory } from "./earlyWarning";
-import { count } from "drizzle-orm";
+import { count, isNull, eq, sql } from "drizzle-orm";
 import * as fs from "fs";
 import * as path from "path";
 import bcrypt from "bcryptjs";
@@ -95,6 +95,30 @@ function findGeoJsonPath(): string | null {
   return null;
 }
 
+async function seedIndiaGeometryIfMissing(features: Array<{ properties: { ID: string }; geometry: any }>): Promise<void> {
+  try {
+    const missingResult = await db.select({ value: count() }).from(districts)
+      .where(sql`${districts.countryId} = 'IND' AND ${districts.geometry} IS NULL`);
+    const missing = Number(missingResult[0]?.value ?? 0);
+    if (missing === 0) {
+      console.log("[autoSeed] India geometries already present — skipping geometry import.");
+      return;
+    }
+    console.log(`[autoSeed] ${missing} India districts missing geometry — importing from india.json...`);
+    let updated = 0;
+    for (const feature of features) {
+      if (!feature.geometry) continue;
+      const id = String(feature.properties.ID);
+      const geomStr = JSON.stringify(feature.geometry).replace(/'/g, "''");
+      await db.execute(sql.raw(`UPDATE districts SET geometry = '${geomStr}'::jsonb, updated_at = NOW() WHERE id = '${id}' AND geometry IS NULL`));
+      updated++;
+    }
+    console.log(`[autoSeed] ✅ India geometry import done — ${updated} districts updated.`);
+  } catch (err) {
+    console.error("[autoSeed] Geometry import failed:", err);
+  }
+}
+
 export async function seedIfEmpty(): Promise<void> {
   try {
     const geoJsonPath = findGeoJsonPath();
@@ -104,7 +128,7 @@ export async function seedIfEmpty(): Promise<void> {
     }
 
     const geojson = JSON.parse(fs.readFileSync(geoJsonPath, 'utf-8'));
-    const features = geojson.features as Array<{ properties: { NAME: string; ID: string; HAZARD?: number; EXPOSURE?: number; VULNERABILITY?: number; RISK?: number; STATE?: string } }>;
+    const features = geojson.features as Array<{ properties: { NAME: string; ID: string; HAZARD?: number; EXPOSURE?: number; VULNERABILITY?: number; RISK?: number; STATE?: string }; geometry: any }>;
     const expectedCount = features.length;
 
     const result = await db.select({ value: count() }).from(districts);
@@ -112,7 +136,8 @@ export async function seedIfEmpty(): Promise<void> {
 
     if (districtCount >= expectedCount) {
       console.log(`[autoSeed] Database already has ${districtCount}/${expectedCount} districts — skipping seed.`);
-      // Still check technologies even when districts are present
+      // Still import geometry and check technologies even when districts are present
+      await seedIndiaGeometryIfMissing(features);
       await seedTechnologiesIfEmpty();
       return;
     }
