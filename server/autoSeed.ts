@@ -83,16 +83,113 @@ function generateAqiObservations(districtId: string) {
   return observations;
 }
 
-function findGeoJsonPath(): string | null {
+function findDataFile(filename: string): string | null {
   const cwd = process.cwd();
   const candidates = [
-    path.join(cwd, 'dist', 'public', 'data', 'india.json'),
-    path.join(cwd, 'client', 'public', 'data', 'india.json'),
+    path.join(cwd, 'dist', 'public', 'data', filename),
+    path.join(cwd, 'client', 'public', 'data', filename),
   ];
   for (const p of candidates) {
     if (fs.existsSync(p)) return p;
   }
   return null;
+}
+
+function findGeoJsonPath(): string | null {
+  return findDataFile('india.json');
+}
+
+async function seedMultiCountryDataIfMissing(): Promise<void> {
+  try {
+    const countriesPath = findDataFile('countries_seed.json');
+    const districtsPath = findDataFile('districts_seed.json');
+    if (!countriesPath || !districtsPath) {
+      console.log("[autoSeed] Multi-country seed files not found — skipping.");
+      return;
+    }
+    const countryCount = await db.select({ value: count() }).from(countries).then(r => Number(r[0]?.value ?? 0));
+    if (countryCount >= 14) {
+      console.log(`[autoSeed] Multi-country data already present (${countryCount} countries) — skipping.`);
+      return;
+    }
+    console.log(`[autoSeed] Only ${countryCount} countries in DB — importing multi-country seed data...`);
+
+    const countryRows: any[] = JSON.parse(fs.readFileSync(countriesPath, 'utf-8'));
+    for (const c of countryRows) {
+      await db.insert(countries).values({
+        id: c.id,
+        name: c.name,
+        population: c.population,
+        totalStates: c.total_states,
+        totalDistricts: c.total_districts,
+      }).onConflictDoNothing();
+      await db.insert(states).values({
+        id: c.id,
+        countryId: c.id,
+        name: c.name,
+        code: c.id,
+        population: c.population,
+        totalDistricts: c.total_districts,
+        topClimateRisks: ["Flood", "Drought", "Heatwave"],
+      }).onConflictDoNothing();
+    }
+    console.log(`[autoSeed] ✅ Imported ${countryRows.length} countries.`);
+
+    const districtRows: any[] = JSON.parse(fs.readFileSync(districtsPath, 'utf-8'));
+    const CHUNK = 50;
+    let imported = 0;
+    for (let i = 0; i < districtRows.length; i += CHUNK) {
+      const chunk = districtRows.slice(i, i + CHUNK).map((d: any) => ({
+        id: d.id,
+        countryId: d.country_id,
+        stateId: d.state_id,
+        name: d.name,
+        population: d.population,
+        vulnerabilityScore: d.vulnerability_score,
+        adaptationScore: d.adaptation_score,
+        hazardScore: d.hazard_score,
+        hazardCategory: d.hazard_category,
+        exposureScore: d.exposure_score,
+        exposureCategory: d.exposure_category,
+        vulnerabilityCategory: d.vulnerability_category,
+        riskScore: d.risk_score,
+        riskCategory: d.risk_category,
+        childrenAtRisk: d.children_at_risk,
+        elderlyAtRisk: d.elderly_at_risk,
+        climateRisks: d.climate_risks,
+        adaptationStrategies: d.adaptation_strategies,
+        impactIfNoAction: d.impact_if_no_action,
+        soilType: d.soil_type,
+        rockType: d.rock_type,
+        toiletTechnology: d.toilet_technology,
+        waterSupplyStrategy: d.water_supply_strategy,
+        dropoutRate: d.dropout_rate,
+        waterAccessPercent: d.water_access_percent,
+        toiletCoveragePercent: d.toilet_coverage_percent,
+        handwashingFacilityPercent: d.handwashing_facility_percent,
+        schoolToiletPercent: d.school_toilet_percent,
+        schoolWaterPercent: d.school_water_percent,
+        anganwadiToiletPercent: d.anganwadi_toilet_percent,
+        anganwadiWaterPercent: d.anganwadi_water_percent,
+        childMarriageRate: d.child_marriage_rate,
+        malnutritionStunting: d.malnutrition_stunting,
+        malnutritionWasting: d.malnutrition_wasting,
+        malnutritionUnderweight: d.malnutrition_underweight,
+        infantMortalityRate: d.infant_mortality_rate,
+        maternalMortalityRatio: d.maternal_mortality_ratio,
+        geometry: d.geometry,
+        seasonalData: generateSeasonalData(d.vulnerability_score ?? 0.4),
+      }));
+      await db.insert(districts).values(chunk).onConflictDoNothing();
+      imported += chunk.length;
+      if (imported % 200 === 0 || imported >= districtRows.length) {
+        console.log(`[autoSeed] Multi-country districts: ${imported}/${districtRows.length} imported`);
+      }
+    }
+    console.log(`[autoSeed] ✅ Multi-country seed complete — ${imported} districts imported.`);
+  } catch (err) {
+    console.error("[autoSeed] Multi-country seed failed:", err);
+  }
 }
 
 async function seedIndiaGeometryIfMissing(features: Array<{ properties: { ID: string }; geometry: any }>): Promise<void> {
@@ -136,8 +233,9 @@ export async function seedIfEmpty(): Promise<void> {
 
     if (districtCount >= expectedCount) {
       console.log(`[autoSeed] Database already has ${districtCount}/${expectedCount} districts — skipping seed.`);
-      // Still import geometry and check technologies even when districts are present
+      // Still import geometry, multi-country data, and check technologies
       await seedIndiaGeometryIfMissing(features);
+      await seedMultiCountryDataIfMissing();
       await seedTechnologiesIfEmpty();
       return;
     }
