@@ -3,7 +3,7 @@ import { MapComponent } from "@/components/MapComponent";
 import { Sidebar } from "@/components/Sidebar";
 import { GeographicNavigation } from "@/components/GeographicNavigation";
 import { DistrictData, MapViewMode, Alert, AqiObservation, Intervention, CommunityReport, GeographicLevel, CountryData, StateData, BlockData } from "@/lib/types";
-import { fetchDistrict } from "@/lib/api";
+import { fetchDistrict, transformDistrict } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Settings, AlertTriangle, Bell, X, Wind, ChevronRight, Menu, MapPin, Globe } from "lucide-react";
@@ -69,7 +69,7 @@ export default function Dashboard() {
       : `/api/districts?country=${selectedCountryId}`;
     fetch(url)
       .then(res => res.json())
-      .then(data => setAllDistricts(data))
+      .then(data => setAllDistricts(data.map(transformDistrict)))
       .catch(err => console.error('Failed to fetch districts:', err));
 
     // Update countryData for the selected country
