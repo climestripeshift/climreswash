@@ -3,6 +3,7 @@ import { MapComponent } from "@/components/MapComponent";
 import { Sidebar } from "@/components/Sidebar";
 import { GeographicNavigation } from "@/components/GeographicNavigation";
 import { DistrictData, MapViewMode, Alert, AqiObservation, Intervention, CommunityReport, GeographicLevel, CountryData, StateData, BlockData } from "@/lib/types";
+import { fetchDistrict } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Settings, AlertTriangle, Bell, X, Wind, ChevronRight, Menu, MapPin, Globe } from "lucide-react";
@@ -165,7 +166,7 @@ export default function Dashboard() {
         const district = allDistricts.find(d => d.id === id);
         if (district) {
           setSelectedDistrict(district);
-          fetch(`/api/districts/${id}`).then(r => r.json()).then((full: DistrictData) => {
+          fetchDistrict(id).then(full => {
             setSelectedDistrict(full);
           }).catch(() => {});
         }
@@ -182,7 +183,7 @@ export default function Dashboard() {
     setSelectedDistrict(district);
     if (district) {
       setCurrentLevel('district');
-      fetch(`/api/districts/${district.id}`).then(r => r.json()).then((full: DistrictData) => {
+      fetchDistrict(district.id).then(full => {
         setSelectedDistrict(full);
       }).catch(() => {});
     }
