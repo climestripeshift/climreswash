@@ -550,5 +550,119 @@ export async function registerRoutes(
     }
   });
 
+  // ── Admin: Country Import from Excel data ──────────────────────────────────
+  app.post("/api/admin/import-countries", requireAdmin, async (req, res) => {
+    try {
+      const { country, districts: districtRows } = req.body as {
+        country: { id: string; name: string; population: number; totalDistricts: number };
+        districts: any[];
+      };
+      if (!country?.id || !Array.isArray(districtRows) || districtRows.length === 0) {
+        return res.status(400).json({ error: "Missing country info or district rows." });
+      }
+
+      const { db } = await import("./db");
+      const { countries, states, districts } = await import("@shared/schema");
+      const { sql } = await import("drizzle-orm");
+
+      await db.insert(countries).values({
+        id: country.id,
+        name: country.name,
+        population: country.population,
+        totalStates: 1,
+        totalDistricts: districtRows.length,
+      }).onConflictDoUpdate({ target: countries.id, set: { name: country.name, population: country.population, totalDistricts: districtRows.length } });
+
+      await db.insert(states).values({
+        id: country.id,
+        countryId: country.id,
+        name: country.name,
+        code: country.id,
+        population: country.population,
+        totalDistricts: districtRows.length,
+        topClimateRisks: ["Flood", "Drought", "Heatwave"],
+      }).onConflictDoNothing();
+
+      let inserted = 0;
+      let failed = 0;
+      const errors: string[] = [];
+      const CHUNK = 50;
+
+      for (let i = 0; i < districtRows.length; i += CHUNK) {
+        const chunk = districtRows.slice(i, i + CHUNK);
+        for (const r of chunk) {
+          try {
+            const geomStr = r.geometry ? JSON.stringify(r.geometry).replace(/'/g, "''") : null;
+            const seasonalArr = Array.isArray(r.seasonalData) ? r.seasonalData : [];
+            const q = `
+              INSERT INTO districts (
+                id, country_id, state_id, name, population,
+                vulnerability_score, adaptation_score,
+                children_at_risk, elderly_at_risk,
+                climate_risks, adaptation_strategies, impact_if_no_action,
+                soil_type, rock_type, toilet_technology, water_supply_strategy,
+                dropout_rate, water_access_percent, toilet_coverage_percent,
+                handwashing_facility_percent, school_toilet_percent, school_water_percent,
+                anganwadi_toilet_percent, anganwadi_water_percent,
+                malnutrition_stunting, malnutrition_wasting, malnutrition_underweight,
+                infant_mortality_rate, maternal_mortality_ratio,
+                seasonal_data, geometry
+              ) VALUES (
+                '${String(r.id).replace(/'/g,"''")}',
+                '${country.id}',
+                '${country.id}',
+                '${String(r.name||"").replace(/'/g,"''")}',
+                ${Number(r.population)||0},
+                ${Number(r.vulnerabilityScore)||0},
+                ${Number(r.adaptationScore)||0},
+                ${Number(r.childrenAtRisk)||0},
+                ${Number(r.elderlyAtRisk)||0},
+                ARRAY[${(r.climateRisks||[]).map((s:string)=>`'${s.replace(/'/g,"''")}'`).join(",")||""}]::text[],
+                ARRAY[${(r.adaptationStrategies||[]).map((s:string)=>`'${s.replace(/'/g,"''")}'`).join(",")||""}]::text[],
+                '${String(r.impactIfNoAction||"").replace(/'/g,"''")}',
+                '${String(r.soilType||"Alluvial").replace(/'/g,"''")}',
+                '${String(r.rockType||"Sandstone").replace(/'/g,"''")}',
+                '${String(r.toiletTechnology||"Twin Pit").replace(/'/g,"''")}',
+                '${String(r.waterSupplyStrategy||"Bore Well").replace(/'/g,"''")}',
+                ${Number(r.dropoutRate)||0},
+                ${Number(r.waterAccessPercent)||0},
+                ${Number(r.toiletCoveragePercent)||0},
+                ${Number(r.handwashingFacilityPercent)||0},
+                ${r.schoolToiletPercent!=null?Number(r.schoolToiletPercent):"NULL"},
+                ${r.schoolWaterPercent!=null?Number(r.schoolWaterPercent):"NULL"},
+                ${r.anganwadiToiletPercent!=null?Number(r.anganwadiToiletPercent):"NULL"},
+                ${r.anganwadiWaterPercent!=null?Number(r.anganwadiWaterPercent):"NULL"},
+                ${Number(r.malnutritionStunting)||0},
+                ${Number(r.malnutritionWasting)||0},
+                ${Number(r.malnutritionUnderweight)||0},
+                ${Number(r.infantMortalityRate)||0},
+                ${Number(r.maternalMortalityRatio)||0},
+                '${JSON.stringify(seasonalArr).replace(/'/g,"''")}',
+                ${geomStr ? `'${geomStr}'::jsonb` : "NULL"}
+              )
+              ON CONFLICT (id) DO UPDATE SET
+                country_id = EXCLUDED.country_id,
+                name = EXCLUDED.name,
+                population = EXCLUDED.population,
+                vulnerability_score = EXCLUDED.vulnerability_score,
+                adaptation_score = EXCLUDED.adaptation_score,
+                geometry = EXCLUDED.geometry,
+                updated_at = NOW();
+            `;
+            await db.execute(sql.raw(q));
+            inserted++;
+          } catch (err: any) {
+            failed++;
+            errors.push(`${r.id}: ${err.message?.slice(0, 80)}`);
+          }
+        }
+      }
+
+      res.json({ success: true, inserted, failed, errors: errors.slice(0, 10), country: country.id });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   return httpServer;
 }

@@ -453,6 +453,236 @@ function DistrictEditor({ district, onClose }: { district: DistrictData; onClose
   );
 }
 
+function downloadTemplate() {
+  const headers = [
+    "id","name","population","vulnerabilityScore","adaptationScore",
+    "childrenAtRisk","elderlyAtRisk","climateRisks","adaptationStrategies","impactIfNoAction",
+    "soilType","rockType","toiletTechnology","waterSupplyStrategy",
+    "dropoutRate","waterAccessPercent","toiletCoveragePercent","handwashingFacilityPercent",
+    "schoolToiletPercent","schoolWaterPercent","malnutritionStunting","malnutritionWasting",
+    "malnutritionUnderweight","infantMortalityRate","maternalMortalityRatio"
+  ];
+  const example = [
+    "NG-0001","Abuja FCT","3564126","45","60","128310","56822",
+    "Flood,Drought,Heatwave","Rainwater Harvesting,Early Warning Systems",
+    "Without intervention, Abuja FCT faces increased flood risk by 2030.",
+    "Alluvial","Granite","Twin Pit","Piped Water",
+    "8.5","72","65","58","70","68","28","9","22","38","150"
+  ];
+  const csv = [headers.join(","), example.join(",")].join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "country_districts_template.csv"; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function CountryImportTab() {
+  const { toast } = useToast();
+  const [countryId, setCountryId] = useState("");
+  const [countryName, setCountryName] = useState("");
+  const [population, setPopulation] = useState("");
+  const [rows, setRows] = useState<any[]>([]);
+  const [importing, setImporting] = useState(false);
+  const [result, setResult] = useState<{ inserted: number; failed: number; errors: string[] } | null>(null);
+  const [dragOver, setDragOver] = useState(false);
+
+  const parseFile = async (file: File) => {
+    const XLSX = (await import("xlsx")) as any;
+    const ab = await file.arrayBuffer();
+    const wb = XLSX.read(ab, { type: "array" });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const parsed: any[] = XLSX.utils.sheet_to_json(ws, { defval: null });
+    if (parsed.length === 0) { toast({ title: "Empty file", description: "No rows found in the file.", variant: "destructive" }); return; }
+    setRows(parsed);
+    if (!countryId && parsed[0]?.countryId) setCountryId(String(parsed[0].countryId));
+    if (!countryName && parsed[0]?.countryName) setCountryName(String(parsed[0].countryName));
+    toast({ title: `Parsed ${parsed.length} rows`, description: "Review below, then click Import." });
+  };
+
+  const handleFile = (file: File) => {
+    if (!file.name.match(/\.(xlsx|xls|csv)$/i)) { toast({ title: "Invalid file", description: "Please upload an Excel (.xlsx/.xls) or CSV file.", variant: "destructive" }); return; }
+    parseFile(file);
+  };
+
+  const handleImport = async () => {
+    if (!countryId.trim() || !countryName.trim() || !population.trim()) { toast({ title: "Fill in country details", variant: "destructive" }); return; }
+    if (rows.length === 0) { toast({ title: "No data to import", variant: "destructive" }); return; }
+    setImporting(true);
+    setResult(null);
+    try {
+      const districts = rows.map((r, i) => ({
+        id: r.id || `${countryId}-${String(i+1).padStart(4,"0")}`,
+        name: r.name || r.NAME || "",
+        population: Number(r.population) || 0,
+        vulnerabilityScore: Number(r.vulnerabilityScore) || 0,
+        adaptationScore: Number(r.adaptationScore) || 0,
+        childrenAtRisk: Number(r.childrenAtRisk) || 0,
+        elderlyAtRisk: Number(r.elderlyAtRisk) || 0,
+        climateRisks: r.climateRisks ? String(r.climateRisks).split(",").map((s: string) => s.trim()).filter(Boolean) : [],
+        adaptationStrategies: r.adaptationStrategies ? String(r.adaptationStrategies).split(",").map((s: string) => s.trim()).filter(Boolean) : [],
+        impactIfNoAction: r.impactIfNoAction || "",
+        soilType: r.soilType || "Alluvial",
+        rockType: r.rockType || "Sandstone",
+        toiletTechnology: r.toiletTechnology || "Twin Pit",
+        waterSupplyStrategy: r.waterSupplyStrategy || "Bore Well",
+        dropoutRate: Number(r.dropoutRate) || 0,
+        waterAccessPercent: Number(r.waterAccessPercent) || 0,
+        toiletCoveragePercent: Number(r.toiletCoveragePercent) || 0,
+        handwashingFacilityPercent: Number(r.handwashingFacilityPercent) || 0,
+        schoolToiletPercent: r.schoolToiletPercent != null ? Number(r.schoolToiletPercent) : null,
+        schoolWaterPercent: r.schoolWaterPercent != null ? Number(r.schoolWaterPercent) : null,
+        anganwadiToiletPercent: r.anganwadiToiletPercent != null ? Number(r.anganwadiToiletPercent) : null,
+        anganwadiWaterPercent: r.anganwadiWaterPercent != null ? Number(r.anganwadiWaterPercent) : null,
+        malnutritionStunting: Number(r.malnutritionStunting) || 0,
+        malnutritionWasting: Number(r.malnutritionWasting) || 0,
+        malnutritionUnderweight: Number(r.malnutritionUnderweight) || 0,
+        infantMortalityRate: Number(r.infantMortalityRate) || 0,
+        maternalMortalityRatio: Number(r.maternalMortalityRatio) || 0,
+        geometry: r.geometry ? (typeof r.geometry === "string" ? JSON.parse(r.geometry) : r.geometry) : null,
+        seasonalData: r.seasonalData ? (typeof r.seasonalData === "string" ? JSON.parse(r.seasonalData) : r.seasonalData) : [],
+      }));
+      const resp = await fetch("/api/admin/import-countries", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ country: { id: countryId.trim().toUpperCase(), name: countryName.trim(), population: Number(population) || 0, totalDistricts: districts.length }, districts }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || "Import failed");
+      setResult(data);
+      toast({ title: `✅ Import complete`, description: `${data.inserted} districts added for ${countryName}.` });
+    } catch (err: any) {
+      toast({ title: "Import failed", description: err.message, variant: "destructive" });
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><Database className="h-5 w-5" /> Add a New Country</CardTitle>
+          <CardDescription>Upload an Excel or CSV file with district data to add a new country to the map.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Step 1: Download Template */}
+          <div className="rounded-lg border p-4 space-y-2">
+            <p className="text-sm font-medium">Step 1 — Download the template</p>
+            <p className="text-xs text-muted-foreground">Fill in one row per district. Required columns: id, name, population, vulnerabilityScore (0-100), adaptationScore (0-100), climateRisks (comma-separated), waterAccessPercent, toiletCoveragePercent, infantMortalityRate, maternalMortalityRatio.</p>
+            <Button variant="outline" size="sm" onClick={downloadTemplate} className="gap-2">
+              <Upload className="h-3.5 w-3.5" /> Download CSV Template
+            </Button>
+          </div>
+
+          {/* Step 2: Country Info */}
+          <div className="rounded-lg border p-4 space-y-3">
+            <p className="text-sm font-medium">Step 2 — Enter country details</p>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Country Code (2-3 letters)</Label>
+                <Input placeholder="e.g. NG" value={countryId} onChange={e => setCountryId(e.target.value.toUpperCase())} maxLength={3} className="h-8 text-sm" data-testid="input-country-code" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Country Name</Label>
+                <Input placeholder="e.g. Nigeria" value={countryName} onChange={e => setCountryName(e.target.value)} className="h-8 text-sm" data-testid="input-country-name" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Total Population</Label>
+                <Input placeholder="e.g. 220000000" value={population} onChange={e => setPopulation(e.target.value)} type="number" className="h-8 text-sm" data-testid="input-country-population" />
+              </div>
+            </div>
+          </div>
+
+          {/* Step 3: Upload File */}
+          <div className="rounded-lg border p-4 space-y-3">
+            <p className="text-sm font-medium">Step 3 — Upload your file</p>
+            <div
+              className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${dragOver ? "border-primary bg-primary/5" : "border-muted-foreground/30 hover:border-primary/50"}`}
+              onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={e => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }}
+              onClick={() => { const inp = document.createElement("input"); inp.type = "file"; inp.accept = ".xlsx,.xls,.csv"; inp.onchange = () => { if (inp.files?.[0]) handleFile(inp.files[0]); }; inp.click(); }}
+              data-testid="upload-district-file"
+            >
+              <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">{rows.length > 0 ? `✅ ${rows.length} rows loaded — click to replace` : "Drag & drop or click to upload Excel / CSV"}</p>
+            </div>
+          </div>
+
+          {/* Preview */}
+          {rows.length > 0 && (
+            <div className="rounded-lg border p-4 space-y-2">
+              <p className="text-sm font-medium">Preview — first 5 rows</p>
+              <div className="overflow-x-auto">
+                <table className="text-xs w-full">
+                  <thead>
+                    <tr className="border-b">
+                      {Object.keys(rows[0]).slice(0, 8).map(k => <th key={k} className="text-left px-2 py-1 text-muted-foreground">{k}</th>)}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.slice(0, 5).map((r, i) => (
+                      <tr key={i} className="border-b last:border-0">
+                        {Object.keys(rows[0]).slice(0, 8).map(k => <td key={k} className="px-2 py-1 truncate max-w-[120px]">{String(r[k] ?? "")}</td>)}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Import Button */}
+          <Button onClick={handleImport} disabled={importing || rows.length === 0} className="w-full gap-2" data-testid="button-import-country">
+            {importing ? <><RefreshCw className="h-4 w-4 animate-spin" /> Importing {rows.length} districts...</> : <><Database className="h-4 w-4" /> Import {rows.length > 0 ? `${rows.length} Districts for ${countryName || "Country"}` : "Country"}</>}
+          </Button>
+
+          {/* Result */}
+          {result && (
+            <div className={`rounded-lg border p-4 space-y-2 ${result.failed === 0 ? "border-green-500/30 bg-green-500/5" : "border-orange-500/30 bg-orange-500/5"}`}>
+              <p className="text-sm font-medium flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-500" />
+                Import complete: {result.inserted} districts added, {result.failed} failed
+              </p>
+              {result.errors.length > 0 && (
+                <div className="text-xs text-muted-foreground space-y-0.5">
+                  {result.errors.map((e, i) => <p key={i}>{e}</p>)}
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">The country is now live on the map. Reload the dashboard to see it in the country selector.</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Existing countries */}
+      <ExistingCountriesList />
+    </div>
+  );
+}
+
+function ExistingCountriesList() {
+  const { data: countriesList = [] } = useQuery({ queryKey: ["countries"], queryFn: () => fetch("/api/countries").then(r => r.json()) });
+  return (
+    <Card>
+      <CardHeader><CardTitle className="text-base">Currently Active Countries ({countriesList.length})</CardTitle></CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          {countriesList.map((c: any) => (
+            <div key={c.id} className="rounded-lg border p-3 space-y-1">
+              <p className="text-xs font-mono font-bold text-primary">{c.id}</p>
+              <p className="text-sm font-medium">{c.name}</p>
+              <p className="text-xs text-muted-foreground">{(c.totalDistricts||0).toLocaleString()} districts</p>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function TechnologyManagerTab() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -722,6 +952,9 @@ export default function AdminDashboard() {
           <TabsTrigger value="integrations" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3">
             API Integrations
           </TabsTrigger>
+          <TabsTrigger value="countries" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3">
+            Add Countries
+          </TabsTrigger>
           <TabsTrigger value="settings" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3">
             System Settings
           </TabsTrigger>
@@ -906,6 +1139,11 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        {/* Countries Import Tab */}
+        <TabsContent value="countries" className="pt-6">
+          <CountryImportTab />
         </TabsContent>
 
         {/* Settings Tab */}
