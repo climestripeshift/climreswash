@@ -37,7 +37,7 @@ export function transformDistrict(d: any): DistrictData {
     malnutritionUnderweight: d.malnutritionUnderweight,
     infantMortalityRate: d.infantMortalityRate ?? 0,
     maternalMortalityRatio: d.maternalMortalityRatio ?? 0,
-    seasonalData: d.seasonalData,
+    seasonalData: d.seasonalData ?? [],
   };
 }
 

@@ -1217,7 +1217,7 @@ export function Sidebar({ mode, setMode, selectedDistrict, selectedBlock, blocks
                           </h4>
                           <div className="h-[200px] w-full">
                             <ResponsiveContainer width="100%" height="100%">
-                              <LineChart data={selectedDistrict.seasonalData}>
+                              <LineChart data={selectedDistrict.seasonalData ?? []}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                                 <XAxis 
                                   dataKey="month" 
@@ -1271,7 +1271,7 @@ export function Sidebar({ mode, setMode, selectedDistrict, selectedBlock, blocks
 
                        <div className="space-y-3">
                           <h4 className="text-xs uppercase text-muted-foreground font-bold tracking-wider">Hazard Analysis</h4>
-                          {selectedDistrict.seasonalData
+                          {(selectedDistrict.seasonalData ?? [])
                             .filter(d => d.hazard !== 'None')
                             .map((d, i) => (
                             <div key={i} className="flex items-start gap-3 text-sm p-2 rounded hover:bg-secondary/50 transition-colors">
