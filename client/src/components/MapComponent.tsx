@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, GeoJSON, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { DistrictData, MapViewMode, GeographicLevel } from "@/lib/types";
+import { transformDistrict } from "@/lib/api";
 import { Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
@@ -122,7 +123,8 @@ export function MapComponent({
         : `/api/districts?country=${countryId}`;
       const res = await fetch(url);
       if (!res.ok) throw new Error('Failed to fetch districts');
-      return res.json() as Promise<DistrictData[]>;
+      const raw = await res.json();
+      return (raw as any[]).map(transformDistrict) as DistrictData[];
     }
   });
 
