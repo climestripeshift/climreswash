@@ -53,6 +53,7 @@ Preferred communication style: Simple, everyday language.
 ### Data Model
 
 **District Schema**: Comprehensive climate and social indicators including:
+- `countryId` — links every district to a country (`IND` = India); the `countries` table holds national aggregates
 - Vulnerability and adaptation scores
 - Population and at-risk demographics (children, elderly)
 - Climate risks and adaptation strategies

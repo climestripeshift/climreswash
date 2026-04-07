@@ -45,6 +45,7 @@ export const states = pgTable("states", {
 
 export const districts = pgTable("districts", {
   id: varchar("id", { length: 100 }).primaryKey(),
+  countryId: varchar("country_id", { length: 50 }).notNull().default('IND'),
   stateId: varchar("state_id", { length: 50 }).notNull().default('RJ'),
   name: varchar("name", { length: 255 }).notNull(),
   population: integer("population").notNull(),
