@@ -126,7 +126,14 @@ export interface DistrictData {
   hazardIntensities?: Record<string, number> | null;
 }
 
-export type MapViewMode = 'vulnerability' | 'adaptation' | 'hazard' | 'exposure' | 'risk' | 'weather';
+export type MapViewMode = 'vulnerability' | 'adaptation' | 'hazard' | 'exposure' | 'risk' | 'weather' | 'ml-risk';
+
+export interface MlRiskData {
+  id: string;
+  prediction: { flood: number; heatwave: number; drought: number };
+  dominant_hazard: 'flood' | 'heatwave' | 'drought';
+  severity: 'low' | 'moderate' | 'high' | 'critical';
+}
 
 export interface MlHazardPrediction {
   district_id: string;

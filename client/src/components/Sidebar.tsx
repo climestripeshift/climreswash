@@ -106,6 +106,12 @@ const modeConfig: Record<MapViewMode, { label: string; color: string; bgColor: s
     color: 'text-sky-500',
     bgColor: 'bg-sky-500',
     getValue: (d) => (d.vulnerabilityScore !== undefined && d.vulnerabilityScore !== null) ? d.vulnerabilityScore : null
+  },
+  'ml-risk': {
+    label: 'ML Hazard Risk',
+    color: 'text-violet-500',
+    bgColor: 'bg-violet-500',
+    getValue: (d) => (d.riskScore !== undefined && d.riskScore !== null) ? d.riskScore : null
   }
 };
 

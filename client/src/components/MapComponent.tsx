@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { MapContainer, TileLayer, GeoJSON, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { DistrictData, MapViewMode, GeographicLevel, WeatherData } from "@/lib/types";
+import { DistrictData, MapViewMode, GeographicLevel, WeatherData, MlRiskData } from "@/lib/types";
 import { transformDistrict } from "@/lib/api";
 import { Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -40,6 +40,8 @@ interface MapComponentProps {
   currentLevel?: GeographicLevel;
   countryId?: string;
   weatherData?: Map<string, WeatherData>;
+  mlRiskData?: Map<string, MlRiskData>;
+  mlRiskLoading?: boolean;
 }
 
 const getHazardColor = (score: number): string => {
@@ -91,10 +93,26 @@ const getWeatherSeverityColor = (severity: string): string => {
   }
 };
 
-const getColorForMode = (data: DistrictData, mode: MapViewMode, weatherMap?: Map<string, WeatherData>): string => {
+const getMlRiskColor = (risk: MlRiskData): string => {
+  const { dominant_hazard, severity } = risk;
+  if (dominant_hazard === 'flood') {
+    return severity === 'critical' ? '#1e3a8a' : severity === 'high' ? '#1d4ed8' : severity === 'moderate' ? '#60a5fa' : '#93c5fd';
+  }
+  if (dominant_hazard === 'heatwave') {
+    return severity === 'critical' ? '#7f1d1d' : severity === 'high' ? '#dc2626' : severity === 'moderate' ? '#f87171' : '#fca5a5';
+  }
+  // drought
+  return severity === 'critical' ? '#78350f' : severity === 'high' ? '#d97706' : severity === 'moderate' ? '#fcd34d' : '#fef08a';
+};
+
+const getColorForMode = (data: DistrictData, mode: MapViewMode, weatherMap?: Map<string, WeatherData>, mlRiskMap?: Map<string, MlRiskData>): string => {
   if (mode === 'weather') {
     const w = weatherMap?.get(data.id);
     return w ? getWeatherSeverityColor(w.severity) : '#475569';
+  }
+  if (mode === 'ml-risk') {
+    const r = mlRiskMap?.get(data.id);
+    return r ? getMlRiskColor(r) : '#334155';
   }
   switch (mode) {
     case 'hazard': return getHazardColor(data.hazardScore ?? 0);
@@ -113,6 +131,7 @@ const getModeLabel = (mode: MapViewMode): string => {
     case 'risk': return 'Risk Index';
     case 'adaptation': return 'Adaptation Readiness';
     case 'weather': return 'Live Weather Alerts';
+    case 'ml-risk': return 'ML Hazard Risk (Live)';
     default: return 'Vulnerability Index';
   }
 };
@@ -123,7 +142,9 @@ export function MapComponent({
   selectedDistrictId,
   currentLevel = 'state',
   countryId = 'IND',
-  weatherData
+  weatherData,
+  mlRiskData,
+  mlRiskLoading,
 }: MapComponentProps) {
   const [geoJsonData, setGeoJsonData] = useState<any>(null);
   const [geoLoading, setGeoLoading] = useState(true);
@@ -173,7 +194,7 @@ export function MapComponent({
   }, [districts]);
 
   const [renderKey, setRenderKey] = useState(Date.now());
-  useEffect(() => { setRenderKey(Date.now()); }, [mode, countryId, weatherData]);
+  useEffect(() => { setRenderKey(Date.now()); }, [mode, countryId, weatherData, mlRiskData]);
 
   const style = useCallback((feature: any) => {
     const id = feature.properties?.ID || feature.properties?.id;
@@ -182,16 +203,17 @@ export function MapComponent({
       return { fillColor: '#444', weight: 1, opacity: 0.7, color: '#1e293b', fillOpacity: 0.25 };
     }
     const isSelected = selectedDistrictId === data.id;
-    const color = getColorForMode(data, mode, weatherData);
+    const color = getColorForMode(data, mode, weatherData, mlRiskData);
+    const hasData = mode === 'weather' ? weatherData?.has(data.id) : mode === 'ml-risk' ? mlRiskData?.has(data.id) : true;
     return {
       fillColor: color,
       weight: isSelected ? 3 : 1,
       opacity: 1,
       color: isSelected ? 'white' : '#1e293b',
       dashArray: '',
-      fillOpacity: mode === 'weather' ? (weatherData?.has(data.id) ? 0.75 : 0.2) : (isSelected ? 0.85 : 0.65)
+      fillOpacity: (mode === 'weather' || mode === 'ml-risk') ? (hasData ? 0.78 : 0.2) : (isSelected ? 0.85 : 0.65)
     };
-  }, [districtDataMap, mode, selectedDistrictId, weatherData]);
+  }, [districtDataMap, mode, selectedDistrictId, weatherData, mlRiskData]);
 
   const onEachFeature = useCallback((feature: any, layer: L.Layer) => {
     const id = feature.properties?.ID || feature.properties?.id;
@@ -205,17 +227,19 @@ export function MapComponent({
       },
       mouseout: (e) => {
         const isSelected = selectedDistrictId === data.id;
+        const hasData = mode === 'weather' ? weatherData?.has(data.id) : mode === 'ml-risk' ? mlRiskData?.has(data.id) : true;
         e.target.setStyle({
           weight: isSelected ? 3 : 1,
           color: isSelected ? 'white' : '#1e293b',
-          fillOpacity: isSelected ? 0.85 : (mode === 'weather' && weatherData?.has(data.id) ? 0.75 : 0.65)
+          fillOpacity: isSelected ? 0.85 : ((mode === 'weather' || mode === 'ml-risk') && hasData ? 0.78 : 0.65)
         });
       },
       click: () => { onDistrictSelect(data); }
     });
-  }, [districtDataMap, selectedDistrictId, onDistrictSelect, mode, weatherData]);
+  }, [districtDataMap, selectedDistrictId, onDistrictSelect, mode, weatherData, mlRiskData]);
 
   const isLoading = geoLoading || districtsLoading;
+  const isMLLoading = mode === 'ml-risk' && mlRiskLoading;
 
   return (
     <div className="h-full w-full rounded-lg overflow-hidden border border-border shadow-lg relative z-0">
@@ -223,6 +247,12 @@ export function MapComponent({
         <div className="absolute inset-0 flex items-center justify-center bg-slate-950/80 z-[999] text-white">
           <Loader2 className="h-8 w-8 animate-spin mr-2" />
           <span>Loading Map…</span>
+        </div>
+      )}
+      {isMLLoading && !isLoading && (
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-slate-900/90 text-white text-xs px-3 py-1.5 rounded-full z-[999] border border-border shadow">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          <span>Fetching ML predictions for all districts…</span>
         </div>
       )}
       <MapContainer
@@ -251,7 +281,23 @@ export function MapComponent({
       {/* Legend */}
       <div className="absolute bottom-4 right-4 bg-card/90 backdrop-blur border border-border p-3 rounded-md z-[1000] text-xs">
         <h4 className="font-bold mb-2 text-foreground">{getModeLabel(mode)}</h4>
-        {mode === 'weather' ? (
+        {mode === 'ml-risk' ? (
+          <div className="flex flex-col gap-1">
+            <div className="text-muted-foreground mb-1 text-[10px]">Dominant Hazard · Severity</div>
+            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full" style={{background:'#7f1d1d'}}></span><span>Heatwave · Critical</span></div>
+            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full" style={{background:'#dc2626'}}></span><span>Heatwave · High</span></div>
+            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full" style={{background:'#78350f'}}></span><span>Drought · Critical</span></div>
+            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full" style={{background:'#d97706'}}></span><span>Drought · High</span></div>
+            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full" style={{background:'#1e3a8a'}}></span><span>Flood · Critical</span></div>
+            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full" style={{background:'#1d4ed8'}}></span><span>Flood · High</span></div>
+            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-slate-500"></span><span>Moderate / Low</span></div>
+            {mlRiskData && mlRiskData.size > 0 && (
+              <div className="mt-1 pt-1 border-t border-border text-muted-foreground">
+                {mlRiskData.size} districts assessed
+              </div>
+            )}
+          </div>
+        ) : mode === 'weather' ? (
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-red-500"></span><span>Emergency (≥45°C / ≥100mm)</span></div>
             <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-orange-500"></span><span>Warning (≥40°C / ≥50mm)</span></div>

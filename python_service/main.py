@@ -168,6 +168,48 @@ def long_term_recommendation(district_name):
     })
 
 
+@app.route("/api/bulk-predict", methods=["POST"])
+def bulk_predict():
+    """
+    POST body: [{"id": "514", "lat": 26.9, "lon": 75.7}, ...]
+    Returns hazard predictions for all districts in parallel (20 threads).
+    Used for country-wide ML risk map layer.
+    """
+    import concurrent.futures
+    items = request.get_json()
+    if not items or not isinstance(items, list):
+        return jsonify({"error": "Send a JSON array of {id, lat, lon}"}), 400
+
+    def predict_one(item):
+        try:
+            id_ = str(item.get("id", ""))
+            lat = item.get("lat")
+            lon = item.get("lon")
+            if not lat or not lon:
+                return {"id": id_, "prediction": {"flood": 0.0, "heatwave": 0.0, "drought": 0.0}, "dominant_hazard": "drought", "severity": "low"}
+            forecast = fetch_forecast(lat, lon, days=7)
+            hazards = compute_hazard_from_forecast(forecast)
+            probs = {k: round(hazards.get(k, 0.0), 3) for k in ["flood", "heatwave", "drought"]}
+            dominant = max(probs, key=probs.get)
+            max_prob = probs[dominant]
+            if max_prob >= 0.75:
+                severity = "critical"
+            elif max_prob >= 0.50:
+                severity = "high"
+            elif max_prob >= 0.25:
+                severity = "moderate"
+            else:
+                severity = "low"
+            return {"id": id_, "prediction": probs, "dominant_hazard": dominant, "severity": severity}
+        except Exception as e:
+            return {"id": str(item.get("id", "")), "prediction": {"flood": 0.0, "heatwave": 0.0, "drought": 0.0}, "dominant_hazard": "drought", "severity": "low", "error": str(e)}
+
+    # Use 5 workers to stay within Open-Meteo free tier rate limits
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        results = list(executor.map(predict_one, items))
+    return jsonify(results)
+
+
 @app.route("/api/predict", methods=["POST"])
 def predict_custom():
     """

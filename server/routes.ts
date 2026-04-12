@@ -807,6 +807,52 @@ export async function registerRoutes(
     }
   });
 
+  app.get('/api/ml/country-risk', async (req, res) => {
+    try {
+      const country = (req.query.country as string) || 'IND';
+      const cacheKey = `country-risk-${country}`;
+      const cached = mlCache.get(cacheKey);
+      if (cached && Date.now() - cached.ts < ML_TTL) {
+        return res.json(cached.data);
+      }
+
+      const { db } = await import("./db");
+      const { districts } = await import("@shared/schema");
+      const { eq, isNotNull } = await import("drizzle-orm");
+
+      const rows = await db.select({ id: districts.id, name: districts.name, geometry: districts.geometry })
+        .from(districts)
+        .where(eq(districts.countryId, country));
+
+      const payload = rows
+        .map(r => {
+          const c = r.geometry ? computeCentroid(r.geometry as any) : null;
+          return c ? { id: r.id, name: r.name, lat: c.lat, lon: c.lng } : null;
+        })
+        .filter(Boolean);
+
+      if (payload.length === 0) return res.json([]);
+
+      const ctrl = new AbortController();
+      const timeout = setTimeout(() => ctrl.abort(), 120000); // 2 min for bulk (5 workers to avoid rate-limit)
+      const resp = await fetch(`${ML_BASE}/api/bulk-predict`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal: ctrl.signal,
+      });
+      clearTimeout(timeout);
+
+      if (!resp.ok) return res.status(resp.status).json({ error: 'ML bulk service error' });
+      const data = await resp.json();
+      mlCache.set(cacheKey, { data, ts: Date.now() });
+      res.json(data);
+    } catch (error: any) {
+      if (error.name === 'AbortError') return res.status(504).json({ error: 'ML service timeout' });
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   app.get('/api/ml/long-term/:districtId', async (req, res) => {
     try {
       const { districtId } = req.params;

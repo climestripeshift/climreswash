@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { MapComponent } from "@/components/MapComponent";
 import { Sidebar } from "@/components/Sidebar";
 import { GeographicNavigation } from "@/components/GeographicNavigation";
-import { DistrictData, MapViewMode, Alert, AqiObservation, Intervention, CommunityReport, GeographicLevel, CountryData, StateData, BlockData, WeatherData, MlHazardPrediction, MlTechRecommendation } from "@/lib/types";
+import { DistrictData, MapViewMode, Alert, AqiObservation, Intervention, CommunityReport, GeographicLevel, CountryData, StateData, BlockData, WeatherData, MlHazardPrediction, MlTechRecommendation, MlRiskData } from "@/lib/types";
 import { fetchDistrict, transformDistrict } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -51,6 +51,9 @@ export default function Dashboard() {
   const [mlPrediction, setMlPrediction] = useState<MlHazardPrediction | null>(null);
   const [mlTechRec, setMlTechRec] = useState<MlTechRecommendation | null>(null);
   const [mlLoading, setMlLoading] = useState(false);
+  const [mlRiskLayerActive, setMlRiskLayerActive] = useState(false);
+  const [mlRiskData, setMlRiskData] = useState<Map<string, MlRiskData>>(new Map());
+  const [mlRiskLoading, setMlRiskLoading] = useState(false);
 
   useEffect(() => {
     fetch('/api/countries')
@@ -132,13 +135,46 @@ export default function Dashboard() {
   const toggleWeatherLayer = useCallback(() => {
     if (weatherLayerActive) {
       setWeatherLayerActive(false);
+      setMlRiskLayerActive(false);
       setMode(prevMode);
     } else {
       setPrevMode(mode);
       setWeatherLayerActive(true);
+      setMlRiskLayerActive(false);
       setMode('weather');
     }
   }, [weatherLayerActive, mode, prevMode]);
+
+  // Fetch ML risk layer for all districts when toggled on or country changes
+  useEffect(() => {
+    if (!mlRiskLayerActive) return;
+    const country = selectedCountryId === 'ALL' ? 'IND' : selectedCountryId;
+    setMlRiskLoading(true);
+    fetch(`/api/ml/country-risk?country=${country}`)
+      .then(res => res.json())
+      .then((items: MlRiskData[]) => {
+        const map = new Map<string, MlRiskData>();
+        items.forEach(d => map.set(d.id, d));
+        setMlRiskData(map);
+        setMlRiskLoading(false);
+      })
+      .catch(err => {
+        console.error('Failed to fetch ML risk layer:', err);
+        setMlRiskLoading(false);
+      });
+  }, [mlRiskLayerActive, selectedCountryId]);
+
+  const toggleMlRiskLayer = useCallback(() => {
+    if (mlRiskLayerActive) {
+      setMlRiskLayerActive(false);
+      setMode(prevMode);
+    } else {
+      setPrevMode(mode);
+      setMlRiskLayerActive(true);
+      setWeatherLayerActive(false);
+      setMode('ml-risk');
+    }
+  }, [mlRiskLayerActive, mode, prevMode]);
 
   useEffect(() => {
     if (selectedDistrict) {
@@ -432,6 +468,17 @@ export default function Dashboard() {
             {weatherLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CloudSun className="h-4 w-4" />}
             <span className="hidden sm:inline">{weatherLayerActive ? 'Weather ON' : 'Live Weather'}</span>
           </Button>
+          <Button
+            variant={mlRiskLayerActive ? "default" : "outline"}
+            size="sm"
+            onClick={toggleMlRiskLayer}
+            className={`gap-1 sm:gap-2 px-2 sm:px-3 ${mlRiskLayerActive ? 'bg-violet-600 hover:bg-violet-700 border-violet-600' : ''}`}
+            data-testid="button-ml-risk-layer"
+            title="Toggle ML Hazard Risk Layer (all districts)"
+          >
+            {mlRiskLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <span className="text-sm leading-none">🧠</span>}
+            <span className="hidden sm:inline">{mlRiskLayerActive ? 'ML Risk ON' : 'ML Risk'}</span>
+          </Button>
           <ThemeToggle />
           <Link href="/admin">
             <Button variant="outline" size="sm" className="gap-1 sm:gap-2 px-2 sm:px-3" data-testid="link-admin">
@@ -494,6 +541,8 @@ export default function Dashboard() {
             currentLevel={currentLevel}
             countryId={selectedCountryId}
             weatherData={weatherLayerActive ? weatherData : undefined}
+            mlRiskData={mlRiskLayerActive ? mlRiskData : undefined}
+            mlRiskLoading={mlRiskLoading}
           />
         </div>
       </div>
