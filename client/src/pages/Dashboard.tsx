@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { MapComponent } from "@/components/MapComponent";
 import { Sidebar } from "@/components/Sidebar";
 import { GeographicNavigation } from "@/components/GeographicNavigation";
-import { DistrictData, MapViewMode, Alert, AqiObservation, Intervention, CommunityReport, GeographicLevel, CountryData, StateData, BlockData, WeatherData } from "@/lib/types";
+import { DistrictData, MapViewMode, Alert, AqiObservation, Intervention, CommunityReport, GeographicLevel, CountryData, StateData, BlockData, WeatherData, MlHazardPrediction, MlTechRecommendation } from "@/lib/types";
 import { fetchDistrict, transformDistrict } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -48,6 +48,9 @@ export default function Dashboard() {
   const [weatherLoading, setWeatherLoading] = useState(false);
   const [weatherData, setWeatherData] = useState<Map<string, WeatherData>>(new Map());
   const [prevMode, setPrevMode] = useState<MapViewMode>('vulnerability');
+  const [mlPrediction, setMlPrediction] = useState<MlHazardPrediction | null>(null);
+  const [mlTechRec, setMlTechRec] = useState<MlTechRecommendation | null>(null);
+  const [mlLoading, setMlLoading] = useState(false);
 
   useEffect(() => {
     fetch('/api/countries')
@@ -91,6 +94,21 @@ export default function Dashboard() {
       .then(data => setAlerts(data))
       .catch(err => console.error('Failed to fetch alerts:', err));
   }, []);
+
+  // Fetch ML predictions when a district is selected
+  useEffect(() => {
+    if (!selectedDistrict) { setMlPrediction(null); setMlTechRec(null); return; }
+    setMlLoading(true);
+    const id = selectedDistrict.id;
+    Promise.all([
+      fetch(`/api/ml/short-term/${id}`).then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch(`/api/ml/long-term/${id}`).then(r => r.ok ? r.json() : null).catch(() => null),
+    ]).then(([pred, tech]) => {
+      setMlPrediction(pred);
+      setMlTechRec(tech);
+      setMlLoading(false);
+    });
+  }, [selectedDistrict?.id]);
 
   // Fetch weather layer data when activated or country changes
   useEffect(() => {
@@ -360,6 +378,9 @@ export default function Dashboard() {
                   allDistricts={allDistricts}
                   allAlerts={alerts}
                   districtWeather={selectedDistrict ? weatherData.get(selectedDistrict.id) ?? null : null}
+                  mlPrediction={mlPrediction}
+                  mlTechRec={mlTechRec}
+                  mlLoading={mlLoading}
                 />
               </div>
             </SheetContent>
@@ -460,6 +481,9 @@ export default function Dashboard() {
             allDistricts={allDistricts}
             allAlerts={alerts}
             districtWeather={selectedDistrict ? weatherData.get(selectedDistrict.id) ?? null : null}
+            mlPrediction={mlPrediction}
+            mlTechRec={mlTechRec}
+            mlLoading={mlLoading}
           />
         </div>
         <div className="flex-1 h-full min-h-[300px] sm:min-h-[400px]">

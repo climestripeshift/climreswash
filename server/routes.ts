@@ -762,5 +762,86 @@ export async function registerRoutes(
     }
   });
 
+  // ─── ML Service Proxy (Flask on port 8080) ──────────────────────────────────
+  const ML_BASE = process.env.ML_SERVICE_URL || 'http://localhost:8080';
+  const mlCache = new Map<string, { data: any; ts: number }>();
+  const ML_TTL = 30 * 60 * 1000; // 30 minutes
+
+  app.get('/api/ml/short-term/:districtId', async (req, res) => {
+    try {
+      const { districtId } = req.params;
+      const cacheKey = `short-${districtId}`;
+      const cached = mlCache.get(cacheKey);
+      if (cached && Date.now() - cached.ts < ML_TTL) {
+        return res.json(cached.data);
+      }
+
+      const { db } = await import("./db");
+      const { districts } = await import("@shared/schema");
+      const { eq } = await import("drizzle-orm");
+
+      // Look up geometry to compute centroid
+      const rows = await db.select({ geometry: districts.geometry })
+        .from(districts)
+        .where(eq(districts.id, districtId))
+        .limit(1);
+
+      const centroid = rows[0]?.geometry ? computeCentroid(rows[0].geometry as any) : null;
+      let url = `${ML_BASE}/api/short-term/${districtId}`;
+      if (centroid) url += `?lat=${centroid.lat.toFixed(4)}&lon=${centroid.lng.toFixed(4)}`;
+
+      const ctrl = new AbortController();
+      const timeout = setTimeout(() => ctrl.abort(), 8000);
+      const resp = await fetch(url, { signal: ctrl.signal });
+      clearTimeout(timeout);
+
+      if (!resp.ok) {
+        return res.status(resp.status).json({ error: 'ML service error' });
+      }
+      const data = await resp.json();
+      mlCache.set(cacheKey, { data, ts: Date.now() });
+      res.json(data);
+    } catch (error: any) {
+      if (error.name === 'AbortError') return res.status(504).json({ error: 'ML service timeout' });
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get('/api/ml/long-term/:districtId', async (req, res) => {
+    try {
+      const { districtId } = req.params;
+      const cacheKey = `long-${districtId}`;
+      const cached = mlCache.get(cacheKey);
+      if (cached && Date.now() - cached.ts < ML_TTL) {
+        return res.json(cached.data);
+      }
+
+      const { db } = await import("./db");
+      const { districts } = await import("@shared/schema");
+      const { eq } = await import("drizzle-orm");
+
+      const rows = await db.select({ name: districts.name })
+        .from(districts)
+        .where(eq(districts.id, districtId))
+        .limit(1);
+
+      const districtName = rows[0]?.name || districtId;
+      const url = `${ML_BASE}/api/long-term/${encodeURIComponent(districtName)}`;
+
+      const ctrl = new AbortController();
+      const timeout = setTimeout(() => ctrl.abort(), 8000);
+      const resp = await fetch(url, { signal: ctrl.signal });
+      clearTimeout(timeout);
+
+      if (!resp.ok) return res.status(resp.status).json({ error: 'ML service error' });
+      const data = await resp.json();
+      mlCache.set(cacheKey, { data, ts: Date.now() });
+      res.json(data);
+    } catch (error: any) {
+      if (error.name === 'AbortError') return res.status(504).json({ error: 'ML service timeout' });
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   return httpServer;
 }

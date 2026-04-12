@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { DistrictData, MapViewMode, Alert, AqiObservation, Intervention, CommunityReport, GeographicLevel, BlockData, WeatherData } from "@/lib/types";
+import { DistrictData, MapViewMode, Alert, AqiObservation, Intervention, CommunityReport, GeographicLevel, BlockData, WeatherData, MlHazardPrediction, MlTechRecommendation } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -31,6 +31,9 @@ interface SidebarProps {
   allDistricts?: DistrictData[];
   allAlerts?: Alert[];
   districtWeather?: WeatherData | null;
+  mlPrediction?: MlHazardPrediction | null;
+  mlTechRec?: MlTechRecommendation | null;
+  mlLoading?: boolean;
 }
 
 const severityConfig = {
@@ -106,7 +109,7 @@ const modeConfig: Record<MapViewMode, { label: string; color: string; bgColor: s
   }
 };
 
-export function Sidebar({ mode, setMode, selectedDistrict, selectedBlock, blocks = [], onBlockSelect, onDistrictSelect, districtAlerts = [], districtAqi, districtInterventions = [], districtCommunityReports = [], currentLevel = 'state', countryData, stateData, allDistricts = [], allAlerts = [], districtWeather }: SidebarProps) {
+export function Sidebar({ mode, setMode, selectedDistrict, selectedBlock, blocks = [], onBlockSelect, onDistrictSelect, districtAlerts = [], districtAqi, districtInterventions = [], districtCommunityReports = [], currentLevel = 'state', countryData, stateData, allDistricts = [], allAlerts = [], districtWeather, mlPrediction, mlTechRec, mlLoading }: SidebarProps) {
   const [isPanelOpen, setIsPanelOpen] = useState(true);
   const activeAlerts = districtAlerts.filter(a => a.isActive === 1);
   const pendingInterventions = districtInterventions.filter(i => i.status !== 'completed');
@@ -366,7 +369,105 @@ export function Sidebar({ mode, setMode, selectedDistrict, selectedBlock, blocks
                     </div>
                   )}
 
-                  <Accordion type="multiple" defaultValue={["overview"]} className="w-full">
+                  <Accordion type="multiple" defaultValue={["overview", "ml-prediction"]} className="w-full">
+
+                    {/* ML Hazard Prediction */}
+                    <AccordionItem value="ml-prediction" className="border-b border-border/50">
+                      <AccordionTrigger className="py-3 text-sm font-semibold hover:no-underline">
+                        <div className="flex items-center gap-2">
+                          <span className="text-base">🧠</span>
+                          <span>Hazard Prediction</span>
+                          {mlLoading && <span className="ml-1 h-3 w-3 rounded-full border-2 border-primary border-t-transparent animate-spin inline-block" />}
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        {mlLoading && !mlPrediction && (
+                          <div className="text-xs text-muted-foreground py-3 text-center">Fetching predictions…</div>
+                        )}
+                        {!mlLoading && !mlPrediction && (
+                          <div className="text-xs text-muted-foreground py-3 text-center">ML service unavailable</div>
+                        )}
+                        {mlPrediction && (
+                          <div className="space-y-3 pb-2">
+                            <div className="text-[10px] text-muted-foreground uppercase tracking-wide">
+                              Source: {mlPrediction.source} · Short-term (1-7 days)
+                            </div>
+
+                            {/* Risk bars */}
+                            {(['flood', 'heatwave', 'drought'] as const).map(hazard => {
+                              const pct = Math.round((mlPrediction.prediction[hazard] ?? 0) * 100);
+                              const triggered = mlPrediction.triggered_measures?.[hazard];
+                              const level = triggered?.risk_level?.level ?? 'LOW';
+                              const color = hazard === 'flood' ? 'bg-blue-500' : hazard === 'heatwave' ? 'bg-orange-500' : 'bg-yellow-600';
+                              const labelColor = level === 'CRITICAL' ? 'bg-red-500 text-white' : level === 'HIGH' ? 'bg-orange-500 text-white' : level === 'MODERATE' ? 'bg-yellow-500 text-black' : 'bg-green-600 text-white';
+                              return (
+                                <div key={hazard} className="space-y-1">
+                                  <div className="flex items-center justify-between text-xs">
+                                    <span className="font-medium capitalize">{hazard === 'heatwave' ? '🌡 Heatwave' : hazard === 'flood' ? '🌊 Flood' : '🏜 Drought'}</span>
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-muted-foreground">{pct}%</span>
+                                      <Badge className={`text-[9px] px-1 py-0 font-bold ${labelColor}`}>{level}</Badge>
+                                    </div>
+                                  </div>
+                                  <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                                    <div className={`h-full ${color} transition-all rounded-full`} style={{ width: `${pct}%` }} />
+                                  </div>
+                                </div>
+                              );
+                            })}
+
+                            {/* Triggered measures */}
+                            {Object.keys(mlPrediction.triggered_measures ?? {}).length > 0 && (
+                              <div className="mt-3 space-y-2">
+                                <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Protective Measures Triggered</div>
+                                {Object.entries(mlPrediction.triggered_measures).map(([hazard, data]) =>
+                                  data.measures.slice(0, 3).map((m, i) => (
+                                    <div key={`${hazard}-${i}`} className="flex gap-2 text-xs p-2 rounded bg-muted/40">
+                                      <span className={`mt-0.5 flex-shrink-0 font-bold text-[9px] px-1 rounded ${m.priority === 'CRITICAL' ? 'bg-red-500 text-white' : m.priority === 'HIGH' ? 'bg-orange-500 text-white' : 'bg-yellow-500 text-black'}`}>{m.priority}</span>
+                                      <div>
+                                        <div className="font-medium leading-tight">{m.action}</div>
+                                        <div className="text-muted-foreground text-[10px] mt-0.5">{m.who} · {m.timeframe}</div>
+                                      </div>
+                                    </div>
+                                  ))
+                                )}
+                              </div>
+                            )}
+
+                            {/* WASH tech recommendations from long-term model */}
+                            {mlTechRec && (
+                              <div className="mt-3 pt-3 border-t border-border/40 space-y-2">
+                                <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground flex items-center justify-between">
+                                  <span>Recommended WASH Technology</span>
+                                  <span className="normal-case font-normal">Long-term proneness</span>
+                                </div>
+                                <div className="grid grid-cols-3 gap-1 text-center text-[10px]">
+                                  {(['flood_proneness', 'heatwave_proneness', 'drought_proneness'] as const).map(k => (
+                                    <div key={k} className="bg-muted/40 rounded p-1">
+                                      <div className="font-bold text-xs">{Math.round((mlTechRec.proneness_scores[k] ?? 0) * 100)}%</div>
+                                      <div className="text-muted-foreground capitalize">{k.replace('_proneness', '')}</div>
+                                    </div>
+                                  ))}
+                                </div>
+                                {mlTechRec.recommendations.toilet_recommendations.filter(r => r.priority === 'PRIMARY').slice(0, 1).map((rec, i) => (
+                                  <div key={i} className="p-2 rounded bg-sky-500/10 border border-sky-500/20 text-xs">
+                                    <div className="font-semibold text-sky-400 text-[11px]">🚽 {rec.technology.name}</div>
+                                    <div className="text-muted-foreground mt-0.5 text-[10px]">{rec.reason}</div>
+                                    {rec.technology.cost_range && <div className="text-[10px] mt-1 font-medium">{rec.technology.cost_range}</div>}
+                                  </div>
+                                ))}
+                                {mlTechRec.recommendations.liquid_waste_recommendations.filter(r => r.priority === 'PRIMARY').slice(0, 1).map((rec, i) => (
+                                  <div key={i} className="p-2 rounded bg-teal-500/10 border border-teal-500/20 text-xs">
+                                    <div className="font-semibold text-teal-400 text-[11px]">💧 {rec.technology.name}</div>
+                                    <div className="text-muted-foreground mt-0.5 text-[10px]">{rec.reason}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </AccordionContent>
+                    </AccordionItem>
 
                     <AccordionItem value="overview" className="border-b border-border/50">
                       <AccordionTrigger className="py-3 text-sm font-semibold hover:no-underline">

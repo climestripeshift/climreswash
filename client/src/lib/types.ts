@@ -128,6 +128,40 @@ export interface DistrictData {
 
 export type MapViewMode = 'vulnerability' | 'adaptation' | 'hazard' | 'exposure' | 'risk' | 'weather';
 
+export interface MlHazardPrediction {
+  district_id: string;
+  source: string;
+  prediction: { flood: number; heatwave: number; drought: number };
+  triggered_measures: Record<string, {
+    probability: number;
+    risk_level: { level: string; color: string };
+    measures: { action: string; who: string; timeframe: string; priority: string }[];
+  }>;
+  message: string;
+}
+
+export interface MlTechRecommendation {
+  district: string;
+  proneness_scores: {
+    flood_proneness: number;
+    heatwave_proneness: number;
+    drought_proneness: number;
+    dominant_hazard: string;
+  };
+  recommendations: {
+    toilet_recommendations: Array<{
+      technology: { name: string; description: string; cost_range: string };
+      reason: string;
+      priority: string;
+    }>;
+    liquid_waste_recommendations: Array<{
+      technology: { name: string; description: string };
+      reason: string;
+      priority: string;
+    }>;
+  };
+}
+
 export interface WeatherData {
   id: string;
   name: string;
