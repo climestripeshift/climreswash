@@ -97,6 +97,12 @@ const modeConfig: Record<MapViewMode, { label: string; color: string; bgColor: s
     color: 'text-green-500', 
     bgColor: 'bg-green-500',
     getValue: (d) => (d.adaptationScore !== undefined && d.adaptationScore !== null) ? d.adaptationScore : null 
+  },
+  weather: {
+    label: 'Live Weather',
+    color: 'text-sky-500',
+    bgColor: 'bg-sky-500',
+    getValue: (d) => (d.vulnerabilityScore !== undefined && d.vulnerabilityScore !== null) ? d.vulnerabilityScore : null
   }
 };
 
