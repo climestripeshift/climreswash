@@ -2,11 +2,11 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { MapComponent } from "@/components/MapComponent";
 import { Sidebar } from "@/components/Sidebar";
 import { GeographicNavigation } from "@/components/GeographicNavigation";
-import { DistrictData, MapViewMode, Alert, AqiObservation, Intervention, CommunityReport, GeographicLevel, CountryData, StateData, BlockData } from "@/lib/types";
+import { DistrictData, MapViewMode, Alert, AqiObservation, Intervention, CommunityReport, GeographicLevel, CountryData, StateData, BlockData, WeatherData } from "@/lib/types";
 import { fetchDistrict, transformDistrict } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Settings, AlertTriangle, Bell, X, Wind, ChevronRight, Menu, MapPin, Globe } from "lucide-react";
+import { Settings, AlertTriangle, Bell, X, Wind, ChevronRight, Menu, MapPin, Globe, CloudSun, Loader2 } from "lucide-react";
 import { Link } from "wouter";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Badge } from "@/components/ui/badge";
@@ -44,6 +44,10 @@ export default function Dashboard() {
   const [allDistricts, setAllDistricts] = useState<DistrictData[]>([]);
   const [selectedCountryId, setSelectedCountryId] = useState<string>('ALL');
   const [allCountries, setAllCountries] = useState<CountryData[]>([]);
+  const [weatherLayerActive, setWeatherLayerActive] = useState(false);
+  const [weatherLoading, setWeatherLoading] = useState(false);
+  const [weatherData, setWeatherData] = useState<Map<string, WeatherData>>(new Map());
+  const [prevMode, setPrevMode] = useState<MapViewMode>('vulnerability');
 
   useEffect(() => {
     fetch('/api/countries')
@@ -87,6 +91,36 @@ export default function Dashboard() {
       .then(data => setAlerts(data))
       .catch(err => console.error('Failed to fetch alerts:', err));
   }, []);
+
+  // Fetch weather layer data when activated or country changes
+  useEffect(() => {
+    if (!weatherLayerActive) return;
+    const country = selectedCountryId === 'ALL' ? 'IND' : selectedCountryId;
+    setWeatherLoading(true);
+    fetch(`/api/weather-layer?country=${country}`)
+      .then(res => res.json())
+      .then((data: WeatherData[]) => {
+        const map = new Map<string, WeatherData>();
+        data.forEach(d => map.set(d.id, d));
+        setWeatherData(map);
+        setWeatherLoading(false);
+      })
+      .catch(err => {
+        console.error('Failed to fetch weather layer:', err);
+        setWeatherLoading(false);
+      });
+  }, [weatherLayerActive, selectedCountryId]);
+
+  const toggleWeatherLayer = useCallback(() => {
+    if (weatherLayerActive) {
+      setWeatherLayerActive(false);
+      setMode(prevMode);
+    } else {
+      setPrevMode(mode);
+      setWeatherLayerActive(true);
+      setMode('weather');
+    }
+  }, [weatherLayerActive, mode, prevMode]);
 
   useEffect(() => {
     if (selectedDistrict) {
@@ -325,6 +359,7 @@ export default function Dashboard() {
                   stateData={stateData}
                   allDistricts={allDistricts}
                   allAlerts={alerts}
+                  districtWeather={selectedDistrict ? weatherData.get(selectedDistrict.id) ?? null : null}
                 />
               </div>
             </SheetContent>
@@ -365,6 +400,17 @@ export default function Dashboard() {
               </SelectContent>
             </Select>
           </div>
+          <Button
+            variant={weatherLayerActive ? "default" : "outline"}
+            size="sm"
+            onClick={toggleWeatherLayer}
+            className={`gap-1 sm:gap-2 px-2 sm:px-3 ${weatherLayerActive ? 'bg-sky-500 hover:bg-sky-600 border-sky-500' : ''}`}
+            data-testid="button-weather-layer"
+            title="Toggle Live Weather Layer (Open-Meteo)"
+          >
+            {weatherLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CloudSun className="h-4 w-4" />}
+            <span className="hidden sm:inline">{weatherLayerActive ? 'Weather ON' : 'Live Weather'}</span>
+          </Button>
           <ThemeToggle />
           <Link href="/admin">
             <Button variant="outline" size="sm" className="gap-1 sm:gap-2 px-2 sm:px-3" data-testid="link-admin">
@@ -413,6 +459,7 @@ export default function Dashboard() {
             stateData={stateData}
             allDistricts={allDistricts}
             allAlerts={alerts}
+            districtWeather={selectedDistrict ? weatherData.get(selectedDistrict.id) ?? null : null}
           />
         </div>
         <div className="flex-1 h-full min-h-[300px] sm:min-h-[400px]">
@@ -422,6 +469,7 @@ export default function Dashboard() {
             selectedDistrictId={selectedDistrict?.id || null}
             currentLevel={currentLevel}
             countryId={selectedCountryId}
+            weatherData={weatherLayerActive ? weatherData : undefined}
           />
         </div>
       </div>

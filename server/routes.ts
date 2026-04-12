@@ -154,6 +154,104 @@ export async function registerRoutes(
     }
   });
 
+  // ─── Live Weather Layer (Open-Meteo, no auth needed) ───────────────────────
+  const weatherCache = new Map<string, { data: any[]; ts: number }>();
+  const WEATHER_TTL = 3 * 60 * 60 * 1000; // 3 hours
+
+  function computeCentroid(geometry: any): { lat: number; lng: number } | null {
+    try {
+      if (!geometry) return null;
+      let coords: [number, number][] = [];
+      if (geometry.type === 'Polygon') coords = geometry.coordinates[0];
+      else if (geometry.type === 'MultiPolygon') coords = geometry.coordinates.flatMap((p: any) => p[0]);
+      if (!coords.length) return null;
+      const lng = coords.reduce((s, c) => s + c[0], 0) / coords.length;
+      const lat = coords.reduce((s, c) => s + c[1], 0) / coords.length;
+      return { lat, lng };
+    } catch { return null; }
+  }
+
+  function toWeatherSeverity(temp: number, rain: number, wind: number): string {
+    if (temp >= 45 || rain >= 100 || wind >= 100) return 'emergency';
+    if (temp >= 40 || rain >= 50  || wind >= 70)  return 'warning';
+    if (temp >= 35 || rain >= 20  || wind >= 50)  return 'watch';
+    return 'normal';
+  }
+
+  function weatherConditionLabel(code: number): string {
+    if (code === 0) return 'Clear sky';
+    if (code <= 3) return 'Partly cloudy';
+    if (code <= 9) return 'Foggy / hazy';
+    if (code <= 19) return 'Drizzle';
+    if (code <= 29) return 'Rain';
+    if (code <= 39) return 'Snow / sleet';
+    if (code <= 49) return 'Fog';
+    if (code <= 59) return 'Drizzle';
+    if (code <= 69) return 'Rain';
+    if (code <= 79) return 'Snow';
+    if (code <= 84) return 'Rain shower';
+    if (code <= 94) return 'Thunderstorm';
+    return 'Severe thunderstorm';
+  }
+
+  app.get("/api/weather-layer", async (req, res) => {
+    const country = (req.query.country as string) || 'IND';
+    const cached = weatherCache.get(country);
+    if (cached && Date.now() - cached.ts < WEATHER_TTL) {
+      res.setHeader('X-Weather-Cache', 'HIT');
+      return res.json(cached.data);
+    }
+    try {
+      const { db } = await import("./db");
+      const { districts } = await import("@shared/schema");
+      const { eq } = await import("drizzle-orm");
+
+      const rows = await db
+        .select({ id: districts.id, name: districts.name, geometry: districts.geometry })
+        .from(districts)
+        .where(eq(districts.countryId, country))
+        .limit(250);
+
+      const withCentroids = rows
+        .map(r => ({ id: r.id, name: r.name, centroid: computeCentroid(r.geometry as any) }))
+        .filter(r => r.centroid !== null) as { id: string; name: string; centroid: { lat: number; lng: number } }[];
+
+      const results: any[] = [];
+      const BATCH = 20;
+      for (let i = 0; i < withCentroids.length; i += BATCH) {
+        const batch = withCentroids.slice(i, i + BATCH);
+        const settled = await Promise.allSettled(batch.map(async ({ id, name, centroid }) => {
+          const url = `https://api.open-meteo.com/v1/forecast?latitude=${centroid.lat.toFixed(4)}&longitude=${centroid.lng.toFixed(4)}&current=temperature_2m,precipitation,wind_speed_10m,relative_humidity_2m,weather_code&timezone=auto&forecast_days=1`;
+          const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
+          if (!r.ok) throw new Error('open-meteo error');
+          const d = await r.json();
+          const temp  = d.current?.temperature_2m        ?? 25;
+          const rain  = d.current?.precipitation          ?? 0;
+          const wind  = d.current?.wind_speed_10m         ?? 0;
+          const humidity = d.current?.relative_humidity_2m ?? 60;
+          const code  = d.current?.weather_code           ?? 0;
+          return { id, name,
+            temp: Math.round(temp * 10) / 10,
+            rain: Math.round(rain * 10) / 10,
+            wind: Math.round(wind),
+            humidity: Math.round(humidity),
+            weatherCode: code,
+            condition: weatherConditionLabel(code),
+            severity: toWeatherSeverity(temp, rain, wind),
+            fetchedAt: new Date().toISOString()
+          };
+        }));
+        results.push(...settled.filter(r => r.status === 'fulfilled').map(r => (r as PromiseFulfilledResult<any>).value));
+      }
+
+      weatherCache.set(country, { data: results, ts: Date.now() });
+      res.setHeader('X-Weather-Cache', 'MISS');
+      res.json(results);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Block Routes (sub-district level)
   app.get("/api/blocks", async (_req, res) => {
     try {

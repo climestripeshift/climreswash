@@ -126,7 +126,20 @@ export interface DistrictData {
   hazardIntensities?: Record<string, number> | null;
 }
 
-export type MapViewMode = 'vulnerability' | 'adaptation' | 'hazard' | 'exposure' | 'risk';
+export type MapViewMode = 'vulnerability' | 'adaptation' | 'hazard' | 'exposure' | 'risk' | 'weather';
+
+export interface WeatherData {
+  id: string;
+  name: string;
+  temp: number;
+  rain: number;
+  wind: number;
+  humidity: number;
+  weatherCode: number;
+  condition: string;
+  severity: 'normal' | 'watch' | 'warning' | 'emergency';
+  fetchedAt: string;
+}
 
 export interface Alert {
   id: string;

@@ -1,0 +1,27 @@
+Free data sources — what's available right now
+1. IMD (India Meteorological Department) — the most critical source. IMD offers 14+ APIs India Meteorological Department covering district-level weather. The key ones for your early warning system:
+
+District-wise warnings — warnings_district_api.php gives you 5-day warning codes per district with color codes (Green/Yellow/Orange/Red) for hazards like heavy rain, heatwave, cold wave, dust storms, and thunderstorms India Meteorological Department.
+District-wise rainfall — districtwise_rainfall_api.php gives daily, weekly, monthly, and cumulative rainfall with departure-from-normal categories (Large Excess, Normal, Deficient, etc.).
+District nowcast — nowcast_district_api.php provides real-time nowcast with categories from "No Weather" to "Heavy rain >15mm/hr" and severe thunderstorm warnings.
+AWS/ARG stations — aws_data_api.php gives current temperature, humidity, wind, rainfall with lat/long for every automatic weather station.
+
+Important: IMD requires you to provide your public IP for whitelisting India Meteorological Department before the APIs work. Email them at the contacts on mausam.imd.gov.in.
+2. CGWB (Central Ground Water Board) — for water table monitoring. CGWB monitors groundwater levels through a network of 25,437+ observation wells and is installing Digital Water Level Recorders with telemetry systems under the National Hydrology Project CGWB. Access the data through:
+
+India-WRIS portal (indiawris.gov.in) — station-wise water level data, seasonal/yearly trends
+India Data Portal — downloadable CSV/JSON of groundwater level changes from 22,965 observation wells, measured four times annually since 1969 Indiadataportal
+gwdata.cgwb.gov.in — visualization portal for groundwater data
+
+3. CWC (Central Water Commission) — for flood alerts. CWC issues over 7,000 flood forecasts annually with accuracy above 90%, categorizing floods as Normal, Above Normal, Severe, and Extreme based on warning level, danger level, and highest flood level Central Water Commission. Access through:
+
+ffs.india-water.gov.in — flood forecast site with hydrograph data
+FloodWatch India app — provides 7-day flood forecasts using satellite data, mathematical modeling, and real-time monitoring for 392 flood monitoring stations Google Play
+
+4. Open-Meteo (Fallback) — no auth needed. Open-Meteo offers free access to weather APIs for non-commercial use with no API key, registration, or credit card required Open-Meteo. It gives hourly forecasts, historical data (80+ years), and works as a reliable backup when IMD APIs are down.
+
+How to build it — step by step
+Step 1: Data ingestion backend. Set up cron jobs (every 3-6 hours) that call IMD's district warning, rainfall, and nowcast APIs. Store the responses in PostgreSQL with district IDs as keys. Use Redis to cache the latest state so your frontend isn't hammering the database.
+Step 2: Threshold rules engine. Define WASH-specific thresholds that map climate conditions to sanitation risks. For example: if rainfall departure is "Large Excess" (>60% above normal) + water table is < 3m deep → flag "Twin-pit toilet flooding risk" for that district. If temperature exceeds 45°C for 3+ days → flag "Composting toilet pathogen kill acceleration."
+Step 3: WASH impact mapper. Cross-reference the alerts with your existing technology-district mapping. Each sanitation technology has known failure modes tied to climate conditions — this layer connects the dots.
+Step 4: Frontend overlay. On your existing map, overlay color-coded warning indicators per district. When a user clicks a district, show the active alerts alongside the recommended technologies.

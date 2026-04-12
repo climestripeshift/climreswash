@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { DistrictData, MapViewMode, Alert, AqiObservation, Intervention, CommunityReport, GeographicLevel, BlockData } from "@/lib/types";
+import { DistrictData, MapViewMode, Alert, AqiObservation, Intervention, CommunityReport, GeographicLevel, BlockData, WeatherData } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -30,6 +30,7 @@ interface SidebarProps {
   stateData?: { name: string; population: number; totalDistricts: number; totalBlocks: number; avgVulnerabilityScore: number; avgAdaptationScore: number; totalChildrenAtRisk: number; totalElderlyAtRisk: number; activeAlerts: number; criticalDistricts: number; topClimateRisks: string[]; } | null;
   allDistricts?: DistrictData[];
   allAlerts?: Alert[];
+  districtWeather?: WeatherData | null;
 }
 
 const severityConfig = {
@@ -99,7 +100,7 @@ const modeConfig: Record<MapViewMode, { label: string; color: string; bgColor: s
   }
 };
 
-export function Sidebar({ mode, setMode, selectedDistrict, selectedBlock, blocks = [], onBlockSelect, onDistrictSelect, districtAlerts = [], districtAqi, districtInterventions = [], districtCommunityReports = [], currentLevel = 'state', countryData, stateData, allDistricts = [], allAlerts = [] }: SidebarProps) {
+export function Sidebar({ mode, setMode, selectedDistrict, selectedBlock, blocks = [], onBlockSelect, onDistrictSelect, districtAlerts = [], districtAqi, districtInterventions = [], districtCommunityReports = [], currentLevel = 'state', countryData, stateData, allDistricts = [], allAlerts = [], districtWeather }: SidebarProps) {
   const [isPanelOpen, setIsPanelOpen] = useState(true);
   const activeAlerts = districtAlerts.filter(a => a.isActive === 1);
   const pendingInterventions = districtInterventions.filter(i => i.status !== 'completed');
@@ -314,7 +315,51 @@ export function Sidebar({ mode, setMode, selectedDistrict, selectedBlock, blocks
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-0">
-                  
+
+                  {/* Live Weather Panel */}
+                  {districtWeather && (
+                    <div className={`mx-0 mb-3 mt-1 rounded-lg border p-3 text-xs ${
+                      districtWeather.severity === 'emergency' ? 'bg-red-500/10 border-red-500/30' :
+                      districtWeather.severity === 'warning'   ? 'bg-orange-500/10 border-orange-500/30' :
+                      districtWeather.severity === 'watch'     ? 'bg-yellow-500/10 border-yellow-500/30' :
+                                                                 'bg-sky-500/10 border-sky-500/30'
+                    }`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-bold text-sm flex items-center gap-1.5">
+                          🌤 Live Weather
+                        </span>
+                        <Badge className={`text-[10px] uppercase font-bold ${
+                          districtWeather.severity === 'emergency' ? 'bg-red-500 text-white' :
+                          districtWeather.severity === 'warning'   ? 'bg-orange-500 text-white' :
+                          districtWeather.severity === 'watch'     ? 'bg-yellow-500 text-black' :
+                                                                     'bg-sky-500 text-white'
+                        }`}>{districtWeather.severity}</Badge>
+                      </div>
+                      <div className="grid grid-cols-4 gap-2 text-center">
+                        <div className="bg-background/60 rounded p-1.5">
+                          <div className="text-lg font-mono font-bold text-orange-400">{districtWeather.temp}°</div>
+                          <div className="text-muted-foreground" style={{fontSize:'9px'}}>TEMP °C</div>
+                        </div>
+                        <div className="bg-background/60 rounded p-1.5">
+                          <div className="text-lg font-mono font-bold text-blue-400">{districtWeather.rain}</div>
+                          <div className="text-muted-foreground" style={{fontSize:'9px'}}>RAIN mm</div>
+                        </div>
+                        <div className="bg-background/60 rounded p-1.5">
+                          <div className="text-lg font-mono font-bold text-slate-300">{districtWeather.wind}</div>
+                          <div className="text-muted-foreground" style={{fontSize:'9px'}}>WIND km/h</div>
+                        </div>
+                        <div className="bg-background/60 rounded p-1.5">
+                          <div className="text-lg font-mono font-bold text-cyan-400">{districtWeather.humidity}%</div>
+                          <div className="text-muted-foreground" style={{fontSize:'9px'}}>HUMIDITY</div>
+                        </div>
+                      </div>
+                      <div className="mt-2 text-muted-foreground flex items-center justify-between">
+                        <span>{districtWeather.condition}</span>
+                        <span>via Open-Meteo · {new Date(districtWeather.fetchedAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span>
+                      </div>
+                    </div>
+                  )}
+
                   <Accordion type="multiple" defaultValue={["overview"]} className="w-full">
 
                     <AccordionItem value="overview" className="border-b border-border/50">

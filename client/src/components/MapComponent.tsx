@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { MapContainer, TileLayer, GeoJSON, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { DistrictData, MapViewMode, GeographicLevel } from "@/lib/types";
+import { DistrictData, MapViewMode, GeographicLevel, WeatherData } from "@/lib/types";
 import { transformDistrict } from "@/lib/api";
 import { Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -18,7 +18,6 @@ let DefaultIcon = L.icon({
 });
 L.Marker.prototype.options.icon = DefaultIcon;
 
-// Auto-fit map to GeoJSON bounds when data changes
 function FitBounds({ geoJsonData }: { geoJsonData: any }) {
   const map = useMap();
   useEffect(() => {
@@ -40,6 +39,7 @@ interface MapComponentProps {
   selectedDistrictId: string | null;
   currentLevel?: GeographicLevel;
   countryId?: string;
+  weatherData?: Map<string, WeatherData>;
 }
 
 const getHazardColor = (score: number): string => {
@@ -82,7 +82,20 @@ const getAdaptationColor = (score: number): string => {
   return '#ef4444';
 };
 
-const getColorForMode = (data: DistrictData, mode: MapViewMode): string => {
+const getWeatherSeverityColor = (severity: string): string => {
+  switch (severity) {
+    case 'emergency': return '#ef4444';
+    case 'warning':   return '#f97316';
+    case 'watch':     return '#eab308';
+    default:          return '#22c55e';
+  }
+};
+
+const getColorForMode = (data: DistrictData, mode: MapViewMode, weatherMap?: Map<string, WeatherData>): string => {
+  if (mode === 'weather') {
+    const w = weatherMap?.get(data.id);
+    return w ? getWeatherSeverityColor(w.severity) : '#475569';
+  }
   switch (mode) {
     case 'hazard': return getHazardColor(data.hazardScore ?? 0);
     case 'exposure': return getExposureColor(data.exposureScore ?? 0);
@@ -99,6 +112,7 @@ const getModeLabel = (mode: MapViewMode): string => {
     case 'exposure': return 'Exposure Index';
     case 'risk': return 'Risk Index';
     case 'adaptation': return 'Adaptation Readiness';
+    case 'weather': return 'Live Weather Alerts';
     default: return 'Vulnerability Index';
   }
 };
@@ -108,13 +122,13 @@ export function MapComponent({
   onDistrictSelect,
   selectedDistrictId,
   currentLevel = 'state',
-  countryId = 'IND'
+  countryId = 'IND',
+  weatherData
 }: MapComponentProps) {
   const [geoJsonData, setGeoJsonData] = useState<any>(null);
   const [geoLoading, setGeoLoading] = useState(true);
   const prevCountryRef = useRef<string>('');
 
-  // Fetch districts for the selected country
   const { data: districts, isLoading: districtsLoading } = useQuery({
     queryKey: ['districts', countryId],
     queryFn: async () => {
@@ -128,7 +142,6 @@ export function MapComponent({
     }
   });
 
-  // Load GeoJSON: DB endpoint for all cases (now India has geometry too)
   useEffect(() => {
     if (prevCountryRef.current === countryId) return;
     prevCountryRef.current = countryId;
@@ -151,7 +164,6 @@ export function MapComponent({
       });
   }, [countryId]);
 
-  // Build districtDataMap keyed by district ID
   const districtDataMap = useMemo(() => {
     const map = new Map<string, DistrictData>();
     if (districts) {
@@ -161,7 +173,7 @@ export function MapComponent({
   }, [districts]);
 
   const [renderKey, setRenderKey] = useState(Date.now());
-  useEffect(() => { setRenderKey(Date.now()); }, [mode, countryId]);
+  useEffect(() => { setRenderKey(Date.now()); }, [mode, countryId, weatherData]);
 
   const style = useCallback((feature: any) => {
     const id = feature.properties?.ID || feature.properties?.id;
@@ -170,16 +182,16 @@ export function MapComponent({
       return { fillColor: '#444', weight: 1, opacity: 0.7, color: '#1e293b', fillOpacity: 0.25 };
     }
     const isSelected = selectedDistrictId === data.id;
-    const color = getColorForMode(data, mode);
+    const color = getColorForMode(data, mode, weatherData);
     return {
       fillColor: color,
       weight: isSelected ? 3 : 1,
       opacity: 1,
       color: isSelected ? 'white' : '#1e293b',
       dashArray: '',
-      fillOpacity: isSelected ? 0.85 : 0.65
+      fillOpacity: mode === 'weather' ? (weatherData?.has(data.id) ? 0.75 : 0.2) : (isSelected ? 0.85 : 0.65)
     };
-  }, [districtDataMap, mode, selectedDistrictId]);
+  }, [districtDataMap, mode, selectedDistrictId, weatherData]);
 
   const onEachFeature = useCallback((feature: any, layer: L.Layer) => {
     const id = feature.properties?.ID || feature.properties?.id;
@@ -196,15 +208,13 @@ export function MapComponent({
         e.target.setStyle({
           weight: isSelected ? 3 : 1,
           color: isSelected ? 'white' : '#1e293b',
-          fillOpacity: isSelected ? 0.85 : 0.65
+          fillOpacity: isSelected ? 0.85 : (mode === 'weather' && weatherData?.has(data.id) ? 0.75 : 0.65)
         });
       },
       click: () => { onDistrictSelect(data); }
     });
-  }, [districtDataMap, selectedDistrictId, onDistrictSelect]);
+  }, [districtDataMap, selectedDistrictId, onDistrictSelect, mode, weatherData]);
 
-  // Show loading overlay while GeoJSON or districts are loading
-  // Don't block on districtDataMap.size since 'ALL' loads thousands of records
   const isLoading = geoLoading || districtsLoading;
 
   return (
@@ -241,24 +251,35 @@ export function MapComponent({
       {/* Legend */}
       <div className="absolute bottom-4 right-4 bg-card/90 backdrop-blur border border-border p-3 rounded-md z-[1000] text-xs">
         <h4 className="font-bold mb-2 text-foreground">{getModeLabel(mode)}</h4>
-        <div className="flex flex-col gap-1">
-          {mode === 'adaptation' ? (
-            <>
-              <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-green-600"></span><span>High Readiness</span></div>
-              <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-green-500"></span><span>Moderate</span></div>
-              <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-yellow-500"></span><span>Low</span></div>
-              <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-red-500"></span><span>Critical Gap</span></div>
-            </>
-          ) : (
-            <>
-              <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-red-500"></span><span>Very High</span></div>
-              <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-orange-500"></span><span>High</span></div>
-              <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-yellow-500"></span><span>Moderate</span></div>
-              <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-green-500"></span><span>Low</span></div>
-              <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-green-700"></span><span>Very Low</span></div>
-            </>
-          )}
-        </div>
+        {mode === 'weather' ? (
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-red-500"></span><span>Emergency (≥45°C / ≥100mm)</span></div>
+            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-orange-500"></span><span>Warning (≥40°C / ≥50mm)</span></div>
+            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-yellow-500"></span><span>Watch (≥35°C / ≥20mm)</span></div>
+            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-green-500"></span><span>Normal conditions</span></div>
+            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-slate-500"></span><span>No data yet</span></div>
+            {weatherData && weatherData.size > 0 && (
+              <div className="mt-1 pt-1 border-t border-border text-muted-foreground">
+                {weatherData.size} districts loaded
+              </div>
+            )}
+          </div>
+        ) : mode === 'adaptation' ? (
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-green-600"></span><span>High Readiness</span></div>
+            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-green-500"></span><span>Moderate</span></div>
+            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-yellow-500"></span><span>Low</span></div>
+            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-red-500"></span><span>Critical Gap</span></div>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-red-500"></span><span>Very High</span></div>
+            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-orange-500"></span><span>High</span></div>
+            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-yellow-500"></span><span>Moderate</span></div>
+            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-green-500"></span><span>Low</span></div>
+            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-green-700"></span><span>Very Low</span></div>
+          </div>
+        )}
       </div>
     </div>
   );
