@@ -808,6 +808,9 @@ export async function registerRoutes(
   });
 
   app.get('/api/ml/country-risk', async (req, res) => {
+    // Uses only DB data (no external API calls) — instant response for all districts.
+    // Combines existing vulnerability/hazard/risk scores with climate risk tags to
+    // compute flood/heatwave/drought probabilities for every district in the country.
     try {
       const country = (req.query.country as string) || 'IND';
       const cacheKey = `country-risk-${country}`;
@@ -818,37 +821,60 @@ export async function registerRoutes(
 
       const { db } = await import("./db");
       const { districts } = await import("@shared/schema");
-      const { eq, isNotNull } = await import("drizzle-orm");
+      const { eq } = await import("drizzle-orm");
 
-      const rows = await db.select({ id: districts.id, name: districts.name, geometry: districts.geometry })
-        .from(districts)
-        .where(eq(districts.countryId, country));
+      const rows = await db.select({
+        id: districts.id,
+        vulnerabilityScore: districts.vulnerabilityScore,
+        hazardScore: districts.hazardScore,
+        riskScore: districts.riskScore,
+        adaptationScore: districts.adaptationScore,
+        climateRisks: districts.climateRisks,
+      }).from(districts).where(eq(districts.countryId, country));
 
-      const payload = rows
-        .map(r => {
-          const c = r.geometry ? computeCentroid(r.geometry as any) : null;
-          return c ? { id: r.id, name: r.name, lat: c.lat, lon: c.lng } : null;
-        })
-        .filter(Boolean);
+      const data = rows.map(r => {
+        // Normalise scores to 0-1 (India stores 0-1, other countries 0-100)
+        const norm = (v: number | null | undefined) => {
+          if (v == null) return 0;
+          return v > 1 ? v / 100 : v;
+        };
+        const vuln = norm(r.vulnerabilityScore as any);
+        const hazard = norm(r.hazardScore as any);
+        const risk = norm(r.riskScore as any);
+        const adapt = norm(r.adaptationScore as any);
+        // Adaptation reduces realised risk
+        const adaptPenalty = Math.max(0, 1 - adapt);
 
-      if (payload.length === 0) return res.json([]);
+        const tags = ((r.climateRisks as string[]) || []).map(s => s.toLowerCase());
+        const hasFlood    = tags.some(t => t.includes('flood'));
+        const hasHeatwave = tags.some(t => t.includes('heat') || t.includes('heatwave'));
+        const hasDrought  = tags.some(t => t.includes('drought') || t.includes('dry'));
 
-      const ctrl = new AbortController();
-      const timeout = setTimeout(() => ctrl.abort(), 120000); // 2 min for bulk (5 workers to avoid rate-limit)
-      const resp = await fetch(`${ML_BASE}/api/bulk-predict`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-        signal: ctrl.signal,
+        // Base probabilities from existing scores × climate risk tags × adapt penalty
+        const flood    = Math.min(0.99, hazard * (hasFlood    ? 1.4 : 0.5) * adaptPenalty + risk * 0.15);
+        const heatwave = Math.min(0.99, vuln   * (hasHeatwave ? 1.4 : 0.5) * adaptPenalty + risk * 0.15);
+        const drought  = Math.min(0.99, vuln   * (hasDrought  ? 1.4 : 0.5) * adaptPenalty + risk * 0.10);
+
+        const dominant = flood >= heatwave && flood >= drought ? 'flood'
+          : heatwave >= drought ? 'heatwave' : 'drought';
+        const maxP = Math.max(flood, heatwave, drought);
+        const severity = maxP >= 0.75 ? 'critical' : maxP >= 0.50 ? 'high' : maxP >= 0.25 ? 'moderate' : 'low';
+
+        return {
+          id: r.id,
+          prediction: {
+            flood:    Math.round(flood    * 1000) / 1000,
+            heatwave: Math.round(heatwave * 1000) / 1000,
+            drought:  Math.round(drought  * 1000) / 1000,
+          },
+          dominant_hazard: dominant,
+          severity,
+        };
       });
-      clearTimeout(timeout);
 
-      if (!resp.ok) return res.status(resp.status).json({ error: 'ML bulk service error' });
-      const data = await resp.json();
       mlCache.set(cacheKey, { data, ts: Date.now() });
       res.json(data);
     } catch (error: any) {
-      if (error.name === 'AbortError') return res.status(504).json({ error: 'ML service timeout' });
       res.status(500).json({ error: error.message });
     }
   });
