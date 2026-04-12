@@ -1,0 +1,1757 @@
+# ClimResWASH Early Warning System — Complete Replit Build Guide
+
+## What You're Building
+
+A Python Flask backend with two regression models that integrate into your existing climreswash.in website:
+
+- **Layer 1 (Short-term):** Predicts flood / heatwave / drought probability for the next 1-7 days per district → triggers quick protective measures for existing WASH infrastructure
+- **Layer 2 (Long-term):** Scores each district's chronic proneness to hazards → recommends which toilet and liquid waste technology to install
+
+---
+
+## Step 1: Create the Replit Project
+
+1. Go to **replit.com** → Sign up / Log in
+2. Click **+ Create Repl**
+3. Select template: **Python (Flask)**
+4. Name it: `climreswash-early-warning`
+5. Click **Create Repl**
+
+---
+
+## Step 2: Project File Structure
+
+Create these files in Replit (use the file panel on the left, click ⋮ → New File):
+
+```
+climreswash-early-warning/
+├── main.py                    ← Flask app entry point
+├── config.py                  ← API keys, thresholds, settings
+├── models/
+│   ├── __init__.py
+│   ├── short_term_model.py    ← Layer 1: XGBoost hazard prediction
+│   ├── long_term_model.py     ← Layer 2: Random forest proneness
+│   └── wash_recommender.py    ← Maps proneness → technology
+├── data/
+│   ├── __init__.py
+│   ├── imd_fetcher.py         ← Fetches IMD weather/warning APIs
+│   ├── cgwb_fetcher.py        ← Fetches groundwater data
+│   ├── cwc_fetcher.py         ← Fetches flood forecast data
+│   ├── openmeteo_fetcher.py   ← Fallback weather from Open-Meteo
+│   └── district_master.json   ← District IDs, lat/long, metadata
+├── quick_measures.json        ← Your custom quick measures per hazard
+├── tech_recommendations.json  ← Technology mapping rules
+├── requirements.txt           ← Python dependencies
+└── templates/
+    └── dashboard.html         ← Optional test dashboard
+```
+
+---
+
+## Step 3: Install Dependencies
+
+In Replit, open the **Shell** tab (bottom panel) and run:
+
+```bash
+pip install flask flask-cors requests numpy scikit-learn xgboost pandas schedule
+```
+
+Or create a `requirements.txt` file with this content:
+
+```
+flask==3.1.0
+flask-cors==5.0.0
+requests==2.32.3
+numpy==1.26.4
+scikit-learn==1.5.2
+xgboost==2.1.3
+pandas==2.2.3
+schedule==1.2.2
+```
+
+Then in Shell: `pip install -r requirements.txt`
+
+---
+
+## Step 4: Configuration File
+
+Create `config.py`:
+
+```python
+"""
+Configuration for ClimResWASH Early Warning System
+"""
+
+# ============================================
+# IMD API ENDPOINTS (Free, need IP whitelist)
+# ============================================
+# IMPORTANT: Email IMD at mausam.imd.gov.in to get
+# your Replit server IP whitelisted before these work.
+# Until then, Open-Meteo is your fallback.
+
+IMD_BASE = "https://mausam.imd.gov.in/api"
+IMD_CITY_BASE = "https://city.imd.gov.in/api"
+
+IMD_APIS = {
+    # District-wise 5-day weather warnings (Green/Yellow/Orange/Red)
+    # Returns warning codes: 1=No warning, 2=Heavy rain, 3=Heavy snow,
+    # 4=Thunderstorm, 5=Hailstorm, 6=Dust storm, 9=Heat wave,
+    # 12=Cold wave, 16=Very heavy rain, 17=Extremely heavy rain
+    "district_warnings": f"{IMD_BASE}/warnings_district_api.php",
+    
+    # District-wise actual vs normal rainfall
+    # Returns daily, weekly, monthly, cumulative rainfall with
+    # departure categories: LE, E, N, D, LD, NR
+    "district_rainfall": f"{IMD_BASE}/districtwise_rainfall_api.php",
+    
+    # District nowcast (current conditions, 3-hour forecast)
+    # Returns categories 1-19 for current weather severity
+    "district_nowcast": f"{IMD_BASE}/nowcast_district_api.php",
+    
+    # AWS station data (temperature, humidity, wind, rainfall)
+    # Has lat/long for each station
+    "aws_data": f"{IMD_CITY_BASE}/aws_data_api.php",
+    
+    # 7-day city forecast (temperature + weather description)
+    "city_forecast": f"{IMD_CITY_BASE}/cityweather_loc.php",
+    
+    # State-wise rainfall
+    "state_rainfall": f"{IMD_BASE}/statewise_rainfall_api.php",
+    
+    # 5-day district rainfall forecast
+    "district_rf_forecast": f"{IMD_BASE}/api_5d_statewisedistricts_rf_forecast.php",
+    
+    # River basin quantitative precipitation forecast
+    "basin_qpf": f"{IMD_BASE}/basin_qpf_api.php",
+}
+
+# ============================================
+# OPEN-METEO API (Free, no auth needed)
+# ============================================
+# Use as fallback when IMD APIs are down or not whitelisted
+# Docs: https://open-meteo.com/en/docs
+
+OPENMETEO_BASE = "https://api.open-meteo.com/v1"
+OPENMETEO_FORECAST = f"{OPENMETEO_BASE}/forecast"
+OPENMETEO_HISTORICAL = "https://archive-api.open-meteo.com/v1/archive"
+OPENMETEO_FLOOD = "https://flood-api.open-meteo.com/v1/flood"
+
+# ============================================
+# CGWB GROUNDWATER DATA
+# ============================================
+# Downloadable CSV from India Data Portal
+# URL: https://ckandev.indiadataportal.com/dataset/groundwater
+# Also: https://indiawris.gov.in/wris/#/ (India-WRIS portal)
+# Also: https://gwdata.cgwb.gov.in/ (CGWB visualization portal)
+
+CGWB_CSV_URL = (
+    "https://ckandev.indiadataportal.com/dataset/"
+    "8ceb3cea-a8a9-4624-af75-fc92429d8fa5/resource/"
+    "580a8f6e-3d86-4ca7-ac7d-cd5df12b443c/download/"
+    "cgwb-changes-in-depth-to-water-level.csv"
+)
+
+# ============================================
+# CWC FLOOD DATA
+# ============================================
+# Flood forecast dashboard: https://ffs.india-water.gov.in/
+# FloodWatch India app data: real-time river levels at 392 stations
+# India-WRIS: https://indiawris.gov.in/wris/#/ (river discharge data)
+
+CWC_FLOOD_URL = "https://ffs.india-water.gov.in"
+
+# ============================================
+# HAZARD THRESHOLDS (IMD Official Criteria)
+# ============================================
+THRESHOLDS = {
+    "flood": {
+        "rainfall_heavy_mm_day": 115.6,      # IMD "Very Heavy Rain"
+        "rainfall_extreme_mm_day": 204.4,     # IMD "Extremely Heavy Rain"
+        "river_level_warning_pct": 70,        # % of danger level
+        "river_level_danger_pct": 90,
+        "gw_shallow_risk_m": 3.0,             # Below this = flood risk to pits
+        "rainfall_departure_excess_pct": 60,  # IMD "Large Excess"
+    },
+    "heatwave": {
+        # IMD criteria: >= 40°C for plains, >= 30°C for hills
+        "temp_plains_c": 40,
+        "temp_hills_c": 30,
+        # Departure from normal: 4.5-6.4°C = heatwave, > 6.4°C = severe
+        "departure_heatwave_c": 4.5,
+        "departure_severe_c": 6.4,
+        # Absolute: >= 45°C = heatwave, >= 47°C = severe
+        "temp_absolute_hw_c": 45,
+        "temp_absolute_severe_c": 47,
+    },
+    "drought": {
+        "rainfall_deficient_pct": -20,       # IMD "Deficient"
+        "rainfall_large_deficient_pct": -60,  # IMD "Large Deficient"
+        "consecutive_dry_days": 15,
+        "gw_deep_stress_m": 15,              # Deep GW = water stress
+    },
+}
+
+# ============================================
+# DATA FETCH SCHEDULE
+# ============================================
+FETCH_INTERVAL_HOURS = 3  # How often to poll IMD/CWC APIs
+LONG_TERM_UPDATE_DAYS = 30  # How often to recalculate proneness
+```
+
+---
+
+## Step 5: Data Fetchers
+
+### 5a. IMD Data Fetcher
+
+Create `data/imd_fetcher.py`:
+
+```python
+"""
+Fetches weather data from IMD APIs.
+Requires IP whitelisting — email IMD.
+Falls back to Open-Meteo if IMD is unreachable.
+"""
+import requests
+import json
+from datetime import datetime
+from config import IMD_APIS, THRESHOLDS
+
+
+def fetch_district_warnings(district_id=None):
+    """
+    Fetch 5-day weather warnings for all or specific district.
+    
+    Returns dict with:
+    - Obj_id: district ID
+    - District: name
+    - Day_1 through Day_5: warning codes (comma-separated)
+    - Day1_Color through Day5_Color: 1=Red, 2=Orange, 3=Yellow, 4=Green
+    
+    Warning codes:
+    1=No Warning, 2=Heavy Rain, 3=Heavy Snow, 4=Thunderstorm,
+    5=Hailstorm, 6=Dust Storm, 9=Heat Wave, 10=Hot Day,
+    12=Cold Wave, 16=Very Heavy Rain, 17=Extremely Heavy Rain
+    """
+    url = IMD_APIS["district_warnings"]
+    if district_id:
+        url += f"?id={district_id}"
+    
+    try:
+        resp = requests.get(url, timeout=30)
+        resp.raise_for_status()
+        return resp.json()
+    except Exception as e:
+        print(f"[IMD] District warnings fetch failed: {e}")
+        return None
+
+
+def fetch_district_rainfall(district_id=None):
+    """
+    Fetch actual vs normal rainfall for district.
+    
+    Returns daily, weekly, monthly, cumulative rainfall with
+    departure percentage and category:
+    LE = Large Excess (>=60%)
+    E  = Excess (20-59%)
+    N  = Normal (-19 to 19%)
+    D  = Deficient (-59 to -20%)
+    LD = Large Deficient (-99 to -60%)
+    NR = No Rain (-100%)
+    """
+    url = IMD_APIS["district_rainfall"]
+    if district_id:
+        url += f"?id={district_id}"
+    
+    try:
+        resp = requests.get(url, timeout=30)
+        resp.raise_for_status()
+        return resp.json()
+    except Exception as e:
+        print(f"[IMD] District rainfall fetch failed: {e}")
+        return None
+
+
+def fetch_district_nowcast(district_id=None):
+    """
+    Fetch current nowcast (real-time weather) for district.
+    Color codes: 1=Green (safe), 2=Yellow, 3=Orange, 4=Red (severe)
+    """
+    url = IMD_APIS["district_nowcast"]
+    if district_id:
+        url += f"?id={district_id}"
+    
+    try:
+        resp = requests.get(url, timeout=30)
+        resp.raise_for_status()
+        return resp.json()
+    except Exception as e:
+        print(f"[IMD] Nowcast fetch failed: {e}")
+        return None
+
+
+def fetch_aws_data(state_id=None):
+    """
+    Fetch Automatic Weather Station data.
+    Returns current temp, humidity, wind, rainfall with lat/long.
+    
+    State IDs: 1=Telangana, 2=AP, 3=HP, 4=Kerala, 5=UP,
+    7=Delhi, 8=Rajasthan, 9=Gujarat, 10=Odisha, 11=Bihar, etc.
+    """
+    url = IMD_APIS["aws_data"]
+    if state_id:
+        url += f"?sid={state_id}"
+    
+    try:
+        resp = requests.get(url, timeout=30)
+        resp.raise_for_status()
+        return resp.json()
+    except Exception as e:
+        print(f"[IMD] AWS data fetch failed: {e}")
+        return None
+
+
+def fetch_district_rf_forecast():
+    """
+    Fetch 5-day district-wise rainfall forecast.
+    Returns distribution (Isolated/Scattered/Widespread) per day.
+    """
+    url = IMD_APIS["district_rf_forecast"]
+    try:
+        resp = requests.get(url, timeout=30)
+        resp.raise_for_status()
+        return resp.json()
+    except Exception as e:
+        print(f"[IMD] RF forecast fetch failed: {e}")
+        return None
+
+
+def parse_warning_to_hazards(warning_data):
+    """
+    Convert IMD warning codes to hazard probabilities.
+    
+    Maps: color code → probability range
+    Red (1) → 0.85-0.95
+    Orange (2) → 0.55-0.75
+    Yellow (3) → 0.25-0.45
+    Green (4) → 0.0-0.15
+    """
+    if not warning_data:
+        return {"flood": 0, "heatwave": 0, "drought": 0}
+    
+    hazards = {"flood": 0, "heatwave": 0, "drought": 0}
+    
+    # Map warning codes to hazard types
+    flood_codes = {2, 3, 16, 17}     # Heavy/Very Heavy/Extreme rain, snow
+    heat_codes = {9, 10, 11}          # Heat wave, hot day, warm night
+    drought_indicators = {"D", "LD", "NR"}  # Deficient rainfall categories
+    
+    # Color to probability mapping
+    color_prob = {1: 0.9, 2: 0.65, 3: 0.35, 4: 0.05}
+    
+    for record in (warning_data if isinstance(warning_data, list) 
+                   else [warning_data]):
+        for day in range(1, 6):
+            day_key = f"Day_{day}"
+            color_key = f"Day{day}_Color"
+            
+            if day_key not in record or color_key not in record:
+                continue
+                
+            codes = str(record[day_key]).split(",")
+            color = int(record.get(color_key, 4))
+            prob = color_prob.get(color, 0.05)
+            
+            for code in codes:
+                code = code.strip()
+                if not code.isdigit():
+                    continue
+                code = int(code)
+                
+                if code in flood_codes:
+                    hazards["flood"] = max(hazards["flood"], prob)
+                elif code in heat_codes:
+                    hazards["heatwave"] = max(hazards["heatwave"], prob)
+    
+    return hazards
+```
+
+### 5b. Open-Meteo Fallback Fetcher
+
+Create `data/openmeteo_fetcher.py`:
+
+```python
+"""
+Open-Meteo API — free, no auth, no rate limits for non-commercial use.
+Use as primary source until IMD IP is whitelisted.
+Docs: https://open-meteo.com/en/docs
+"""
+import requests
+from config import OPENMETEO_FORECAST, OPENMETEO_HISTORICAL, OPENMETEO_FLOOD
+
+
+def fetch_forecast(lat, lon, days=7):
+    """
+    Fetch weather forecast for a location.
+    Returns hourly/daily temperature, rainfall, humidity, wind.
+    
+    No API key needed. No registration needed.
+    """
+    params = {
+        "latitude": lat,
+        "longitude": lon,
+        "daily": ",".join([
+            "temperature_2m_max",
+            "temperature_2m_min",
+            "precipitation_sum",
+            "rain_sum",
+            "precipitation_probability_max",
+            "windspeed_10m_max",
+            "relative_humidity_2m_mean",  
+            "et0_fao_evapotranspiration",
+        ]),
+        "forecast_days": days,
+        "timezone": "Asia/Kolkata",
+    }
+    
+    try:
+        resp = requests.get(OPENMETEO_FORECAST, params=params, timeout=15)
+        resp.raise_for_status()
+        data = resp.json()
+        return data.get("daily", {})
+    except Exception as e:
+        print(f"[Open-Meteo] Forecast failed: {e}")
+        return None
+
+
+def fetch_historical(lat, lon, start_date, end_date):
+    """
+    Fetch historical weather data (goes back 80+ years).
+    Use for training long-term model and calculating normals.
+    
+    start_date/end_date format: "YYYY-MM-DD"
+    """
+    params = {
+        "latitude": lat,
+        "longitude": lon,
+        "start_date": start_date,
+        "end_date": end_date,
+        "daily": ",".join([
+            "temperature_2m_max",
+            "temperature_2m_min",
+            "precipitation_sum",
+            "rain_sum",
+            "windspeed_10m_max",
+            "relative_humidity_2m_mean",
+        ]),
+        "timezone": "Asia/Kolkata",
+    }
+    
+    try:
+        resp = requests.get(OPENMETEO_HISTORICAL, params=params, timeout=30)
+        resp.raise_for_status()
+        return resp.json().get("daily", {})
+    except Exception as e:
+        print(f"[Open-Meteo] Historical failed: {e}")
+        return None
+
+
+def fetch_flood_forecast(lat, lon):
+    """
+    Fetch river discharge forecast from Open-Meteo Flood API.
+    Uses GloFAS (Global Flood Awareness System) data.
+    """
+    params = {
+        "latitude": lat,
+        "longitude": lon,
+        "daily": "river_discharge",
+        "forecast_days": 7,
+    }
+    
+    try:
+        resp = requests.get(OPENMETEO_FLOOD, params=params, timeout=15)
+        resp.raise_for_status()
+        return resp.json().get("daily", {})
+    except Exception as e:
+        print(f"[Open-Meteo] Flood forecast failed: {e}")
+        return None
+
+
+def compute_hazard_from_forecast(forecast_data):
+    """
+    Convert Open-Meteo forecast into hazard probabilities.
+    This is the fallback logic when IMD is unavailable.
+    """
+    if not forecast_data:
+        return {"flood": 0.0, "heatwave": 0.0, "drought": 0.0}
+    
+    temps_max = forecast_data.get("temperature_2m_max", [])
+    precip = forecast_data.get("precipitation_sum", [])
+    humidity = forecast_data.get("relative_humidity_2m_mean", [])
+    
+    # Flood probability
+    max_rain = max(precip) if precip else 0
+    avg_rain = sum(precip) / len(precip) if precip else 0
+    flood_prob = min(1.0, max_rain / 150 * 0.5 + avg_rain / 80 * 0.3)
+    
+    # Heatwave probability
+    max_temp = max(temps_max) if temps_max else 0
+    days_above_40 = sum(1 for t in temps_max if t and t >= 40)
+    heat_prob = min(1.0, 
+        (max(0, max_temp - 38) / 12) * 0.5 + 
+        (days_above_40 / max(len(temps_max), 1)) * 0.5
+    )
+    
+    # Drought probability
+    dry_days = sum(1 for p in precip if p is not None and p < 1)
+    total_rain = sum(p for p in precip if p is not None)
+    drought_prob = min(1.0,
+        (dry_days / max(len(precip), 1)) * 0.4 +
+        max(0, 1 - total_rain / 20) * 0.3 +
+        (max(0, max_temp - 35) / 15) * 0.3
+    )
+    
+    return {
+        "flood": round(flood_prob, 3),
+        "heatwave": round(heat_prob, 3),
+        "drought": round(drought_prob, 3),
+    }
+```
+
+### 5c. CGWB Groundwater Fetcher
+
+Create `data/cgwb_fetcher.py`:
+
+```python
+"""
+CGWB Groundwater data.
+The CSV dataset has 22,965 observation wells measured 4 times/year.
+Download once and cache locally.
+
+Sources:
+- India Data Portal CSV: district-level depth-to-water-level
+- India-WRIS: https://indiawris.gov.in/wris/#/
+- CGWB portal: https://gwdata.cgwb.gov.in/
+"""
+import os
+import csv
+import requests
+from config import CGWB_CSV_URL
+
+
+CACHE_FILE = "data/cgwb_cache.csv"
+
+
+def download_cgwb_data():
+    """
+    Download CGWB groundwater CSV (one-time, ~5MB).
+    Contains columns: State, District, Well_Code, Lat, Long,
+    Season, Year, Depth_to_Water_Level (meters)
+    """
+    if os.path.exists(CACHE_FILE):
+        print("[CGWB] Using cached data")
+        return True
+    
+    print("[CGWB] Downloading groundwater dataset...")
+    try:
+        resp = requests.get(CGWB_CSV_URL, timeout=60)
+        resp.raise_for_status()
+        os.makedirs("data", exist_ok=True)
+        with open(CACHE_FILE, "w") as f:
+            f.write(resp.text)
+        print(f"[CGWB] Downloaded {len(resp.text)} bytes")
+        return True
+    except Exception as e:
+        print(f"[CGWB] Download failed: {e}")
+        return False
+
+
+def get_district_gw_depth(district_name):
+    """
+    Get latest groundwater depth for a district.
+    Returns depth in meters (lower = shallower = higher flood risk).
+    """
+    if not os.path.exists(CACHE_FILE):
+        download_cgwb_data()
+    
+    if not os.path.exists(CACHE_FILE):
+        return None
+    
+    district_upper = district_name.upper()
+    latest_depth = None
+    latest_year = 0
+    
+    try:
+        with open(CACHE_FILE, "r") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                if district_upper in str(row.get("District", "")).upper():
+                    year = int(row.get("Year", 0) or 0)
+                    depth = row.get("Depth_to_Water_Level", "")
+                    if year > latest_year and depth:
+                        try:
+                            latest_depth = float(depth)
+                            latest_year = year
+                        except ValueError:
+                            continue
+    except Exception as e:
+        print(f"[CGWB] Parse error: {e}")
+    
+    return latest_depth
+
+
+def get_district_gw_trend(district_name, years=20):
+    """
+    Calculate long-term groundwater trend for a district.
+    Returns: trend (m/year), positive = deepening (bad),
+    negative = rising (flood risk if near surface).
+    """
+    if not os.path.exists(CACHE_FILE):
+        download_cgwb_data()
+    
+    if not os.path.exists(CACHE_FILE):
+        return None
+    
+    district_upper = district_name.upper()
+    yearly_depths = {}
+    
+    try:
+        with open(CACHE_FILE, "r") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                if district_upper in str(row.get("District", "")).upper():
+                    year = int(row.get("Year", 0) or 0)
+                    depth = row.get("Depth_to_Water_Level", "")
+                    if year > 0 and depth:
+                        try:
+                            d = float(depth)
+                            yearly_depths.setdefault(year, []).append(d)
+                        except ValueError:
+                            continue
+    except Exception:
+        return None
+    
+    if len(yearly_depths) < 3:
+        return None
+    
+    # Simple linear trend: average depth per year
+    years_list = sorted(yearly_depths.keys())
+    avgs = [(y, sum(yearly_depths[y]) / len(yearly_depths[y])) 
+            for y in years_list]
+    
+    if len(avgs) < 2:
+        return None
+    
+    # Slope calculation
+    n = len(avgs)
+    sum_x = sum(a[0] for a in avgs)
+    sum_y = sum(a[1] for a in avgs)
+    sum_xy = sum(a[0] * a[1] for a in avgs)
+    sum_x2 = sum(a[0] ** 2 for a in avgs)
+    
+    denom = n * sum_x2 - sum_x ** 2
+    if denom == 0:
+        return 0
+    
+    slope = (n * sum_xy - sum_x * sum_y) / denom
+    return round(slope, 3)  # meters per year
+```
+
+---
+
+## Step 6: Prediction Models
+
+### 6a. Short-Term Model (Layer 1)
+
+Create `models/short_term_model.py`:
+
+```python
+"""
+Layer 1: Short-term hazard prediction (1-7 days ahead).
+
+Predicts probability of flood, heatwave, drought for a district
+using current/forecast weather data.
+
+Starts with rule-based model (works immediately, no training needed).
+Upgrade to XGBoost when you have 6+ months of labeled data.
+"""
+import numpy as np
+from config import THRESHOLDS
+
+
+class ShortTermPredictor:
+    """
+    Rule-based predictor (Phase 1).
+    Uses IMD official thresholds + weighted scoring.
+    
+    Replace with trained XGBoost model in Phase 2 once you have
+    labeled data (did flood/heatwave/drought actually occur Y/N).
+    """
+    
+    def predict(self, features):
+        """
+        Predict hazard probabilities from current conditions.
+        
+        Args:
+            features: dict with keys:
+                - rainfall_mm: current/forecast rainfall (mm/day)
+                - temperature_c: max temperature (°C)
+                - temp_departure_c: departure from normal (°C)
+                - humidity_pct: relative humidity (%)
+                - wind_speed_kmph: wind speed (km/h)
+                - gw_depth_m: groundwater depth (meters)
+                - river_level_pct: river level as % of danger level
+                - consecutive_dry_days: days without rain
+                - rainfall_departure_pct: % departure from normal rainfall
+                - imd_warning_color: IMD color code (1=Red to 4=Green)
+                - soil_permeability: 1=Low, 2=Medium, 3=High
+        
+        Returns:
+            dict with flood, heatwave, drought probabilities (0-1)
+        """
+        rain = features.get("rainfall_mm", 0)
+        temp = features.get("temperature_c", 30)
+        temp_dep = features.get("temp_departure_c", 0)
+        humidity = features.get("humidity_pct", 50)
+        gw = features.get("gw_depth_m", 10)
+        river = features.get("river_level_pct", 50)
+        dry_days = features.get("consecutive_dry_days", 0)
+        rain_dep = features.get("rainfall_departure_pct", 0)
+        soil = features.get("soil_permeability", 2)
+        
+        # ---- FLOOD PREDICTION ----
+        flood_score = 0.0
+        
+        # Rainfall intensity (biggest factor)
+        t = THRESHOLDS["flood"]
+        if rain >= t["rainfall_extreme_mm_day"]:
+            flood_score += 0.45
+        elif rain >= t["rainfall_heavy_mm_day"]:
+            flood_score += 0.30
+        elif rain >= 64.5:  # IMD "Heavy Rain" threshold
+            flood_score += 0.15
+        else:
+            flood_score += min(0.10, rain / 650)
+        
+        # River level contribution
+        if river >= t["river_level_danger_pct"]:
+            flood_score += 0.30
+        elif river >= t["river_level_warning_pct"]:
+            flood_score += 0.15
+        else:
+            flood_score += river / 700
+        
+        # Shallow groundwater amplifies flood risk to pits
+        if gw < t["gw_shallow_risk_m"]:
+            flood_score += 0.15 * (1 - gw / t["gw_shallow_risk_m"])
+        
+        # Low soil permeability = water doesn't drain
+        flood_score += (1 / soil) * 0.08
+        
+        # Excess rainfall departure
+        if rain_dep > t["rainfall_departure_excess_pct"]:
+            flood_score += 0.10
+        
+        flood_prob = min(0.99, max(0.0, flood_score))
+        
+        # ---- HEATWAVE PREDICTION ----
+        heat_score = 0.0
+        t_hw = THRESHOLDS["heatwave"]
+        
+        # Absolute temperature
+        if temp >= t_hw["temp_absolute_severe_c"]:
+            heat_score += 0.50
+        elif temp >= t_hw["temp_absolute_hw_c"]:
+            heat_score += 0.40
+        elif temp >= t_hw["temp_plains_c"]:
+            heat_score += 0.20
+        else:
+            heat_score += max(0, (temp - 35) / 30)
+        
+        # Temperature departure from normal
+        if temp_dep >= t_hw["departure_severe_c"]:
+            heat_score += 0.30
+        elif temp_dep >= t_hw["departure_heatwave_c"]:
+            heat_score += 0.20
+        elif temp_dep > 2:
+            heat_score += 0.08
+        
+        # Low humidity + high temp = worse heat stress
+        if humidity < 30 and temp > 40:
+            heat_score += 0.10
+        
+        # Consecutive dry days amplify heat
+        if dry_days > 5:
+            heat_score += min(0.10, dry_days / 100)
+        
+        heat_prob = min(0.99, max(0.0, heat_score))
+        
+        # ---- DROUGHT PREDICTION ----
+        drought_score = 0.0
+        t_dr = THRESHOLDS["drought"]
+        
+        # Rainfall deficit
+        if rain_dep <= t_dr["rainfall_large_deficient_pct"]:
+            drought_score += 0.40
+        elif rain_dep <= t_dr["rainfall_deficient_pct"]:
+            drought_score += 0.25
+        
+        # Consecutive dry days
+        if dry_days >= t_dr["consecutive_dry_days"]:
+            drought_score += 0.30
+        elif dry_days >= 7:
+            drought_score += 0.15
+        else:
+            drought_score += dry_days / 100
+        
+        # Deep groundwater = water stress
+        if gw >= t_dr["gw_deep_stress_m"]:
+            drought_score += 0.20
+        elif gw >= 10:
+            drought_score += 0.10
+        
+        # Low current rainfall
+        if rain < 2:
+            drought_score += 0.10
+        
+        drought_prob = min(0.99, max(0.0, drought_score))
+        
+        return {
+            "flood": round(flood_prob, 3),
+            "heatwave": round(heat_prob, 3),
+            "drought": round(drought_prob, 3),
+            "dominant_hazard": max(
+                ["flood", "heatwave", "drought"],
+                key=lambda h: {"flood": flood_prob, 
+                              "heatwave": heat_prob,
+                              "drought": drought_prob}[h]
+            ),
+        }
+    
+    def get_risk_level(self, probability):
+        """Convert probability to human-readable risk level."""
+        if probability >= 0.75:
+            return {"level": "CRITICAL", "color": "#E24B4A"}
+        elif probability >= 0.50:
+            return {"level": "HIGH", "color": "#EF9F27"}
+        elif probability >= 0.25:
+            return {"level": "MODERATE", "color": "#F0997B"}
+        else:
+            return {"level": "LOW", "color": "#5DCAA5"}
+```
+
+### 6b. Long-Term Model (Layer 2)
+
+Create `models/long_term_model.py`:
+
+```python
+"""
+Layer 2: Long-term district proneness scoring.
+
+Scores each district's chronic vulnerability to flood, heatwave,
+drought using 10-30 year historical data.
+
+Output feeds into WASH technology recommender.
+"""
+import numpy as np
+
+
+class LongTermPronenessModel:
+    """
+    Scores district-level hazard proneness (0-1) per hazard type.
+    Uses historical data aggregates.
+    
+    Upgrade path:
+    Phase 1 (now): Weighted formula using available data
+    Phase 2: Train Random Forest on CEEW/NDMA district risk data
+    Phase 3: Add CMIP6 climate projections for future proneness
+    """
+    
+    def score_district(self, profile):
+        """
+        Calculate hazard proneness scores for a district.
+        
+        Args:
+            profile: dict with keys:
+                - avg_annual_rainfall_mm: 30-year average
+                - flood_events_per_decade: historical count
+                - avg_gw_depth_m: average groundwater depth
+                - gw_trend_m_per_year: +ve = deepening, -ve = rising
+                - soil_permeability: 1=Low, 2=Medium, 3=High
+                - elevation_m: average elevation
+                - heatwave_days_per_year: average
+                - drought_months_per_year: average
+                - coastal_district: True/False
+                - river_basin: True if in major river floodplain
+        
+        Returns:
+            dict with proneness scores and recommended actions
+        """
+        rain = profile.get("avg_annual_rainfall_mm", 1100)
+        floods = profile.get("flood_events_per_decade", 2)
+        gw = profile.get("avg_gw_depth_m", 8)
+        gw_trend = profile.get("gw_trend_m_per_year", 0)
+        soil = profile.get("soil_permeability", 2)
+        elevation = profile.get("elevation_m", 200)
+        hw_days = profile.get("heatwave_days_per_year", 10)
+        drought_months = profile.get("drought_months_per_year", 1)
+        coastal = profile.get("coastal_district", False)
+        river_basin = profile.get("river_basin", False)
+        
+        # ---- FLOOD PRONENESS ----
+        flood_score = 0.0
+        
+        # Historical flood frequency (strongest signal)
+        flood_score += min(0.35, floods / 12)
+        
+        # High rainfall areas
+        if rain > 2500:
+            flood_score += 0.20
+        elif rain > 1500:
+            flood_score += 0.12
+        elif rain > 1000:
+            flood_score += 0.05
+        
+        # Shallow / rising groundwater
+        if gw < 3:
+            flood_score += 0.15
+        elif gw < 5:
+            flood_score += 0.08
+        if gw_trend < -0.1:  # Rising water table
+            flood_score += 0.08
+        
+        # Low permeability soil
+        flood_score += (1 / soil) * 0.08
+        
+        # Coastal + river basin
+        if coastal:
+            flood_score += 0.10
+        if river_basin:
+            flood_score += 0.10
+        
+        # Low elevation
+        if elevation < 50:
+            flood_score += 0.08
+        
+        flood_prone = min(1.0, flood_score)
+        
+        # ---- HEATWAVE PRONENESS ----
+        heat_score = 0.0
+        
+        # Historical heatwave frequency
+        heat_score += min(0.40, hw_days / 50)
+        
+        # Arid / semi-arid (low rainfall = more heat)
+        if rain < 500:
+            heat_score += 0.25
+        elif rain < 800:
+            heat_score += 0.15
+        elif rain < 1200:
+            heat_score += 0.05
+        
+        # Deep groundwater (less evaporative cooling)
+        if gw > 20:
+            heat_score += 0.10
+        elif gw > 10:
+            heat_score += 0.05
+        
+        # Inland, non-coastal (less sea breeze moderation)
+        if not coastal:
+            heat_score += 0.05
+        
+        heat_prone = min(1.0, heat_score)
+        
+        # ---- DROUGHT PRONENESS ----
+        drought_score = 0.0
+        
+        # Historical drought frequency
+        drought_score += min(0.35, drought_months / 5)
+        
+        # Low rainfall
+        if rain < 400:
+            drought_score += 0.30
+        elif rain < 700:
+            drought_score += 0.20
+        elif rain < 1000:
+            drought_score += 0.08
+        
+        # Deepening groundwater trend
+        if gw_trend > 0.3:
+            drought_score += 0.15
+        elif gw_trend > 0.1:
+            drought_score += 0.08
+        
+        # Already deep groundwater
+        if gw > 20:
+            drought_score += 0.12
+        elif gw > 12:
+            drought_score += 0.06
+        
+        drought_prone = min(1.0, drought_score)
+        
+        return {
+            "flood_proneness": round(flood_prone, 3),
+            "heatwave_proneness": round(heat_prone, 3),
+            "drought_proneness": round(drought_prone, 3),
+            "dominant_hazard": max(
+                ["flood", "heatwave", "drought"],
+                key=lambda h: {
+                    "flood": flood_prone,
+                    "heatwave": heat_prone,
+                    "drought": drought_prone,
+                }[h]
+            ),
+        }
+```
+
+### 6c. WASH Technology Recommender
+
+Create `models/wash_recommender.py`:
+
+```python
+"""
+Maps hazard proneness profiles to recommended WASH technologies.
+
+This is where YOUR domain expertise goes.
+Edit the rules and recommendations to match your knowledge.
+"""
+
+
+# ============================================
+# TECHNOLOGY DATABASE
+# ============================================
+# Add/edit these based on your expertise
+
+TOILET_TECHNOLOGIES = {
+    "raised_ecosan": {
+        "name": "Raised EcoSan Toilet (Urine-Diverting)",
+        "description": "Elevated platform (>60cm), sealed urine diversion, twin composting vaults above flood level. Zero groundwater contact.",
+        "best_for": ["flood"],
+        "avoid_for": [],
+        "cost_range": "₹25,000 - ₹45,000",
+    },
+    "elevated_twin_pit": {
+        "name": "Elevated Twin-Pit Pour-Flush",
+        "description": "Standard twin-pit raised on plinth with reinforced concrete rings, flood-proof inspection covers, sealed joints.",
+        "best_for": ["flood"],
+        "avoid_for": ["drought"],
+        "cost_range": "₹20,000 - ₹35,000",
+    },
+    "vip_latrine": {
+        "name": "Ventilated Improved Pit (VIP) Latrine",
+        "description": "Solar-heated dark vent pipe creates updraft. Accelerates pathogen kill in heat. Low water requirement.",
+        "best_for": ["heatwave"],
+        "avoid_for": ["flood"],
+        "cost_range": "₹12,000 - ₹20,000",
+    },
+    "composting_uddt": {
+        "name": "Composting / Urine-Diverting Dry Toilet (UDDT)",
+        "description": "Zero water requirement. Urine diverted. Ash/sawdust after use. Desiccation chamber produces safe compost in 6-12 months.",
+        "best_for": ["drought"],
+        "avoid_for": ["flood"],
+        "cost_range": "₹18,000 - ₹30,000",
+    },
+    "biogas_toilet": {
+        "name": "Biogas-Linked Toilet",
+        "description": "Connected to biogas digester. Produces cooking gas. Works best above 15°C. Needs water for slurry.",
+        "best_for": ["moderate_climate"],
+        "avoid_for": ["drought", "cold"],
+        "cost_range": "₹35,000 - ₹60,000",
+    },
+    "standard_twin_pit": {
+        "name": "Standard Twin-Pit Pour-Flush",
+        "description": "SBM-recommended design. Alternating pit usage. Adequate for low-to-moderate hazard zones.",
+        "best_for": ["low_risk"],
+        "avoid_for": ["flood", "drought"],
+        "cost_range": "₹15,000 - ₹25,000",
+    },
+}
+
+LIQUID_WASTE_TECHNOLOGIES = {
+    "raised_leach_pit": {
+        "name": "Raised Leach Pit with Sealed Cover",
+        "description": "Leach pit with raised collar wall, sealed concrete cover. Prevents floodwater ingress.",
+        "best_for": ["flood"],
+    },
+    "constructed_wetland": {
+        "name": "Constructed Wetland / Reed Bed (Bunded)",
+        "description": "Bunded walls for flood protection. Treats greywater through planted gravel filter. Resistant to seasonal flooding.",
+        "best_for": ["flood", "moderate_climate"],
+    },
+    "et_bed": {
+        "name": "Evapotranspiration Bed",
+        "description": "Shallow planted bed uses high ET rates in hot climate to process greywater. Low water requirement. Kitchen garden reuse.",
+        "best_for": ["heatwave", "drought"],
+    },
+    "soak_pit_recycle": {
+        "name": "Soak Pit with Greywater Recycling",
+        "description": "Greywater recycled for toilet flushing or irrigation. Reduces total water demand 40-60%.",
+        "best_for": ["drought"],
+    },
+    "standard_leach_pit": {
+        "name": "Standard Leach Pit / Soak Pit",
+        "description": "Simple leach pit for greywater. Sized for household usage. Include grease trap for kitchen waste.",
+        "best_for": ["low_risk"],
+    },
+    "dewats": {
+        "name": "DEWATS (Decentralized Wastewater Treatment)",
+        "description": "Settler + anaerobic baffled reactor + planted gravel filter. For community-level treatment.",
+        "best_for": ["moderate_climate", "community"],
+    },
+}
+
+
+def recommend_technologies(proneness_scores):
+    """
+    Recommend toilet + liquid waste technologies based on
+    district hazard proneness profile.
+    
+    Args:
+        proneness_scores: dict from LongTermPronenessModel.score_district()
+    
+    Returns:
+        dict with toilet and liquid_waste recommendations
+    """
+    flood = proneness_scores.get("flood_proneness", 0)
+    heat = proneness_scores.get("heatwave_proneness", 0)
+    drought = proneness_scores.get("drought_proneness", 0)
+    
+    toilet_recs = []
+    liquid_recs = []
+    
+    # ---- PRIMARY HAZARD RECOMMENDATIONS ----
+    
+    if flood >= 0.5:
+        toilet_recs.append({
+            "technology": TOILET_TECHNOLOGIES["raised_ecosan"],
+            "reason": f"Flood proneness is {flood:.0%}. Raised design prevents pit flooding and groundwater contamination.",
+            "priority": "PRIMARY",
+        })
+        toilet_recs.append({
+            "technology": TOILET_TECHNOLOGIES["elevated_twin_pit"],
+            "reason": "Alternative: Elevated twin-pit if EcoSan is culturally unacceptable in the community.",
+            "priority": "ALTERNATIVE",
+        })
+        liquid_recs.append({
+            "technology": LIQUID_WASTE_TECHNOLOGIES["raised_leach_pit"],
+            "reason": "Sealed cover prevents floodwater contamination of greywater system.",
+            "priority": "PRIMARY",
+        })
+        liquid_recs.append({
+            "technology": LIQUID_WASTE_TECHNOLOGIES["constructed_wetland"],
+            "reason": "Bunded wetland handles seasonal flooding while treating greywater.",
+            "priority": "ALTERNATIVE",
+        })
+    
+    if heat >= 0.5:
+        toilet_recs.append({
+            "technology": TOILET_TECHNOLOGIES["vip_latrine"],
+            "reason": f"Heatwave proneness is {heat:.0%}. Solar vent pipe accelerates drying and pathogen kill.",
+            "priority": "PRIMARY" if flood < 0.5 else "SECONDARY",
+        })
+        liquid_recs.append({
+            "technology": LIQUID_WASTE_TECHNOLOGIES["et_bed"],
+            "reason": "High ET rates during heat efficiently process greywater with low water input.",
+            "priority": "PRIMARY" if flood < 0.5 else "SECONDARY",
+        })
+    
+    if drought >= 0.5:
+        toilet_recs.append({
+            "technology": TOILET_TECHNOLOGIES["composting_uddt"],
+            "reason": f"Drought proneness is {drought:.0%}. Zero water requirement. Produces safe compost.",
+            "priority": "PRIMARY" if flood < 0.5 else "SECONDARY",
+        })
+        liquid_recs.append({
+            "technology": LIQUID_WASTE_TECHNOLOGIES["soak_pit_recycle"],
+            "reason": "Greywater recycling reduces total water demand by 40-60%.",
+            "priority": "PRIMARY" if flood < 0.5 else "SECONDARY",
+        })
+    
+    # ---- DEFAULT (LOW RISK) ----
+    if not toilet_recs:
+        toilet_recs.append({
+            "technology": TOILET_TECHNOLOGIES["standard_twin_pit"],
+            "reason": "Low hazard proneness. Standard SBM design is adequate.",
+            "priority": "PRIMARY",
+        })
+        liquid_recs.append({
+            "technology": LIQUID_WASTE_TECHNOLOGIES["standard_leach_pit"],
+            "reason": "Standard leach pit suitable for low-risk districts.",
+            "priority": "PRIMARY",
+        })
+    
+    return {
+        "toilet_recommendations": toilet_recs,
+        "liquid_waste_recommendations": liquid_recs,
+        "hazard_profile": {
+            "flood": flood,
+            "heatwave": heat,
+            "drought": drought,
+        },
+    }
+```
+
+---
+
+## Step 7: Quick Measures Database
+
+Create `quick_measures.json` — **edit this with YOUR measures**:
+
+```json
+{
+  "flood": {
+    "threshold": 0.3,
+    "measures": [
+      {
+        "action": "Seal pit and tank openings with sandbags or concrete covers",
+        "who": "Household / Mason",
+        "timeframe": "Immediate (within 24 hrs)",
+        "priority": "CRITICAL"
+      },
+      {
+        "action": "Elevate pump and electrical equipment above expected flood level",
+        "who": "Technician",
+        "timeframe": "Immediate",
+        "priority": "CRITICAL"
+      },
+      {
+        "action": "Pre-position desludging vehicles in vulnerable blocks",
+        "who": "ULB / Block office",
+        "timeframe": "24-48 hrs",
+        "priority": "HIGH"
+      },
+      {
+        "action": "Chlorinate all nearby water sources (wells, handpumps)",
+        "who": "PHE department",
+        "timeframe": "Immediate",
+        "priority": "CRITICAL"
+      },
+      {
+        "action": "Alert communities to avoid open defecation near drains and waterways",
+        "who": "ASHA / Swachhagrahis",
+        "timeframe": "Immediate",
+        "priority": "HIGH"
+      },
+      {
+        "action": "Cover ventilation pipes of VIP latrines to prevent backflow",
+        "who": "Household",
+        "timeframe": "Before rain starts",
+        "priority": "MEDIUM"
+      },
+      {
+        "action": "Inspect and reinforce soak pit walls if erosion visible",
+        "who": "Mason",
+        "timeframe": "24 hrs",
+        "priority": "MEDIUM"
+      }
+    ]
+  },
+  "heatwave": {
+    "threshold": 0.3,
+    "measures": [
+      {
+        "action": "Increase water supply to pour-flush toilet systems",
+        "who": "PHE / Jal Board",
+        "timeframe": "Ongoing during heatwave",
+        "priority": "HIGH"
+      },
+      {
+        "action": "Shade exposed biogas digesters with tarpaulin or thatch",
+        "who": "Household",
+        "timeframe": "Before peak heat",
+        "priority": "MEDIUM"
+      },
+      {
+        "action": "Check and maintain moisture levels in composting chambers",
+        "who": "Household",
+        "timeframe": "Daily during heatwave",
+        "priority": "HIGH"
+      },
+      {
+        "action": "Ensure VIP latrine ventilation pipes are unblocked for airflow",
+        "who": "Household",
+        "timeframe": "Immediate",
+        "priority": "MEDIUM"
+      },
+      {
+        "action": "Advise users to flush with greywater to conserve freshwater",
+        "who": "ASHA / Swachhagrahis",
+        "timeframe": "Ongoing",
+        "priority": "MEDIUM"
+      },
+      {
+        "action": "Monitor leach pits for drying and cracking — add water if needed",
+        "who": "Household / Mason",
+        "timeframe": "Weekly",
+        "priority": "LOW"
+      }
+    ]
+  },
+  "drought": {
+    "threshold": 0.3,
+    "measures": [
+      {
+        "action": "Switch pour-flush users to dry toilet mode where dual-mode available",
+        "who": "Household / Swachhagrahi",
+        "timeframe": "When water rationing starts",
+        "priority": "HIGH"
+      },
+      {
+        "action": "Reduce flush volumes using bucket instead of cistern",
+        "who": "Household",
+        "timeframe": "Immediate",
+        "priority": "HIGH"
+      },
+      {
+        "action": "Prioritize available water for handwashing over flushing",
+        "who": "ASHA / Anganwadi",
+        "timeframe": "Ongoing",
+        "priority": "CRITICAL"
+      },
+      {
+        "action": "Activate rainwater harvesting reserves for toilet use",
+        "who": "GP / ULB",
+        "timeframe": "When supply drops below 40 LPCD",
+        "priority": "HIGH"
+      },
+      {
+        "action": "Schedule delayed desludging to avoid wasting water on refill",
+        "who": "ULB / Private operator",
+        "timeframe": "Reschedule to post-drought",
+        "priority": "MEDIUM"
+      },
+      {
+        "action": "Install ash/sawdust station near community toilets for dry use",
+        "who": "GP / SHG",
+        "timeframe": "48 hrs",
+        "priority": "MEDIUM"
+      }
+    ]
+  }
+}
+```
+
+---
+
+## Step 8: Flask API (Main App)
+
+Create `main.py`:
+
+```python
+"""
+ClimResWASH Early Warning System API
+Runs on Replit — serves endpoints for climreswash.in frontend
+"""
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+import json
+import os
+
+from models.short_term_model import ShortTermPredictor
+from models.long_term_model import LongTermPronenessModel
+from models.wash_recommender import recommend_technologies
+from data.openmeteo_fetcher import (
+    fetch_forecast, 
+    compute_hazard_from_forecast
+)
+from data.imd_fetcher import (
+    fetch_district_warnings, 
+    parse_warning_to_hazards,
+    fetch_district_rainfall,
+)
+from data.cgwb_fetcher import get_district_gw_depth, get_district_gw_trend
+
+
+app = Flask(__name__)
+CORS(app)  # Allow your frontend at climreswash.in to call this API
+
+# Initialize models
+short_term = ShortTermPredictor()
+long_term = LongTermPronenessModel()
+
+# Load quick measures
+with open("quick_measures.json", "r") as f:
+    QUICK_MEASURES = json.load(f)
+
+
+# ============================================
+# API ENDPOINTS
+# ============================================
+
+@app.route("/")
+def home():
+    return jsonify({
+        "service": "ClimResWASH Early Warning System",
+        "version": "1.0",
+        "endpoints": {
+            "/api/short-term/<district_id>": "Short-term hazard prediction",
+            "/api/long-term/<district_name>": "Long-term proneness + tech recommendation",
+            "/api/predict": "POST custom features for prediction",
+            "/api/quick-measures/<hazard>": "Quick protective measures",
+            "/api/districts": "List all district IDs",
+        }
+    })
+
+
+@app.route("/api/short-term/<district_id>")
+def short_term_prediction(district_id):
+    """
+    Short-term hazard prediction for a district.
+    
+    Tries IMD first, falls back to Open-Meteo.
+    Requires lat/lon as query params if using Open-Meteo.
+    
+    Usage:
+      /api/short-term/573                      (uses IMD)
+      /api/short-term/573?lat=26.9&lon=75.7    (uses Open-Meteo fallback)
+    """
+    lat = request.args.get("lat", type=float)
+    lon = request.args.get("lon", type=float)
+    
+    # --- Try IMD first ---
+    imd_warnings = fetch_district_warnings(district_id)
+    imd_rainfall = fetch_district_rainfall(district_id)
+    
+    if imd_warnings:
+        # Use IMD warning data
+        hazards = parse_warning_to_hazards(imd_warnings)
+        source = "IMD"
+        
+        # Enrich with rainfall departure if available
+        rain_dep = 0
+        if imd_rainfall and isinstance(imd_rainfall, list) and len(imd_rainfall) > 0:
+            dep_str = imd_rainfall[0].get("Daily Departure Per", "0%")
+            try:
+                rain_dep = float(dep_str.replace("%", "").replace("+", ""))
+            except:
+                rain_dep = 0
+    
+    elif lat and lon:
+        # --- Fallback to Open-Meteo ---
+        forecast = fetch_forecast(lat, lon, days=7)
+        hazards = compute_hazard_from_forecast(forecast)
+        source = "Open-Meteo"
+        rain_dep = 0
+    
+    else:
+        return jsonify({
+            "error": "IMD unavailable. Provide lat/lon for Open-Meteo fallback.",
+            "example": f"/api/short-term/{district_id}?lat=26.9&lon=75.7"
+        }), 400
+    
+    # Get groundwater depth if available
+    gw_depth = None
+    # (You'd map district_id to district_name here using district_master.json)
+    
+    # Build full features for model
+    features = {
+        "rainfall_mm": 0,  # Would come from live data
+        "temperature_c": 0,
+        "temp_departure_c": 0,
+        "humidity_pct": 50,
+        "gw_depth_m": gw_depth or 10,
+        "river_level_pct": 50,
+        "consecutive_dry_days": 0,
+        "rainfall_departure_pct": rain_dep,
+        "soil_permeability": 2,
+    }
+    
+    # If we have IMD data, trust their hazard assessment directly
+    # If Open-Meteo, use our model
+    if source == "Open-Meteo":
+        model_prediction = short_term.predict(features)
+        # Blend Open-Meteo computed hazards with model
+        for h in ["flood", "heatwave", "drought"]:
+            hazards[h] = max(hazards.get(h, 0), 
+                           model_prediction.get(h, 0))
+    
+    # Attach quick measures for triggered hazards
+    triggered_measures = {}
+    for hazard_type, prob in hazards.items():
+        if hazard_type in QUICK_MEASURES:
+            threshold = QUICK_MEASURES[hazard_type]["threshold"]
+            if prob >= threshold:
+                triggered_measures[hazard_type] = {
+                    "probability": prob,
+                    "risk_level": short_term.get_risk_level(prob),
+                    "measures": QUICK_MEASURES[hazard_type]["measures"],
+                }
+    
+    return jsonify({
+        "district_id": district_id,
+        "source": source,
+        "prediction": {
+            "flood": round(hazards.get("flood", 0), 3),
+            "heatwave": round(hazards.get("heatwave", 0), 3),
+            "drought": round(hazards.get("drought", 0), 3),
+        },
+        "triggered_measures": triggered_measures,
+        "message": _build_alert_message(hazards, triggered_measures),
+    })
+
+
+@app.route("/api/long-term/<district_name>")
+def long_term_recommendation(district_name):
+    """
+    Long-term proneness scoring + WASH technology recommendation.
+    
+    Query params (all optional, provide what you have):
+      avg_rainfall=1200  (mm/year)
+      flood_events=4     (per decade)
+      gw_depth=6         (meters)
+      soil=2             (1=Low, 2=Medium, 3=High permeability)
+      hw_days=12         (heatwave days per year)
+      drought_months=1   (per year)
+      coastal=false
+      river_basin=true
+    """
+    # Get CGWB data
+    gw_depth = get_district_gw_depth(district_name)
+    gw_trend = get_district_gw_trend(district_name)
+    
+    profile = {
+        "avg_annual_rainfall_mm": request.args.get("avg_rainfall", 1100, type=float),
+        "flood_events_per_decade": request.args.get("flood_events", 2, type=int),
+        "avg_gw_depth_m": gw_depth or request.args.get("gw_depth", 8, type=float),
+        "gw_trend_m_per_year": gw_trend or 0,
+        "soil_permeability": request.args.get("soil", 2, type=int),
+        "elevation_m": request.args.get("elevation", 200, type=float),
+        "heatwave_days_per_year": request.args.get("hw_days", 10, type=int),
+        "drought_months_per_year": request.args.get("drought_months", 1, type=int),
+        "coastal_district": request.args.get("coastal", "false").lower() == "true",
+        "river_basin": request.args.get("river_basin", "false").lower() == "true",
+    }
+    
+    # Score proneness
+    scores = long_term.score_district(profile)
+    
+    # Get technology recommendations
+    recommendations = recommend_technologies(scores)
+    
+    return jsonify({
+        "district": district_name,
+        "profile_used": profile,
+        "proneness_scores": scores,
+        "recommendations": recommendations,
+    })
+
+
+@app.route("/api/predict", methods=["POST"])
+def predict_custom():
+    """
+    POST custom features for short-term prediction.
+    Useful for your frontend sliders / what-if analysis.
+    
+    POST JSON body:
+    {
+        "rainfall_mm": 85,
+        "temperature_c": 42,
+        "humidity_pct": 65,
+        "gw_depth_m": 3.5,
+        "river_level_pct": 75,
+        "consecutive_dry_days": 5,
+        "rainfall_departure_pct": 40,
+        "soil_permeability": 2
+    }
+    """
+    features = request.get_json()
+    if not features:
+        return jsonify({"error": "Send JSON body with features"}), 400
+    
+    prediction = short_term.predict(features)
+    
+    # Attach quick measures
+    triggered = {}
+    for hazard_type in ["flood", "heatwave", "drought"]:
+        prob = prediction.get(hazard_type, 0)
+        if hazard_type in QUICK_MEASURES:
+            threshold = QUICK_MEASURES[hazard_type]["threshold"]
+            if prob >= threshold:
+                triggered[hazard_type] = {
+                    "probability": prob,
+                    "risk_level": short_term.get_risk_level(prob),
+                    "measures": QUICK_MEASURES[hazard_type]["measures"],
+                }
+    
+    prediction["triggered_measures"] = triggered
+    return jsonify(prediction)
+
+
+@app.route("/api/quick-measures/<hazard>")
+def get_quick_measures(hazard):
+    """Get all quick measures for a specific hazard type."""
+    if hazard not in QUICK_MEASURES:
+        return jsonify({
+            "error": f"Unknown hazard: {hazard}",
+            "available": list(QUICK_MEASURES.keys())
+        }), 404
+    return jsonify(QUICK_MEASURES[hazard])
+
+
+def _build_alert_message(hazards, triggered):
+    """Build human-readable alert message."""
+    if not triggered:
+        return "All hazard levels LOW. No immediate action needed."
+    
+    parts = []
+    for h, data in triggered.items():
+        level = data["risk_level"]["level"]
+        pct = round(data["probability"] * 100)
+        count = len(data["measures"])
+        parts.append(f"{h.upper()} risk {level} ({pct}%) — {count} measures activated")
+    
+    return " | ".join(parts)
+
+
+# ============================================
+# RUN SERVER
+# ============================================
+if __name__ == "__main__":
+    # Create data directory
+    os.makedirs("data", exist_ok=True)
+    
+    # Ensure __init__.py files exist
+    for folder in ["models", "data"]:
+        init_path = os.path.join(folder, "__init__.py")
+        if not os.path.exists(init_path):
+            os.makedirs(folder, exist_ok=True)
+            open(init_path, "w").close()
+    
+    print("=" * 50)
+    print("ClimResWASH Early Warning System")
+    print("=" * 50)
+    print("Endpoints:")
+    print("  GET  /api/short-term/<district_id>?lat=XX&lon=YY")
+    print("  GET  /api/long-term/<district_name>")
+    print("  POST /api/predict  (JSON body)")
+    print("  GET  /api/quick-measures/<flood|heatwave|drought>")
+    print("=" * 50)
+    
+    app.run(host="0.0.0.0", port=8080, debug=True)
+```
+
+---
+
+## Step 9: Create Empty `__init__.py` Files
+
+In the **Shell** tab, run:
+
+```bash
+mkdir -p models data
+touch models/__init__.py data/__init__.py
+```
+
+---
+
+## Step 10: Run and Test
+
+1. Click the **Run** button in Replit
+2. A browser preview will appear with your API running
+3. Test these URLs (append to your Replit URL):
+   - `/` — shows all endpoints
+   - `/api/short-term/573?lat=26.9&lon=75.7` — Jaipur flood/heat/drought prediction
+   - `/api/long-term/JAIPUR?avg_rainfall=600&hw_days=35&drought_months=3`
+   - `/api/quick-measures/flood` — all flood quick measures
+
+---
+
+## Step 11: Connect to climreswash.in Frontend
+
+On your existing website, add JavaScript to call the Replit API:
+
+```javascript
+// Replace with your actual Replit URL
+const API_BASE = "https://climreswash-early-warning.yourusername.repl.co";
+
+async function getDistrictWarning(districtId, lat, lon) {
+    const url = `${API_BASE}/api/short-term/${districtId}?lat=${lat}&lon=${lon}`;
+    const resp = await fetch(url);
+    const data = await resp.json();
+    
+    // data.prediction = { flood: 0.87, heatwave: 0.23, drought: 0.05 }
+    // data.triggered_measures = { flood: { measures: [...] } }
+    
+    return data;
+}
+
+async function getTechRecommendation(districtName, params) {
+    const query = new URLSearchParams(params).toString();
+    const url = `${API_BASE}/api/long-term/${districtName}?${query}`;
+    const resp = await fetch(url);
+    return await resp.json();
+}
+
+// Example: When user clicks a district on your map
+map.on("click", async (district) => {
+    const warning = await getDistrictWarning(
+        district.id, district.lat, district.lon
+    );
+    
+    // Show alert overlay on map
+    if (warning.prediction.flood > 0.5) {
+        showFloodAlert(district, warning.triggered_measures.flood);
+    }
+    
+    // Show tech recommendations
+    const recs = await getTechRecommendation(district.name, {
+        avg_rainfall: district.avg_rainfall,
+        flood_events: district.flood_events,
+        hw_days: district.hw_days,
+    });
+    
+    showTechPanel(recs.recommendations);
+});
+```
+
+---
+
+## Step 12: Deploy on Replit
+
+1. Click the **Deploy** button (top right in Replit)
+2. Choose **Autoscale** deployment
+3. Your API will be live at a permanent URL
+4. Update `API_BASE` in your frontend code
+
+---
+
+## Step 13: Get IMD IP Whitelisted (Important)
+
+1. Find your Replit server's IP: add this temp route to main.py:
+   ```python
+   @app.route("/api/myip")
+   def my_ip():
+       import requests
+       r = requests.get("https://api.ipify.org?format=json")
+       return r.json()
+   ```
+2. Visit `/api/myip` to get the IP
+3. Email IMD at contacts on `mausam.imd.gov.in` requesting API access
+4. Provide your public IP for whitelisting
+5. Once approved, IMD APIs will work directly (much richer data than Open-Meteo)
+
+---
+
+## What to Do Next
+
+1. **Edit `quick_measures.json`** with YOUR specific protective measures
+2. **Edit `wash_recommender.py`** with YOUR technology knowledge
+3. **Add more districts** to `data/district_master.json` with lat/long/metadata
+4. **Collect labeled data** — when a flood/heatwave actually occurs, log it. After 6-12 months, train XGBoost to replace the rule-based model
+5. **Add CMIP6 projections** for future climate scenarios in the long-term model
+6. **Add SMS/email alerts** using free services like Twilio (trial) or SMTP
+
+---
+
+## Free Data Sources Summary
+
+| Source | Data | Access | Update Frequency |
+|--------|------|--------|-----------------|
+| IMD APIs | Warnings, rainfall, forecasts, nowcast | IP whitelist (free) | Real-time |
+| Open-Meteo | Temperature, rain, humidity, wind | No auth needed | Hourly |
+| Open-Meteo Historical | 80+ years of weather data | No auth needed | Static |
+| Open-Meteo Flood | River discharge forecasts (GloFAS) | No auth needed | Daily |
+| CGWB / India Data Portal | Groundwater levels (22,965 wells) | CSV download (free) | Quarterly |
+| India-WRIS | Water level, river data, aquifer maps | Web portal (free) | Monthly |
+| CWC FloodWatch | River levels at 392 stations | App/website (free) | During monsoon |
+| CEEW Heat Risk Index | 734 district heat risk scores | Report download (free) | Annual |
+| IMDLIB Python library | IMD gridded data programmatic access | pip install (free) | On-demand |
