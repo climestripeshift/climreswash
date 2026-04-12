@@ -1,8 +1,8 @@
-# Rajasthan Climate Vulnerability Map
+# ClimResWASH — Climate Vulnerability & Early Warning System
 
 ## Overview
 
-This is an interactive climate vulnerability and adaptation assessment dashboard for India (735 districts). The application visualizes district-level climate risks, adaptation strategies, health indicators, and air quality data through an interactive map interface. It provides early warning systems for climate hazards, tracks various social and environmental metrics, and displays estimated mitigation and adaptation funding requirements at district and national levels to support climate action planning.
+A multi-country district-level WASH climate vulnerability mapping system covering 14 countries. The main app (Node.js/React, port 5000) visualizes district-level climate risks, adaptation strategies, health indicators, and air quality data. A companion Python Flask service (port 8080) provides ML-powered short-term hazard prediction and long-term WASH technology recommendations based on Open-Meteo and IMD data.
 
 ## User Preferences
 
@@ -111,3 +111,43 @@ Preferred communication style: Simple, everyday language.
 - Framer Motion for animations
 
 The application does not currently use authentication middleware or session management, though the schema includes a users table for future implementation.
+
+## Python ML Service (`python_service/`)
+
+A separate Flask API running on **port 8080** alongside the main Node.js app (port 5000).
+
+**Workflow**: `ML Service (Flask)` — command: `cd python_service && python main.py`
+
+### Endpoints
+- `GET /api/short-term/<district_id>?lat=XX&lon=YY` — Short-term hazard prediction (IMD → Open-Meteo fallback)
+- `GET /api/long-term/<district_name>` — Long-term proneness + WASH tech recommendations
+- `POST /api/predict` — Custom feature vector → hazard probabilities
+- `GET /api/quick-measures/<flood|heatwave|drought>` — Protective measures list
+- `GET /api/myip` — Returns server public IP (for IMD whitelist request)
+
+### File Structure
+```
+python_service/
+├── main.py                    Flask entry point (port 8080)
+├── config.py                  IMD/Open-Meteo/CGWB API config + thresholds
+├── quick_measures.json        Protective measures per hazard type
+├── requirements.txt
+├── models/
+│   ├── short_term_model.py    Layer 1: rule-based hazard predictor (XGBoost-ready)
+│   ├── long_term_model.py     Layer 2: district proneness scorer (RF-ready)
+│   └── wash_recommender.py    Maps proneness → toilet/liquid waste technologies
+└── data/
+    ├── imd_fetcher.py         IMD API fetcher (needs IP whitelist)
+    ├── openmeteo_fetcher.py   Open-Meteo fallback (no auth needed)
+    └── cgwb_fetcher.py        CGWB groundwater CSV downloader/parser
+```
+
+### Data Sources
+- **IMD APIs** — district warnings, rainfall, nowcast (requires IP whitelist; email mausam.imd.gov.in)
+- **Open-Meteo** — temperature, rain, humidity, wind, river discharge (free, no auth)
+- **CGWB** — groundwater depth/trend data (CSV downloaded on first use)
+
+### Upgrade Path
+- Phase 1 (current): Rule-based prediction using IMD thresholds
+- Phase 2: Replace with trained XGBoost after 6+ months of labeled event data
+- Phase 3: Add CMIP6 projections for future climate scenarios

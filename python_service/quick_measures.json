@@ -1,0 +1,131 @@
+{
+  "flood": {
+    "threshold": 0.3,
+    "measures": [
+      {
+        "action": "Seal pit and tank openings with sandbags or concrete covers",
+        "who": "Household / Mason",
+        "timeframe": "Immediate (within 24 hrs)",
+        "priority": "CRITICAL"
+      },
+      {
+        "action": "Elevate pump and electrical equipment above expected flood level",
+        "who": "Technician",
+        "timeframe": "Immediate",
+        "priority": "CRITICAL"
+      },
+      {
+        "action": "Pre-position desludging vehicles in vulnerable blocks",
+        "who": "ULB / Block office",
+        "timeframe": "24-48 hrs",
+        "priority": "HIGH"
+      },
+      {
+        "action": "Chlorinate all nearby water sources (wells, handpumps)",
+        "who": "PHE department",
+        "timeframe": "Immediate",
+        "priority": "CRITICAL"
+      },
+      {
+        "action": "Alert communities to avoid open defecation near drains and waterways",
+        "who": "ASHA / Swachhagrahis",
+        "timeframe": "Immediate",
+        "priority": "HIGH"
+      },
+      {
+        "action": "Cover ventilation pipes of VIP latrines to prevent backflow",
+        "who": "Household",
+        "timeframe": "Before rain starts",
+        "priority": "MEDIUM"
+      },
+      {
+        "action": "Inspect and reinforce soak pit walls if erosion visible",
+        "who": "Mason",
+        "timeframe": "24 hrs",
+        "priority": "MEDIUM"
+      }
+    ]
+  },
+  "heatwave": {
+    "threshold": 0.3,
+    "measures": [
+      {
+        "action": "Increase water supply to pour-flush toilet systems",
+        "who": "PHE / Jal Board",
+        "timeframe": "Ongoing during heatwave",
+        "priority": "HIGH"
+      },
+      {
+        "action": "Shade exposed biogas digesters with tarpaulin or thatch",
+        "who": "Household",
+        "timeframe": "Before peak heat",
+        "priority": "MEDIUM"
+      },
+      {
+        "action": "Check and maintain moisture levels in composting chambers",
+        "who": "Household",
+        "timeframe": "Daily during heatwave",
+        "priority": "HIGH"
+      },
+      {
+        "action": "Ensure VIP latrine ventilation pipes are unblocked for airflow",
+        "who": "Household",
+        "timeframe": "Immediate",
+        "priority": "MEDIUM"
+      },
+      {
+        "action": "Advise users to flush with greywater to conserve freshwater",
+        "who": "ASHA / Swachhagrahis",
+        "timeframe": "Ongoing",
+        "priority": "MEDIUM"
+      },
+      {
+        "action": "Monitor leach pits for drying and cracking — add water if needed",
+        "who": "Household / Mason",
+        "timeframe": "Weekly",
+        "priority": "LOW"
+      }
+    ]
+  },
+  "drought": {
+    "threshold": 0.3,
+    "measures": [
+      {
+        "action": "Switch pour-flush users to dry toilet mode where dual-mode available",
+        "who": "Household / Swachhagrahi",
+        "timeframe": "When water rationing starts",
+        "priority": "HIGH"
+      },
+      {
+        "action": "Reduce flush volumes using bucket instead of cistern",
+        "who": "Household",
+        "timeframe": "Immediate",
+        "priority": "HIGH"
+      },
+      {
+        "action": "Prioritize available water for handwashing over flushing",
+        "who": "ASHA / Anganwadi",
+        "timeframe": "Ongoing",
+        "priority": "CRITICAL"
+      },
+      {
+        "action": "Activate rainwater harvesting reserves for toilet use",
+        "who": "GP / ULB",
+        "timeframe": "When supply drops below 40 LPCD",
+        "priority": "HIGH"
+      },
+      {
+        "action": "Schedule delayed desludging to avoid wasting water on refill",
+        "who": "ULB / Private operator",
+        "timeframe": "Reschedule to post-drought",
+        "priority": "MEDIUM"
+      },
+      {
+        "action": "Install ash/sawdust station near community toilets for dry use",
+        "who": "GP / SHG",
+        "timeframe": "48 hrs",
+        "priority": "MEDIUM"
+      }
+    ]
+  }
+}
