@@ -632,7 +632,7 @@ function TechnologyIndex() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedHazards, setSelectedHazards] = useState<string[]>(() => {
     const hazard = new URLSearchParams(search).get('hazard');
-    return hazard && ALL_HAZARDS.includes(hazard) ? [hazard] : [];
+    return hazard && (ALL_HAZARDS as readonly string[]).includes(hazard) ? [hazard] : [];
   });
   const [selectedTypologies, setSelectedTypologies] = useState<string[]>([]);
   const [activeMatrixHazard, setActiveMatrixHazard] = useState<string | null>(null);

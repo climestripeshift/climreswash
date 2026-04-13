@@ -139,6 +139,7 @@ export interface MlHazardPrediction {
   district_id: string;
   source: string;
   prediction: { flood: number; heatwave: number; drought: number };
+  dominant_hazard: 'flood' | 'heatwave' | 'drought';
   triggered_measures: Record<string, {
     probability: number;
     risk_level: { level: string; color: string };
