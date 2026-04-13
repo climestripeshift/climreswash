@@ -440,6 +440,23 @@ export function Sidebar({ mode, setMode, selectedDistrict, selectedBlock, blocks
                               </div>
                             )}
 
+                            {/* Link to Technology Library filtered by dominant hazard */}
+                            {mlPrediction && (() => {
+                              const dom = mlPrediction.dominant_hazard;
+                              const label = dom === 'flood' ? 'Flood' : dom === 'heatwave' ? 'Heatwave' : 'Drought';
+                              const icon  = dom === 'flood' ? '🌊' : dom === 'heatwave' ? '🌡' : '🏜';
+                              return (
+                                <Link
+                                  href={`/technology?hazard=${label}`}
+                                  className="mt-3 flex items-center justify-between w-full rounded-md border border-sky-500/30 bg-sky-500/10 px-3 py-2 text-xs font-medium text-sky-400 hover:bg-sky-500/20 transition-colors"
+                                  data-testid="link-technology-hazard"
+                                >
+                                  <span>{icon} View WASH Technologies for {label}</span>
+                                  <span className="text-[10px] opacity-70">→ Library</span>
+                                </Link>
+                              );
+                            })()}
+
                             {/* WASH tech recommendations from long-term model */}
                             {mlTechRec && (
                               <div className="mt-3 pt-3 border-t border-border/40 space-y-2">

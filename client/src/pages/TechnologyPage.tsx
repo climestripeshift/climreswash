@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useRoute, Link } from "wouter";
+import { useRoute, Link, useSearch } from "wouter";
 import { getTechnologyBySlug, getAllTechnologies, ALL_HAZARDS, ALL_TYPOLOGIES, TechnologyInfo, getRecommendedTechnologies, MATRIX_HAZARDS, MATRIX_HAZARD_ICONS, MATRIX_HAZARD_COLORS, HazardSuitability } from "@/lib/technologyContent";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -628,8 +628,12 @@ function TechnologyDetail({ tech }: { tech: TechnologyInfo }) {
 
 function TechnologyIndex() {
   const allTech = getAllTechnologies();
+  const search = useSearch();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedHazards, setSelectedHazards] = useState<string[]>([]);
+  const [selectedHazards, setSelectedHazards] = useState<string[]>(() => {
+    const hazard = new URLSearchParams(search).get('hazard');
+    return hazard && ALL_HAZARDS.includes(hazard) ? [hazard] : [];
+  });
   const [selectedTypologies, setSelectedTypologies] = useState<string[]>([]);
   const [activeMatrixHazard, setActiveMatrixHazard] = useState<string | null>(null);
   const [showMap, setShowMap] = useState(false);
