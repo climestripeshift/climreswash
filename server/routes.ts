@@ -832,28 +832,37 @@ export async function registerRoutes(
         climateRisks: districts.climateRisks,
       }).from(districts).where(eq(districts.countryId, country));
 
+      // Seasonal factors for India (month 1-12)
+      // Hazard seasons: Heatwave=Mar-Jun, Flood=Jun-Sep, Drought=Oct-Feb
+      const month = new Date().getMonth() + 1;
+      const heatSeason  = (month >= 3 && month <= 6) ? 1.35 : (month >= 7 && month <= 9) ? 0.55 : 0.80;
+      const floodSeason = (month >= 6 && month <= 9) ? 1.40 : 0.45;
+      const droughtSeason = (month <= 2 || month >= 11) ? 1.20 : (month >= 3 && month <= 5) ? 0.75 : 0.45;
+
       const data = rows.map(r => {
-        // Normalise scores to 0-1 (India stores 0-1, other countries 0-100)
+        // Normalise scores to 0–1 (India stores 0–1, other countries 0–100)
         const norm = (v: number | null | undefined) => {
           if (v == null) return 0;
           return v > 1 ? v / 100 : v;
         };
-        const vuln = norm(r.vulnerabilityScore as any);
+        const vuln   = norm(r.vulnerabilityScore as any);
         const hazard = norm(r.hazardScore as any);
-        const risk = norm(r.riskScore as any);
-        const adapt = norm(r.adaptationScore as any);
-        // Adaptation reduces realised risk
-        const adaptPenalty = Math.max(0, 1 - adapt);
+        const adapt  = norm(r.adaptationScore as any);
+        // Higher adaptation = lower realised risk, but never fully eliminates it
+        const adaptPenalty = Math.max(0.25, 1 - adapt * 0.8);
 
         const tags = ((r.climateRisks as string[]) || []).map(s => s.toLowerCase());
         const hasFlood    = tags.some(t => t.includes('flood'));
-        const hasHeatwave = tags.some(t => t.includes('heat') || t.includes('heatwave'));
+        const hasHeatwave = tags.some(t => t.includes('heat'));
         const hasDrought  = tags.some(t => t.includes('drought') || t.includes('dry'));
 
-        // Base probabilities from existing scores × climate risk tags × adapt penalty
-        const flood    = Math.min(0.99, hazard * (hasFlood    ? 1.4 : 0.5) * adaptPenalty + risk * 0.15);
-        const heatwave = Math.min(0.99, vuln   * (hasHeatwave ? 1.4 : 0.5) * adaptPenalty + risk * 0.15);
-        const drought  = Math.min(0.99, vuln   * (hasDrought  ? 1.4 : 0.5) * adaptPenalty + risk * 0.10);
+        // Each hazard has its own primary driver + seasonal weighting.
+        // Tag presence gives a 1.3× boost; absence stays at 1.0× (not penalised hard).
+        // Drought gets a softer boost (1.1×) because it's over-tagged — prevents it
+        // from dominating every district even in peak heatwave months.
+        const flood    = Math.min(0.99, hazard * (hasFlood    ? 1.30 : 0.80) * adaptPenalty * floodSeason);
+        const heatwave = Math.min(0.99, vuln   * (hasHeatwave ? 1.40 : 1.00) * adaptPenalty * heatSeason);
+        const drought  = Math.min(0.99, vuln   * (hasDrought  ? 1.10 : 0.40) * adaptPenalty * droughtSeason);
 
         const dominant = flood >= heatwave && flood >= drought ? 'flood'
           : heatwave >= drought ? 'heatwave' : 'drought';
