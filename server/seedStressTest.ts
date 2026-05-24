@@ -1,13 +1,17 @@
 /**
  * Stress-test seeder — v0 synthetic projections
  *
- * Method: AR6 WG1 Chapter 12 South-Asia regional temperature/precip deltas are
- * applied as scalar multipliers to each district's baseline hazard exposure.
- * Sensitivity and Adaptive Capacity are frozen at current district values (v1 plan:
- * let adaptive capacity evolve along the SSP socioeconomic pathway).
+ * Method: IPCC AR6 Risk = Hazard × Exposure × Vulnerability.
+ * Only the Hazard term varies by scenario and year; Exposure and Vulnerability
+ * are frozen at present-day district values (v0).
+ *   H(district, hazard, scenario, year) = baseline_hazard(district, hazard) × (1 + delta)
+ *   E = district.exposureScore          (frozen)
+ *   V = district.vulnerabilityScore     (frozen)
+ * Three hazard channels (heat, drought, flood) combined by geometric mean → H composite.
+ * v1 plan: let E and V evolve along the SSP socioeconomic pathway.
  *
  * Stated limitations (tell funders up-front):
- *   1. Static sensitivity / adaptive capacity — understates risk where population grows fastest.
+ *   1. Static Exposure and Vulnerability — understates risk where population grows fastest.
  *   2. Flood proxied via extreme-precip delta, not hydrological inundation modelling.
  *   3. Compound / correlated hazards (heat + drought co-occurrence) not jointly modelled.
  *
@@ -66,8 +70,8 @@ const SOURCE =
 
 const HAZARD_WEIGHTS = { heat: 1 / 3, drought: 1 / 3, flood: 1 / 3 };
 
-/** Derive a 0–1 baseline exposure score per hazard for a district */
-function baselineExposure(
+/** Derive a 0–1 baseline Hazard intensity for a district (the H term in Risk = H × E × V) */
+function baselineHazard(
   district: {
     hazardScore: number | null;
     climateRisks: string[];
@@ -126,7 +130,7 @@ export async function computeStressTestProjections(): Promise<{ districts: numbe
       for (const year of YEARS) {
         const byHazard = new Map<string, number>();
         for (const hazard of HAZARDS) {
-          const base = baselineExposure(
+          const base = baselineHazard(
             { hazardScore: d.hazardScore, climateRisks: d.climateRisks, hazardIntensities: d.hazardIntensities as any },
             hazard
           );
@@ -165,16 +169,17 @@ export async function computeStressTestProjections(): Promise<{ districts: numbe
   const hazardRows: InsertHazardProjection[] = [];
   const vulnRows: InsertVulnerabilityProjection[] = [];
 
-  // Track vulnerability values so we can compute deterioration + avoidedDamage
-  // vMap[districtId][scenario][year] = vulnerability
+  // Track risk values (H × E × V) for deterioration + avoidedDamage
+  // vMap[districtId][scenario][year] = risk
   const vMap: Map<string, Map<string, Map<number, number>>> = new Map();
   // exposureMap[districtId][scenario][year] = { composite, breakdown }
   type ExposureEntry = { composite: number; breakdown: Record<string, number> };
   const expMap: Map<string, Map<string, Map<number, ExposureEntry>>> = new Map();
 
   for (const d of allDistricts) {
-    const sensitivity = Math.max(d.vulnerabilityScore ?? 0.5, 0.01);
-    const adaptiveCap = Math.max((d.adaptationScore ?? 50) / 100, 0.05);
+    // AR6 Risk = H × E × V — E and V frozen at present-day values
+    const exposure    = Math.max(d.exposureScore ?? 0.5, 0.01);       // E term
+    const vulnFactor  = Math.max(d.vulnerabilityScore ?? 0.5, 0.01);  // V term
 
     const dvMap = new Map<string, Map<number, number>>();
     const deMap = new Map<string, Map<number, ExposureEntry>>();
@@ -199,9 +204,9 @@ export async function computeStressTestProjections(): Promise<{ districts: numbe
           flood:   nFlood  / total,
         };
 
-        const vulnerability = (composite * sensitivity) / adaptiveCap;
+        const risk = composite * exposure * vulnFactor;  // Risk = H × E × V
 
-        syVMap.set(year, vulnerability);
+        syVMap.set(year, risk);
         syEMap.set(year, { composite, breakdown });
 
         // Push hazard rows
@@ -230,8 +235,8 @@ export async function computeStressTestProjections(): Promise<{ districts: numbe
 
   // ── Step 4: build vulnerability_projections rows with deterioration / avoidedDamage ──
   for (const d of allDistricts) {
-    const sensitivity = Math.max(d.vulnerabilityScore ?? 0.5, 0.01);
-    const adaptiveCap = Math.max((d.adaptationScore ?? 50) / 100, 0.05);
+    const exposure    = Math.max(d.exposureScore ?? 0.5, 0.01);       // E term
+    const vulnFactor  = Math.max(d.vulnerabilityScore ?? 0.5, 0.01);  // V term
 
     // Baseline = current_policies @ 2025 (delta = 0, so scenario doesn't matter at 2025)
     const baseline2025 = vMap.get(d.id)!.get('current_policies')!.get(2025)!;
@@ -249,9 +254,9 @@ export async function computeStressTestProjections(): Promise<{ districts: numbe
           scenario,
           horizonYear:       year,
           exposureComposite: composite,
-          sensitivity,
-          adaptiveCap,
-          vulnerability:     v,
+          sensitivity:       vulnFactor,  // V term: district.vulnerabilityScore
+          adaptiveCap:       exposure,    // E term: district.exposureScore (column repurposed)
+          vulnerability:     v,           // Risk = H_composite × E × V
           deterioration:     v - baseline2025,
           // avoidedDamage is the same for every row of this district (it's a 2050 stat)
           // but storing it here means the frontend can read it in any row
