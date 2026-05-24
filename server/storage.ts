@@ -1,11 +1,11 @@
-import { 
-  type User, 
-  type InsertUser, 
+import {
+  type User,
+  type InsertUser,
   type Country,
   type InsertCountry,
   type State,
   type InsertState,
-  type District, 
+  type District,
   type InsertDistrict,
   type Block,
   type InsertBlock,
@@ -21,6 +21,10 @@ import {
   type InsertCommunityReport,
   type Technology,
   type InsertTechnology,
+  type HazardProjection,
+  type InsertHazardProjection,
+  type VulnerabilityProjection,
+  type InsertVulnerabilityProjection,
   users,
   countries,
   states,
@@ -32,9 +36,11 @@ import {
   interventions,
   communityReports,
   technologies,
+  hazardProjections,
+  vulnerabilityProjections,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, gte, desc } from "drizzle-orm";
+import { eq, and, gte, desc, asc, sql } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -103,6 +109,22 @@ export interface IStorage {
   getCommunityReportsByDistrict(districtId: string): Promise<CommunityReport[]>;
   createCommunityReport(report: InsertCommunityReport): Promise<CommunityReport>;
   updateCommunityReportStatus(id: string, status: string): Promise<CommunityReport | undefined>;
+
+  // Stress-test projections
+  hasProjections(): Promise<boolean>;
+  getHazardProjections(districtId: string): Promise<HazardProjection[]>;
+  getVulnerabilityProjections(districtId: string): Promise<VulnerabilityProjection[]>;
+  getProjectionRankings(
+    scenario: string,
+    horizonYear: number,
+    metric: 'deterioration' | 'avoided_damage',
+    limit: number
+  ): Promise<Array<VulnerabilityProjection & { districtName: string; stateId: string }>>;
+  upsertHazardProjection(projection: InsertHazardProjection): Promise<void>;
+  upsertVulnerabilityProjection(projection: InsertVulnerabilityProjection): Promise<void>;
+  bulkInsertHazardProjections(rows: InsertHazardProjection[]): Promise<void>;
+  bulkInsertVulnerabilityProjections(rows: InsertVulnerabilityProjection[]): Promise<void>;
+  clearProjections(): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -439,6 +461,175 @@ export class DatabaseStorage implements IStorage {
   async deleteTechnology(id: string): Promise<boolean> {
     const result = await db.delete(technologies).where(eq(technologies.id, id)).returning();
     return result.length > 0;
+  }
+
+  // ── Stress-test projections ───────────────────────────────────────────────
+
+  async hasProjections(): Promise<boolean> {
+    const [row] = await db
+      .select({ cnt: sql<number>`count(*)::int` })
+      .from(vulnerabilityProjections);
+    return (row?.cnt ?? 0) > 0;
+  }
+
+  async getHazardProjections(districtId: string): Promise<HazardProjection[]> {
+    return await db
+      .select()
+      .from(hazardProjections)
+      .where(eq(hazardProjections.districtId, districtId))
+      .orderBy(hazardProjections.scenario, asc(hazardProjections.horizonYear), hazardProjections.hazard);
+  }
+
+  async getVulnerabilityProjections(districtId: string): Promise<VulnerabilityProjection[]> {
+    return await db
+      .select()
+      .from(vulnerabilityProjections)
+      .where(eq(vulnerabilityProjections.districtId, districtId))
+      .orderBy(vulnerabilityProjections.scenario, asc(vulnerabilityProjections.horizonYear));
+  }
+
+  async getProjectionRankings(
+    scenario: string,
+    horizonYear: number,
+    metric: 'deterioration' | 'avoided_damage',
+    limit: number
+  ): Promise<Array<VulnerabilityProjection & { districtName: string; stateId: string }>> {
+    const col = metric === 'avoided_damage'
+      ? vulnerabilityProjections.avoidedDamage
+      : vulnerabilityProjections.deterioration;
+
+    const rows = await db
+      .select({
+        districtId:        vulnerabilityProjections.districtId,
+        scenario:          vulnerabilityProjections.scenario,
+        horizonYear:       vulnerabilityProjections.horizonYear,
+        exposureComposite: vulnerabilityProjections.exposureComposite,
+        sensitivity:       vulnerabilityProjections.sensitivity,
+        adaptiveCap:       vulnerabilityProjections.adaptiveCap,
+        vulnerability:     vulnerabilityProjections.vulnerability,
+        deterioration:     vulnerabilityProjections.deterioration,
+        avoidedDamage:     vulnerabilityProjections.avoidedDamage,
+        hazardWeights:     vulnerabilityProjections.hazardWeights,
+        hazardBreakdown:   vulnerabilityProjections.hazardBreakdown,
+        computedAt:        vulnerabilityProjections.computedAt,
+        districtName:      districts.name,
+        stateId:           districts.stateId,
+      })
+      .from(vulnerabilityProjections)
+      .innerJoin(districts, eq(vulnerabilityProjections.districtId, districts.id))
+      .where(
+        and(
+          eq(vulnerabilityProjections.scenario, scenario),
+          eq(vulnerabilityProjections.horizonYear, horizonYear)
+        )
+      )
+      .orderBy(desc(col))
+      .limit(limit);
+
+    return rows;
+  }
+
+  async upsertHazardProjection(projection: InsertHazardProjection): Promise<void> {
+    await db
+      .insert(hazardProjections)
+      .values(projection)
+      .onConflictDoUpdate({
+        target: [
+          hazardProjections.districtId,
+          hazardProjections.scenario,
+          hazardProjections.horizonYear,
+          hazardProjections.hazard,
+        ],
+        set: {
+          rawValue:    projection.rawValue,
+          normValue:   projection.normValue,
+          modelSpread: projection.modelSpread,
+          cmip6Models: projection.cmip6Models,
+          source:      projection.source,
+          computedAt:  new Date(),
+        },
+      });
+  }
+
+  async upsertVulnerabilityProjection(projection: InsertVulnerabilityProjection): Promise<void> {
+    await db
+      .insert(vulnerabilityProjections)
+      .values(projection)
+      .onConflictDoUpdate({
+        target: [
+          vulnerabilityProjections.districtId,
+          vulnerabilityProjections.scenario,
+          vulnerabilityProjections.horizonYear,
+        ],
+        set: {
+          exposureComposite: projection.exposureComposite,
+          sensitivity:       projection.sensitivity,
+          adaptiveCap:       projection.adaptiveCap,
+          vulnerability:     projection.vulnerability,
+          deterioration:     projection.deterioration,
+          avoidedDamage:     projection.avoidedDamage,
+          hazardWeights:     projection.hazardWeights,
+          hazardBreakdown:   projection.hazardBreakdown,
+          computedAt:        new Date(),
+        },
+      });
+  }
+
+  async bulkInsertHazardProjections(rows: InsertHazardProjection[]): Promise<void> {
+    const CHUNK = 500;
+    for (let i = 0; i < rows.length; i += CHUNK) {
+      await db
+        .insert(hazardProjections)
+        .values(rows.slice(i, i + CHUNK))
+        .onConflictDoUpdate({
+          target: [
+            hazardProjections.districtId,
+            hazardProjections.scenario,
+            hazardProjections.horizonYear,
+            hazardProjections.hazard,
+          ],
+          set: {
+            rawValue:    sql`excluded.raw_value`,
+            normValue:   sql`excluded.norm_value`,
+            modelSpread: sql`excluded.model_spread`,
+            cmip6Models: sql`excluded.cmip6_models`,
+            source:      sql`excluded.source`,
+            computedAt:  sql`now()`,
+          },
+        });
+    }
+  }
+
+  async bulkInsertVulnerabilityProjections(rows: InsertVulnerabilityProjection[]): Promise<void> {
+    const CHUNK = 500;
+    for (let i = 0; i < rows.length; i += CHUNK) {
+      await db
+        .insert(vulnerabilityProjections)
+        .values(rows.slice(i, i + CHUNK))
+        .onConflictDoUpdate({
+          target: [
+            vulnerabilityProjections.districtId,
+            vulnerabilityProjections.scenario,
+            vulnerabilityProjections.horizonYear,
+          ],
+          set: {
+            exposureComposite: sql`excluded.exposure_composite`,
+            sensitivity:       sql`excluded.sensitivity`,
+            adaptiveCap:       sql`excluded.adaptive_cap`,
+            vulnerability:     sql`excluded.vulnerability`,
+            deterioration:     sql`excluded.deterioration`,
+            avoidedDamage:     sql`excluded.avoided_damage`,
+            hazardWeights:     sql`excluded.hazard_weights`,
+            hazardBreakdown:   sql`excluded.hazard_breakdown`,
+            computedAt:        sql`now()`,
+          },
+        });
+    }
+  }
+
+  async clearProjections(): Promise<void> {
+    await db.delete(vulnerabilityProjections);
+    await db.delete(hazardProjections);
   }
 }
 

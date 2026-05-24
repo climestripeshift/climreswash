@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, real, jsonb, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, real, jsonb, timestamp, doublePrecision, primaryKey } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -326,3 +326,51 @@ export const insertTechnologySchema = createInsertSchema(technologies).omit({
 });
 export type Technology = typeof technologies.$inferSelect;
 export type InsertTechnology = z.infer<typeof insertTechnologySchema>;
+
+// ── Stress-test / forward-looking projections ──────────────────────────────
+
+// One row per (district, scenario, year, hazard) — the raw + normalised hazard exposure
+export const hazardProjections = pgTable("hazard_projections", {
+  districtId:  varchar("district_id", { length: 100 }).notNull(),
+  scenario:    varchar("scenario", { length: 50 }).notNull(),
+  // 'current_policies' | 'ndc' | 'net_zero_2050'
+  horizonYear: integer("horizon_year").notNull(),
+  // 2025 | 2030 | 2040 | 2050
+  hazard:      varchar("hazard", { length: 20 }).notNull(),
+  // 'heat' | 'drought' | 'flood'
+  rawValue:    doublePrecision("raw_value").notNull(),
+  normValue:   doublePrecision("norm_value"),      // [0,1] set after global normalisation pass
+  modelSpread: doublePrecision("model_spread"),    // inter-model std dev (uncertainty band)
+  cmip6Models: text("cmip6_models").array(),       // e.g. ['ACCESS-CM2','MPI-ESM1-2-HR',...]
+  source:      text("source"),                     // dataset version + method note
+  computedAt:  timestamp("computed_at").defaultNow().notNull(),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.districtId, t.scenario, t.horizonYear, t.hazard] }),
+}));
+
+// One row per (district, scenario, year) — the composite vulnerability projection
+export const vulnerabilityProjections = pgTable("vulnerability_projections", {
+  districtId:        varchar("district_id", { length: 100 }).notNull(),
+  scenario:          varchar("scenario", { length: 50 }).notNull(),
+  horizonYear:       integer("horizon_year").notNull(),
+  exposureComposite: doublePrecision("exposure_composite").notNull(),
+  sensitivity:       doublePrecision("sensitivity").notNull(),   // frozen from current district data (v1)
+  adaptiveCap:       doublePrecision("adaptive_cap").notNull(),  // frozen from current district data (v1)
+  vulnerability:     doublePrecision("vulnerability").notNull(), // (exposure × sensitivity) / adaptiveCap
+  deterioration:     doublePrecision("deterioration"),           // V(scenario,year) − V(baseline,2025)
+  avoidedDamage:     doublePrecision("avoided_damage"),          // V(current_policies,2050) − V(net_zero,2050)
+  // hazardWeights stores the weights used so every score is reproducible
+  hazardWeights:     jsonb("hazard_weights").$type<Record<string, number>>(),
+  // hazardBreakdown shows each hazard's share of the composite (for "why is this district bad" UI)
+  hazardBreakdown:   jsonb("hazard_breakdown").$type<Record<string, number>>(),
+  computedAt:        timestamp("computed_at").defaultNow().notNull(),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.districtId, t.scenario, t.horizonYear] }),
+}));
+
+export const insertHazardProjectionSchema = createInsertSchema(hazardProjections).omit({ computedAt: true });
+export const insertVulnerabilityProjectionSchema = createInsertSchema(vulnerabilityProjections).omit({ computedAt: true });
+export type HazardProjection = typeof hazardProjections.$inferSelect;
+export type InsertHazardProjection = z.infer<typeof insertHazardProjectionSchema>;
+export type VulnerabilityProjection = typeof vulnerabilityProjections.$inferSelect;
+export type InsertVulnerabilityProjection = z.infer<typeof insertVulnerabilityProjectionSchema>;

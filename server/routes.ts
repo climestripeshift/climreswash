@@ -633,6 +633,52 @@ export async function registerRoutes(
     }
   });
 
+  // ── Stress-test / 2050 forward-looking projections ───────────────────────
+
+  app.get("/api/stress-test/status", async (_req, res) => {
+    try {
+      const has = await storage.hasProjections();
+      res.json({ hasData: has });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/stress-test/compute", async (_req, res) => {
+    try {
+      const { computeStressTestProjections } = await import("./seedStressTest");
+      const result = await computeStressTestProjections();
+      res.json({ ok: true, ...result });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/stress-test/rankings", async (req, res) => {
+    try {
+      const scenario = (req.query.scenario as string) || 'current_policies';
+      const year     = parseInt((req.query.year as string) || '2050', 10);
+      const metric   = (req.query.metric as 'deterioration' | 'avoided_damage') || 'deterioration';
+      const limit    = Math.min(parseInt((req.query.limit as string) || '50', 10), 200);
+      const rows = await storage.getProjectionRankings(scenario, year, metric, limit);
+      res.json(rows);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/stress-test/district/:id", async (req, res) => {
+    try {
+      const [hazard, vuln] = await Promise.all([
+        storage.getHazardProjections(req.params.id),
+        storage.getVulnerabilityProjections(req.params.id),
+      ]);
+      res.json({ hazard, vulnerability: vuln });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // ── Auth routes ───────────────────────────────────────────────────────────
   app.post("/api/auth/login", loginHandler);
   app.post("/api/auth/logout", logoutHandler);
