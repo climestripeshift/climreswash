@@ -15,60 +15,16 @@
  *   2. Flood proxied via extreme-precip delta, not hydrological inundation modelling.
  *   3. Compound / correlated hazards (heat + drought co-occurrence) not jointly modelled.
  *
- * Sources:
- *   IPCC AR6 WG1, Chapter 12: Climate Change Information for Regional Impact and
- *   Risk Assessment (2021). South Asia temperature change table, Table 12.SM.1.
- *   Scenario mapping: SSP5-8.5 ≈ Current Policies, SSP2-4.5 ≈ NDCs, SSP1-2.6 ≈ Net Zero 2050.
+ * All numeric delta values and citations live in stressTestConfig.ts — do not add
+ * hardcoded climate numbers here.
  */
 
 import { storage } from "./storage";
 import type { InsertHazardProjection, InsertVulnerabilityProjection } from "@shared/schema";
-
-// AR6 South-Asia exposure-delta fractions per (scenario, year, hazard)
-// Values = proportional increase over 1995–2014 baseline exposure
-const DELTAS: Record<string, Record<number, Record<string, number>>> = {
-  current_policies: {      // SSP5-8.5 / SSP3-7.0
-    2025: { heat: 0.00, drought: 0.00, flood: 0.00 },
-    2030: { heat: 0.10, drought: 0.06, flood: 0.05 },
-    2040: { heat: 0.22, drought: 0.16, flood: 0.13 },
-    2050: { heat: 0.35, drought: 0.25, flood: 0.20 },
-  },
-  ndc: {                   // SSP2-4.5 → SSP3-7.0
-    2025: { heat: 0.00, drought: 0.00, flood: 0.00 },
-    2030: { heat: 0.07, drought: 0.04, flood: 0.03 },
-    2040: { heat: 0.12, drought: 0.10, flood: 0.08 },
-    2050: { heat: 0.20, drought: 0.15, flood: 0.12 },
-  },
-  net_zero_2050: {         // SSP1-2.6 / SSP1-1.9
-    2025: { heat: 0.00, drought: 0.00, flood: 0.00 },
-    2030: { heat: 0.03, drought: 0.02, flood: 0.02 },
-    2040: { heat: 0.05, drought: 0.03, flood: 0.03 },
-    2050: { heat: 0.08, drought: 0.05, flood: 0.05 },
-  },
-};
-
-// Inter-model spread (std dev as fraction of raw value) per scenario
-const SPREAD: Record<string, number> = {
-  current_policies: 0.12,
-  ndc: 0.08,
-  net_zero_2050: 0.05,
-};
-
-const SCENARIOS = Object.keys(DELTAS);
-const YEARS = [2025, 2030, 2040, 2050];
-const HAZARDS = ['heat', 'drought', 'flood'] as const;
-
-const CMIP6_MODELS = [
-  'ACCESS-CM2', 'MPI-ESM1-2-HR', 'MIROC6', 'CNRM-CM6-1', 'IPSL-CM6A-LR',
-];
-
-const SOURCE =
-  'AR6 WG1 Ch.12 South-Asia regional projections (IPCC, 2021); ' +
-  'SSP5-8.5 (Current Policies), SSP2-4.5 (NDCs), SSP1-2.6 (Net Zero). ' +
-  'v0: scalar deltas applied to district baseline exposure. ' +
-  'NEX-GDDP-CMIP6 district-level downscaling planned for v1.';
-
-const HAZARD_WEIGHTS = { heat: 1 / 3, drought: 1 / 3, flood: 1 / 3 };
+import {
+  DELTAS, SPREAD, SCENARIOS, YEARS, HAZARDS,
+  CMIP6_MODELS, SOURCE_TEXT as SOURCE, HAZARD_WEIGHTS,
+} from "./stressTestConfig";
 
 /** Derive a 0–1 baseline Hazard intensity for a district (the H term in Risk = H × E × V) */
 function baselineHazard(
