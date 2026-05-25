@@ -5,6 +5,8 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
   ResponsiveContainer, LineChart, Line, Legend, ReferenceLine,
 } from "recharts";
+import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
 import { ArrowLeft, TrendingUp, TrendingDown, Loader2, Info, ChevronRight, X, RefreshCw, AlertTriangle, Zap, Leaf } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,6 +43,18 @@ interface VulnRow {
 
 interface DistrictDetail {
   vulnerability: VulnRow[];
+}
+
+interface MapPoint {
+  districtId: string;
+  districtName: string;
+  stateId: string;
+  deterioration: number | null;
+  avoidedDamage: number | null;
+  vulnerability: number;
+  hazardBreakdown: Record<string, number> | null;
+  lat: number | null;
+  lon: number | null;
 }
 
 // ── Constants ──────────────────────────────────────────────────────────────
@@ -170,6 +184,15 @@ export default function StressTestPage() {
     queryFn: () =>
       fetch(`/api/stress-test/district/${selectedId}`).then((r) => r.json()),
     enabled: !!selectedId && hasData,
+  });
+
+  const mapQ = useQuery<MapPoint[]>({
+    queryKey: ["stress-test-map", scenario, year, metric],
+    queryFn: () =>
+      fetch(
+        `/api/stress-test/map-data?scenario=${scenario}&year=${year}&metric=${metric}&limit=200`
+      ).then((r) => r.json()),
+    enabled: hasData,
   });
 
   // ── Compute handler ───────────────────────────────────────────────────────
@@ -602,6 +625,26 @@ export default function StressTestPage() {
                   </CardContent>
                 </Card>
 
+                {/* Map */}
+                <Card className="border-border/50">
+                  <CardHeader className="pb-1 pt-3 px-4">
+                    <CardTitle className="text-sm">
+                      Geographic Distribution —{" "}
+                      {metric === "avoided_damage" ? "Avoided Damage" : `Deterioration by ${year}`}
+                    </CardTitle>
+                    <p className="text-[11px] text-muted-foreground">
+                      Circle size and colour scale with risk score. Click a district for details.
+                    </p>
+                  </CardHeader>
+                  <CardContent className="pt-0 pb-3 px-3">
+                    <ProjectionMap
+                      points={mapQ.data ?? []}
+                      metric={metric}
+                      onSelect={setSelectedId}
+                    />
+                  </CardContent>
+                </Card>
+
                 {/* v0 disclaimer */}
                 <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/30 border border-border/30 text-xs text-muted-foreground">
                   <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5 text-yellow-500" />
@@ -623,6 +666,93 @@ export default function StressTestPage() {
 }
 
 // ── Sub-components ─────────────────────────────────────────────────────────
+
+// ── Colour helpers for map markers ────────────────────────────────────────────
+
+function deteriorationToColor(d: number | null): string {
+  if (d == null || d <= 0) return "#22c55e";
+  if (d > 0.08) return "#ef4444";
+  if (d > 0.04) return "#f97316";
+  return "#f59e0b";
+}
+
+function deteriorationToRadius(d: number | null, max: number): number {
+  if (d == null || d <= 0 || max <= 0) return 4;
+  return 4 + (d / max) * 12;
+}
+
+function ProjectionMap({
+  points,
+  metric,
+  onSelect,
+}: {
+  points: MapPoint[];
+  metric: "deterioration" | "avoided_damage";
+  onSelect: (id: string) => void;
+}) {
+  const valid = points.filter((p) => p.lat != null && p.lon != null);
+  const values = valid.map((p) =>
+    metric === "avoided_damage" ? (p.avoidedDamage ?? 0) : (p.deterioration ?? 0)
+  );
+  const maxVal = values.length ? Math.max(...values) : 1;
+
+  return (
+    <div style={{ height: 380 }} className="rounded-lg overflow-hidden border border-border/30">
+      <MapContainer
+        center={[22.5, 82.5]}
+        zoom={4}
+        style={{ height: "100%", width: "100%" }}
+        scrollWheelZoom={false}
+      >
+        <TileLayer
+          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+        />
+        {valid.map((p) => {
+          const val = metric === "avoided_damage" ? (p.avoidedDamage ?? 0) : (p.deterioration ?? 0);
+          return (
+            <CircleMarker
+              key={p.districtId}
+              center={[p.lat!, p.lon!]}
+              radius={deteriorationToRadius(val, maxVal)}
+              pathOptions={{
+                color: deteriorationToColor(val),
+                fillColor: deteriorationToColor(val),
+                fillOpacity: 0.75,
+                weight: 0.5,
+              }}
+              eventHandlers={{ click: () => onSelect(p.districtId) }}
+            >
+              <Popup>
+                <div className="text-xs space-y-0.5 min-w-[140px]">
+                  <p className="font-semibold">{p.districtName}</p>
+                  <p className="text-muted-foreground">{p.stateId}</p>
+                  <p className="mt-1">
+                    {metric === "avoided_damage" ? "Avoided damage" : "Deterioration"}:{" "}
+                    <strong>{pct(val)}</strong>
+                  </p>
+                  {p.hazardBreakdown && (
+                    <div className="flex gap-1 mt-1">
+                      {(["heat", "drought", "flood"] as const).map((h) => (
+                        <div key={h} className="text-center flex-1">
+                          <div
+                            className="h-1.5 rounded-sm"
+                            style={{ background: HAZARD_COLORS[h], opacity: p.hazardBreakdown![h] ?? 0 }}
+                          />
+                          <span style={{ fontSize: 9 }}>{h.slice(0, 2)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </Popup>
+            </CircleMarker>
+          );
+        })}
+      </MapContainer>
+    </div>
+  );
+}
 
 function HazardBar({ breakdown }: { breakdown: Record<string, number> }) {
   return (

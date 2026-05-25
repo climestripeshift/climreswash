@@ -667,6 +667,19 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/stress-test/map-data", async (req, res) => {
+    try {
+      const scenario = (req.query.scenario as string) || 'current_policies';
+      const year     = parseInt((req.query.year as string) || '2050', 10);
+      const metric   = (req.query.metric as 'deterioration' | 'avoided_damage') || 'deterioration';
+      const limit    = Math.min(parseInt((req.query.limit as string) || '200', 10), 735);
+      const rows = await storage.getProjectionMapData(scenario, year, metric, limit);
+      res.json(rows);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   app.get("/api/stress-test/district/:id", async (req, res) => {
     try {
       const [hazard, vuln] = await Promise.all([
