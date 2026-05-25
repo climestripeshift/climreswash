@@ -5,7 +5,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
   ResponsiveContainer, LineChart, Line, Legend, ReferenceLine,
 } from "recharts";
-import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
+import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { ArrowLeft, TrendingUp, TrendingDown, Loader2, Info, ChevronRight, X, RefreshCw, AlertTriangle, Zap, Leaf } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -195,6 +195,29 @@ export default function StressTestPage() {
     enabled: hasData,
   });
 
+  const geoQ = useQuery<any>({
+    queryKey: ["india-geojson"],
+    queryFn: () => fetch("/data/india.json").then((r) => r.json()),
+    staleTime: Infinity,
+  });
+
+  const [stateFilter, setStateFilter] = useState<string>("");
+
+  // districtId → state name, derived from the GeoJSON file
+  const geoStateMap = useMemo(() => {
+    const m: Record<string, string> = {};
+    if (!geoQ.data?.features) return m;
+    for (const f of geoQ.data.features) {
+      m[String(f.properties.ID)] = f.properties.STATE as string;
+    }
+    return m;
+  }, [geoQ.data]);
+
+  const uniqueStates = useMemo(() => {
+    const s = new Set(Object.values(geoStateMap));
+    return Array.from(s).sort();
+  }, [geoStateMap]);
+
   // ── Compute handler ───────────────────────────────────────────────────────
 
   async function handleCompute() {
@@ -215,9 +238,14 @@ export default function StressTestPage() {
 
   const rankings = rankingsQ.data ?? [];
 
+  const filteredRankings = useMemo(() => {
+    if (!stateFilter) return rankings;
+    return rankings.filter((r) => geoStateMap[r.districtId] === stateFilter);
+  }, [rankings, stateFilter, geoStateMap]);
+
   const chartData = useMemo(
     () =>
-      rankings.slice(0, 15).map((r) => ({
+      filteredRankings.slice(0, 15).map((r) => ({
         name: r.districtName.length > 14 ? r.districtName.slice(0, 13) + "…" : r.districtName,
         fullName: r.districtName,
         state: r.stateId,
@@ -238,13 +266,13 @@ export default function StressTestPage() {
   const selectedScenario = SCENARIOS.find((s) => s.key === scenario)!;
 
   const summaryStats = useMemo(() => {
-    if (!rankings.length) return null;
-    const worsening = rankings.filter((r) => (r.deterioration ?? 0) > 0);
-    const avgDet =
-      rankings.reduce((a, b) => a + (b.deterioration ?? 0), 0) / rankings.length;
-    const worst = rankings[0];
-    return { worseningCount: worsening.length, total: rankings.length, avgDet, worst };
-  }, [rankings]);
+    const src = filteredRankings.length ? filteredRankings : rankings;
+    if (!src.length) return null;
+    const worsening = src.filter((r) => (r.deterioration ?? 0) > 0);
+    const avgDet = src.reduce((a, b) => a + (b.deterioration ?? 0), 0) / src.length;
+    const worst = src[0];
+    return { worseningCount: worsening.length, total: src.length, avgDet, worst };
+  }, [filteredRankings, rankings]);
 
   // District detail: build timeline data for line chart
   const timelineData = useMemo(() => {
@@ -337,6 +365,20 @@ export default function StressTestPage() {
           ))}
         </div>
 
+        {/* State filter */}
+        {uniqueStates.length > 0 && (
+          <select
+            value={stateFilter}
+            onChange={(e) => setStateFilter(e.target.value)}
+            className="h-7 px-2 rounded-lg text-xs bg-muted/50 border border-border/40 text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          >
+            <option value="">All States</option>
+            {uniqueStates.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+        )}
+
         {/* Metric toggle */}
         <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-0.5 ml-auto">
           <button
@@ -418,7 +460,7 @@ export default function StressTestPage() {
                   {metric === "avoided_damage" ? "What action saves" : `Worst by ${year}`}
                 </span>
                 <span className="text-[11px] text-muted-foreground">
-                  {rankings.length} districts
+                  {filteredRankings.length}{stateFilter ? ` / ${rankings.length}` : ""} districts
                 </span>
               </div>
             </div>
@@ -429,7 +471,7 @@ export default function StressTestPage() {
               </div>
             ) : (
               <div className="flex-1 overflow-y-auto">
-                {rankings.map((r, i) => (
+                {filteredRankings.map((r, i) => (
                   <button
                     key={r.districtId}
                     onClick={() =>
@@ -640,6 +682,8 @@ export default function StressTestPage() {
                     <ProjectionMap
                       points={mapQ.data ?? []}
                       metric={metric}
+                      geoData={geoQ.data ?? null}
+                      highlightState={stateFilter}
                       onSelect={setSelectedId}
                     />
                   </CardContent>
@@ -667,89 +711,126 @@ export default function StressTestPage() {
 
 // ── Sub-components ─────────────────────────────────────────────────────────
 
-// ── Colour helpers for map markers ────────────────────────────────────────────
+// ── Choropleth colour scale ────────────────────────────────────────────────────
 
-function deteriorationToColor(d: number | null): string {
-  if (d == null || d <= 0) return "#22c55e";
-  if (d > 0.08) return "#ef4444";
-  if (d > 0.04) return "#f97316";
-  return "#f59e0b";
-}
-
-function deteriorationToRadius(d: number | null, max: number): number {
-  if (d == null || d <= 0 || max <= 0) return 4;
-  return 4 + (d / max) * 12;
+function choroplethColor(score: number, max: number): string {
+  if (max <= 0) return "#6b7280";
+  const t = Math.min(score / max, 1);
+  if (t > 0.75) return "#ef4444";
+  if (t > 0.5)  return "#f97316";
+  if (t > 0.25) return "#f59e0b";
+  if (t > 0)    return "#eab308";
+  return "#22c55e";
 }
 
 function ProjectionMap({
   points,
   metric,
+  geoData,
+  highlightState,
   onSelect,
 }: {
   points: MapPoint[];
   metric: "deterioration" | "avoided_damage";
+  geoData: any;
+  highlightState: string;
   onSelect: (id: string) => void;
 }) {
-  const valid = points.filter((p) => p.lat != null && p.lon != null);
-  const values = valid.map((p) =>
-    metric === "avoided_damage" ? (p.avoidedDamage ?? 0) : (p.deterioration ?? 0)
-  );
-  const maxVal = values.length ? Math.max(...values) : 1;
+  const scoreMap = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const p of points) {
+      m[p.districtId] = metric === "avoided_damage"
+        ? (p.avoidedDamage ?? 0)
+        : (p.deterioration ?? 0);
+    }
+    return m;
+  }, [points, metric]);
+
+  const pointMap = useMemo(() => {
+    const m: Record<string, MapPoint> = {};
+    for (const p of points) m[p.districtId] = p;
+    return m;
+  }, [points]);
+
+  const maxVal = useMemo(() => {
+    const vals = Object.values(scoreMap);
+    return vals.length ? Math.max(...vals) : 1;
+  }, [scoreMap]);
+
+  const styleFeature = useMemo(() => (feature: any) => {
+    const id = String(feature.properties.ID);
+    const score = scoreMap[id];
+    const inState = !highlightState || feature.properties.STATE === highlightState;
+    if (score == null) {
+      return { fillColor: "#374151", fillOpacity: inState ? 0.25 : 0.1, color: "#4b5563", weight: 0.3 };
+    }
+    return {
+      fillColor: choroplethColor(score, maxVal),
+      fillOpacity: inState ? 0.78 : 0.2,
+      color: inState ? "#1f2937" : "#374151",
+      weight: inState ? 0.5 : 0.2,
+    };
+  }, [scoreMap, maxVal, highlightState]);
+
+  const onEachFeature = useMemo(() => (feature: any, layer: any) => {
+    const id = String(feature.properties.ID);
+    const score = scoreMap[id];
+    const label = score != null
+      ? `<strong>${feature.properties.NAME}</strong><br/>${feature.properties.STATE}<br/>${pct(score)}`
+      : `<strong>${feature.properties.NAME}</strong><br/>${feature.properties.STATE}<br/>No data`;
+    layer.bindTooltip(label, { sticky: true, className: "leaflet-proj-tooltip" });
+    layer.on("click", () => {
+      const p = pointMap[id];
+      if (p) onSelect(p.districtId);
+    });
+  }, [scoreMap, pointMap, onSelect]);
+
+  // legend entries
+  const legend = [
+    { color: "#ef4444", label: "Very high (top 25%)" },
+    { color: "#f97316", label: "High" },
+    { color: "#f59e0b", label: "Moderate" },
+    { color: "#eab308", label: "Low" },
+    { color: "#22c55e", label: "None / improving" },
+    { color: "#374151", label: "No data" },
+  ];
 
   return (
-    <div style={{ height: 380 }} className="rounded-lg overflow-hidden border border-border/30">
-      <MapContainer
-        center={[22.5, 82.5]}
-        zoom={4}
-        style={{ height: "100%", width: "100%" }}
-        scrollWheelZoom={false}
-      >
-        <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-          attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-        />
-        {valid.map((p) => {
-          const val = metric === "avoided_damage" ? (p.avoidedDamage ?? 0) : (p.deterioration ?? 0);
-          return (
-            <CircleMarker
-              key={p.districtId}
-              center={[p.lat!, p.lon!]}
-              radius={deteriorationToRadius(val, maxVal)}
-              pathOptions={{
-                color: deteriorationToColor(val),
-                fillColor: deteriorationToColor(val),
-                fillOpacity: 0.75,
-                weight: 0.5,
-              }}
-              eventHandlers={{ click: () => onSelect(p.districtId) }}
-            >
-              <Popup>
-                <div className="text-xs space-y-0.5 min-w-[140px]">
-                  <p className="font-semibold">{p.districtName}</p>
-                  <p className="text-muted-foreground">{p.stateId}</p>
-                  <p className="mt-1">
-                    {metric === "avoided_damage" ? "Avoided damage" : "Deterioration"}:{" "}
-                    <strong>{pct(val)}</strong>
-                  </p>
-                  {p.hazardBreakdown && (
-                    <div className="flex gap-1 mt-1">
-                      {(["heat", "drought", "flood"] as const).map((h) => (
-                        <div key={h} className="text-center flex-1">
-                          <div
-                            className="h-1.5 rounded-sm"
-                            style={{ background: HAZARD_COLORS[h], opacity: p.hazardBreakdown![h] ?? 0 }}
-                          />
-                          <span style={{ fontSize: 9 }}>{h.slice(0, 2)}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </Popup>
-            </CircleMarker>
-          );
-        })}
-      </MapContainer>
+    <div className="space-y-2">
+      <div style={{ height: 400 }} className="rounded-lg overflow-hidden border border-border/30">
+        {!geoData ? (
+          <div className="h-full flex items-center justify-center text-xs text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin mr-2" /> Loading map…
+          </div>
+        ) : (
+          <MapContainer
+            center={[22.5, 82.5]}
+            zoom={4}
+            style={{ height: "100%", width: "100%" }}
+            scrollWheelZoom={false}
+          >
+            <TileLayer
+              url="https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png"
+              attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+            />
+            <GeoJSON
+              key={`${metric}-${Object.keys(scoreMap).length}-${highlightState}`}
+              data={geoData}
+              style={styleFeature}
+              onEachFeature={onEachFeature}
+            />
+          </MapContainer>
+        )}
+      </div>
+      {/* Legend */}
+      <div className="flex flex-wrap gap-3 px-1">
+        {legend.map((l) => (
+          <div key={l.label} className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+            <span className="h-2.5 w-4 rounded-sm shrink-0" style={{ background: l.color }} />
+            {l.label}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
