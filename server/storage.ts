@@ -40,7 +40,7 @@ import {
   vulnerabilityProjections,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, gte, desc, asc, sql, isNotNull } from "drizzle-orm";
+import { eq, and, gte, desc, asc, sql } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -111,21 +111,24 @@ export interface IStorage {
   updateCommunityReportStatus(id: string, status: string): Promise<CommunityReport | undefined>;
 
   // Stress-test projections
-  hasProjections(): Promise<boolean>;
+  hasProjections(countryId?: string): Promise<boolean>;
+  getProjectionCountries(): Promise<Array<{ id: string; name: string }>>;
   getHazardProjections(districtId: string): Promise<HazardProjection[]>;
   getVulnerabilityProjections(districtId: string): Promise<VulnerabilityProjection[]>;
   getProjectionRankings(
     scenario: string,
     horizonYear: number,
     metric: 'deterioration' | 'avoided_damage',
-    limit: number
-  ): Promise<Array<VulnerabilityProjection & { districtName: string; stateId: string }>>;
+    limit: number,
+    countryId?: string
+  ): Promise<Array<VulnerabilityProjection & { districtName: string; stateId: string; countryId: string }>>;
   getProjectionMapData(
     scenario: string,
     horizonYear: number,
     metric: 'deterioration' | 'avoided_damage',
-    limit: number
-  ): Promise<Array<{ districtId: string; districtName: string; stateId: string; deterioration: number | null; avoidedDamage: number | null; vulnerability: number; hazardBreakdown: Record<string, number> | null; lat: number | null; lon: number | null }>>;
+    limit: number,
+    countryId?: string
+  ): Promise<Array<{ districtId: string; districtName: string; stateId: string; countryId: string; deterioration: number | null; avoidedDamage: number | null; vulnerability: number; hazardBreakdown: Record<string, number> | null }>>;
   upsertHazardProjection(projection: InsertHazardProjection): Promise<void>;
   upsertVulnerabilityProjection(projection: InsertVulnerabilityProjection): Promise<void>;
   bulkInsertHazardProjections(rows: InsertHazardProjection[]): Promise<void>;
@@ -471,11 +474,25 @@ export class DatabaseStorage implements IStorage {
 
   // ── Stress-test projections ───────────────────────────────────────────────
 
-  async hasProjections(): Promise<boolean> {
-    const [row] = await db
+  async hasProjections(countryId?: string): Promise<boolean> {
+    const base = db
       .select({ cnt: sql<number>`count(*)::int` })
       .from(vulnerabilityProjections);
+    const [row] = countryId
+      ? await base
+          .innerJoin(districts, eq(vulnerabilityProjections.districtId, districts.id))
+          .where(eq(districts.countryId, countryId))
+      : await base;
     return (row?.cnt ?? 0) > 0;
+  }
+
+  async getProjectionCountries(): Promise<Array<{ id: string; name: string }>> {
+    const rows = await db
+      .selectDistinct({ id: districts.countryId, name: countries.name })
+      .from(vulnerabilityProjections)
+      .innerJoin(districts, eq(vulnerabilityProjections.districtId, districts.id))
+      .innerJoin(countries, eq(districts.countryId, countries.id));
+    return rows;
   }
 
   async getHazardProjections(districtId: string): Promise<HazardProjection[]> {
@@ -498,8 +515,9 @@ export class DatabaseStorage implements IStorage {
     scenario: string,
     horizonYear: number,
     metric: 'deterioration' | 'avoided_damage',
-    limit: number
-  ): Promise<Array<VulnerabilityProjection & { districtName: string; stateId: string }>> {
+    limit: number,
+    countryId?: string
+  ) {
     const col = metric === 'avoided_damage'
       ? vulnerabilityProjections.avoidedDamage
       : vulnerabilityProjections.deterioration;
@@ -520,6 +538,7 @@ export class DatabaseStorage implements IStorage {
         computedAt:        vulnerabilityProjections.computedAt,
         districtName:      districts.name,
         stateId:           districts.stateId,
+        countryId:         districts.countryId,
       })
       .from(vulnerabilityProjections)
       .innerJoin(districts, eq(vulnerabilityProjections.districtId, districts.id))
@@ -527,7 +546,7 @@ export class DatabaseStorage implements IStorage {
         and(
           eq(vulnerabilityProjections.scenario, scenario),
           eq(vulnerabilityProjections.horizonYear, horizonYear),
-          eq(districts.countryId, 'IND')
+          ...(countryId ? [eq(districts.countryId, countryId)] : [])
         )
       )
       .orderBy(desc(col))
@@ -540,22 +559,23 @@ export class DatabaseStorage implements IStorage {
     scenario: string,
     horizonYear: number,
     metric: 'deterioration' | 'avoided_damage',
-    limit: number
+    limit: number,
+    countryId?: string
   ) {
     const col = metric === 'avoided_damage'
       ? vulnerabilityProjections.avoidedDamage
       : vulnerabilityProjections.deterioration;
 
-    const rows = await db
+    return await db
       .select({
-        districtId:    vulnerabilityProjections.districtId,
-        districtName:  districts.name,
-        stateId:       districts.stateId,
-        deterioration: vulnerabilityProjections.deterioration,
-        avoidedDamage: vulnerabilityProjections.avoidedDamage,
-        vulnerability: vulnerabilityProjections.vulnerability,
+        districtId:      vulnerabilityProjections.districtId,
+        districtName:    districts.name,
+        stateId:         districts.stateId,
+        countryId:       districts.countryId,
+        deterioration:   vulnerabilityProjections.deterioration,
+        avoidedDamage:   vulnerabilityProjections.avoidedDamage,
+        vulnerability:   vulnerabilityProjections.vulnerability,
         hazardBreakdown: vulnerabilityProjections.hazardBreakdown,
-        geometry:      districts.geometry,
       })
       .from(vulnerabilityProjections)
       .innerJoin(districts, eq(vulnerabilityProjections.districtId, districts.id))
@@ -563,36 +583,11 @@ export class DatabaseStorage implements IStorage {
         and(
           eq(vulnerabilityProjections.scenario, scenario),
           eq(vulnerabilityProjections.horizonYear, horizonYear),
-          eq(districts.countryId, 'IND'),
-          isNotNull(districts.geometry)
+          ...(countryId ? [eq(districts.countryId, countryId)] : [])
         )
       )
       .orderBy(desc(col))
       .limit(limit);
-
-    return rows.map((r) => {
-      const geom = r.geometry as { type: string; coordinates: any[] } | null;
-      let lat: number | null = null;
-      let lon: number | null = null;
-      if (geom) {
-        let ring: [number, number][];
-        if (geom.type === 'Polygon') {
-          ring = geom.coordinates[0];
-        } else if (geom.type === 'MultiPolygon') {
-          ring = (geom.coordinates as [number, number][][][])
-            .map((p) => p[0])
-            .sort((a, b) => b.length - a.length)[0];
-        } else {
-          ring = [];
-        }
-        if (ring.length > 0) {
-          lon = ring.reduce((s, c) => s + c[0], 0) / ring.length;
-          lat = ring.reduce((s, c) => s + c[1], 0) / ring.length;
-        }
-      }
-      const { geometry: _g, ...rest } = r;
-      return { ...rest, lat, lon };
-    });
   }
 
   async upsertHazardProjection(projection: InsertHazardProjection): Promise<void> {

@@ -635,10 +635,20 @@ export async function registerRoutes(
 
   // ── Stress-test / 2050 forward-looking projections ───────────────────────
 
-  app.get("/api/stress-test/status", async (_req, res) => {
+  app.get("/api/stress-test/status", async (req, res) => {
     try {
-      const has = await storage.hasProjections();
+      const countryId = (req.query.country as string) || undefined;
+      const has = await storage.hasProjections(countryId);
       res.json({ hasData: has });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/stress-test/countries", async (_req, res) => {
+    try {
+      const rows = await storage.getProjectionCountries();
+      res.json(rows);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -656,11 +666,12 @@ export async function registerRoutes(
 
   app.get("/api/stress-test/rankings", async (req, res) => {
     try {
-      const scenario = (req.query.scenario as string) || 'current_policies';
-      const year     = parseInt((req.query.year as string) || '2050', 10);
-      const metric   = (req.query.metric as 'deterioration' | 'avoided_damage') || 'deterioration';
-      const limit    = Math.min(parseInt((req.query.limit as string) || '50', 10), 200);
-      const rows = await storage.getProjectionRankings(scenario, year, metric, limit);
+      const scenario  = (req.query.scenario as string) || 'current_policies';
+      const year      = parseInt((req.query.year as string) || '2050', 10);
+      const metric    = (req.query.metric as 'deterioration' | 'avoided_damage') || 'deterioration';
+      const limit     = Math.min(parseInt((req.query.limit as string) || '200', 10), 2000);
+      const countryId = (req.query.country as string) || undefined;
+      const rows = await storage.getProjectionRankings(scenario, year, metric, limit, countryId);
       res.json(rows);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -669,11 +680,12 @@ export async function registerRoutes(
 
   app.get("/api/stress-test/map-data", async (req, res) => {
     try {
-      const scenario = (req.query.scenario as string) || 'current_policies';
-      const year     = parseInt((req.query.year as string) || '2050', 10);
-      const metric   = (req.query.metric as 'deterioration' | 'avoided_damage') || 'deterioration';
-      const limit    = Math.min(parseInt((req.query.limit as string) || '200', 10), 735);
-      const rows = await storage.getProjectionMapData(scenario, year, metric, limit);
+      const scenario  = (req.query.scenario as string) || 'current_policies';
+      const year      = parseInt((req.query.year as string) || '2050', 10);
+      const metric    = (req.query.metric as 'deterioration' | 'avoided_damage') || 'deterioration';
+      const limit     = Math.min(parseInt((req.query.limit as string) || '2000', 10), 2000);
+      const countryId = (req.query.country as string) || undefined;
+      const rows = await storage.getProjectionMapData(scenario, year, metric, limit, countryId);
       res.json(rows);
     } catch (error: any) {
       res.status(500).json({ error: error.message });

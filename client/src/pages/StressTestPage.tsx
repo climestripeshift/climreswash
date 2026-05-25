@@ -153,6 +153,7 @@ function BarTooltip({ active, payload, label }: any) {
 // ── Main page ──────────────────────────────────────────────────────────────
 
 export default function StressTestPage() {
+  const [countryFilter, setCountryFilter] = useState<string>("IND");
   const [scenario, setScenario] = useState<string>("current_policies");
   const [year, setYear] = useState<number>(2050);
   const [metric, setMetric] = useState<"deterioration" | "avoided_damage">("deterioration");
@@ -163,18 +164,25 @@ export default function StressTestPage() {
 
   // ── Data queries ─────────────────────────────────────────────────────────
 
+  const countriesQ = useQuery<Array<{ id: string; name: string }>>({
+    queryKey: ["stress-test-countries"],
+    queryFn: () => fetch("/api/stress-test/countries").then((r) => r.json()),
+    staleTime: 5 * 60 * 1000,
+  });
+
   const statusQ = useQuery<{ hasData: boolean }>({
-    queryKey: ["stress-test-status"],
-    queryFn: () => fetch("/api/stress-test/status").then((r) => r.json()),
+    queryKey: ["stress-test-status", countryFilter],
+    queryFn: () =>
+      fetch(`/api/stress-test/status?country=${countryFilter}`).then((r) => r.json()),
   });
 
   const hasData = statusQ.data?.hasData ?? false;
 
   const rankingsQ = useQuery<RankingRow[]>({
-    queryKey: ["stress-test-rankings", scenario, year, metric],
+    queryKey: ["stress-test-rankings", scenario, year, metric, countryFilter],
     queryFn: () =>
       fetch(
-        `/api/stress-test/rankings?scenario=${scenario}&year=${year}&metric=${metric}&limit=50`
+        `/api/stress-test/rankings?scenario=${scenario}&year=${year}&metric=${metric}&limit=2000&country=${countryFilter}`
       ).then((r) => r.json()),
     enabled: hasData,
   });
@@ -187,12 +195,12 @@ export default function StressTestPage() {
   });
 
   const mapQ = useQuery<MapPoint[]>({
-    queryKey: ["stress-test-map", scenario, year, metric],
+    queryKey: ["stress-test-map", scenario, year, metric, countryFilter],
     queryFn: () =>
       fetch(
-        `/api/stress-test/map-data?scenario=${scenario}&year=${year}&metric=${metric}&limit=200`
+        `/api/stress-test/map-data?scenario=${scenario}&year=${year}&metric=${metric}&limit=2000&country=${countryFilter}`
       ).then((r) => r.json()),
-    enabled: hasData,
+    enabled: hasData && countryFilter === "IND",
   });
 
   const geoQ = useQuery<any>({
@@ -227,6 +235,8 @@ export default function StressTestPage() {
       if (!res.ok) throw new Error(await res.text());
       await queryClient.invalidateQueries({ queryKey: ["stress-test-status"] });
       await queryClient.invalidateQueries({ queryKey: ["stress-test-rankings"] });
+      await queryClient.invalidateQueries({ queryKey: ["stress-test-map"] });
+      await queryClient.invalidateQueries({ queryKey: ["stress-test-countries"] });
     } catch (e) {
       console.error("Compute failed:", e);
     } finally {
@@ -365,8 +375,22 @@ export default function StressTestPage() {
           ))}
         </div>
 
-        {/* State filter */}
-        {uniqueStates.length > 0 && (
+        {/* Country filter */}
+        {(countriesQ.data?.length ?? 0) > 0 && (
+          <select
+            value={countryFilter}
+            onChange={(e) => { setCountryFilter(e.target.value); setStateFilter(""); setSelectedId(null); }}
+            className="h-7 px-2 rounded-lg text-xs bg-muted/50 border border-border/40 text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          >
+            <option value="">All Countries</option>
+            {countriesQ.data!.map((c) => (
+              <option key={c.id} value={c.id}>{c.name} ({c.id})</option>
+            ))}
+          </select>
+        )}
+
+        {/* State filter — India only (state names come from india.json) */}
+        {countryFilter === "IND" && uniqueStates.length > 0 && (
           <select
             value={stateFilter}
             onChange={(e) => setStateFilter(e.target.value)}
@@ -667,7 +691,7 @@ export default function StressTestPage() {
                   </CardContent>
                 </Card>
 
-                {/* Map */}
+                {/* Map — India choropleth or placeholder */}
                 <Card className="border-border/50">
                   <CardHeader className="pb-1 pt-3 px-4">
                     <CardTitle className="text-sm">
@@ -675,17 +699,26 @@ export default function StressTestPage() {
                       {metric === "avoided_damage" ? "Avoided Damage" : `Deterioration by ${year}`}
                     </CardTitle>
                     <p className="text-[11px] text-muted-foreground">
-                      Circle size and colour scale with risk score. Click a district for details.
+                      {countryFilter === "IND"
+                        ? "Hover for tooltip · click district to open detail panel"
+                        : "District map available for India only"}
                     </p>
                   </CardHeader>
                   <CardContent className="pt-0 pb-3 px-3">
-                    <ProjectionMap
-                      points={mapQ.data ?? []}
-                      metric={metric}
-                      geoData={geoQ.data ?? null}
-                      highlightState={stateFilter}
-                      onSelect={setSelectedId}
-                    />
+                    {countryFilter === "IND" ? (
+                      <ProjectionMap
+                        points={mapQ.data ?? []}
+                        metric={metric}
+                        geoData={geoQ.data ?? null}
+                        highlightState={stateFilter}
+                        onSelect={setSelectedId}
+                      />
+                    ) : (
+                      <div className="h-24 flex items-center justify-center text-xs text-muted-foreground rounded-lg border border-border/30 bg-muted/20">
+                        Geographic boundary data is only available for India (IND).
+                        Select India from the country filter to see the choropleth map.
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 
@@ -974,7 +1007,7 @@ function DistrictDetailPanel({
         <CardHeader className="pb-1 pt-3 px-4">
           <CardTitle className="text-sm">Vulnerability Trajectory — All Scenarios</CardTitle>
           <p className="text-[11px] text-muted-foreground">
-            Score = (Exposure × Sensitivity) / Adaptive Capacity · lower is better
+            Risk = Hazard × Exposure × Sensitivity · Hazard extrapolated from temperature Δ (AR6 v0)
           </p>
         </CardHeader>
         <CardContent className="pt-0 pb-3 px-2">
