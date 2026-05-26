@@ -512,7 +512,7 @@ export default function StressTestPage() {
                     </span>
                     <div className="flex-1 min-w-0">
                       <div className="text-xs font-medium truncate">{r.districtName}</div>
-                      <div className="text-[10px] text-muted-foreground">{r.stateId}</div>
+                      <div className="text-[10px] text-muted-foreground">{geoStateMap[r.districtId] || r.stateId}</div>
                     </div>
                     <div className="shrink-0 text-right">
                       <div
@@ -565,6 +565,7 @@ export default function StressTestPage() {
                 timelineData={timelineData}
                 onClose={() => setSelectedId(null)}
                 metric={metric}
+                geoStateMap={geoStateMap}
               />
             ) : (
               /* Overview: stats + chart */
@@ -944,12 +945,14 @@ function DistrictDetailPanel({
   timelineData,
   onClose,
   metric,
+  geoStateMap,
 }: {
   district: RankingRow | null;
   detail: DistrictDetail;
   timelineData: Record<string, number | string>[];
   onClose: () => void;
   metric: "deterioration" | "avoided_damage";
+  geoStateMap: Record<string, string>;
 }) {
   const latestRow = detail.vulnerability.find(
     (r) => r.scenario === "current_policies" && r.horizonYear === 2050
@@ -965,7 +968,7 @@ function DistrictDetailPanel({
         <div>
           <h3 className="text-base font-semibold">{district?.districtName ?? "District"}</h3>
           <div className="flex items-center gap-2 mt-1">
-            <Badge variant="outline" className="text-xs">{district?.stateId}</Badge>
+            <Badge variant="outline" className="text-xs">{(district && geoStateMap[district.districtId]) || district?.stateId}</Badge>
             <span className="text-xs text-muted-foreground">
               Current vulnerability: <strong>{fmt2(baseline?.vulnerability)}</strong>
             </span>

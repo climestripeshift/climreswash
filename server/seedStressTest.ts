@@ -30,6 +30,7 @@ import {
 function baselineHazard(
   district: {
     hazardScore: number | null;
+    exposureScore: number | null;
     climateRisks: string[];
     hazardIntensities: Record<string, number> | null;
   },
@@ -47,8 +48,6 @@ function baselineHazard(
     if (typeof intensities[k] === 'number') return Math.min(intensities[k], 1);
   }
 
-  // Fall back: scale district hazardScore by whether this hazard is in climateRisks
-  const base = Math.max(0, Math.min(district.hazardScore ?? 0.5, 1));
   const hazardInProfile =
     hazard === 'heat'
       ? district.climateRisks.some(r => /heat|heatwave/i.test(r))
@@ -56,7 +55,18 @@ function baselineHazard(
       ? district.climateRisks.some(r => /drought|water|groundwater/i.test(r))
       : district.climateRisks.some(r => /flood/i.test(r));
 
-  return hazardInProfile ? base * 0.9 : base * 0.5;
+  if (district.hazardScore != null) {
+    // Authoritative hazard score available: scale by in-profile flag
+    const base = Math.max(0, Math.min(district.hazardScore, 1));
+    return hazardInProfile ? base * 0.9 : base * 0.5;
+  }
+
+  // No hazardScore (CVI import doesn't set it). Use exposureScore as a regional
+  // climate-stress proxy — high-exposure districts are typically in more hazard-prone
+  // areas. Then apply a larger penalty for hazards absent from the district's
+  // climate risk profile so inter-district spread is meaningful.
+  const regionProxy = Math.max(0.15, Math.min(district.exposureScore ?? 0.4, 0.85));
+  return hazardInProfile ? regionProxy * 0.8 : regionProxy * 0.25;
 }
 
 /** Geometric mean of three values with equal weights */
@@ -87,7 +97,7 @@ export async function computeStressTestProjections(): Promise<{ districts: numbe
         const byHazard = new Map<string, number>();
         for (const hazard of HAZARDS) {
           const base = baselineHazard(
-            { hazardScore: d.hazardScore, climateRisks: d.climateRisks, hazardIntensities: d.hazardIntensities as any },
+            { hazardScore: d.hazardScore, exposureScore: d.exposureScore, climateRisks: d.climateRisks, hazardIntensities: d.hazardIntensities as any },
             hazard
           );
           const delta = DELTAS[scenario][year][hazard];
