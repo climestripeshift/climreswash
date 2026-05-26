@@ -1,15 +1,23 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { ArrowRight, Activity, MapPin, BarChart3, AlertTriangle, ShieldAlert, Droplets, Banknote, Users, Zap, CheckCircle2 } from "lucide-react";
+import { motion } from "framer-motion";
 
 function useCounter(target: number, duration = 1800, delay = 0): [number, React.RefObject<HTMLSpanElement | null>] {
   const [val, setVal] = useState(0);
   const [started, setStarted] = useState(false);
   const ref = useRef<HTMLSpanElement | null>(null);
+  
   useEffect(() => {
     const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) setStarted(true); }, { threshold: 0.2 });
     if (ref.current) obs.observe(ref.current);
     return () => obs.disconnect();
   }, []);
+  
   useEffect(() => {
     if (!started) return;
     const t = setTimeout(() => {
@@ -26,6 +34,7 @@ function useCounter(target: number, duration = 1800, delay = 0): [number, React.
     }, delay);
     return () => clearTimeout(t);
   }, [started, target, duration, delay]);
+  
   return [val, ref];
 }
 
@@ -40,30 +49,24 @@ const IMPACT_CARDS = [
     title: "Disaster Response Costs",
     detail: "Early warning alerts triggered 72hrs in advance enable pre-positioned WASH supplies and contingency activation \u2014 shifting from reactive to proactive response.",
     cite: "UNDRR, 2022",
-    icon: "\u26A1",
-    color: "#E53E3E",
-    bg: "#FFF5F5",
-    border: "#FED7D7",
+    icon: <Zap className="w-8 h-8 text-destructive" />,
+    colorClass: "text-destructive",
   },
   {
     value: "1.4B",
     title: "People Risk-Screened",
     detail: "Every district\u2019s population covered by WASH climate risk assessment \u2014 identifying who is most exposed to heatwave, flood, drought and cyclone impacts.",
     cite: "National census aggregates",
-    icon: "\uD83D\uDC67",
-    color: "#00AEEF",
-    bg: "#E6F7FF",
-    border: "#BAE7FF",
+    icon: <Users className="w-8 h-8 text-primary" />,
+    colorClass: "text-primary",
   },
   {
     value: "\u20B94.09T",
     title: "Investment Gaps Mapped",
     detail: "District-level funding needs quantified across Mitigation and Adaptation requirements \u2014 turning vulnerability scores into actionable investment proposals.",
     cite: "Platform calculation, IPCC AR5",
-    icon: "\u25C8",
-    color: "#0077B6",
-    bg: "#EBF8FF",
-    border: "#BEE3F8",
+    icon: <Banknote className="w-8 h-8 text-chart-4" />,
+    colorClass: "text-chart-4",
   },
 ];
 
@@ -76,9 +79,9 @@ const SECONDARY_STATS = [
 
 const PILLARS = [
   {
-    icon: "\u26A1",
-    color: "#E53E3E",
-    bg: "#FFF5F5",
+    icon: <AlertTriangle className="w-5 h-5 text-destructive" />,
+    colorClass: "text-destructive",
+    bgClass: "bg-destructive/10",
     label: "Disaster Preparedness",
     headline: "Up to 30% reduction",
     sub: "in disaster response costs",
@@ -91,9 +94,9 @@ const PILLARS = [
     ],
   },
   {
-    icon: "\uD83D\uDCA7",
-    color: "#00AEEF",
-    bg: "#E6F7FF",
+    icon: <Droplets className="w-5 h-5 text-primary" />,
+    colorClass: "text-primary",
+    bgClass: "bg-primary/10",
     label: "WASH System Resilience",
     headline: "1.4 Billion people",
     sub: "covered by WASH climate risk assessment",
@@ -106,9 +109,9 @@ const PILLARS = [
     ],
   },
   {
-    icon: "\uD83D\uDCCA",
-    color: "#0077B6",
-    bg: "#EBF8FF",
+    icon: <BarChart3 className="w-5 h-5 text-chart-4" />,
+    colorClass: "text-chart-4",
+    bgClass: "bg-chart-4/10",
     label: "Climate Investment Intelligence",
     headline: "\u20B94.09 Trillion",
     sub: "in climate investment needs identified",
@@ -141,406 +144,447 @@ const METHODOLOGY = [
   { n: "06", label: "Early Warning Integration", desc: "4-tier severity alerts \u2014 Advisory, Watch, Warning, Emergency \u2014 with 72hr lead time" },
 ];
 
-const U = "#00AEEF";
-const UDARK = "#0077B6";
-const ULIGHT = "#E6F7FF";
-
 export default function HomePage() {
   const [activePillar, setActivePillar] = useState(0);
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const fn = () => setScrolled(window.scrollY > 40);
-    window.addEventListener("scroll", fn);
-    return () => window.removeEventListener("scroll", fn);
+    const handleScroll = () => setScrolled(window.scrollY > 40);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const pillar = PILLARS[activePillar];
 
+  const fadeUpVariant = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.6 } }
+  };
+
   return (
-    <div data-testid="page-home" style={{ fontFamily: "'Gill Sans', 'Trebuchet MS', Arial, sans-serif", background: "#FFFFFF", color: "#1A1A2E", minHeight: "100vh" }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800;900&family=Merriweather:ital,wght@0,400;0,700;1,400&display=swap');
-
-        @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
-        @keyframes pulse { 0%,100%{transform:scale(1);opacity:1;} 50%{transform:scale(1.3);opacity:0.7;} }
-        @keyframes wave { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-5px);} }
-
-        .f1 { animation: fadeUp 0.6s 0.1s both; }
-        .f2 { animation: fadeUp 0.6s 0.2s both; }
-        .f3 { animation: fadeUp 0.6s 0.35s both; }
-        .f4 { animation: fadeUp 0.6s 0.5s both; }
-        .f5 { animation: fadeUp 0.6s 0.65s both; }
-
-        .hp-nav-a { color: rgba(255,255,255,0.8); text-decoration:none; font-size:13px; font-weight:600; letter-spacing:0.5px; transition:color 0.2s; }
-        .hp-nav-a:hover { color:white; }
-
-        .hp-btn-white { background:white; color:${U}; border:none; padding:13px 28px; font-size:14px; font-weight:700; border-radius:4px; cursor:pointer; transition:all 0.25s; font-family:inherit; display:inline-flex; align-items:center; gap:8px; text-decoration:none; }
-        .hp-btn-white:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,0.2); }
-        .hp-btn-outline-w { background:transparent; color:white; border:2px solid rgba(255,255,255,0.5); padding:11px 24px; font-size:14px; font-weight:600; border-radius:4px; cursor:pointer; transition:all 0.25s; font-family:inherit; text-decoration:none; }
-        .hp-btn-outline-w:hover { border-color:white; background:rgba(255,255,255,0.1); }
-
-        .hp-impact-card { background:white; border-radius:12px; padding:24px; border:1px solid rgba(0,0,0,0.07); transition:all 0.3s ease; box-shadow:0 2px 8px rgba(0,0,0,0.06); }
-        .hp-impact-card:hover { transform:translateY(-4px); box-shadow:0 16px 40px rgba(0,174,239,0.15); border-color:rgba(0,174,239,0.3); }
-
-        .hp-feat-card { background:#FAFAFA; border:1px solid rgba(0,0,0,0.06); border-radius:10px; padding:20px; transition:all 0.25s; }
-        .hp-feat-card:hover { background:white; border-color:rgba(0,174,239,0.3); box-shadow:0 8px 24px rgba(0,174,239,0.1); transform:translateY(-2px); }
-
-        .hp-pillar-btn { padding:14px 20px; border:1px solid rgba(0,0,0,0.08); border-radius:8px; cursor:pointer; text-align:left; transition:all 0.3s ease; background:white; }
-        .hp-pillar-btn.active { border-color:${U}; background:${ULIGHT}; box-shadow:0 4px 16px rgba(0,174,239,0.15); }
-        .hp-pillar-btn:hover:not(.active) { border-color:rgba(0,174,239,0.3); }
-
-        .hp-method-row { display:flex; gap:20px; padding:18px 0; border-bottom:1px solid rgba(0,0,0,0.06); align-items:flex-start; }
-        .hp-method-row:last-child { border-bottom:none; }
-
-        .hp-tag { display:inline-block; background:${ULIGHT}; color:${UDARK}; padding:2px 8px; border-radius:3px; font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase; }
-        .hp-live-dot { width:7px; height:7px; border-radius:50%; background:#00C853; display:inline-block; animation:pulse 2s ease-in-out infinite; }
-        .hp-wave-icon { animation:wave 3s ease-in-out infinite; display:inline-block; }
-
-        @media (max-width: 768px) {
-          .hp-hero-grid { grid-template-columns: 1fr !important; }
-          .hp-hero-right { display: none !important; }
-          .hp-impact-grid-3 { grid-template-columns: 1fr !important; }
-          .hp-stats-grid-4 { grid-template-columns: repeat(2, 1fr) !important; }
-          .hp-pillar-grid { grid-template-columns: 1fr !important; }
-          .hp-features-grid { grid-template-columns: 1fr !important; }
-          .hp-method-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
-          .hp-who-grid { grid-template-columns: 1fr !important; }
-          .hp-scale-grid { grid-template-columns: repeat(2, 1fr) !important; }
-          .hp-hero-h1 { font-size: 32px !important; }
-          .hp-nav-text-links { display: none !important; }
-          .hp-section { padding: 48px 16px !important; }
-          .hp-header-grid { grid-template-columns: 1fr !important; }
-          .hp-mobile-pad { padding-left: 16px !important; padding-right: 16px !important; }
-        }
-      `}</style>
-
-      <nav className="hp-mobile-pad" style={{
-        position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
-        background: scrolled ? `${U}F5` : U,
-        backdropFilter: scrolled ? "blur(12px)" : "none",
-        borderBottom: scrolled ? "1px solid rgba(0,0,0,0.1)" : "none",
-        transition: "all 0.3s", padding: "0 40px",
-      }}>
-        <div style={{ maxWidth: 1160, margin: "0 auto", height: 60, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontSize: 22 }} className="hp-wave-icon">{"\uD83D\uDCA7"}</span>
-            <div>
-              <div style={{ fontSize: 15, fontWeight: 800, color: "white", letterSpacing: 0.3, fontFamily: "'Nunito', sans-serif" }}>ClimateAdapt India</div>
-              <div style={{ fontSize: 9, color: "rgba(255,255,255,0.75)", letterSpacing: 2, textTransform: "uppercase", fontWeight: 600 }}>UNICEF · WASH Climate Intelligence</div>
+    <div data-testid="page-home" className="min-h-screen bg-background text-foreground selection:bg-primary/30">
+      
+      {/* Navigation */}
+      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-background/80 backdrop-blur-md border-b border-border shadow-sm' : 'bg-transparent'}`}>
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 sm:h-20">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl animate-pulse text-primary">{"\uD83D\uDCA7"}</span>
+              <div>
+                <div className={`font-bold text-lg leading-tight ${scrolled ? 'text-foreground' : 'text-primary-foreground'}`}>ClimateAdapt India</div>
+                <div className={`text-[10px] tracking-wider uppercase font-semibold opacity-80 ${scrolled ? 'text-muted-foreground' : 'text-primary-foreground'}`}>UNICEF \u00B7 WASH Intelligence</div>
+              </div>
             </div>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 32 }}>
-            <a href="#impact" className="hp-nav-a hp-nav-text-links">Impact</a>
-            <a href="#platform" className="hp-nav-a hp-nav-text-links">Platform</a>
-            <a href="#methodology" className="hp-nav-a hp-nav-text-links">Methodology</a>
-            <Link href="/stress-test" className="hp-nav-a hp-nav-text-links" style={{ color: "#fde68a", fontWeight: 700 }} data-testid="nav-stress-test-link">2050 Projections \u2197</Link>
-            <Link href="/dashboard" className="hp-btn-white" style={{ padding: "8px 18px", fontSize: 13 }} data-testid="nav-dashboard-link">Dashboard {"\u2192"}</Link>
+            
+            <div className="hidden md:flex items-center gap-8">
+              <a href="#impact" className={`text-sm font-semibold hover:opacity-100 transition-opacity ${scrolled ? 'text-muted-foreground hover:text-foreground' : 'text-primary-foreground/80'}`}>Impact</a>
+              <a href="#platform" className={`text-sm font-semibold hover:opacity-100 transition-opacity ${scrolled ? 'text-muted-foreground hover:text-foreground' : 'text-primary-foreground/80'}`}>Platform</a>
+              <a href="#methodology" className={`text-sm font-semibold hover:opacity-100 transition-opacity ${scrolled ? 'text-muted-foreground hover:text-foreground' : 'text-primary-foreground/80'}`}>Methodology</a>
+              <Link href="/stress-test" className="text-sm font-bold text-yellow-400 hover:text-yellow-300 transition-colors" data-testid="nav-stress-test-link">
+                2050 Projections \u2197
+              </Link>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <div className={scrolled ? "" : "opacity-0 md:opacity-100"}>
+                 <ThemeToggle />
+              </div>
+              <Link href="/dashboard" data-testid="nav-dashboard-link">
+                <Button variant={scrolled ? "default" : "secondary"} className="gap-2">
+                  Dashboard <ArrowRight className="w-4 h-4" />
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </nav>
 
-      <section style={{
-        background: `linear-gradient(135deg, ${U} 0%, ${UDARK} 100%)`,
-        paddingTop: 60, minHeight: "100vh", display: "flex", alignItems: "center",
-        position: "relative", overflow: "hidden",
-      }}>
-        <div style={{ position: "absolute", top: "-10%", right: "-5%", width: 500, height: 500, borderRadius: "50%", background: "rgba(255,255,255,0.05)", pointerEvents: "none" }} />
-        <div style={{ position: "absolute", bottom: "-15%", left: "-8%", width: 600, height: 600, borderRadius: "50%", background: "rgba(255,255,255,0.04)", pointerEvents: "none" }} />
-        <div style={{ position: "absolute", top: "20%", right: "5%", width: 200, height: 200, borderRadius: "50%", background: "rgba(255,255,255,0.06)", pointerEvents: "none" }} />
+      {/* Hero Section */}
+      <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden bg-primary text-primary-foreground">
+        <div className="absolute inset-0 z-0 opacity-10 dark:opacity-5">
+            <svg className="absolute w-full h-full" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <pattern id="grid-pattern" width="40" height="40" patternUnits="userSpaceOnUse">
+                  <path d="M0 40V0h40" fill="none" stroke="currentColor" strokeWidth="1"/>
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#grid-pattern)"/>
+            </svg>
+        </div>
 
-        <div className="hp-mobile-pad" style={{ maxWidth: 1160, margin: "0 auto", padding: "60px 40px", width: "100%" }}>
-          <div className="hp-hero-grid" style={{ display: "grid", gridTemplateColumns: "1fr 400px", gap: 60, alignItems: "center" }}>
-
-            <div>
-              <div className="f1" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.3)", borderRadius: 20, padding: "6px 14px", marginBottom: 24, fontSize: 12, color: "white", letterSpacing: 1.5, textTransform: "uppercase", fontWeight: 700 }}>
-                <span className="hp-live-dot" /> For Every Child · A Climate-Safe Future
-              </div>
-
-              <h1 className="f2 hp-hero-h1" style={{ fontFamily: "'Nunito', sans-serif", fontSize: 52, fontWeight: 900, color: "white", lineHeight: 1.1, marginBottom: 20, letterSpacing: -0.5 }}>
+        <div className="container relative z-10 mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-[1fr_400px] gap-12 lg:gap-20 items-center">
+            
+            <motion.div initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.1 } } }}>
+              <motion.div variants={fadeUpVariant} className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary-foreground/10 border border-primary-foreground/20 text-xs font-bold uppercase tracking-widest mb-6">
+                <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                For Every Child \u00B7 A Climate-Safe Future
+              </motion.div>
+              
+              <motion.h1 variants={fadeUpVariant} className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.1] mb-6">
                 Protecting Children<br />
                 from Climate Risk,<br />
-                <span style={{ fontWeight: 400, fontStyle: "italic", opacity: 0.9 }}>District by District.</span>
-              </h1>
+                <span className="font-medium italic opacity-90">District by District.</span>
+              </motion.h1>
+              
+              <motion.p variants={fadeUpVariant} className="text-lg sm:text-xl opacity-90 leading-relaxed max-w-2xl mb-10 font-light">
+                India's first district-level WASH climate risk platform \u2014 covering <strong className="font-bold">735 districts</strong> and <strong className="font-bold">1.4 billion people</strong> \u2014 built on the UNICEF-CEEW methodology to protect children from heatwave, flood, drought and cyclone impacts.
+              </motion.p>
+              
+              <motion.div variants={fadeUpVariant} className="flex flex-wrap gap-4 mb-16">
+                <Link href="/dashboard">
+                  <Button size="lg" variant="secondary" className="gap-2 font-semibold">
+                    {"\uD83D\uDCA7"} Demo Map
+                  </Button>
+                </Link>
+                <Link href="/live-data">
+                  <Button size="lg" variant="outline" className="gap-2 bg-transparent text-primary-foreground border-primary-foreground/30 hover:bg-primary-foreground/10">
+                    <Activity className="w-4 h-4" /> Live Data Dashboard
+                  </Button>
+                </Link>
+                <a href="#methodology" className="inline-flex items-center justify-center px-6 text-sm font-semibold hover:underline opacity-80 hover:opacity-100 transition-opacity">
+                  Read Methodology
+                </a>
+              </motion.div>
 
-              <p className="f3" style={{ fontSize: 17, color: "rgba(255,255,255,0.85)", lineHeight: 1.75, marginBottom: 28, maxWidth: 540, fontWeight: 300 }}>
-                India's first district-level WASH climate risk platform {"\u2014"} covering <strong style={{ color: "white", fontWeight: 700 }}>735 districts</strong> and <strong style={{ color: "white", fontWeight: 700 }}>1.4 billion people</strong> {"\u2014"} built on the UNICEF-CEEW methodology to protect children from heatwave, flood, drought and cyclone impacts.
-              </p>
-
-              <div className="f4" style={{ display: "flex", gap: 12, marginBottom: 36, flexWrap: "wrap" }}>
-                <Link href="/dashboard" className="hp-btn-white" data-testid="hero-dashboard-link">{"\uD83D\uDCA7"} Demo Map</Link>
-                <Link href="/live-data" className="hp-btn-outline-w" data-testid="hero-live-data-link" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>⚡ Live Data Dashboard</Link>
-                <a href="#methodology" className="hp-btn-outline-w">Read Methodology</a>
-              </div>
-
-              <div className="f5">
-                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.6)", letterSpacing: 2.5, textTransform: "uppercase", fontWeight: 700, marginBottom: 12 }}>
-                  Measurable Impact
-                </div>
-
-                <div className="hp-impact-grid-3" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 10 }}>
-                  {IMPACT_CARDS.map((c, i) => (
-                    <div key={i} style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.25)", borderRadius: 10, padding: "16px 14px", position: "relative", overflow: "hidden" }}>
-                      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: "rgba(255,255,255,0.5)", borderRadius: "10px 10px 0 0" }} />
-                      <div style={{ fontSize: 20, marginBottom: 6 }}>{c.icon}</div>
-                      <div style={{ fontFamily: "'Nunito', sans-serif", fontSize: 28, fontWeight: 900, color: "white", lineHeight: 1, marginBottom: 5 }}>{c.value}</div>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.9)", marginBottom: 2 }}>{c.title}</div>
-                      <div style={{ fontSize: 10, color: "rgba(255,255,255,0.55)", marginBottom: 6, lineHeight: 1.4 }}>{c.detail.substring(0, 60)}{"\u2026"}</div>
-                      <div style={{ fontSize: 10, color: "rgba(255,255,255,0.7)", fontWeight: 600 }}>{"\u2197"} {c.cite}</div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="hp-stats-grid-4" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
-                  {SECONDARY_STATS.map((s, i) => (
-                    <div key={i} style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 7, padding: "10px 12px", display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ fontSize: 16 }}>{s.icon}</span>
+              <motion.div variants={fadeUpVariant} className="hidden sm:block">
+                <div className="text-xs font-bold tracking-widest uppercase opacity-60 mb-4">Measurable Impact</div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {SECONDARY_STATS.map((stat, i) => (
+                    <div key={i} className="flex items-center gap-3 bg-primary-foreground/5 rounded-lg p-3 border border-primary-foreground/10">
+                      <span className="text-xl">{stat.icon}</span>
                       <div>
-                        <div style={{ fontFamily: "'Nunito', sans-serif", fontSize: 16, fontWeight: 800, color: "white", lineHeight: 1 }}>{s.value}</div>
-                        <div style={{ fontSize: 10, color: "rgba(255,255,255,0.55)", marginTop: 2, lineHeight: 1.3 }}>{s.label}</div>
+                        <div className="font-bold">{stat.value}</div>
+                        <div className="text-[10px] opacity-70 leading-tight">{stat.label}</div>
                       </div>
                     </div>
                   ))}
                 </div>
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
 
-            <div className="f3 hp-hero-right" style={{ background: "rgba(255,255,255,0.95)", borderRadius: 14, padding: 26, boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18, paddingBottom: 14, borderBottom: `2px solid ${ULIGHT}` }}>
-                <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: "#6B7280" }}>National Risk Snapshot</div>
-                <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "#00C853", fontWeight: 700 }}>
-                  <span className="hp-live-dot" /> Live
+            {/* Right side stats card */}
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.4, duration: 0.6 }}
+              className="bg-card text-card-foreground rounded-xl shadow-2xl p-6 border border-border"
+            >
+              <div className="flex items-center justify-between pb-4 border-b mb-4">
+                <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">National Risk Snapshot</div>
+                <div className="flex items-center gap-1.5 text-[10px] font-bold text-green-500 uppercase">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" /> Live
                 </div>
               </div>
 
-              {[
-                { label: "Very High Risk", n: 124, total: 735, color: "#E53E3E" },
-                { label: "High Risk", n: 218, total: 735, color: "#DD6B20" },
-                { label: "Moderate Risk", n: 243, total: 735, color: "#D69E2E" },
-                { label: "Low / Very Low", n: 150, total: 735, color: U },
-              ].map((r, i) => (
-                <div key={i} style={{ marginBottom: 12 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 5 }}>
-                    <span style={{ fontWeight: 600, color: "#1A1A2E" }}>{r.label}</span>
-                    <span style={{ color: r.color, fontWeight: 800, fontFamily: "'Nunito', sans-serif" }}>{r.n} districts</span>
+              <div className="space-y-4">
+                {[
+                  { label: "Very High Risk", n: 124, total: 735, color: "bg-destructive", textColor: "text-destructive" },
+                  { label: "High Risk", n: 218, total: 735, color: "bg-orange-500", textColor: "text-orange-500" },
+                  { label: "Moderate Risk", n: 243, total: 735, color: "bg-yellow-500", textColor: "text-yellow-500" },
+                  { label: "Low / Very Low", n: 150, total: 735, color: "bg-primary", textColor: "text-primary" },
+                ].map((r, i) => (
+                  <div key={i}>
+                    <div className="flex justify-between text-xs mb-1.5">
+                      <span className="font-semibold text-muted-foreground">{r.label}</span>
+                      <span className={`font-bold ${r.textColor}`}>{r.n} districts</span>
+                    </div>
+                    <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${(r.n / r.total) * 100}%` }}
+                        transition={{ delay: 0.8 + (i * 0.1), duration: 1 }}
+                        className={`h-full ${r.color} rounded-full`} 
+                      />
+                    </div>
                   </div>
-                  <div style={{ height: 6, background: "#F0F0F0", borderRadius: 3, overflow: "hidden" }}>
-                    <div style={{ height: "100%", width: `${(r.n / r.total) * 100}%`, background: r.color, borderRadius: 3, transition: "width 1.5s ease" }} />
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
 
-              <div style={{ marginTop: 16, paddingTop: 14, borderTop: `1px solid ${ULIGHT}`, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                <div style={{ background: ULIGHT, borderRadius: 8, padding: 12, textAlign: "center" }}>
-                  <div style={{ fontFamily: "'Nunito', sans-serif", fontSize: 20, fontWeight: 900, color: UDARK }}>160M+</div>
-                  <div style={{ fontSize: 10, color: "#6B7280", marginTop: 2, lineHeight: 1.4 }}>Children in flood-risk areas</div>
+              <div className="grid grid-cols-2 gap-3 mt-6 pt-5 border-t">
+                <div className="bg-primary/10 rounded-lg p-3 text-center">
+                  <div className="text-xl font-bold text-primary">160M+</div>
+                  <div className="text-[10px] text-muted-foreground leading-tight mt-1">Children in flood-risk areas</div>
                 </div>
-                <div style={{ background: "#FFF5F5", borderRadius: 8, padding: 12, textAlign: "center" }}>
-                  <div style={{ fontFamily: "'Nunito', sans-serif", fontSize: 20, fontWeight: 900, color: "#E53E3E" }}>115M+</div>
-                  <div style={{ fontSize: 10, color: "#6B7280", marginTop: 2, lineHeight: 1.4 }}>Children in drought areas</div>
+                <div className="bg-destructive/10 rounded-lg p-3 text-center">
+                  <div className="text-xl font-bold text-destructive">115M+</div>
+                  <div className="text-[10px] text-muted-foreground leading-tight mt-1">Children in drought areas</div>
                 </div>
               </div>
 
-              <div style={{ marginTop: 12, background: `linear-gradient(135deg, ${U}, ${UDARK})`, borderRadius: 8, padding: "12px 14px" }}>
-                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.7)", marginBottom: 4, fontWeight: 600, letterSpacing: 1 }}>TOTAL INVESTMENT NEED</div>
-                <div style={{ fontFamily: "'Nunito', sans-serif", fontSize: 22, fontWeight: 900, color: "white" }}>{"\u20B9"}4,09,460 Cr</div>
-                <div style={{ display: "flex", gap: 12, marginTop: 6 }}>
-                  <span style={{ fontSize: 11, color: "rgba(255,255,255,0.7)" }}>Mitigation: {"\u20B9"}1,59,303 Cr</span>
-                  <span style={{ fontSize: 11, color: "rgba(255,255,255,0.7)" }}>Adaptation: {"\u20B9"}2,50,157 Cr</span>
+              <div className="mt-4 bg-gradient-to-br from-primary to-blue-700 rounded-lg p-4 text-primary-foreground">
+                <div className="text-[10px] font-bold tracking-wider opacity-80 mb-1">TOTAL INVESTMENT NEED</div>
+                <div className="text-2xl font-extrabold mb-2">{"\u20B9"}4,09,460 Cr</div>
+                <div className="flex gap-4 text-xs opacity-90">
+                  <span>Mitig: {"\u20B9"}1.59L Cr</span>
+                  <span>Adapt: {"\u20B9"}2.50L Cr</span>
                 </div>
               </div>
-            </div>
+            </motion.div>
+
           </div>
         </div>
       </section>
 
-      <section id="impact" className="hp-section" style={{ padding: "80px 40px", background: "#F8FCFF" }}>
-        <div style={{ maxWidth: 1160, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: 48 }}>
-            <div style={{ display: "inline-block", background: ULIGHT, color: UDARK, padding: "4px 14px", borderRadius: 20, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 14 }}>Evidence-Based Impact</div>
-            <h2 style={{ fontFamily: "'Nunito', sans-serif", fontSize: 38, fontWeight: 900, color: "#1A1A2E", marginBottom: 12 }}>Impact Across Three Pillars</h2>
-            <p style={{ fontSize: 15, color: "#6B7280", maxWidth: 540, margin: "0 auto", lineHeight: 1.7 }}>All figures grounded in peer-reviewed evidence. Conservative estimates applied where ranges exist.</p>
+      {/* Impact Section */}
+      <section id="impact" className="py-24 bg-secondary/30">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-2xl mx-auto mb-16">
+            <Badge variant="outline" className="mb-4 text-primary border-primary/30 uppercase tracking-widest">Evidence-Based Impact</Badge>
+            <h2 className="text-3xl sm:text-4xl font-extrabold mb-4 text-foreground">Impact Across Three Pillars</h2>
+            <p className="text-muted-foreground">All figures grounded in peer-reviewed evidence. Conservative estimates applied where ranges exist.</p>
           </div>
 
-          <div className="hp-impact-grid-3" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20, marginBottom: 40 }}>
-            {IMPACT_CARDS.map((c, i) => (
-              <div key={i} className="hp-impact-card" style={{ borderTop: `4px solid ${c.color}` }}>
-                <div style={{ fontSize: 32, marginBottom: 12 }}>{c.icon}</div>
-                <div style={{ fontFamily: "'Nunito', sans-serif", fontSize: 40, fontWeight: 900, color: c.color, lineHeight: 1, marginBottom: 6 }}>{c.value}</div>
-                <div style={{ fontSize: 16, fontWeight: 700, color: "#1A1A2E", marginBottom: 8 }}>{c.title}</div>
-                <p style={{ fontSize: 13, color: "#6B7280", lineHeight: 1.65, marginBottom: 12 }}>{c.detail}</p>
-                <div style={{ display: "inline-flex", alignItems: "center", gap: 4, background: c.bg, border: `1px solid ${c.border}`, borderRadius: 4, padding: "4px 10px", fontSize: 11, color: c.color, fontWeight: 700 }}>
-                  {"\u2197"} {c.cite}
-                </div>
-              </div>
+          <div className="grid md:grid-cols-3 gap-8 mb-16">
+            {IMPACT_CARDS.map((card, i) => (
+              <Card key={i} className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                <CardHeader>
+                  <div className="mb-4">{card.icon}</div>
+                  <CardTitle className={`text-4xl font-black ${card.colorClass}`}>{card.value}</CardTitle>
+                  <CardDescription className="text-lg font-bold text-foreground">{card.title}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-6 leading-relaxed">{card.detail}</p>
+                  <Badge variant="secondary" className="font-mono text-xs">{"\u2197"} {card.cite}</Badge>
+                </CardContent>
+              </Card>
             ))}
           </div>
 
-          <div style={{ background: "white", border: "1px solid rgba(0,0,0,0.07)", borderRadius: 12, overflow: "hidden", boxShadow: "0 4px 16px rgba(0,0,0,0.06)" }}>
-            <div className="hp-pillar-grid" style={{ display: "grid", gridTemplateColumns: "280px 1fr" }}>
-              <div style={{ borderRight: "1px solid rgba(0,0,0,0.06)", padding: 16, background: "#FAFAFA" }}>
+          <Card className="overflow-hidden">
+            <div className="grid lg:grid-cols-[300px_1fr] divide-y lg:divide-y-0 lg:divide-x">
+              <div className="bg-secondary/30 p-4 space-y-2">
                 {PILLARS.map((p, i) => (
-                  <button key={i} onClick={() => setActivePillar(i)} className={`hp-pillar-btn ${activePillar === i ? "active" : ""}`} style={{ width: "100%", marginBottom: 8 }}>
-                    <div style={{ fontSize: 18, marginBottom: 4 }}>{p.icon}</div>
-                    <div style={{ fontSize: 11, color: activePillar === i ? UDARK : "#6B7280", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 2 }}>{p.label}</div>
-                    <div style={{ fontFamily: "'Nunito', sans-serif", fontSize: 16, fontWeight: 800, color: activePillar === i ? U : "#1A1A2E" }}>{p.headline}</div>
+                  <button 
+                    key={i} 
+                    onClick={() => setActivePillar(i)} 
+                    className={`w-full text-left p-4 rounded-lg border transition-all duration-200 ${
+                      activePillar === i 
+                        ? 'bg-background border-primary shadow-sm' 
+                        : 'bg-transparent border-transparent hover:bg-background/50 hover:border-border'
+                    }`}
+                  >
+                    <div className="mb-2">{p.icon}</div>
+                    <div className={`text-xs font-bold uppercase tracking-wider mb-1 ${activePillar === i ? 'text-primary' : 'text-muted-foreground'}`}>{p.label}</div>
+                    <div className={`font-bold ${activePillar === i ? 'text-foreground' : 'text-muted-foreground'}`}>{p.headline}</div>
                   </button>
                 ))}
               </div>
-              <div style={{ padding: 36 }}>
-                <div style={{ fontSize: 11, color: U, letterSpacing: 2, textTransform: "uppercase", fontWeight: 700, marginBottom: 10 }}>{pillar.label}</div>
-                <div style={{ fontFamily: "'Nunito', sans-serif", fontSize: 36, fontWeight: 900, color: "#1A1A2E", marginBottom: 4 }}>{pillar.headline}</div>
-                <div style={{ fontSize: 16, color: "#6B7280", marginBottom: 14 }}>{pillar.sub}</div>
-                <div style={{ display: "inline-flex", alignItems: "center", gap: 4, background: ULIGHT, border: `1px solid ${U}40`, borderRadius: 4, padding: "4px 10px", fontSize: 11, color: UDARK, fontWeight: 600, marginBottom: 18 }}>{"\u2197"} {pillar.cite}</div>
-                <p style={{ fontSize: 14, color: "#6B7280", lineHeight: 1.75, marginBottom: 24 }}>{pillar.body}</p>
-                <div className="hp-impact-grid-3" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
+              
+              <div className="p-8 lg:p-12 bg-background">
+                <div className={`text-xs font-bold uppercase tracking-wider mb-2 ${pillar.colorClass}`}>{pillar.label}</div>
+                <h3 className="text-3xl sm:text-4xl font-extrabold mb-2">{pillar.headline}</h3>
+                <div className="text-xl text-muted-foreground mb-6">{pillar.sub}</div>
+                
+                <Badge variant="outline" className="mb-8 text-xs">{"\u2197"} {pillar.cite}</Badge>
+                
+                <p className="text-muted-foreground leading-relaxed max-w-3xl mb-12">
+                  {pillar.body}
+                </p>
+
+                <div className="grid sm:grid-cols-3 gap-6">
                   {pillar.stats.map((s, i) => (
-                    <div key={i} style={{ background: ULIGHT, borderRadius: 8, padding: "14px 12px", textAlign: "center" }}>
-                      <div style={{ fontFamily: "'Nunito', sans-serif", fontSize: 28, fontWeight: 900, color: U }}>
+                    <div key={i} className={`p-6 rounded-xl text-center ${pillar.bgClass}`}>
+                      <div className={`text-3xl font-black mb-2 ${pillar.colorClass}`}>
                         <CountUp to={s.n} suffix={s.suffix} duration={1400} delay={i * 150} />
                       </div>
-                      <div style={{ fontSize: 11, color: "#6B7280", marginTop: 4, lineHeight: 1.4 }}>{s.label}</div>
+                      <div className="text-xs font-medium text-muted-foreground">{s.label}</div>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
+          </Card>
+        </div>
+      </section>
+
+      {/* Scale Section */}
+      <section className="bg-primary text-primary-foreground py-16">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-0 divide-x-0 md:divide-x divide-primary-foreground/20">
+            {[
+              { n: 735, suffix: "", label: "Districts Analysed", sub: "India national coverage" },
+              { val: "1.4B", label: "People Covered", sub: "Aggregate district populations" },
+              { n: 21, suffix: "M+", label: "Children Under 5 at Risk", sub: "In vulnerable districts" },
+              { val: "IPCC AR5", label: "Risk Framework", sub: "International standard" },
+            ].map((s: any, i) => (
+              <div key={i} className="text-center px-4">
+                <div className="text-4xl sm:text-5xl font-black mb-3">
+                  {s.val ? s.val : <CountUp to={s.n} suffix={s.suffix} />}
+                </div>
+                <div className="font-bold text-sm sm:text-base opacity-90">{s.label}</div>
+                <div className="text-xs opacity-70 mt-1">{s.sub}</div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      <section className="hp-mobile-pad" style={{ background: `linear-gradient(135deg, ${U}, ${UDARK})`, padding: "48px 40px" }}>
-        <div className="hp-scale-grid" style={{ maxWidth: 1160, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 0 }}>
-          {[
-            { n: 735, suffix: "", label: "Districts Analysed", sub: "India national coverage" },
-            { val: "1.4B", label: "People Covered", sub: "Aggregate district populations" },
-            { n: 21, suffix: "M+", label: "Children Under 5 at Risk", sub: "In vulnerable districts" },
-            { val: "IPCC AR5", label: "Risk Framework", sub: "International standard" },
-          ].map((s: any, i) => (
-            <div key={i} style={{ textAlign: "center", padding: "0 24px", borderRight: i < 3 ? "1px solid rgba(255,255,255,0.2)" : "none" }}>
-              <div style={{ fontFamily: "'Nunito', sans-serif", fontSize: 40, fontWeight: 900, color: "white", lineHeight: 1 }}>
-                {s.val ? s.val : <CountUp to={s.n} suffix={s.suffix} />}
-              </div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.9)", marginTop: 6 }}>{s.label}</div>
-              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.55)", marginTop: 3 }}>{s.sub}</div>
+      {/* Platform Features Section */}
+      <section id="platform" className="py-24 bg-background">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
+            <div className="max-w-xl">
+              <div className="w-12 h-1.5 bg-primary rounded-full mb-6" />
+              <h2 className="text-3xl sm:text-4xl font-extrabold">Platform Capabilities</h2>
             </div>
-          ))}
-        </div>
-      </section>
-
-      <section id="platform" className="hp-section" style={{ padding: "80px 40px", background: "white" }}>
-        <div style={{ maxWidth: 1160, margin: "0 auto" }}>
-          <div className="hp-header-grid" style={{ marginBottom: 48, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 48, alignItems: "end" }}>
-            <div>
-              <div style={{ width: 40, height: 4, background: U, borderRadius: 2, marginBottom: 14 }} />
-              <h2 style={{ fontFamily: "'Nunito', sans-serif", fontSize: 36, fontWeight: 900, color: "#1A1A2E" }}>Platform Capabilities</h2>
-            </div>
-            <p style={{ fontSize: 15, color: "#6B7280", lineHeight: 1.75, fontWeight: 300 }}>
+            <p className="text-muted-foreground max-w-md">
               Built for government departments and development partners who need district-level intelligence to design climate-resilient WASH interventions.
             </p>
           </div>
-          <div className="hp-features-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {FEATURES.map((f: any, i: number) => {
               const isNew = f.tag === "New";
-              const card = (
-                <div
-                  key={i}
-                  className="hp-feat-card"
-                  style={isNew ? { border: "1.5px solid #f59e0b", background: "#fffbeb", cursor: "pointer" } : {}}
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
-                    <span style={{ fontSize: 28 }}>{f.icon}</span>
-                    <span className="hp-tag" style={isNew ? { background: "#fef3c7", color: "#b45309" } : {}}>{f.tag}</span>
+              
+              const CardContent = (
+                <Card className={`h-full transition-all duration-300 ${isNew ? 'border-yellow-500/50 bg-yellow-500/5 hover:border-yellow-500 dark:bg-yellow-500/10' : 'hover:border-primary/50 hover:shadow-md'}`}>
+                  <div className="p-6">
+                    <div className="flex justify-between items-start mb-6">
+                      <span className="text-3xl">{f.icon}</span>
+                      <Badge variant={isNew ? "default" : "secondary"} className={isNew ? 'bg-yellow-500 hover:bg-yellow-600 text-yellow-950' : ''}>
+                        {f.tag}
+                      </Badge>
+                    </div>
+                    <h3 className="text-lg font-bold mb-3">{f.title}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
+                    
+                    {isNew && (
+                      <div className="mt-6 flex items-center text-sm font-bold text-yellow-600 dark:text-yellow-400 group">
+                        Open stress test <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
+                      </div>
+                    )}
                   </div>
-                  <div style={{ fontFamily: "'Nunito', sans-serif", fontSize: 15, fontWeight: 800, color: "#1A1A2E", marginBottom: 6 }}>{f.title}</div>
-                  <div style={{ fontSize: 12, color: "#6B7280", lineHeight: 1.6 }}>{f.desc}</div>
-                  {isNew && (
-                    <div style={{ marginTop: 10, fontSize: 11, fontWeight: 700, color: "#b45309" }}>Open stress test →</div>
-                  )}
+                </Card>
+              );
+
+              return f.link ? (
+                <Link key={i} href={f.link} className="block h-full cursor-pointer">
+                  {CardContent}
+                </Link>
+              ) : (
+                <div key={i} className="h-full">
+                  {CardContent}
                 </div>
               );
-              return f.link ? <Link key={i} href={f.link} style={{ textDecoration: "none" }}>{card}</Link> : card;
             })}
           </div>
         </div>
       </section>
 
-      <section id="methodology" className="hp-section" style={{ padding: "80px 40px", background: "#F8FCFF", borderTop: "1px solid rgba(0,174,239,0.1)" }}>
-        <div className="hp-method-grid" style={{ maxWidth: 1160, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80 }}>
-          <div>
-            <div style={{ width: 40, height: 4, background: U, borderRadius: 2, marginBottom: 14 }} />
-            <h2 style={{ fontFamily: "'Nunito', sans-serif", fontSize: 34, fontWeight: 900, color: "#1A1A2E", marginBottom: 14 }}>Methodology</h2>
-            <p style={{ fontSize: 15, color: "#6B7280", lineHeight: 1.75, marginBottom: 24, fontWeight: 300 }}>
-              Aligned with the <strong style={{ color: "#1A1A2E", fontWeight: 700 }}>UNICEF-CEEW Climate Extremes & WASH Risk Study</strong> {"\u2014"} using IPCC AR5 risk framing to produce defensible, district-level vulnerability scores.
-            </p>
-            <div style={{ background: "white", border: `2px solid ${ULIGHT}`, borderLeft: `4px solid ${U}`, borderRadius: 8, padding: 18, marginBottom: 14 }}>
-              <div style={{ fontSize: 10, color: "#6B7280", marginBottom: 6, letterSpacing: 1, textTransform: "uppercase", fontWeight: 700 }}>Core Formula</div>
-              <div style={{ fontFamily: "'Nunito', sans-serif", fontSize: 20, fontWeight: 900, color: U }}>Risk = f(Hazard {"\u00D7"} Exposure {"\u00D7"} Vulnerability)</div>
-              <div style={{ fontSize: 12, color: "#6B7280", marginTop: 4 }}>IPCC AR5 standard · UNICEF-CEEW methodology</div>
-            </div>
-            <div style={{ background: "white", border: `2px solid ${ULIGHT}`, borderLeft: `4px solid ${UDARK}`, borderRadius: 8, padding: 18 }}>
-              <div style={{ fontSize: 10, color: "#6B7280", marginBottom: 6, letterSpacing: 1, textTransform: "uppercase", fontWeight: 700 }}>Data Sources</div>
-              <div style={{ fontSize: 13, color: "#1A1A2E", lineHeight: 1.65 }}>National census, NFHS health indicators, IMD climate data, CEEW hazard indices {"\u2014"} normalised, weighted and combined into district-level composite scores</div>
-            </div>
-          </div>
-          <div>
-            {METHODOLOGY.map((s, i) => (
-              <div key={i} className="hp-method-row">
-                <div style={{ fontFamily: "'Nunito', sans-serif", fontSize: 20, fontWeight: 900, color: `${U}55`, minWidth: 32 }}>{s.n}</div>
-                <div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: "#1A1A2E", marginBottom: 3 }}>{s.label}</div>
-                  <div style={{ fontSize: 13, color: "#6B7280", lineHeight: 1.6 }}>{s.desc}</div>
-                </div>
+      {/* Methodology Section */}
+      <section id="methodology" className="py-24 bg-secondary/30 border-t border-border">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-16 lg:gap-24">
+            <div>
+              <div className="w-12 h-1.5 bg-primary rounded-full mb-6" />
+              <h2 className="text-3xl sm:text-4xl font-extrabold mb-6">Methodology</h2>
+              <p className="text-muted-foreground text-lg mb-10">
+                Aligned with the <strong className="text-foreground">UNICEF-CEEW Climate Extremes & WASH Risk Study</strong> \u2014 using IPCC AR5 risk framing to produce defensible, district-level vulnerability scores.
+              </p>
+              
+              <div className="space-y-6">
+                <Card className="border-l-4 border-l-primary">
+                  <CardHeader className="pb-2">
+                    <CardDescription className="uppercase tracking-widest font-bold text-xs">Core Formula</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-xl sm:text-2xl font-black text-primary mb-2">Risk = f(Hazard {"\u00D7"} Exposure {"\u00D7"} Vulnerability)</div>
+                    <div className="text-sm text-muted-foreground">IPCC AR5 standard \u00B7 UNICEF-CEEW methodology</div>
+                  </CardContent>
+                </Card>
+                
+                <Card className="border-l-4 border-l-chart-4">
+                  <CardHeader className="pb-2">
+                    <CardDescription className="uppercase tracking-widest font-bold text-xs">Data Sources</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-sm font-medium leading-relaxed">National census, NFHS health indicators, IMD climate data, CEEW hazard indices \u2014 normalised, weighted and combined into district-level composite scores</div>
+                  </CardContent>
+                </Card>
               </div>
-            ))}
+            </div>
+            
+            <div className="space-y-8">
+              {METHODOLOGY.map((s, i) => (
+                <div key={i} className="flex gap-6">
+                  <div className="text-3xl font-black text-muted-foreground/30 leading-none">{s.n}</div>
+                  <div>
+                    <h4 className="text-lg font-bold mb-2">{s.label}</h4>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{s.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="hp-section" style={{ padding: "80px 40px", background: "white" }}>
-        <div style={{ maxWidth: 1160, margin: "0 auto" }}>
-          <h2 style={{ fontFamily: "'Nunito', sans-serif", fontSize: 34, fontWeight: 900, color: "#1A1A2E", marginBottom: 40, textAlign: "center" }}>Who Can Use This Dashboard?</h2>
-          <div className="hp-who-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
+      {/* Target Audience Section */}
+      <section className="py-24 bg-background">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-center mb-16">Who Can Use This Dashboard?</h2>
+          
+          <div className="grid md:grid-cols-3 gap-8">
             {[
               { icon: "\uD83C\uDFDB\uFE0F", who: "Government & Line Departments", points: ["Identify high-risk districts for climate-resilient WASH investment", "Support Jal Jeevan Mission, SBM and state climate action plans", "Strengthen convergence between WASH, DRR and climate programmes"] },
               { icon: "\uD83C\uDF0D", who: "Development Partners", points: ["Prioritise geographies for child-centred climate adaptation programming", "Use district profiles in programme design and donor proposals", "Track climate risk evolution as data improves over time"] },
               { icon: "\uD83E\uDD1D", who: "NGOs & Practitioners", points: ["Target high-risk districts for field interventions", "Choose technologies suited to local climate typology", "Support advocacy with visual evidence of climate risk"] },
             ].map((c, i) => (
-              <div key={i} style={{ border: `1px solid rgba(0,174,239,0.15)`, borderTop: `4px solid ${U}`, borderRadius: 10, padding: 24, background: "white" }}>
-                <div style={{ fontSize: 32, marginBottom: 12 }}>{c.icon}</div>
-                <div style={{ fontFamily: "'Nunito', sans-serif", fontSize: 16, fontWeight: 800, color: "#1A1A2E", marginBottom: 14 }}>{c.who}</div>
-                {c.points.map((p, j) => (
-                  <div key={j} style={{ display: "flex", gap: 8, fontSize: 13, color: "#6B7280", marginBottom: 8, lineHeight: 1.5 }}>
-                    <span style={{ color: U, fontWeight: 700, flexShrink: 0 }}>{"\u2713"}</span> {p}
-                  </div>
-                ))}
-              </div>
+              <Card key={i} className="border-t-4 border-t-primary h-full">
+                <CardHeader>
+                  <div className="text-4xl mb-4">{c.icon}</div>
+                  <CardTitle className="text-xl">{c.who}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {c.points.map((p, j) => (
+                    <div key={j} className="flex items-start gap-3">
+                      <CheckCircle2 className="w-5 h-5 text-primary shrink-0" />
+                      <span className="text-sm text-muted-foreground leading-relaxed">{p}</span>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="hp-mobile-pad" style={{ background: `linear-gradient(135deg, ${U} 0%, ${UDARK} 100%)`, padding: "72px 40px", textAlign: "center", position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", right: -60, top: "50%", transform: "translateY(-50%)", fontSize: 240, opacity: 0.05, pointerEvents: "none" }}>{"\uD83D\uDCA7"}</div>
-        <div style={{ maxWidth: 640, margin: "0 auto", position: "relative" }}>
-          <div style={{ fontSize: 40, marginBottom: 16 }}>{"\uD83D\uDC67\uD83C\uDFFD"}</div>
-          <h2 style={{ fontFamily: "'Nunito', sans-serif", fontSize: 38, fontWeight: 900, color: "white", marginBottom: 14, lineHeight: 1.2 }}>
-            Every Child Deserves<br />a Climate-Safe Future.
-          </h2>
-          <p style={{ fontSize: 16, color: "rgba(255,255,255,0.75)", marginBottom: 36, lineHeight: 1.7, fontWeight: 300 }}>
-            Built on UNICEF-CEEW methodology. 735 districts. 1.4 billion people. District-level intelligence to protect the most vulnerable.
-          </p>
-          <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-            <Link href="/dashboard" className="hp-btn-white" style={{ fontSize: 15, padding: "14px 32px" }} data-testid="cta-dashboard-link">{"\uD83D\uDCA7"} Demo Map</Link>
-            <Link href="/live-data" className="hp-btn-outline-w" style={{ fontSize: 15, padding: "12px 24px", display: "inline-flex", alignItems: "center", gap: 8 }} data-testid="cta-live-data-link">⚡ Live Data Dashboard</Link>
+      {/* CTA Section */}
+      <section className="relative py-24 bg-primary text-primary-foreground overflow-hidden text-center">
+        <div className="absolute top-1/2 right-0 transform -translate-y-1/2 text-[300px] opacity-5 pointer-events-none select-none">{"\uD83D\uDCA7"}</div>
+        
+        <div className="container relative z-10 mx-auto px-4">
+          <div className="max-w-3xl mx-auto">
+            <div className="text-5xl mb-6">{"\uD83D\uDC67\uD83C\uDFFD"}</div>
+            <h2 className="text-4xl sm:text-5xl font-black mb-6 leading-tight">
+              Every Child Deserves<br />a Climate-Safe Future.
+            </h2>
+            <p className="text-lg sm:text-xl opacity-90 mb-10 font-light leading-relaxed">
+              Built on UNICEF-CEEW methodology. 735 districts. 1.4 billion people. District-level intelligence to protect the most vulnerable.
+            </p>
+            
+            <div className="flex flex-wrap justify-center gap-4">
+              <Link href="/dashboard">
+                <Button size="lg" variant="secondary" className="gap-2 text-base px-8">
+                  {"\uD83D\uDCA7"} Demo Map
+                </Button>
+              </Link>
+              <Link href="/live-data">
+                <Button size="lg" variant="outline" className="gap-2 bg-transparent text-primary-foreground border-primary-foreground/30 hover:bg-primary-foreground/10 text-base px-8">
+                  <Activity className="w-5 h-5" /> Live Data Dashboard
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </section>
 
-      <footer className="hp-mobile-pad" style={{ background: UDARK, padding: "24px 40px" }}>
-        <div style={{ maxWidth: 1160, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
-          <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)" }}>ClimateAdapt India · A UNICEF Initiative for Climate-Resilient WASH · Built on UNICEF-CEEW Methodology</div>
-          <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)" }}>735 Districts · 1.4 Billion People · IPCC AR5 Framework</div>
+      {/* Footer */}
+      <footer className="bg-background border-t border-border py-8">
+        <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-muted-foreground text-center md:text-left">
+          <div>ClimateAdapt India \u00B7 A UNICEF Initiative for Climate-Resilient WASH \u00B7 Built on UNICEF-CEEW Methodology</div>
+          <div>735 Districts \u00B7 1.4 Billion People \u00B7 IPCC AR5 Framework</div>
         </div>
       </footer>
     </div>
