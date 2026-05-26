@@ -129,6 +129,7 @@ const FEATURES = [
   { icon: "\uD83D\uDCB0", title: "Investment Gap Modelling", desc: "Per-capita funding needs estimated by hazard score, WASH deficit and health burden \u2014 disaggregated by district", tag: "Finance" },
   { icon: "\uD83D\uDC67", title: "Child Vulnerability Index", desc: "Children and elderly at risk quantified per district \u2014 including stunting, malnutrition, dropout rates and infant mortality indicators", tag: "Children" },
   { icon: "\uD83D\uDD2C", title: "Technology Guidance", desc: "Each district matched to suitable WASH technologies based on flood, drought or heat stress typology \u2014 actionable for engineers", tag: "Technology" },
+  { icon: "\uD83D\uDCC8", title: "2050 Climate Stress Test", desc: "AR6-based projections under 3 IPCC scenarios \u2014 Current Policies, NDCs, Net Zero 2050. Ranks districts by deterioration and avoided damage to 2050.", tag: "New", link: "/stress-test" },
 ];
 
 const METHODOLOGY = [
@@ -233,6 +234,7 @@ export default function HomePage() {
             <a href="#impact" className="hp-nav-a hp-nav-text-links">Impact</a>
             <a href="#platform" className="hp-nav-a hp-nav-text-links">Platform</a>
             <a href="#methodology" className="hp-nav-a hp-nav-text-links">Methodology</a>
+            <Link href="/stress-test" className="hp-nav-a hp-nav-text-links" style={{ color: "#fde68a", fontWeight: 700 }} data-testid="nav-stress-test-link">2050 Projections \u2197</Link>
             <Link href="/dashboard" className="hp-btn-white" style={{ padding: "8px 18px", fontSize: 13 }} data-testid="nav-dashboard-link">Dashboard {"\u2192"}</Link>
           </div>
         </div>
@@ -438,16 +440,27 @@ export default function HomePage() {
             </p>
           </div>
           <div className="hp-features-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
-            {FEATURES.map((f, i) => (
-              <div key={i} className="hp-feat-card">
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
-                  <span style={{ fontSize: 28 }}>{f.icon}</span>
-                  <span className="hp-tag">{f.tag}</span>
+            {FEATURES.map((f: any, i: number) => {
+              const isNew = f.tag === "New";
+              const card = (
+                <div
+                  key={i}
+                  className="hp-feat-card"
+                  style={isNew ? { border: "1.5px solid #f59e0b", background: "#fffbeb", cursor: "pointer" } : {}}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
+                    <span style={{ fontSize: 28 }}>{f.icon}</span>
+                    <span className="hp-tag" style={isNew ? { background: "#fef3c7", color: "#b45309" } : {}}>{f.tag}</span>
+                  </div>
+                  <div style={{ fontFamily: "'Nunito', sans-serif", fontSize: 15, fontWeight: 800, color: "#1A1A2E", marginBottom: 6 }}>{f.title}</div>
+                  <div style={{ fontSize: 12, color: "#6B7280", lineHeight: 1.6 }}>{f.desc}</div>
+                  {isNew && (
+                    <div style={{ marginTop: 10, fontSize: 11, fontWeight: 700, color: "#b45309" }}>Open stress test →</div>
+                  )}
                 </div>
-                <div style={{ fontFamily: "'Nunito', sans-serif", fontSize: 15, fontWeight: 800, color: "#1A1A2E", marginBottom: 6 }}>{f.title}</div>
-                <div style={{ fontSize: 12, color: "#6B7280", lineHeight: 1.6 }}>{f.desc}</div>
-              </div>
-            ))}
+              );
+              return f.link ? <Link key={i} href={f.link} style={{ textDecoration: "none" }}>{card}</Link> : card;
+            })}
           </div>
         </div>
       </section>
