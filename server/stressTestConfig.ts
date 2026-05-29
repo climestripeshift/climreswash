@@ -310,3 +310,121 @@ export const DELTAS: Record<Scenario, Record<number, Record<Hazard, number>>> = 
     2050: { heat: HEAT_DELTAS.net_zero_2050[2050], drought: DROUGHT_DELTAS.net_zero_2050[2050], flood: FLOOD_DELTAS.net_zero_2050[2050] },
   },
 };
+
+// ============================================================================
+// BASELINE LIKELIHOOD
+// ============================================================================
+//
+// Probability that a given hazard occurs in any single year (0 = never, 1 = certain).
+// Set at state level — the most granular scale supported by published hazard atlases.
+//
+// Sources / basis:
+//   NDMA (2019): National Disaster Risk Reduction Plan — state-level hazard frequency
+//   IMD historical records (1950–2020): extreme heat days, drought years
+//   CWC (Central Water Commission) flood frequency atlas (2018)
+//   Expert elicitation where published data is sparse (NE states, UTs)
+//
+// ⚠ REVIEW REQUIRED: validate against NDMA district risk atlas before publication.
+//   These are evidence-informed initial estimates, not peer-reviewed point estimates.
+//
+// Structure: LIKELIHOOD[stateName][hazard] = annual probability 0–1
+//
+export const LIKELIHOOD: Record<string, Record<Hazard, number>> = {
+  // ── Arid / high-heat belt ──────────────────────────────────────────────────
+  "Rajasthan":             { heat: 0.90, drought: 0.80, flood: 0.20 },
+  "Gujarat":               { heat: 0.80, drought: 0.65, flood: 0.35 },
+  "Haryana":               { heat: 0.78, drought: 0.52, flood: 0.30 },
+  "Punjab":                { heat: 0.72, drought: 0.42, flood: 0.35 },
+
+  // ── Indo-Gangetic plains ───────────────────────────────────────────────────
+  "Uttar Pradesh":         { heat: 0.68, drought: 0.48, flood: 0.58 },
+  "Bihar":                 { heat: 0.58, drought: 0.42, flood: 0.82 },
+  "Delhi":                 { heat: 0.80, drought: 0.45, flood: 0.35 },
+  "NCT Delhi":             { heat: 0.80, drought: 0.45, flood: 0.35 },
+  "Chandigarh":            { heat: 0.75, drought: 0.40, flood: 0.30 },
+
+  // ── Central India ──────────────────────────────────────────────────────────
+  "Madhya Pradesh":        { heat: 0.72, drought: 0.62, flood: 0.45 },
+  "Chhattisgarh":          { heat: 0.62, drought: 0.55, flood: 0.50 },
+  "Jharkhand":             { heat: 0.58, drought: 0.55, flood: 0.50 },
+
+  // ── Peninsular / Deccan ────────────────────────────────────────────────────
+  "Maharashtra":           { heat: 0.65, drought: 0.62, flood: 0.52 },
+  "Telangana":             { heat: 0.72, drought: 0.62, flood: 0.42 },
+  "Andhra Pradesh":        { heat: 0.65, drought: 0.58, flood: 0.52 },
+  "Karnataka":             { heat: 0.58, drought: 0.52, flood: 0.48 },
+  "Tamil Nadu":            { heat: 0.62, drought: 0.56, flood: 0.55 },
+
+  // ── East / coastal ────────────────────────────────────────────────────────
+  "West Bengal":           { heat: 0.48, drought: 0.28, flood: 0.85 },
+  "Odisha":                { heat: 0.55, drought: 0.48, flood: 0.82 },
+  "Assam":                 { heat: 0.38, drought: 0.28, flood: 0.90 },
+
+  // ── South / wet ───────────────────────────────────────────────────────────
+  "Kerala":                { heat: 0.38, drought: 0.22, flood: 0.82 },
+  "Goa":                   { heat: 0.42, drought: 0.22, flood: 0.62 },
+  "Puducherry":            { heat: 0.58, drought: 0.42, flood: 0.62 },
+
+  // ── Himalayan / mountain ──────────────────────────────────────────────────
+  "Himachal Pradesh":      { heat: 0.28, drought: 0.32, flood: 0.55 },
+  "Uttarakhand":           { heat: 0.28, drought: 0.32, flood: 0.62 },
+  "Jammu & Kashmir":       { heat: 0.22, drought: 0.38, flood: 0.48 },
+  "Sikkim":                { heat: 0.18, drought: 0.22, flood: 0.68 },
+
+  // ── North-East ────────────────────────────────────────────────────────────
+  "Arunachal Pradesh":     { heat: 0.22, drought: 0.18, flood: 0.72 },
+  "Manipur":               { heat: 0.28, drought: 0.22, flood: 0.65 },
+  "Meghalaya":             { heat: 0.22, drought: 0.12, flood: 0.78 },
+  "Mizoram":               { heat: 0.22, drought: 0.18, flood: 0.62 },
+  "Nagaland":              { heat: 0.22, drought: 0.18, flood: 0.62 },
+  "Tripura":               { heat: 0.32, drought: 0.22, flood: 0.72 },
+
+  // ── Union Territories ─────────────────────────────────────────────────────
+  "Andaman & Nicobar":     { heat: 0.52, drought: 0.18, flood: 0.72 },
+  "Lakshadweep":           { heat: 0.48, drought: 0.12, flood: 0.78 },
+  "Dadra & Nagar Haveli":  { heat: 0.58, drought: 0.42, flood: 0.48 },
+  "Daman & Diu":           { heat: 0.52, drought: 0.38, flood: 0.58 },
+
+  // ── Fallback (unknown / unmapped states) ──────────────────────────────────
+  "Unknown":               { heat: 0.50, drought: 0.40, flood: 0.40 },
+  "DEFAULT":               { heat: 0.50, drought: 0.40, flood: 0.40 },
+};
+
+// ============================================================================
+// LIKELIHOOD INCREASE DELTAS
+// ============================================================================
+//
+// Fractional increase in annual occurrence probability under each scenario/year,
+// applied as: L_projected = min(L_baseline × (1 + delta), 1.0)
+//
+// Basis: AR6 WG1 Ch.11 frequency-of-extremes projections for South Asia.
+//   Heat: "virtually certain" increase in frequency of hot extremes (Ch.11 §11.3)
+//   Drought: "likely" increase in agricultural drought frequency (Ch.11 §11.6)
+//   Flood: "likely" increase in extreme-precipitation events (Ch.11 §11.5)
+//
+// Structure: LIKELIHOOD_DELTAS[hazard][scenario][year]
+//
+export const LIKELIHOOD_DELTAS: Record<Hazard, Record<Scenario, Record<number, number>>> = {
+  heat: {
+    // SSP5-8.5: extreme heat events become 2–5× more frequent by 2050 (AR6 Ch.11 §11.3.1)
+    // Expressed as fractional increase in annual probability: +35% by 2050
+    current_policies: { 2025: 0.00, 2030: 0.10, 2040: 0.22, 2050: 0.35 },
+    // SSP2-4.5: moderate increase
+    ndc:              { 2025: 0.00, 2030: 0.06, 2040: 0.12, 2050: 0.20 },
+    // SSP1-2.6: constrained increase consistent with 1.5–2°C target
+    net_zero_2050:    { 2025: 0.00, 2030: 0.02, 2040: 0.05, 2050: 0.08 },
+  },
+  drought: {
+    // SSP5-8.5: SPEI-based drought frequency increases significantly (AR6 Ch.11 §11.6)
+    current_policies: { 2025: 0.00, 2030: 0.06, 2040: 0.14, 2050: 0.22 },
+    ndc:              { 2025: 0.00, 2030: 0.04, 2040: 0.09, 2050: 0.14 },
+    net_zero_2050:    { 2025: 0.00, 2030: 0.01, 2040: 0.03, 2050: 0.05 },
+  },
+  flood: {
+    // SSP5-8.5: Rx1day (extreme precip) increases ~8–10%/°C; translates to
+    // higher annual exceedance probability for flood-triggering events (AR6 Ch.11 §11.5)
+    current_policies: { 2025: 0.00, 2030: 0.05, 2040: 0.12, 2050: 0.20 },
+    ndc:              { 2025: 0.00, 2030: 0.03, 2040: 0.08, 2050: 0.13 },
+    net_zero_2050:    { 2025: 0.00, 2030: 0.01, 2040: 0.03, 2050: 0.06 },
+  },
+};

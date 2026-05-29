@@ -58,6 +58,7 @@ export async function importCVIData(): Promise<CVIImportResult> {
     const exposure: number = typeof row[6] === "number" ? row[6] : parseFloat(row[6]) || 0;
     const sensitivity: number = typeof row[7] === "number" ? row[7] : parseFloat(row[7]) || 0;
     const adaptiveCapacity: number = typeof row[8] === "number" ? row[8] : parseFloat(row[8]) || 0;
+    // col 9 skipped (CVI composite before normalization)
     const normalizedVI: number = typeof row[10] === "number" ? row[10] : parseFloat(row[10]) || 0;
     const category: string = String(row[11] || "").trim();
 
@@ -73,6 +74,7 @@ export async function importCVIData(): Promise<CVIImportResult> {
       const hazards = parseHazards(primaryEvent);
       const updateFields: any = {
         exposureScore: parseFloat(exposure.toFixed(4)),
+        sensitivityScore: parseFloat(sensitivity.toFixed(4)),
         vulnerabilityScore: parseFloat(normalizedVI.toFixed(4)),
         adaptationScore: parseFloat(adaptiveCapacity.toFixed(4)),
         vulnerabilityCategory: category === "No Data Available" ? null : category,

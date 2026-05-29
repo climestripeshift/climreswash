@@ -53,10 +53,14 @@ export const districts = pgTable("districts", {
   adaptationScore: real("adaptation_score").notNull(),
   
   // Climate Risk Scores & Categories (from official data)
+  // hazardScore: populated by fix:district-hazards (from india.json HAZARD field)
   hazardScore: real("hazard_score"),
   hazardCategory: varchar("hazard_category", { length: 50 }),
   exposureScore: real("exposure_score"),
   exposureCategory: varchar("exposure_category", { length: 50 }),
+  // sensitivityScore: CVI Excel col 7 — set by importCVI (was previously discarded)
+  // Distinct from vulnerabilityScore (composite CVI). Used in V = sensitivity × (1 - adaptiveCapacity).
+  sensitivityScore: real("sensitivity_score"),
   vulnerabilityCategory: varchar("vulnerability_category", { length: 50 }),
   riskScore: real("risk_score"),
   riskCategory: varchar("risk_category", { length: 50 }),
