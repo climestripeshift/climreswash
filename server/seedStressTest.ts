@@ -316,8 +316,7 @@ export async function computeStressTestProjections(): Promise<{ districts: numbe
     }
   }
 
-  // ── Step 5: persist ────────────────────────────────────────────────────────
-  await storage.clearProjections();
+  // ── Step 5: persist (upsert — don't clear first so a failed run keeps old data) ──
   await storage.bulkInsertHazardProjections(hazardRows);
   await storage.bulkInsertVulnerabilityProjections(vulnRows);
 

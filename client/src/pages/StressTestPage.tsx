@@ -159,6 +159,7 @@ export default function StressTestPage() {
   const [metric, setMetric] = useState<"deterioration" | "avoided_damage">("deterioration");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isComputing, setIsComputing] = useState(false);
+  const [computeError, setComputeError] = useState<string | null>(null);
   const [showProvenance, setShowProvenance] = useState(false);
   const queryClient = useQueryClient();
 
@@ -230,15 +231,21 @@ export default function StressTestPage() {
 
   async function handleCompute() {
     setIsComputing(true);
+    setComputeError(null);
     try {
       const res = await fetch("/api/stress-test/compute", { method: "POST" });
-      if (!res.ok) throw new Error(await res.text());
+      if (!res.ok) {
+        const body = await res.text();
+        let msg: string;
+        try { msg = JSON.parse(body).error ?? body; } catch { msg = body; }
+        throw new Error(msg);
+      }
       await queryClient.invalidateQueries({ queryKey: ["stress-test-status"] });
       await queryClient.invalidateQueries({ queryKey: ["stress-test-rankings"] });
       await queryClient.invalidateQueries({ queryKey: ["stress-test-map"] });
       await queryClient.invalidateQueries({ queryKey: ["stress-test-countries"] });
-    } catch (e) {
-      console.error("Compute failed:", e);
+    } catch (e: any) {
+      setComputeError(e.message ?? "Unknown error");
     } finally {
       setIsComputing(false);
     }
@@ -439,6 +446,17 @@ export default function StressTestPage() {
         </button>
       </div>
 
+      {/* ── Compute error banner ── */}
+      {computeError && (
+        <div className="flex items-start gap-2 px-4 py-2.5 bg-red-500/10 border-b border-red-500/30 text-xs text-red-400 shrink-0">
+          <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+          <span className="flex-1"><strong>Compute failed:</strong> {computeError}</span>
+          <button onClick={() => setComputeError(null)} className="hover:text-red-300">
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
+
       {/* ── Provenance banner ── */}
       {showProvenance && (
         <div className="px-4 py-3 bg-blue-500/10 border-b border-blue-500/20 text-xs text-muted-foreground shrink-0">
@@ -473,7 +491,7 @@ export default function StressTestPage() {
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : !hasData ? (
-        <EmptyState isComputing={isComputing} onCompute={handleCompute} />
+        <EmptyState isComputing={isComputing} onCompute={handleCompute} error={computeError} />
       ) : (
         <div className="flex-1 overflow-hidden flex">
           {/* ── Left panel: rankings list ── */}
@@ -888,9 +906,11 @@ function HazardBar({ breakdown }: { breakdown: Record<string, number> }) {
 function EmptyState({
   isComputing,
   onCompute,
+  error,
 }: {
   isComputing: boolean;
   onCompute: () => void;
+  error: string | null;
 }) {
   return (
     <div className="flex-1 flex items-center justify-center p-8">
@@ -932,8 +952,14 @@ function EmptyState({
           )}
         </Button>
         <p className="text-[11px] text-muted-foreground">
-          Computes ~650 districts × 3 scenarios × 4 years. Takes 10–30 seconds.
+          Computes ~2500 districts × 3 scenarios × 4 years. Takes 15–30 seconds.
         </p>
+        {error && (
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-xs text-red-400 text-left">
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+            <span><strong>Error:</strong> {error}</span>
+          </div>
+        )}
       </div>
     </div>
   );
