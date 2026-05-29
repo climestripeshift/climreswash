@@ -582,7 +582,6 @@ export default function StressTestPage() {
                 detail={detailQ.data}
                 timelineData={timelineData}
                 onClose={() => setSelectedId(null)}
-                metric={metric}
                 geoStateMap={geoStateMap}
               />
             ) : (
@@ -970,14 +969,12 @@ function DistrictDetailPanel({
   detail,
   timelineData,
   onClose,
-  metric,
   geoStateMap,
 }: {
   district: RankingRow | null;
   detail: DistrictDetail;
   timelineData: Record<string, number | string>[];
   onClose: () => void;
-  metric: "deterioration" | "avoided_damage";
   geoStateMap: Record<string, string>;
 }) {
   const latestRow = detail.vulnerability.find(
@@ -1036,7 +1033,7 @@ function DistrictDetailPanel({
         <CardHeader className="pb-1 pt-3 px-4">
           <CardTitle className="text-sm">Vulnerability Trajectory — All Scenarios</CardTitle>
           <p className="text-[11px] text-muted-foreground">
-            Risk = Hazard × Exposure × Sensitivity · Hazard extrapolated from temperature Δ (AR6 v0)
+            Risk = (Hazard × Likelihood × Severity) × Exposure × Vulnerability · H projected via AR6 deltas; L from state hazard atlas; S from district WASH &amp; health data
           </p>
         </CardHeader>
         <CardContent className="pt-0 pb-3 px-2">
