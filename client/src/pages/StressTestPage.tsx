@@ -7,10 +7,11 @@ import {
 } from "recharts";
 import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import { ArrowLeft, TrendingUp, TrendingDown, Loader2, Info, ChevronRight, X, RefreshCw, AlertTriangle, Zap, Leaf } from "lucide-react";
+import { ArrowLeft, TrendingUp, TrendingDown, Loader2, Info, ChevronRight, X, RefreshCw, AlertTriangle, Zap, Leaf, Sliders, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Slider } from "@/components/ui/slider";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -161,6 +162,9 @@ export default function StressTestPage() {
   const [isComputing, setIsComputing] = useState(false);
   const [computeError, setComputeError] = useState<string | null>(null);
   const [showProvenance, setShowProvenance] = useState(false);
+  const [showSimulator, setShowSimulator] = useState(false);
+  const [simMults, setSimMults] = useState({ heat: 1, drought: 1, flood: 1 });
+  const isSimulating = simMults.heat !== 1 || simMults.drought !== 1 || simMults.flood !== 1;
   const queryClient = useQueryClient();
 
   // ── Data queries ─────────────────────────────────────────────────────────
@@ -260,12 +264,54 @@ export default function StressTestPage() {
     return rankings.filter((r) => geoStateMap[r.districtId] === stateFilter);
   }, [rankings, stateFilter, geoStateMap]);
 
+  // Apply per-hazard intensity multipliers client-side.
+  // Weight = hazard's share of total risk × its multiplier.
+  // High-likelihood districts already have a higher share of a dominant hazard,
+  // so amplifying that hazard compounds proportionally with their likelihood.
+  function applySimMult(
+    base: number | null,
+    breakdown: Record<string, number> | null
+  ): number | null {
+    if (base == null) return null;
+    const b = breakdown ?? { heat: 1 / 3, drought: 1 / 3, flood: 1 / 3 };
+    const wt =
+      (b.heat    ?? 1 / 3) * simMults.heat +
+      (b.drought ?? 1 / 3) * simMults.drought +
+      (b.flood   ?? 1 / 3) * simMults.flood;
+    return base * wt;
+  }
+
+  const simulatedRankings = useMemo(() => {
+    if (!isSimulating) return filteredRankings;
+    return [...filteredRankings]
+      .map((r) => ({
+        ...r,
+        deterioration: applySimMult(r.deterioration, r.hazardBreakdown),
+        avoidedDamage: applySimMult(r.avoidedDamage, r.hazardBreakdown),
+      }))
+      .sort((a, b) => {
+        const va = metric === "avoided_damage" ? (b.avoidedDamage ?? 0) : (b.deterioration ?? 0);
+        const vb = metric === "avoided_damage" ? (a.avoidedDamage ?? 0) : (a.deterioration ?? 0);
+        return va - vb;
+      });
+  }, [filteredRankings, simMults, isSimulating, metric]);
+
+  const simulatedMapPoints = useMemo(() => {
+    const pts = mapQ.data ?? [];
+    if (!isSimulating) return pts;
+    return pts.map((p) => ({
+      ...p,
+      deterioration: applySimMult(p.deterioration, p.hazardBreakdown),
+      avoidedDamage: applySimMult(p.avoidedDamage, p.hazardBreakdown),
+    }));
+  }, [mapQ.data, simMults, isSimulating]);
+
   const chartData = useMemo(
     () =>
-      filteredRankings.slice(0, 15).map((r) => ({
+      simulatedRankings.slice(0, 15).map((r) => ({
         name: r.districtName.length > 14 ? r.districtName.slice(0, 13) + "…" : r.districtName,
         fullName: r.districtName,
-        state: r.stateId,
+        state: geoStateMap[r.districtId] || r.stateId,
         value: parseFloat(
           (
             (metric === "avoided_damage" ? (r.avoidedDamage ?? 0) : (r.deterioration ?? 0)) * 100
@@ -277,19 +323,19 @@ export default function StressTestPage() {
         flood: r.hazardBreakdown?.flood ?? 0,
         id: r.districtId,
       })),
-    [rankings, metric]
+    [simulatedRankings, metric]
   );
 
   const selectedScenario = SCENARIOS.find((s) => s.key === scenario)!;
 
   const summaryStats = useMemo(() => {
-    const src = filteredRankings.length ? filteredRankings : rankings;
+    const src = simulatedRankings.length ? simulatedRankings : rankings;
     if (!src.length) return null;
     const worsening = src.filter((r) => (r.deterioration ?? 0) > 0);
     const avgDet = src.reduce((a, b) => a + (b.deterioration ?? 0), 0) / src.length;
     const worst = src[0];
     return { worseningCount: worsening.length, total: src.length, avgDet, worst };
-  }, [filteredRankings, rankings]);
+  }, [simulatedRankings, rankings]);
 
   // District detail: build timeline data for line chart
   const timelineData = useMemo(() => {
@@ -513,7 +559,7 @@ export default function StressTestPage() {
               </div>
             ) : (
               <div className="flex-1 overflow-y-auto">
-                {filteredRankings.map((r, i) => (
+                {simulatedRankings.map((r, i) => (
                   <button
                     key={r.districtId}
                     onClick={() =>
@@ -601,6 +647,100 @@ export default function StressTestPage() {
                     Horizon: {year}
                   </Badge>
                 </div>
+
+                {/* ── Intensity simulator ── */}
+                <Card className={`border-border/50 ${isSimulating ? "border-amber-500/50 bg-amber-500/5" : ""}`}>
+                  <CardHeader className="pb-2 pt-3 px-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Sliders className="h-3.5 w-3.5 text-muted-foreground" />
+                        <CardTitle className="text-sm">Intensity Simulator</CardTitle>
+                        {isSimulating && (
+                          <Badge className="text-[10px] px-1.5 py-0 bg-amber-500/20 text-amber-400 border-amber-500/30">
+                            Active
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setShowSimulator((v) => !v)}
+                          className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          {showSimulator ? "Hide" : "Show"}
+                        </button>
+                        {isSimulating && (
+                          <button
+                            onClick={() => setSimMults({ heat: 1, drought: 1, flood: 1 })}
+                            className="flex items-center gap-1 text-[11px] text-amber-400 hover:text-amber-300"
+                          >
+                            <RotateCcw className="h-3 w-3" /> Reset
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    {!showSimulator && (
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        Scale hazard intensity per type — rankings &amp; map update instantly.
+                        High-likelihood districts amplify more.
+                      </p>
+                    )}
+                  </CardHeader>
+                  {showSimulator && (
+                    <CardContent className="pt-0 pb-4 px-4 space-y-4">
+                      <p className="text-[11px] text-muted-foreground">
+                        Multiply each hazard's intensity. Districts where that hazard dominates
+                        (high likelihood × severity share) feel the amplified impact more.
+                      </p>
+                      {(["heat", "drought", "flood"] as const).map((h) => {
+                        const mult = simMults[h];
+                        const color = HAZARD_COLORS[h];
+                        return (
+                          <div key={h} className="space-y-1.5">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs capitalize font-medium flex items-center gap-1.5">
+                                <span className="h-2 w-2 rounded-full shrink-0" style={{ background: color }} />
+                                {h} intensity
+                              </span>
+                              <span
+                                className="text-xs font-mono font-semibold tabular-nums"
+                                style={{ color: mult === 1 ? undefined : color }}
+                              >
+                                {mult.toFixed(1)}×
+                                {mult !== 1 && (
+                                  <span className="text-[10px] text-muted-foreground ml-1">
+                                    ({mult > 1 ? "+" : ""}{((mult - 1) * 100).toFixed(0)}%)
+                                  </span>
+                                )}
+                              </span>
+                            </div>
+                            <Slider
+                              min={0.5}
+                              max={3.0}
+                              step={0.1}
+                              value={[mult]}
+                              onValueChange={([v]) =>
+                                setSimMults((prev) => ({ ...prev, [h]: v }))
+                              }
+                            />
+                            <div className="flex justify-between text-[10px] text-muted-foreground">
+                              <span>0.5× (less severe)</span>
+                              <span className="text-border">|</span>
+                              <span>3.0× (extreme)</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      {isSimulating && (
+                        <div className="flex items-center gap-2 pt-1 p-2 rounded-md bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-400">
+                          <AlertTriangle className="h-3 w-3 shrink-0" />
+                          Combined multiplier: {(
+                            simMults.heat * simMults.drought * simMults.flood
+                          ).toFixed(2)}× · Rankings, chart &amp; map reflect simulated intensities
+                        </div>
+                      )}
+                    </CardContent>
+                  )}
+                </Card>
 
                 {/* Summary stat cards */}
                 {summaryStats && (
@@ -725,7 +865,7 @@ export default function StressTestPage() {
                   <CardContent className="pt-0 pb-3 px-3">
                     {countryFilter === "IND" ? (
                       <ProjectionMap
-                        points={mapQ.data ?? []}
+                        points={simulatedMapPoints}
                         metric={metric}
                         geoData={geoQ.data ?? null}
                         highlightState={stateFilter}
