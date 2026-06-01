@@ -330,6 +330,10 @@ export default function StressTestPage() {
       await queryClient.invalidateQueries({ queryKey: ["stress-test-rankings"] });
       await queryClient.invalidateQueries({ queryKey: ["stress-test-map"] });
       await queryClient.invalidateQueries({ queryKey: ["stress-test-countries"] });
+      await queryClient.invalidateQueries({ queryKey: ["mh-status"] });
+      await queryClient.invalidateQueries({ queryKey: ["mh-rankings"] });
+      await queryClient.invalidateQueries({ queryKey: ["mh-map"] });
+      await queryClient.invalidateQueries({ queryKey: ["mh-district"] });
     } catch (e: any) {
       setComputeError(e.message ?? "Unknown error");
     } finally {
@@ -411,13 +415,29 @@ export default function StressTestPage() {
   const selectedScenario = SCENARIOS.find((s) => s.key === scenario)!;
 
   const summaryStats = useMemo(() => {
+    if (useMultiHazard) {
+      const src = (multiRankingsQ.data ?? []).filter(
+        (r) => !stateFilter || geoStateMap[r.districtId] === stateFilter
+      );
+      if (!src.length) return null;
+      const avgRisk = src.reduce((a, b) => a + b.compositeRisk, 0) / src.length;
+      const worst = src[0];
+      return {
+        worseningCount: src.filter((r) => r.compositeRisk > avgRisk).length,
+        total: src.length,
+        avgDet: null as null,
+        avgRisk,
+        worst: { districtName: worst.districtName, deterioration: null, compositeRisk: worst.compositeRisk },
+        isMulti: true,
+      };
+    }
     const src = simulatedRankings.length ? simulatedRankings : rankings;
     if (!src.length) return null;
     const worsening = src.filter((r) => (r.deterioration ?? 0) > 0);
     const avgDet = src.reduce((a, b) => a + (b.deterioration ?? 0), 0) / src.length;
     const worst = src[0];
-    return { worseningCount: worsening.length, total: src.length, avgDet, worst };
-  }, [simulatedRankings, rankings]);
+    return { worseningCount: worsening.length, total: src.length, avgDet, avgRisk: null as null, worst, isMulti: false };
+  }, [simulatedRankings, rankings, useMultiHazard, multiRankingsQ.data, stateFilter, geoStateMap]);
 
   // District detail: build timeline data for line chart
   const timelineData = useMemo(() => {
@@ -640,10 +660,14 @@ export default function StressTestPage() {
             <div className="px-3 py-2 border-b border-border/30 shrink-0">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  {metric === "avoided_damage" ? "What action saves" : `Worst by ${year}`}
+                  {useMultiHazard
+                    ? "Compound Risk (8 Hazards)"
+                    : metric === "avoided_damage" ? "What action saves" : `Worst by ${year}`}
                 </span>
                 <span className="text-[11px] text-muted-foreground">
-                  {filteredRankings.length}{stateFilter ? ` / ${rankings.length}` : ""} districts
+                  {useMultiHazard
+                    ? `${(multiRankingsQ.data ?? []).filter((r) => !stateFilter || geoStateMap[r.districtId] === stateFilter).length} districts`
+                    : `${filteredRankings.length}${stateFilter ? ` / ${rankings.length}` : ""} districts`}
                 </span>
               </div>
             </div>
@@ -767,8 +791,8 @@ export default function StressTestPage() {
                   </Badge>
                 </div>
 
-                {/* ── Intensity simulator ── */}
-                <Card className={`border-border/50 ${isSimulating ? "border-amber-500/50 bg-amber-500/5" : ""}`}>
+                {/* ── Intensity simulator (3-hazard mode only) ── */}
+                {!useMultiHazard && <Card className={`border-border/50 ${isSimulating ? "border-amber-500/50 bg-amber-500/5" : ""}`}>
                   <CardHeader className="pb-2 pt-3 px-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
@@ -859,7 +883,7 @@ export default function StressTestPage() {
                       )}
                     </CardContent>
                   )}
-                </Card>
+                </Card>}
 
                 {/* Summary stat cards */}
                 {summaryStats && (
@@ -867,7 +891,7 @@ export default function StressTestPage() {
                     <Card className="border-border/50">
                       <CardContent className="p-3">
                         <div className="text-[11px] text-muted-foreground uppercase tracking-wide mb-1">
-                          Districts Worsening
+                          {summaryStats.isMulti ? "Above Average Risk" : "Districts Worsening"}
                         </div>
                         <div className="text-2xl font-bold text-red-400">
                           {summaryStats.worseningCount}
@@ -884,15 +908,19 @@ export default function StressTestPage() {
                     <Card className="border-border/50">
                       <CardContent className="p-3">
                         <div className="text-[11px] text-muted-foreground uppercase tracking-wide mb-1">
-                          Avg Deterioration
+                          {summaryStats.isMulti ? "Avg Composite Risk" : "Avg Deterioration"}
                         </div>
-                        <div
-                          className={`text-2xl font-bold ${deteriorationColor(summaryStats.avgDet)}`}
-                        >
-                          {pct(summaryStats.avgDet)}
-                        </div>
+                        {summaryStats.isMulti ? (
+                          <div className="text-2xl font-bold text-violet-400">
+                            {summaryStats.avgRisk?.toFixed(3) ?? "—"}
+                          </div>
+                        ) : (
+                          <div className={`text-2xl font-bold ${deteriorationColor(summaryStats.avgDet)}`}>
+                            {pct(summaryStats.avgDet)}
+                          </div>
+                        )}
                         <div className="text-[11px] text-muted-foreground mt-0.5">
-                          vs 2025 baseline
+                          {summaryStats.isMulti ? "normalised 0–1 scale" : "vs 2025 baseline"}
                         </div>
                       </CardContent>
                     </Card>
@@ -906,15 +934,17 @@ export default function StressTestPage() {
                           {summaryStats.worst?.districtName ?? "—"}
                         </div>
                         <div className="text-[11px] text-muted-foreground mt-0.5">
-                          {pct(summaryStats.worst?.deterioration)} deterioration
+                          {summaryStats.isMulti
+                            ? `Composite: ${(summaryStats.worst as any).compositeRisk?.toFixed(3)}`
+                            : `${pct((summaryStats.worst as any).deterioration)} deterioration`}
                         </div>
                       </CardContent>
                     </Card>
                   </div>
                 )}
 
-                {/* Bar chart */}
-                <Card className="border-border/50">
+                {/* Bar chart — hidden in multi-hazard mode (compositeRisk is not a % change) */}
+                {!useMultiHazard && <Card className="border-border/50">
                   <CardHeader className="pb-1 pt-3 px-4">
                     <CardTitle className="text-sm">
                       Top 15 Districts —{" "}
@@ -966,7 +996,7 @@ export default function StressTestPage() {
                       </ResponsiveContainer>
                     )}
                   </CardContent>
-                </Card>
+                </Card>}
 
                 {/* Map — India choropleth or placeholder */}
                 <Card className="border-border/50">
