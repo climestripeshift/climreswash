@@ -12,7 +12,8 @@
     "db:push": "drizzle-kit push",
     "validate:projections": "tsx server/validateProjections.ts",
     "fix:district-states": "tsx server/fixDistrictStates.ts",
-    "fix:district-hazards": "tsx server/fixDistrictHazards.ts"
+    "fix:district-hazards": "tsx server/fixDistrictHazards.ts",
+    "seed:hazard-taxonomy": "tsx server/seedHazardTaxonomy.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

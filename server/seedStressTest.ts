@@ -41,13 +41,25 @@
 import fs from "fs";
 import path from "path";
 import { storage } from "./storage";
-import type { InsertHazardProjection, InsertVulnerabilityProjection } from "@shared/schema";
+import type { InsertHazardProjection, InsertVulnerabilityProjection, InsertMultiHazardProjection } from "@shared/schema";
 import {
   DELTAS, SPREAD, SCENARIOS, YEARS, HAZARDS,
   CMIP6_MODELS, SOURCE_TEXT as SOURCE, HAZARD_WEIGHTS,
   LIKELIHOOD, LIKELIHOOD_DELTAS,
 } from "./stressTestConfig";
 import type { Hazard } from "./stressTestConfig";
+import {
+  MULTI_HAZARDS,
+  HAZARD_WEIGHTS_8,
+  SEVERITY_WEIGHTS,
+  INTERACTION_DATA,
+  GEOGRAPHIC_SCOPE,
+  getLikelihood,
+  getLikelihoodDelta,
+  getHazardDelta,
+} from "./multiHazardConfig";
+import type { MultiHazard } from "./multiHazardConfig";
+import { seedHazardTaxonomy } from "./seedHazardTaxonomy";
 
 // ── District-state lookup (authoritative; avoids relying on stateId DB column) ──
 const DISTRICT_STATE_MAP: Record<string, { state: string; name: string }> = (() => {
@@ -321,4 +333,222 @@ export async function computeStressTestProjections(): Promise<{ districts: numbe
   await storage.bulkInsertVulnerabilityProjections(vulnRows);
 
   return { districts: allDistricts.length, rows: hazardRows.length + vulnRows.length };
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// MULTI-HAZARD COMPOUND-RISK PROJECTIONS — 8 hazards + Gill & Malamud interactions
+// ══════════════════════════════════════════════════════════════════════════════
+//
+// Formula
+// ───────
+// Per hazard h:
+//   Risk(h) = L(h) × (1 + ΔL(h,s,y)) × H(h) × (1 + ΔH(h,s,y)) × S(h,d) × V(d)
+//   where H(h) = baselineH × geographic_scope_factor  (same baselineH as v1)
+//         S(h,d) = SEVERITY_WEIGHTS[h] dot-product with normalised WASH/health indicators
+//         V(d) = sensitivityScore × (1 − adaptationScore)
+//
+// All Risk(h) values are globally min-max normalised per hazard across all
+// districts/scenarios/years before aggregation.
+//
+// Composite (additive weighted sum + Gill & Malamud interaction terms):
+//   Risk_total = Σ_h  w(h) × Risk_norm(h)
+//              + Σ_{i<j} max(M(i,j)/2, 0) × sqrt(Risk_norm(i) × Risk_norm(j))
+//
+// Only positive interaction codes contribute (negative ones are inhibiting —
+// the primary risk formula already models "no hazard present" implicitly).
+// ══════════════════════════════════════════════════════════════════════════════
+
+function deriveSeverityMulti(
+  d: {
+    waterAccessPercent: number;
+    toiletCoveragePercent: number;
+    handwashingFacilityPercent: number;
+    infantMortalityRate: number;
+    malnutritionStunting: number;
+    malnutritionWasting: number;
+    maternalMortalityRatio: number;
+  },
+  hazard: MultiHazard
+): number {
+  const w = SEVERITY_WEIGHTS[hazard];
+  const waterVuln  = 1 - Math.min(d.waterAccessPercent / 100, 1);
+  const toiletVuln = 1 - Math.min(d.toiletCoveragePercent / 100, 1);
+  const hwVuln     = 1 - Math.min(d.handwashingFacilityPercent / 100, 1);
+  const imrNorm    = Math.min(d.infantMortalityRate / 80, 1);
+  const stuntNorm  = Math.min(d.malnutritionStunting / 60, 1);
+  const wastNorm   = Math.min(d.malnutritionWasting / 30, 1);
+  const mmrNorm    = Math.min(d.maternalMortalityRatio / 500, 1);
+
+  return (
+    w.waterVuln  * waterVuln +
+    w.toiletVuln * toiletVuln +
+    w.hwVuln     * hwVuln +
+    w.imrNorm    * imrNorm +
+    w.stuntNorm  * stuntNorm +
+    w.wastNorm   * wastNorm +
+    w.mmrNorm    * mmrNorm
+  );
+}
+
+// Geographic scope factor: 1.0 if hazard is primary for this state, else 0.0
+// (OUT_OF_SCOPE_L baseline is already built into getLikelihood)
+function geoFactor(hazard: MultiHazard, state: string): 1 | 0 {
+  const scope = GEOGRAPHIC_SCOPE[hazard];
+  if (scope === "ALL") return 1;
+  return scope.includes(state) ? 1 : 0;
+}
+
+export async function computeMultiHazardProjections(): Promise<{ districts: number; rows: number }> {
+  const allDistricts = await storage.getAllDistricts();
+  if (allDistricts.length === 0) {
+    throw new Error("No districts in database — seed districts first.");
+  }
+
+  // Auto-seed taxonomy + interaction matrix (idempotent)
+  await seedHazardTaxonomy();
+
+  // Build interaction lookup: M[i][j] = qualitative code (-2…+2)
+  const M: Map<string, number> = new Map();
+  for (const e of INTERACTION_DATA) {
+    M.set(`${e.i}::${e.j}`, e.code);
+  }
+  function getInteraction(i: MultiHazard, j: MultiHazard): number {
+    return M.get(`${i}::${j}`) ?? 0;
+  }
+
+  // ── Step 1: raw Risk(h) per district/scenario/year/hazard ─────────────────
+  // raw[districtId][scenario][year][hazard] = L × H × S × V (unnormalised)
+  type RawMap = Map<string, Map<string, Map<number, Map<MultiHazard, number>>>>;
+  const raw: RawMap = new Map();
+
+  for (const d of allDistricts) {
+    const state = DISTRICT_STATE_MAP[d.id]?.state ?? d.stateId;
+
+    const S_indicators = {
+      waterAccessPercent:        d.waterAccessPercent    ?? 60,
+      toiletCoveragePercent:     d.toiletCoveragePercent ?? 50,
+      handwashingFacilityPercent: d.handwashingFacilityPercent ?? 40,
+      infantMortalityRate:       d.infantMortalityRate   ?? 35,
+      malnutritionStunting:      d.malnutritionStunting  ?? 25,
+      malnutritionWasting:       d.malnutritionWasting   ?? 15,
+      maternalMortalityRatio:    d.maternalMortalityRatio ?? 130,
+    };
+
+    const adaptNorm = norm01(d.adaptationScore, 0.4);
+    const V = d.sensitivityScore != null
+      ? Math.max(norm01(d.sensitivityScore, 0.4) * (1 - adaptNorm), 1e-3)
+      : Math.max(norm01(d.vulnerabilityScore, 0.4) * (1 - adaptNorm * 0.5), 1e-3);
+
+    const baseH = Math.max(d.hazardScore ?? 0.25, 0);
+
+    const byScenario = new Map<string, Map<number, Map<MultiHazard, number>>>();
+
+    for (const scenario of SCENARIOS) {
+      const byYear = new Map<number, Map<MultiHazard, number>>();
+
+      for (const year of YEARS) {
+        const byHazard = new Map<MultiHazard, number>();
+
+        for (const hazard of MULTI_HAZARDS) {
+          const L = Math.min(
+            getLikelihood(state, hazard) * (1 + getLikelihoodDelta(hazard, scenario, year)),
+            1.0
+          );
+          const H = baseH * geoFactor(hazard, state) * Math.max(1 + getHazardDelta(hazard, scenario, year), 0);
+          const S = deriveSeverityMulti(S_indicators, hazard);
+
+          byHazard.set(hazard, L * H * S * V);
+        }
+        byYear.set(year, byHazard);
+      }
+      byScenario.set(scenario, byYear);
+    }
+    raw.set(d.id, byScenario);
+  }
+
+  // ── Step 2: global min-max normalisation per hazard ───────────────────────
+  const mins: Record<MultiHazard, number> = {} as any;
+  const maxs: Record<MultiHazard, number> = {} as any;
+  for (const h of MULTI_HAZARDS) { mins[h] = Infinity; maxs[h] = -Infinity; }
+
+  for (const byScenario of Array.from(raw.values())) {
+    for (const byYear of Array.from(byScenario.values())) {
+      for (const byHazard of Array.from(byYear.values())) {
+        for (const h of MULTI_HAZARDS) {
+          const v = byHazard.get(h)!;
+          if (v < mins[h]) mins[h] = v;
+          if (v > maxs[h]) maxs[h] = v;
+        }
+      }
+    }
+  }
+
+  function normH(v: number, h: MultiHazard): number {
+    const range = maxs[h] - mins[h];
+    return range < 1e-9 ? 0 : (v - mins[h]) / range;
+  }
+
+  // ── Step 3: build multiHazardProjections rows ─────────────────────────────
+  const rows: InsertMultiHazardProjection[] = [];
+
+  for (const d of allDistricts) {
+    for (const scenario of SCENARIOS) {
+      for (const year of YEARS) {
+        const byHazard = raw.get(d.id)!.get(scenario)!.get(year)!;
+
+        const perHazardNorm: Record<string, number> = {};
+        for (const h of MULTI_HAZARDS) {
+          perHazardNorm[h] = normH(byHazard.get(h)!, h);
+        }
+
+        // Weighted sum
+        let weightedSum = 0;
+        for (const h of MULTI_HAZARDS) {
+          weightedSum += HAZARD_WEIGHTS_8[h] * perHazardNorm[h];
+        }
+
+        // Additive Gill & Malamud interaction terms (positive only)
+        let interactionSum = 0;
+        for (let a = 0; a < MULTI_HAZARDS.length; a++) {
+          for (let b = a + 1; b < MULTI_HAZARDS.length; b++) {
+            const hi = MULTI_HAZARDS[a];
+            const hj = MULTI_HAZARDS[b];
+            // Symmetric interaction: use max(M(i,j), M(j,i)) to capture bidirectional
+            const code = Math.max(getInteraction(hi, hj), getInteraction(hj, hi));
+            if (code <= 0) continue;  // inhibiting or independent — skip
+            const contribution = (code / 2) * Math.sqrt(perHazardNorm[hi] * perHazardNorm[hj]);
+            interactionSum += contribution;
+          }
+        }
+
+        const compositeRisk = weightedSum + interactionSum;
+
+        // Dominant hazard = highest normalised Risk(h)
+        let dominantH: MultiHazard = "heat";
+        let dominantV = -Infinity;
+        for (const h of MULTI_HAZARDS) {
+          if (perHazardNorm[h] > dominantV) {
+            dominantV = perHazardNorm[h];
+            dominantH = h;
+          }
+        }
+
+        rows.push({
+          districtId:              d.id,
+          scenario,
+          horizonYear:             year,
+          perHazardRisk:           perHazardNorm,
+          compositeRisk,
+          interactionContribution: interactionSum,
+          dominantHazard:          dominantH,
+          aggregationMethod:       "weighted_sum_plus_gill_malamud",
+        });
+      }
+    }
+  }
+
+  // ── Step 4: persist ───────────────────────────────────────────────────────
+  await storage.bulkInsertMultiHazardProjections(rows);
+
+  return { districts: allDistricts.length, rows: rows.length };
 }

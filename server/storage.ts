@@ -25,6 +25,8 @@ import {
   type InsertHazardProjection,
   type VulnerabilityProjection,
   type InsertVulnerabilityProjection,
+  type MultiHazardProjection,
+  type InsertMultiHazardProjection,
   users,
   countries,
   states,
@@ -38,6 +40,7 @@ import {
   technologies,
   hazardProjections,
   vulnerabilityProjections,
+  multiHazardProjections,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, desc, asc, sql } from "drizzle-orm";
@@ -134,6 +137,23 @@ export interface IStorage {
   bulkInsertHazardProjections(rows: InsertHazardProjection[]): Promise<void>;
   bulkInsertVulnerabilityProjections(rows: InsertVulnerabilityProjection[]): Promise<void>;
   clearProjections(): Promise<void>;
+
+  // Multi-hazard compound-risk projections
+  hasMultiHazardProjections(countryId?: string): Promise<boolean>;
+  getMultiHazardProjection(districtId: string): Promise<MultiHazardProjection[]>;
+  getMultiHazardRankings(
+    scenario: string,
+    horizonYear: number,
+    limit: number,
+    countryId?: string
+  ): Promise<Array<MultiHazardProjection & { districtName: string; stateId: string; countryId: string }>>;
+  getMultiHazardMapData(
+    scenario: string,
+    horizonYear: number,
+    limit: number,
+    countryId?: string
+  ): Promise<Array<{ districtId: string; districtName: string; stateId: string; compositeRisk: number; perHazardRisk: Record<string, number>; dominantHazard: string | null; interactionContribution: number }>>;
+  bulkInsertMultiHazardProjections(rows: InsertMultiHazardProjection[]): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -691,6 +711,113 @@ export class DatabaseStorage implements IStorage {
   async clearProjections(): Promise<void> {
     await db.delete(vulnerabilityProjections);
     await db.delete(hazardProjections);
+  }
+
+  // ── Multi-hazard projections ────────────────────────────────────────────────
+
+  async hasMultiHazardProjections(countryId?: string): Promise<boolean> {
+    const rows = await db
+      .select({ id: multiHazardProjections.districtId })
+      .from(multiHazardProjections)
+      .innerJoin(districts, eq(multiHazardProjections.districtId, districts.id))
+      .where(countryId ? eq(districts.countryId, countryId) : undefined)
+      .limit(1);
+    return rows.length > 0;
+  }
+
+  async getMultiHazardProjection(districtId: string): Promise<MultiHazardProjection[]> {
+    return await db
+      .select()
+      .from(multiHazardProjections)
+      .where(eq(multiHazardProjections.districtId, districtId))
+      .orderBy(multiHazardProjections.scenario, asc(multiHazardProjections.horizonYear));
+  }
+
+  async getMultiHazardRankings(
+    scenario: string,
+    horizonYear: number,
+    limit: number,
+    countryId?: string
+  ) {
+    return await db
+      .select({
+        districtId:              multiHazardProjections.districtId,
+        scenario:                multiHazardProjections.scenario,
+        horizonYear:             multiHazardProjections.horizonYear,
+        perHazardRisk:           multiHazardProjections.perHazardRisk,
+        compositeRisk:           multiHazardProjections.compositeRisk,
+        interactionContribution: multiHazardProjections.interactionContribution,
+        dominantHazard:          multiHazardProjections.dominantHazard,
+        aggregationMethod:       multiHazardProjections.aggregationMethod,
+        computedAt:              multiHazardProjections.computedAt,
+        districtName:            districts.name,
+        stateId:                 districts.stateId,
+        countryId:               districts.countryId,
+      })
+      .from(multiHazardProjections)
+      .innerJoin(districts, eq(multiHazardProjections.districtId, districts.id))
+      .where(
+        and(
+          eq(multiHazardProjections.scenario, scenario),
+          eq(multiHazardProjections.horizonYear, horizonYear),
+          ...(countryId ? [eq(districts.countryId, countryId)] : [])
+        )
+      )
+      .orderBy(desc(multiHazardProjections.compositeRisk))
+      .limit(limit);
+  }
+
+  async getMultiHazardMapData(
+    scenario: string,
+    horizonYear: number,
+    limit: number,
+    countryId?: string
+  ) {
+    return await db
+      .select({
+        districtId:              multiHazardProjections.districtId,
+        districtName:            districts.name,
+        stateId:                 districts.stateId,
+        compositeRisk:           multiHazardProjections.compositeRisk,
+        perHazardRisk:           multiHazardProjections.perHazardRisk,
+        dominantHazard:          multiHazardProjections.dominantHazard,
+        interactionContribution: multiHazardProjections.interactionContribution,
+      })
+      .from(multiHazardProjections)
+      .innerJoin(districts, eq(multiHazardProjections.districtId, districts.id))
+      .where(
+        and(
+          eq(multiHazardProjections.scenario, scenario),
+          eq(multiHazardProjections.horizonYear, horizonYear),
+          ...(countryId ? [eq(districts.countryId, countryId)] : [])
+        )
+      )
+      .orderBy(desc(multiHazardProjections.compositeRisk))
+      .limit(limit);
+  }
+
+  async bulkInsertMultiHazardProjections(rows: InsertMultiHazardProjection[]): Promise<void> {
+    const CHUNK = 500;
+    for (let i = 0; i < rows.length; i += CHUNK) {
+      await db
+        .insert(multiHazardProjections)
+        .values(rows.slice(i, i + CHUNK))
+        .onConflictDoUpdate({
+          target: [
+            multiHazardProjections.districtId,
+            multiHazardProjections.scenario,
+            multiHazardProjections.horizonYear,
+          ],
+          set: {
+            perHazardRisk:           sql`excluded.per_hazard_risk`,
+            compositeRisk:           sql`excluded.composite_risk`,
+            interactionContribution: sql`excluded.interaction_contribution`,
+            dominantHazard:          sql`excluded.dominant_hazard`,
+            aggregationMethod:       sql`excluded.aggregation_method`,
+            computedAt:              sql`now()`,
+          },
+        });
+    }
   }
 }
 

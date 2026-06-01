@@ -7,7 +7,7 @@ import {
 } from "recharts";
 import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import { ArrowLeft, TrendingUp, TrendingDown, Loader2, Info, ChevronRight, X, RefreshCw, AlertTriangle, Zap, Leaf, Sliders, RotateCcw } from "lucide-react";
+import { ArrowLeft, TrendingUp, TrendingDown, Loader2, Info, ChevronRight, X, RefreshCw, AlertTriangle, Zap, Leaf, Sliders, RotateCcw, Network } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +15,31 @@ import { Slider } from "@/components/ui/slider";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 // ── Types ──────────────────────────────────────────────────────────────────
+
+interface MultiRankingRow {
+  districtId: string;
+  scenario: string;
+  horizonYear: number;
+  perHazardRisk: Record<string, number>;
+  compositeRisk: number;
+  interactionContribution: number;
+  dominantHazard: string | null;
+  aggregationMethod: string;
+  computedAt: string;
+  districtName: string;
+  stateId: string;
+  countryId: string;
+}
+
+interface MultiMapPoint {
+  districtId: string;
+  districtName: string;
+  stateId: string;
+  compositeRisk: number;
+  perHazardRisk: Record<string, number>;
+  dominantHazard: string | null;
+  interactionContribution: number;
+}
 
 interface RankingRow {
   districtId: string;
@@ -90,10 +115,34 @@ const SCENARIOS = [
 const YEARS = [2025, 2030, 2040, 2050] as const;
 
 const HAZARD_COLORS: Record<string, string> = {
-  heat: "#ef4444",
-  drought: "#f97316",
-  flood: "#3b82f6",
+  heat:        "#ef4444",
+  drought:     "#f97316",
+  flood:       "#3b82f6",
+  // 8-hazard extended palette
+  flood_river: "#2563eb",
+  flood_flash: "#6366f1",
+  cyclone:     "#8b5cf6",
+  landslide:   "#78716c",
+  cold_wave:   "#06b6d4",
+  dust_storm:  "#d97706",
 };
+
+const HAZARD_LABELS: Record<string, string> = {
+  heat:        "Extreme Heat",
+  drought:     "Drought",
+  flood:       "Flood",
+  flood_river: "Riverine Flood",
+  flood_flash: "Flash Flood",
+  cyclone:     "Cyclone",
+  landslide:   "Landslide",
+  cold_wave:   "Cold Wave",
+  dust_storm:  "Dust Storm",
+};
+
+const MULTI_HAZARD_KEYS = [
+  "heat", "drought", "flood_river", "flood_flash",
+  "cyclone", "landslide", "cold_wave", "dust_storm",
+] as const;
 
 const CMIP6_MODELS = [
   "ACCESS-CM2", "MPI-ESM1-2-HR", "MIROC6", "CNRM-CM6-1", "IPSL-CM6A-LR",
@@ -165,6 +214,7 @@ export default function StressTestPage() {
   const [showSimulator, setShowSimulator] = useState(false);
   const [simMults, setSimMults] = useState({ heat: 1, drought: 1, flood: 1 });
   const isSimulating = simMults.heat !== 1 || simMults.drought !== 1 || simMults.flood !== 1;
+  const [useMultiHazard, setUseMultiHazard] = useState(false);
   const queryClient = useQueryClient();
 
   // ── Data queries ─────────────────────────────────────────────────────────
@@ -212,6 +262,38 @@ export default function StressTestPage() {
     queryKey: ["india-geojson"],
     queryFn: () => fetch("/data/india.json").then((r) => r.json()),
     staleTime: Infinity,
+  });
+
+  const multiStatusQ = useQuery<{ hasData: boolean }>({
+    queryKey: ["mh-status", countryFilter],
+    queryFn: () =>
+      fetch(`/api/stress-test/multi-hazard/status?country=${countryFilter}`).then((r) => r.json()),
+  });
+  const hasMultiData = multiStatusQ.data?.hasData ?? false;
+
+  const multiRankingsQ = useQuery<MultiRankingRow[]>({
+    queryKey: ["mh-rankings", scenario, year, countryFilter],
+    queryFn: () =>
+      fetch(
+        `/api/stress-test/multi-hazard/rankings?scenario=${scenario}&year=${year}&limit=2000&country=${countryFilter}`
+      ).then((r) => r.json()),
+    enabled: useMultiHazard && hasMultiData,
+  });
+
+  const multiMapQ = useQuery<MultiMapPoint[]>({
+    queryKey: ["mh-map", scenario, year, countryFilter],
+    queryFn: () =>
+      fetch(
+        `/api/stress-test/multi-hazard/map-data?scenario=${scenario}&year=${year}&limit=2000&country=${countryFilter}`
+      ).then((r) => r.json()),
+    enabled: useMultiHazard && hasMultiData && countryFilter === "IND",
+  });
+
+  const multiDetailQ = useQuery<MultiRankingRow[]>({
+    queryKey: ["mh-district", selectedId],
+    queryFn: () =>
+      fetch(`/api/stress-test/multi-hazard/district/${selectedId}`).then((r) => r.json()),
+    enabled: !!selectedId && hasMultiData,
   });
 
   const [stateFilter, setStateFilter] = useState<string>("");
@@ -482,6 +564,19 @@ export default function StressTestPage() {
           </button>
         </div>
 
+        {/* Multi-hazard model toggle */}
+        <button
+          onClick={() => setUseMultiHazard((v) => !v)}
+          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all border ${
+            useMultiHazard
+              ? "bg-violet-500/15 text-violet-400 border-violet-500/40"
+              : "text-muted-foreground border-border/40 hover:text-foreground hover:border-border"
+          }`}
+        >
+          <Network className="h-3 w-3" />
+          {useMultiHazard ? "8-Hazard Model" : "3-Hazard Model"}
+        </button>
+
         {/* Provenance toggle */}
         <button
           onClick={() => setShowProvenance((v) => !v)}
@@ -553,13 +648,22 @@ export default function StressTestPage() {
               </div>
             </div>
 
-            {rankingsQ.isLoading ? (
+            {(useMultiHazard ? multiRankingsQ : rankingsQ).isLoading ? (
               <div className="flex-1 flex items-center justify-center">
                 <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
               </div>
             ) : (
               <div className="flex-1 overflow-y-auto">
-                {simulatedRankings.map((r, i) => (
+                {(useMultiHazard
+                  ? (multiRankingsQ.data ?? []).filter((r) =>
+                      !stateFilter || geoStateMap[r.districtId] === stateFilter
+                    )
+                  : simulatedRankings
+                ).map((r, i) => {
+                  const isMH = useMultiHazard;
+                  const mhRow = r as MultiRankingRow;
+                  const legRow = r as typeof simulatedRankings[0];
+                  return (
                   <button
                     key={r.districtId}
                     onClick={() =>
@@ -579,17 +683,30 @@ export default function StressTestPage() {
                       <div className="text-[10px] text-muted-foreground">{geoStateMap[r.districtId] || r.stateId}</div>
                     </div>
                     <div className="shrink-0 text-right">
-                      <div
-                        className={`text-xs font-mono font-semibold ${deteriorationColor(
-                          metric === "avoided_damage" ? r.avoidedDamage : r.deterioration
-                        )}`}
-                      >
-                        {metric === "avoided_damage"
-                          ? pct(r.avoidedDamage)
-                          : pct(r.deterioration)}
-                      </div>
-                      {r.hazardBreakdown && (
-                        <HazardBar breakdown={r.hazardBreakdown} />
+                      {isMH ? (
+                        <>
+                          <div className="text-xs font-mono font-semibold text-violet-400">
+                            {mhRow.compositeRisk.toFixed(3)}
+                          </div>
+                          {mhRow.perHazardRisk && (
+                            <HazardBar8 perHazardRisk={mhRow.perHazardRisk} dominantHazard={mhRow.dominantHazard} />
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <div
+                            className={`text-xs font-mono font-semibold ${deteriorationColor(
+                              metric === "avoided_damage" ? legRow.avoidedDamage : legRow.deterioration
+                            )}`}
+                          >
+                            {metric === "avoided_damage"
+                              ? pct(legRow.avoidedDamage)
+                              : pct(legRow.deterioration)}
+                          </div>
+                          {legRow.hazardBreakdown && (
+                            <HazardBar breakdown={legRow.hazardBreakdown} />
+                          )}
+                        </>
                       )}
                     </div>
                     <ChevronRight
@@ -598,7 +715,8 @@ export default function StressTestPage() {
                       } text-muted-foreground`}
                     />
                   </button>
-                ))}
+                  );
+                })}
               </div>
             )}
 
@@ -629,6 +747,7 @@ export default function StressTestPage() {
                 timelineData={timelineData}
                 onClose={() => setSelectedId(null)}
                 geoStateMap={geoStateMap}
+                multiDetail={multiDetailQ.data}
               />
             ) : (
               /* Overview: stats + chart */
@@ -854,7 +973,9 @@ export default function StressTestPage() {
                   <CardHeader className="pb-1 pt-3 px-4">
                     <CardTitle className="text-sm">
                       Geographic Distribution —{" "}
-                      {metric === "avoided_damage" ? "Avoided Damage" : `Deterioration by ${year}`}
+                      {useMultiHazard
+                        ? "Composite Risk (8 Hazards)"
+                        : metric === "avoided_damage" ? "Avoided Damage" : `Deterioration by ${year}`}
                     </CardTitle>
                     <p className="text-[11px] text-muted-foreground">
                       {countryFilter === "IND"
@@ -864,13 +985,24 @@ export default function StressTestPage() {
                   </CardHeader>
                   <CardContent className="pt-0 pb-3 px-3">
                     {countryFilter === "IND" ? (
-                      <ProjectionMap
-                        points={simulatedMapPoints}
-                        metric={metric}
-                        geoData={geoQ.data ?? null}
-                        highlightState={stateFilter}
-                        onSelect={setSelectedId}
-                      />
+                      useMultiHazard ? (
+                        <ProjectionMap
+                          points={[]}
+                          metric="deterioration"
+                          geoData={geoQ.data ?? null}
+                          highlightState={stateFilter}
+                          onSelect={setSelectedId}
+                          multiPoints={multiMapQ.data}
+                        />
+                      ) : (
+                        <ProjectionMap
+                          points={simulatedMapPoints}
+                          metric={metric}
+                          geoData={geoQ.data ?? null}
+                          highlightState={stateFilter}
+                          onSelect={setSelectedId}
+                        />
+                      )
                     ) : (
                       <div className="h-24 flex items-center justify-center text-xs text-muted-foreground rounded-lg border border-border/30 bg-muted/20">
                         Geographic boundary data is only available for India (IND).
@@ -920,28 +1052,40 @@ function ProjectionMap({
   geoData,
   highlightState,
   onSelect,
+  multiPoints,
 }: {
   points: MapPoint[];
   metric: "deterioration" | "avoided_damage";
   geoData: any;
   highlightState: string;
   onSelect: (id: string) => void;
+  multiPoints?: MultiMapPoint[];
 }) {
+  const isMulti = !!multiPoints;
+
   const scoreMap = useMemo(() => {
     const m: Record<string, number> = {};
-    for (const p of points) {
-      m[p.districtId] = metric === "avoided_damage"
-        ? (p.avoidedDamage ?? 0)
-        : (p.deterioration ?? 0);
+    if (isMulti && multiPoints) {
+      for (const p of multiPoints) m[p.districtId] = p.compositeRisk;
+    } else {
+      for (const p of points) {
+        m[p.districtId] = metric === "avoided_damage"
+          ? (p.avoidedDamage ?? 0)
+          : (p.deterioration ?? 0);
+      }
     }
     return m;
-  }, [points, metric]);
+  }, [points, multiPoints, metric, isMulti]);
 
   const pointMap = useMemo(() => {
-    const m: Record<string, MapPoint> = {};
-    for (const p of points) m[p.districtId] = p;
+    const m: Record<string, MapPoint | MultiMapPoint> = {};
+    if (isMulti && multiPoints) {
+      for (const p of multiPoints) m[p.districtId] = p;
+    } else {
+      for (const p of points) m[p.districtId] = p;
+    }
     return m;
-  }, [points]);
+  }, [points, multiPoints, isMulti]);
 
   const maxVal = useMemo(() => {
     const vals = Object.values(scoreMap);
@@ -966,15 +1110,19 @@ function ProjectionMap({
   const onEachFeature = useMemo(() => (feature: any, layer: any) => {
     const id = String(feature.properties.ID);
     const score = scoreMap[id];
-    const label = score != null
-      ? `<strong>${feature.properties.NAME}</strong><br/>${feature.properties.STATE}<br/>${pct(score)}`
-      : `<strong>${feature.properties.NAME}</strong><br/>${feature.properties.STATE}<br/>No data`;
+    const p = pointMap[id] as any;
+    let scoreLabel = "No data";
+    if (score != null) {
+      scoreLabel = isMulti
+        ? `Composite: ${score.toFixed(3)}${p?.dominantHazard ? ` · dominant: ${HAZARD_LABELS[p.dominantHazard] ?? p.dominantHazard}` : ""}`
+        : pct(score);
+    }
+    const label = `<strong>${feature.properties.NAME}</strong><br/>${feature.properties.STATE}<br/>${scoreLabel}`;
     layer.bindTooltip(label, { sticky: true, className: "leaflet-proj-tooltip" });
     layer.on("click", () => {
-      const p = pointMap[id];
       if (p) onSelect(p.districtId);
     });
-  }, [scoreMap, pointMap, onSelect]);
+  }, [scoreMap, pointMap, onSelect, isMulti]);
 
   // legend entries
   const legend = [
@@ -1038,6 +1186,33 @@ function HazardBar({ breakdown }: { breakdown: Record<string, number> }) {
           }}
         />
       ))}
+    </div>
+  );
+}
+
+function HazardBar8({
+  perHazardRisk,
+  dominantHazard,
+}: {
+  perHazardRisk: Record<string, number>;
+  dominantHazard: string | null;
+}) {
+  const total = MULTI_HAZARD_KEYS.reduce((s, h) => s + (perHazardRisk[h] ?? 0), 0) || 1;
+  return (
+    <div className="flex h-1 w-16 rounded overflow-hidden mt-0.5">
+      {MULTI_HAZARD_KEYS.map((h) => {
+        const share = (perHazardRisk[h] ?? 0) / total;
+        return (
+          <div
+            key={h}
+            style={{
+              width: `${(share * 100).toFixed(0)}%`,
+              background: HAZARD_COLORS[h],
+              opacity: dominantHazard === h ? 1 : 0.7,
+            }}
+          />
+        );
+      })}
     </div>
   );
 }
@@ -1110,12 +1285,14 @@ function DistrictDetailPanel({
   timelineData,
   onClose,
   geoStateMap,
+  multiDetail,
 }: {
   district: RankingRow | null;
   detail: DistrictDetail;
   timelineData: Record<string, number | string>[];
   onClose: () => void;
   geoStateMap: Record<string, string>;
+  multiDetail?: MultiRankingRow[];
 }) {
   const latestRow = detail.vulnerability.find(
     (r) => r.scenario === "current_policies" && r.horizonYear === 2050
@@ -1211,11 +1388,11 @@ function DistrictDetailPanel({
         </CardContent>
       </Card>
 
-      {/* Hazard breakdown */}
+      {/* 3-hazard breakdown (legacy model) */}
       {latestRow?.hazardBreakdown && (
         <Card className="border-border/50">
           <CardHeader className="pb-1 pt-3 px-4">
-            <CardTitle className="text-sm">Hazard Contribution (2050, Inaction)</CardTitle>
+            <CardTitle className="text-sm">Hazard Contribution — 3-Hazard Model (2050, Inaction)</CardTitle>
           </CardHeader>
           <CardContent className="pt-0 pb-3 px-4 space-y-2">
             {(["heat", "drought", "flood"] as const).map((h) => {
@@ -1226,10 +1403,7 @@ function DistrictDetailPanel({
                   <div className="flex-1 h-2 bg-muted/30 rounded-full overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all"
-                      style={{
-                        width: `${(share * 100).toFixed(0)}%`,
-                        background: HAZARD_COLORS[h],
-                      }}
+                      style={{ width: `${(share * 100).toFixed(0)}%`, background: HAZARD_COLORS[h] }}
                     />
                   </div>
                   <span className="text-xs font-mono w-10 text-right text-muted-foreground">
@@ -1241,6 +1415,73 @@ function DistrictDetailPanel({
           </CardContent>
         </Card>
       )}
+
+      {/* 8-hazard compound risk breakdown */}
+      {(() => {
+        const mhRow = multiDetail?.find(
+          (r) => r.scenario === "current_policies" && r.horizonYear === 2050
+        );
+        if (!mhRow) return null;
+        const maxRisk = Math.max(...MULTI_HAZARD_KEYS.map((h) => mhRow.perHazardRisk[h] ?? 0), 1e-9);
+        const interactionPct = mhRow.compositeRisk > 0
+          ? ((mhRow.interactionContribution / mhRow.compositeRisk) * 100).toFixed(1)
+          : "0.0";
+        return (
+          <Card className="border-violet-500/30 bg-violet-500/5">
+            <CardHeader className="pb-1 pt-3 px-4">
+              <div className="flex items-center gap-2">
+                <Network className="h-3.5 w-3.5 text-violet-400" />
+                <CardTitle className="text-sm">Compound Risk — 8-Hazard Model (2050, Inaction)</CardTitle>
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                Composite: <strong className="text-violet-400">{mhRow.compositeRisk.toFixed(3)}</strong>
+                {" · "}Interaction contribution: <strong className="text-amber-400">{interactionPct}%</strong>
+                {mhRow.dominantHazard && (
+                  <> · Dominant: <strong className="text-foreground">{HAZARD_LABELS[mhRow.dominantHazard] ?? mhRow.dominantHazard}</strong></>
+                )}
+              </p>
+            </CardHeader>
+            <CardContent className="pt-0 pb-3 px-4 space-y-1.5">
+              {MULTI_HAZARD_KEYS.map((h) => {
+                const risk = mhRow.perHazardRisk[h] ?? 0;
+                const barWidth = maxRisk > 0 ? (risk / maxRisk) * 100 : 0;
+                return (
+                  <div key={h} className="flex items-center gap-2">
+                    <span
+                      className="text-[11px] w-20 shrink-0 text-muted-foreground truncate"
+                      title={HAZARD_LABELS[h]}
+                    >
+                      {HAZARD_LABELS[h]}
+                    </span>
+                    <div className="flex-1 h-1.5 bg-muted/30 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{
+                          width: `${barWidth.toFixed(0)}%`,
+                          background: HAZARD_COLORS[h],
+                          opacity: mhRow.dominantHazard === h ? 1 : 0.75,
+                        }}
+                      />
+                    </div>
+                    <span className="text-[11px] font-mono w-12 text-right text-muted-foreground">
+                      {risk.toFixed(3)}
+                    </span>
+                  </div>
+                );
+              })}
+              {mhRow.interactionContribution > 0 && (
+                <div className="mt-2 pt-2 border-t border-border/30 flex items-center justify-between text-[11px] text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <Network className="h-3 w-3 text-amber-400" />
+                    Gill &amp; Malamud interaction amplification
+                  </span>
+                  <span className="font-mono text-amber-400">+{mhRow.interactionContribution.toFixed(3)}</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        );
+      })()}
     </div>
   );
 }

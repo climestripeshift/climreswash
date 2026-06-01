@@ -656,9 +656,12 @@ export async function registerRoutes(
 
   app.post("/api/stress-test/compute", async (_req, res) => {
     try {
-      const { computeStressTestProjections } = await import("./seedStressTest");
-      const result = await computeStressTestProjections();
-      res.json({ ok: true, ...result });
+      const { computeStressTestProjections, computeMultiHazardProjections } = await import("./seedStressTest");
+      const [r1, r2] = await Promise.all([
+        computeStressTestProjections(),
+        computeMultiHazardProjections(),
+      ]);
+      res.json({ ok: true, districts: r1.districts, rows: r1.rows + r2.rows, multiHazardRows: r2.rows });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -699,6 +702,53 @@ export async function registerRoutes(
         storage.getVulnerabilityProjections(req.params.id),
       ]);
       res.json({ hazard, vulnerability: vuln });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // ── Multi-hazard compound-risk endpoints ──────────────────────────────────
+
+  app.get("/api/stress-test/multi-hazard/status", async (req, res) => {
+    try {
+      const countryId = (req.query.country as string) || undefined;
+      const has = await storage.hasMultiHazardProjections(countryId);
+      res.json({ hasData: has });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/stress-test/multi-hazard/rankings", async (req, res) => {
+    try {
+      const scenario   = (req.query.scenario as string) || "current_policies";
+      const year       = parseInt((req.query.year as string) || "2050", 10);
+      const limit      = Math.min(parseInt((req.query.limit as string) || "200", 10), 2000);
+      const countryId  = (req.query.country as string) || undefined;
+      const rows = await storage.getMultiHazardRankings(scenario, year, limit, countryId);
+      res.json(rows);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/stress-test/multi-hazard/map-data", async (req, res) => {
+    try {
+      const scenario  = (req.query.scenario as string) || "current_policies";
+      const year      = parseInt((req.query.year as string) || "2050", 10);
+      const limit     = Math.min(parseInt((req.query.limit as string) || "2000", 10), 2000);
+      const countryId = (req.query.country as string) || undefined;
+      const rows = await storage.getMultiHazardMapData(scenario, year, limit, countryId);
+      res.json(rows);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/stress-test/multi-hazard/district/:id", async (req, res) => {
+    try {
+      const rows = await storage.getMultiHazardProjection(req.params.id);
+      res.json(rows);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }

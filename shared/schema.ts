@@ -378,3 +378,61 @@ export type HazardProjection = typeof hazardProjections.$inferSelect;
 export type InsertHazardProjection = z.infer<typeof insertHazardProjectionSchema>;
 export type VulnerabilityProjection = typeof vulnerabilityProjections.$inferSelect;
 export type InsertVulnerabilityProjection = z.infer<typeof insertVulnerabilityProjectionSchema>;
+
+// ── Multi-hazard compound-risk model (Phase 1–5 upgrade) ──────────────────────
+
+// Canonical hazard taxonomy — 8 hazard types used in the compound-risk model
+export const hazardTaxonomy = pgTable("hazard_taxonomy", {
+  id:             varchar("id", { length: 50 }).primaryKey(),  // 'heat', 'drought', 'flood_river', …
+  name:           varchar("name", { length: 100 }).notNull(),
+  shortCode:      varchar("short_code", { length: 10 }).notNull(),
+  category:       varchar("category", { length: 50 }).notNull(),  // 'meteorological' | 'hydrological' | 'geomorphological'
+  geographicScope: text("geographic_scope").array().notNull(),    // state names where hazard is primary
+  description:    text("description").notNull(),
+  dataSource:     text("data_source").notNull(),
+  defaultWeight:  real("default_weight").notNull().default(0),    // weight in composite (must sum to 1)
+  sortOrder:      integer("sort_order").notNull().default(0),
+  createdAt:      timestamp("created_at").defaultNow().notNull(),
+});
+
+// Hazard interaction matrix (Gill & Malamud 2014 qualitative codes)
+// Rows where i=j (self-interaction) are not stored.
+// qualitativeCode: -2 (strong inhibit) to +2 (strong trigger)
+export const hazardInteractionMatrix = pgTable("hazard_interaction_matrix", {
+  hazardIdI:       varchar("hazard_id_i", { length: 50 }).notNull(),
+  hazardIdJ:       varchar("hazard_id_j", { length: 50 }).notNull(),
+  interactionType: varchar("interaction_type", { length: 50 }),   // 'trigger' | 'increase' | 'inhibit' | 'independent'
+  qualitativeCode: integer("qualitative_code").notNull(),          // -2 to +2
+  strength:        real("strength"),                               // null until empirically calibrated
+  notes:           text("notes"),
+  source:          text("source"),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.hazardIdI, t.hazardIdJ] }),
+}));
+
+// Multi-hazard composite projections — one row per (district, scenario, horizonYear)
+// Produced by computeMultiHazardProjections(); augments, never replaces, vulnerabilityProjections.
+export const multiHazardProjections = pgTable("multi_hazard_projections", {
+  districtId:              varchar("district_id", { length: 100 }).notNull(),
+  scenario:                varchar("scenario", { length: 50 }).notNull(),
+  horizonYear:             integer("horizon_year").notNull(),
+  perHazardRisk:           jsonb("per_hazard_risk").$type<Record<string, number>>().notNull(),
+  compositeRisk:           doublePrecision("composite_risk").notNull(),
+  interactionContribution: doublePrecision("interaction_contribution").notNull().default(0),
+  dominantHazard:          varchar("dominant_hazard", { length: 50 }),
+  aggregationMethod:       varchar("aggregation_method", { length: 80 }).notNull(),
+  computedAt:              timestamp("computed_at").defaultNow().notNull(),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.districtId, t.scenario, t.horizonYear] }),
+}));
+
+export const insertHazardTaxonomySchema = createInsertSchema(hazardTaxonomy).omit({ createdAt: true });
+export const insertHazardInteractionSchema = createInsertSchema(hazardInteractionMatrix);
+export const insertMultiHazardProjectionSchema = createInsertSchema(multiHazardProjections).omit({ computedAt: true });
+
+export type HazardTaxonomy = typeof hazardTaxonomy.$inferSelect;
+export type InsertHazardTaxonomy = z.infer<typeof insertHazardTaxonomySchema>;
+export type HazardInteraction = typeof hazardInteractionMatrix.$inferSelect;
+export type InsertHazardInteraction = z.infer<typeof insertHazardInteractionSchema>;
+export type MultiHazardProjection = typeof multiHazardProjections.$inferSelect;
+export type InsertMultiHazardProjection = z.infer<typeof insertMultiHazardProjectionSchema>;
