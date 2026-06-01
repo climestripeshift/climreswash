@@ -1019,6 +1019,8 @@ export default function StressTestPage() {
                         <ProjectionMap
                           points={[]}
                           metric="deterioration"
+                          scenario={scenario}
+                          year={year}
                           geoData={geoQ.data ?? null}
                           highlightState={stateFilter}
                           onSelect={setSelectedId}
@@ -1028,6 +1030,8 @@ export default function StressTestPage() {
                         <ProjectionMap
                           points={simulatedMapPoints}
                           metric={metric}
+                          scenario={scenario}
+                          year={year}
                           geoData={geoQ.data ?? null}
                           highlightState={stateFilter}
                           onSelect={setSelectedId}
@@ -1079,6 +1083,8 @@ function choroplethColor(score: number, max: number): string {
 function ProjectionMap({
   points,
   metric,
+  scenario,
+  year,
   geoData,
   highlightState,
   onSelect,
@@ -1086,6 +1092,8 @@ function ProjectionMap({
 }: {
   points: MapPoint[];
   metric: "deterioration" | "avoided_damage";
+  scenario: string;
+  year: number;
   geoData: any;
   highlightState: string;
   onSelect: (id: string) => void;
@@ -1183,7 +1191,7 @@ function ProjectionMap({
               attribution='&copy; <a href="https://carto.com/">CARTO</a>'
             />
             <GeoJSON
-              key={`${metric}-${Object.keys(scoreMap).length}-${highlightState}`}
+              key={`${metric}-${scenario}-${year}-${Object.keys(scoreMap).length}-${highlightState}`}
               data={geoData}
               style={styleFeature}
               onEachFeature={onEachFeature}
