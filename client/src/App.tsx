@@ -13,6 +13,7 @@ import TechnologyPage from "@/pages/TechnologyPage";
 import LiveDataPage from "@/pages/LiveDataPage";
 import StressTestPage from "@/pages/StressTestPage";
 import AdaptPage from "@/pages/AdaptPage";
+import RiskMapPage from "@/pages/RiskMapPage";
 
 function Router() {
   return (
@@ -22,6 +23,7 @@ function Router() {
       <Route path="/live-data" component={LiveDataPage} />
       <Route path="/stress-test" component={StressTestPage} />
       <Route path="/adapt" component={AdaptPage} />
+      <Route path="/risk-map" component={RiskMapPage} />
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/technology" component={TechnologyPage} />
