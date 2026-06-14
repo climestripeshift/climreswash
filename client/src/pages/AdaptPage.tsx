@@ -5,7 +5,7 @@ import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import {
   ArrowLeft, Loader2, RefreshCw, AlertTriangle, ShieldCheck,
-  Droplets, Building2, HeartPulse, ScrollText, ChevronRight, X,
+  Droplets, HeartPulse, ScrollText, ChevronRight, X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -224,9 +224,18 @@ export default function AdaptPage() {
 
   const geoQ = useQuery<any>({
     queryKey: ["india-geojson"],
-    queryFn: () => fetch("/api/geo/india-districts").then((r) => r.json()),
+    queryFn: () => fetch("/data/india.json").then((r) => r.json()),
     staleTime: Infinity,
   });
+
+  // Build name/state lookup from GeoJSON so rankings show human-readable labels
+  const nameMap = useMemo(() => {
+    const m: Record<string, { name: string; state: string }> = {};
+    for (const f of (geoQ.data?.features ?? [])) {
+      m[String(f.properties.ID)] = { name: f.properties.NAME, state: f.properties.STATE };
+    }
+    return m;
+  }, [geoQ.data]);
 
   const scoreMap = useMemo(() => {
     const m: Record<string, number> = {};
@@ -387,7 +396,12 @@ export default function AdaptPage() {
                     >
                       <span className="text-[10px] text-muted-foreground w-5 shrink-0">{i + 1}</span>
                       <div className="flex-1 min-w-0">
-                        <div className="text-xs font-medium truncate">{row.districtId}</div>
+                        <div className="text-xs font-medium truncate">
+                          {nameMap[row.districtId]?.name ?? row.districtId}
+                        </div>
+                        <div className="text-[9px] text-muted-foreground truncate">
+                          {nameMap[row.districtId]?.state ?? ""}
+                        </div>
                         <div className="flex gap-2 mt-0.5">
                           <div className="h-1 rounded-full bg-muted/40 flex-1">
                             <div
@@ -480,7 +494,7 @@ export default function AdaptPage() {
                     {/* Category filter */}
                     <div className="flex gap-1 mt-2 flex-wrap">
                       {(["All", "WASH", "DRR", "Policy", "Health"] as const).map((cat) => {
-                        const meta = cat !== "All" ? CATEGORY_META[cat] : null;
+                        // meta unused here — category colour is applied inside RecommendationCard
                         return (
                           <button
                             key={cat}
