@@ -17,7 +17,8 @@ import {
   Sparkles, 
   Globe,
   LineChart,
-  BookOpen
+  BookOpen,
+  Leaf
 } from "lucide-react";
 
 // --- Utility Components ---
@@ -71,6 +72,7 @@ const FEATURES = [
   { icon: <Banknote className="w-5 h-5 text-primary" />, title: "Investment Modelling", desc: "Per-capita funding needs estimated by hazard score, deficit, and health burden.", tag: "Finance" },
   { icon: <ShieldCheck className="w-5 h-5 text-primary" />, title: "Child Vulnerability", desc: "Children at risk quantified per district, including stunting and malnutrition metrics.", tag: "Children" },
   { icon: <Activity className="w-5 h-5 text-primary" />, title: "2050 Stress Test", desc: "AR6-based projections under 3 IPCC scenarios. Ranks districts by deterioration to 2050.", tag: "New", link: "/stress-test", highlight: true },
+  { icon: <Leaf className="w-5 h-5 text-primary" />, title: "Adaptation Planner", desc: "Python-powered compound-risk engine. District-level WASH, DRR, Policy, and Health recommendations.", tag: "Beta", link: "/adapt", highlight: true },
 ];
 
 const METHODOLOGY = [
@@ -115,6 +117,9 @@ export default function HomePage() {
               <a href="#methodology" className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-primary transition-colors">Methodology</a>
               <Link href="/stress-test" className="text-sm font-semibold flex items-center gap-1.5 text-primary hover:text-primary/80 transition-colors">
                 <Sparkles className="w-3.5 h-3.5" /> 2050 Test
+              </Link>
+              <Link href="/adapt" className="text-sm font-semibold flex items-center gap-1.5 text-emerald-600 hover:text-emerald-500 transition-colors">
+                <Leaf className="w-3.5 h-3.5" /> Adapt
               </Link>
             </div>
 
