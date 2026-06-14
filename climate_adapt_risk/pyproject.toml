@@ -1,0 +1,9 @@
+[project]
+name = "climate-adapt-risk"
+version = "0.1.0"
+description = "ClimateAdapt district risk engine (DRR identity + ENSO forcing + biophysical mediation)"
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

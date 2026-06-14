@@ -27,6 +27,8 @@ import {
   type InsertVulnerabilityProjection,
   type MultiHazardProjection,
   type InsertMultiHazardProjection,
+  type AdaptProjection,
+  type InsertAdaptProjection,
   users,
   countries,
   states,
@@ -41,6 +43,7 @@ import {
   hazardProjections,
   vulnerabilityProjections,
   multiHazardProjections,
+  adaptProjections,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, desc, asc, sql } from "drizzle-orm";
@@ -154,6 +157,13 @@ export interface IStorage {
     countryId?: string
   ): Promise<Array<{ districtId: string; districtName: string; stateId: string; compositeRisk: number; perHazardRisk: Record<string, number>; dominantHazard: string | null; interactionContribution: number }>>;
   bulkInsertMultiHazardProjections(rows: InsertMultiHazardProjection[]): Promise<void>;
+
+  // Adaptation Projections (Python climate-adapt-risk engine)
+  hasAdaptProjections(): Promise<boolean>;
+  getAdaptProjection(districtId: string): Promise<AdaptProjection | null>;
+  getAdaptRankings(limit: number): Promise<AdaptProjection[]>;
+  getAdaptMapData(limit: number): Promise<Array<{ districtId: string; riskScore: number; hazardNorm: number; effectiveDrought: number; effectiveFlood: number }>>;
+  bulkInsertAdaptProjections(rows: InsertAdaptProjection[]): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -815,6 +825,64 @@ export class DatabaseStorage implements IStorage {
             dominantHazard:          sql`excluded.dominant_hazard`,
             aggregationMethod:       sql`excluded.aggregation_method`,
             computedAt:              sql`now()`,
+          },
+        });
+    }
+  }
+
+  // ── Adaptation Projections ────────────────────────────────────────────────
+
+  async hasAdaptProjections(): Promise<boolean> {
+    const [row] = await db.select({ c: sql<number>`count(*)::int` }).from(adaptProjections);
+    return (row?.c ?? 0) > 0;
+  }
+
+  async getAdaptProjection(districtId: string): Promise<AdaptProjection | null> {
+    const [row] = await db.select().from(adaptProjections)
+      .where(eq(adaptProjections.districtId, districtId));
+    return row ?? null;
+  }
+
+  async getAdaptRankings(limit: number): Promise<AdaptProjection[]> {
+    return db.select().from(adaptProjections)
+      .orderBy(desc(adaptProjections.riskScore))
+      .limit(limit);
+  }
+
+  async getAdaptMapData(limit: number): Promise<Array<{
+    districtId: string; riskScore: number; hazardNorm: number;
+    effectiveDrought: number; effectiveFlood: number;
+  }>> {
+    return db.select({
+      districtId:       adaptProjections.districtId,
+      riskScore:        adaptProjections.riskScore,
+      hazardNorm:       adaptProjections.hazardNorm,
+      effectiveDrought: adaptProjections.effectiveDrought,
+      effectiveFlood:   adaptProjections.effectiveFlood,
+    }).from(adaptProjections)
+      .orderBy(desc(adaptProjections.riskScore))
+      .limit(limit);
+  }
+
+  async bulkInsertAdaptProjections(rows: InsertAdaptProjection[]): Promise<void> {
+    const CHUNK = 500;
+    for (let i = 0; i < rows.length; i += CHUNK) {
+      await db
+        .insert(adaptProjections)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .values(rows.slice(i, i + CHUNK) as any)
+        .onConflictDoUpdate({
+          target: adaptProjections.districtId,
+          set: {
+            effectiveDrought: sql`excluded.effective_drought`,
+            effectiveFlood:   sql`excluded.effective_flood`,
+            compoundHazard:   sql`excluded.compound_hazard`,
+            hazardNorm:       sql`excluded.hazard_norm`,
+            riskScore:        sql`excluded.risk_score`,
+            impactPeople:     sql`excluded.impact_people`,
+            impactLivelihood: sql`excluded.impact_livelihood`,
+            recommendations:  sql`excluded.recommendations`,
+            computedAt:       sql`now()`,
           },
         });
     }

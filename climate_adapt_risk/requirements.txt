@@ -1,0 +1,8 @@
+pytest>=7.0
+# production extras (not needed for the skeleton tests):
+# numpy
+# pandas
+# geopandas
+# statsmodels
+# SQLAlchemy
+# psycopg2-binary

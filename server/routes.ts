@@ -754,6 +754,57 @@ export async function registerRoutes(
     }
   });
 
+  // ── Adaptation Pathways (Python climate-adapt-risk engine) ───────────────
+
+  app.get("/api/adapt/status", async (_req, res) => {
+    try {
+      const hasData = await storage.hasAdaptProjections();
+      res.json({ hasData });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/adapt/compute", async (_req, res) => {
+    try {
+      const { computeAdaptProjections } = await import("./adaptEngine.js");
+      const result = await computeAdaptProjections();
+      res.json({ ok: true, ...result });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/adapt/districts", async (req, res) => {
+    try {
+      const limit = Math.min(Number(req.query.limit) || 2000, 5000);
+      const rows = await storage.getAdaptMapData(limit);
+      res.json(rows);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/adapt/rankings", async (req, res) => {
+    try {
+      const limit = Math.min(Number(req.query.limit) || 200, 2000);
+      const rows = await storage.getAdaptRankings(limit);
+      res.json(rows);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/adapt/district/:id", async (req, res) => {
+    try {
+      const row = await storage.getAdaptProjection(req.params.id);
+      if (!row) return res.status(404).json({ error: "Not found" });
+      res.json(row);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // ── Auth routes ───────────────────────────────────────────────────────────
   app.post("/api/auth/login", loginHandler);
   app.post("/api/auth/logout", logoutHandler);

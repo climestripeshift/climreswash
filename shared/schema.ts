@@ -436,3 +436,30 @@ export type HazardInteraction = typeof hazardInteractionMatrix.$inferSelect;
 export type InsertHazardInteraction = z.infer<typeof insertHazardInteractionSchema>;
 export type MultiHazardProjection = typeof multiHazardProjections.$inferSelect;
 export type InsertMultiHazardProjection = z.infer<typeof insertMultiHazardProjectionSchema>;
+
+// ── Adaptation Projections (Python climate-adapt-risk engine output) ──────────
+
+export interface AdaptRecommendation {
+  category: "WASH" | "DRR" | "Policy" | "Health";
+  priority: "Critical" | "High" | "Medium" | "Low";
+  action: string;
+  rationale: string;
+  indicator: string;
+}
+
+export const adaptProjections = pgTable("adapt_projections", {
+  districtId:         varchar("district_id", { length: 100 }).primaryKey(),
+  effectiveDrought:   doublePrecision("effective_drought").notNull(),
+  effectiveFlood:     doublePrecision("effective_flood").notNull(),
+  compoundHazard:     doublePrecision("compound_hazard").notNull(),
+  hazardNorm:         doublePrecision("hazard_norm").notNull(),
+  riskScore:          doublePrecision("risk_score").notNull(),
+  impactPeople:       doublePrecision("impact_people").notNull(),
+  impactLivelihood:   doublePrecision("impact_livelihood").notNull(),
+  recommendations:    jsonb("recommendations").$type<AdaptRecommendation[]>().notNull().default([]),
+  computedAt:         timestamp("computed_at").defaultNow().notNull(),
+});
+
+export const insertAdaptProjectionSchema = createInsertSchema(adaptProjections).omit({ computedAt: true });
+export type AdaptProjection = typeof adaptProjections.$inferSelect;
+export type InsertAdaptProjection = z.infer<typeof insertAdaptProjectionSchema>;
