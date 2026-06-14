@@ -54,15 +54,40 @@ function generateSeasonalData(vulnerabilityScore: number) {
   }));
 }
 
-function generateDistrictData(name: string, id: string) {
-  const vulnerabilityScore = Math.round(30 + Math.random() * 60);
+/** Convert state name to a stable slug used as the DB primary key. */
+function stateSlug(stateName: string): string {
+  return stateName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+}
+
+/**
+ * Build district data from GeoJSON properties + seeded WASH/health fields.
+ * hazardScore, exposureScore, vulnerabilityScore come from the GeoJSON so the
+ * map choropleth reflects real relative risk values rather than random numbers.
+ */
+function generateDistrictData(
+  name: string,
+  id: string,
+  stateId: string,
+  geoHazard: number,
+  geoExposure: number,
+  geoVulnerability: number,
+) {
+  // Scale GeoJSON [0,1] scores to [0,100] for the DB columns
+  const hazardScore    = Math.round(geoHazard       * 100);
+  const exposureScore  = Math.round(geoExposure      * 100);
+  const vulnerabilityScore = Math.round(geoVulnerability * 100);
+
   const adaptationScore = Math.round(20 + Math.random() * 50);
   const population = Math.round(500000 + Math.random() * 3000000);
-  
+
   return {
     id,
     name,
+    stateId,
+    countryId: "IND",
     population,
+    hazardScore,
+    exposureScore,
     vulnerabilityScore,
     adaptationScore,
     childrenAtRisk: Math.round(population * 0.05 * (vulnerabilityScore / 100)),
@@ -161,23 +186,53 @@ async function seedIndiaDatabase() {
       criticalDistricts: 0
     });
 
-    console.log("🏛️ Creating state (India-wide placeholder)...");
-    await storage.createState({
-      id: "ALL",
-      countryId: "IND",
-      name: "All States",
-      code: "ALL",
-      population: 1400000000,
-      totalDistricts: districtFeatures.length,
-      totalBlocks: 0,
-      avgVulnerabilityScore: 55,
-      avgAdaptationScore: 40,
-      totalChildrenAtRisk: 50000000,
-      totalElderlyAtRisk: 35000000,
-      activeAlerts: 0,
-      criticalDistricts: 0,
-      topClimateRisks: ["Drought", "Flood", "Heatwave", "Cyclone", "Cold Wave"]
-    });
+    // ── Group features by state so we can create one state record each ─────────
+    const byState = new Map<string, typeof districtFeatures>();
+    for (const f of districtFeatures) {
+      const sName: string = f.properties.STATE || "Unknown";
+      if (!byState.has(sName)) byState.set(sName, []);
+      byState.get(sName)!.push(f);
+    }
+
+    console.log(`🏛️ Creating ${byState.size} state records...`);
+    // Approximate populations per state (Census 2011, millions → scaled)
+    const STATE_POP: Record<string, number> = {
+      "Uttar Pradesh": 200000000, "Maharashtra": 112000000, "Bihar": 104000000,
+      "West Bengal": 91000000, "Madhya Pradesh": 72000000, "Rajasthan": 69000000,
+      "Tamil Nadu": 72000000, "Karnataka": 61000000, "Gujarat": 60000000,
+      "Andhra Pradesh": 50000000, "Telangana": 35000000, "Odisha": 42000000,
+      "Jharkhand": 33000000, "Kerala": 33000000, "Assam": 31000000,
+      "Punjab": 28000000, "Chhattisgarh": 26000000, "Haryana": 25000000,
+      "Uttarakhand": 10000000, "Himachal Pradesh": 7000000, "Jammu And Kashmir": 12000000,
+      "Ladakh": 300000, "Delhi": 16700000, "Goa": 1500000, "Tripura": 3700000,
+      "Meghalaya": 3000000, "Manipur": 2800000, "Nagaland": 1980000,
+      "Mizoram": 1100000, "Sikkim": 610000, "Arunachal Pradesh": 1380000,
+      "Chandigarh": 1050000, "Puducherry": 1250000, "Lakshadweep": 64000,
+      "Andaman And Nicobar Islands": 380000,
+      "Dadra & Nagar Haveli And Daman & Diu": 590000,
+    };
+
+    for (const [stateName, features] of Array.from(byState.entries())) {
+      const sid = stateSlug(stateName);
+      const avgVuln = Math.round(features.reduce((s: number, f: any) => s + (f.properties.VULNERABILITY || 0.5), 0) / features.length * 100);
+      const pop = STATE_POP[stateName] ?? Math.round(features.length * 800000);
+      await storage.createState({
+        id: sid,
+        countryId: "IND",
+        name: stateName,
+        code: sid.toUpperCase().slice(0, 6),
+        population: pop,
+        totalDistricts: features.length,
+        totalBlocks: 0,
+        avgVulnerabilityScore: avgVuln,
+        avgAdaptationScore: 40,
+        totalChildrenAtRisk: Math.round(pop * 0.05 * (avgVuln / 100)),
+        totalElderlyAtRisk: Math.round(pop * 0.03 * (avgVuln / 100)),
+        activeAlerts: 0,
+        criticalDistricts: 0,
+        topClimateRisks: ["Drought", "Flood", "Heatwave", "Cyclone", "Cold Wave"],
+      });
+    }
 
     let totalAlerts = 0;
     let criticalDistricts = 0;
@@ -186,15 +241,21 @@ async function seedIndiaDatabase() {
     let sumChildren = 0;
     let sumElderly = 0;
 
-    console.log("📊 Creating districts...");
-    
+    console.log("📊 Creating districts with real GeoJSON risk scores...");
+
     for (let i = 0; i < districtFeatures.length; i++) {
       const feature = districtFeatures[i];
-      const name = feature.properties.NAME;
-      const id = feature.properties.ID;
-      
-      const districtData = generateDistrictData(name, id);
-      
+      const name    = feature.properties.NAME;
+      const id      = feature.properties.ID;
+      const stateName: string = feature.properties.STATE || "Unknown";
+      const sid     = stateSlug(stateName);
+
+      const geoHazard       = Number(feature.properties.HAZARD)        || 0.25;
+      const geoExposure     = Number(feature.properties.EXPOSURE)       || 0.35;
+      const geoVulnerability = Number(feature.properties.VULNERABILITY) || 0.40;
+
+      const districtData = generateDistrictData(name, id, sid, geoHazard, geoExposure, geoVulnerability);
+
       const createdDistrict = await storage.createDistrict(districtData);
       
       if (districtData.vulnerabilityScore >= 70) criticalDistricts++;
