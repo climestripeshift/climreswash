@@ -1,8 +1,9 @@
-import { useState, useMemo, useCallback, useRef } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
-import type { Map as LeafletMap } from "leaflet";
+import { MapContainer, TileLayer, GeoJSON, useMap } from "react-leaflet";
+import type { Map as LeafletMap, GeoJSON as LeafletGeoJSONLayer } from "leaflet";
+import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import {
   ArrowLeft, ChevronDown, AlertTriangle, Loader2, Grid3X3,
@@ -207,6 +208,48 @@ function Legend({ attr }: { attr: AttrKey }) {
   );
 }
 
+// ── Canvas renderer setup (runs once inside MapContainer) ────────────────────
+
+const canvasRenderer = L.canvas({ padding: 0.5 });
+
+function SetupCanvas() {
+  const map = useMap();
+  useEffect(() => {
+    (map as any).options.renderer = canvasRenderer;
+  }, [map]);
+  return null;
+}
+
+// ── Clicked hex info panel ────────────────────────────────────────────────────
+
+function HexInfoPanel({ props, onClose }: { props: any; onClose: () => void }) {
+  return (
+    <div className="bg-background/95 backdrop-blur border border-border/40 rounded-lg shadow-lg p-3 w-52">
+      <div className="flex items-start justify-between mb-2">
+        <span className="text-xs font-semibold">{props.state}</span>
+        <button onClick={onClose} className="text-muted-foreground hover:text-foreground ml-2">
+          <span className="text-xs">✕</span>
+        </button>
+      </div>
+      <div className="space-y-1 text-[11px]">
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">⛰️ Elevation</span>
+          <span className="font-medium">{props.elevation_mean}m</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">🌿 NDVI</span>
+          <span className="font-medium">{props.ndvi_mean}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">🗺️ Land Use</span>
+          <span className="font-medium capitalize">{props.land_use}</span>
+        </div>
+      </div>
+      <div className="mt-2 text-[9px] text-muted-foreground/50 truncate">{props.h3_id}</div>
+    </div>
+  );
+}
+
 // ── Leaflet map ───────────────────────────────────────────────────────────────
 
 function HexMap({
@@ -214,12 +257,16 @@ function HexMap({
   attr,
   selectedState,
   mapRef,
+  onHexClick,
 }: {
   geoData: any;
   attr: AttrKey;
   selectedState: string;
   mapRef: React.MutableRefObject<LeafletMap | null>;
+  onHexClick: (props: any) => void;
 }) {
+  const geoJsonRef = useRef<LeafletGeoJSONLayer | null>(null);
+
   const filtered = useMemo(() => {
     if (!geoData) return null;
     if (selectedState === "All India") return geoData;
@@ -237,42 +284,27 @@ function HexMap({
       fillOpacity: 0.75,
       color:       "#64748b",
       weight:      0.3,
+      renderer:    canvasRenderer,
     }),
     [attr]
   );
 
+  // Re-colour without rebuilding the layer when attribute changes
+  useEffect(() => {
+    geoJsonRef.current?.setStyle(styleFeature);
+  }, [styleFeature]);
+
   const onEachFeature = useCallback(
     (feature: any, layer: any) => {
       const p = feature.properties;
-      const popupHtml = `
-        <div style="font-size:12px;line-height:1.6">
-          <div style="font-weight:600;margin-bottom:4px">${p.state}</div>
-          ⛰️ Elevation: <b>${p.elevation_mean ?? "—"}m</b><br/>
-          🌿 NDVI: <b>${p.ndvi_mean ?? "—"}</b><br/>
-          🗺️ Land Use: <b style="text-transform:capitalize">${p.land_use ?? "—"}</b><br/>
-          <div style="font-size:10px;color:#94a3b8;margin-top:4px">${p.h3_id}</div>
-        </div>
-      `;
-      layer.bindPopup(popupHtml);
-      layer.on("mouseover", (e: any) => {
-        e.target.setStyle({ weight: 1.2, fillOpacity: 0.95 });
-        e.target.openTooltip();
-      });
-      layer.on("mouseout", (e: any) => {
-        e.target.setStyle(styleFeature(feature));
-        e.target.closeTooltip();
-      });
-      const attr_label =
-        attr === "elevation_mean"
-          ? `${p.elevation_mean}m`
-          : attr === "ndvi_mean"
-          ? `NDVI ${p.ndvi_mean}`
-          : p.land_use;
-      layer.bindTooltip(`<strong>${p.state}</strong> · ${attr_label}`, {
-        sticky: true,
-      });
+      const label =
+        attr === "elevation_mean" ? `${p.elevation_mean}m`
+        : attr === "ndvi_mean"   ? `NDVI ${p.ndvi_mean}`
+        : p.land_use;
+      layer.bindTooltip(`<b>${p.state}</b> · ${label}`, { sticky: true });
+      layer.on("click", () => onHexClick(p));
     },
-    [attr, styleFeature]
+    [attr, onHexClick]
   );
 
   if (!filtered) return null;
@@ -288,12 +320,14 @@ function HexMap({
       maxZoom={10}
       ref={mapRef}
     >
+      <SetupCanvas />
       <TileLayer
         url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>'
       />
       <GeoJSON
-        key={`${attr}-${selectedState}`}
+        ref={geoJsonRef}
+        key={selectedState}
         data={filtered}
         style={styleFeature}
         onEachFeature={onEachFeature}
@@ -305,8 +339,9 @@ function HexMap({
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function HexMapPage() {
-  const [attr, setAttr]             = useState<AttrKey>("elevation_mean");
+  const [attr, setAttr]                   = useState<AttrKey>("elevation_mean");
   const [selectedState, setSelectedState] = useState("All India");
+  const [clickedHex, setClickedHex]       = useState<any | null>(null);
   const mapRef = useRef<LeafletMap | null>(null);
 
   const hexQ = useQuery<any>({
@@ -419,7 +454,15 @@ export default function HexMapPage() {
             attr={attr}
             selectedState={selectedState}
             mapRef={mapRef}
+            onHexClick={setClickedHex}
           />
+        )}
+
+        {/* Clicked hex info — top-right */}
+        {clickedHex && (
+          <div className="absolute top-3 right-3 z-[800]">
+            <HexInfoPanel props={clickedHex} onClose={() => setClickedHex(null)} />
+          </div>
         )}
 
         {/* Legend — bottom-left */}
