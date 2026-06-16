@@ -14,6 +14,7 @@ import LiveDataPage from "@/pages/LiveDataPage";
 import StressTestPage from "@/pages/StressTestPage";
 import AdaptPage from "@/pages/AdaptPage";
 import RiskMapPage from "@/pages/RiskMapPage";
+import HexMapPage from "@/pages/HexMapPage";
 
 function Router() {
   return (
@@ -24,6 +25,7 @@ function Router() {
       <Route path="/stress-test" component={StressTestPage} />
       <Route path="/adapt" component={AdaptPage} />
       <Route path="/risk-map" component={RiskMapPage} />
+      <Route path="/grid" component={HexMapPage} />
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/technology" component={TechnologyPage} />

@@ -72,6 +72,7 @@ export interface SeasonalImpact {
 
 export interface DistrictData {
   stateId?: string;
+  countryId?: string;
   id: string;
   name: string;
   vulnerabilityScore: number;

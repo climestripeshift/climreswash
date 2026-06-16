@@ -696,7 +696,7 @@ export default function LiveDataPage() {
   );
 
   const stateList = useMemo(() =>
-    [...new Set(enriched.map(d => d.stateName).filter(s => s !== "Unknown"))].sort(),
+    Array.from(new Set(enriched.map(d => d.stateName).filter(s => s !== "Unknown"))).sort(),
     [enriched]
   );
 
@@ -735,7 +735,7 @@ export default function LiveDataPage() {
 
     const topHazards: string[] = isSingle
       ? (d.climateRisks || [])
-      : [...new Set(filtered.flatMap((x: any) => x.climateRisks || []))].slice(0, 5);
+      : Array.from(new Set(filtered.flatMap((x: any) => x.climateRisks || []))).slice(0, 5);
 
     return {
       population: sum(filtered.map((x: any) => x.population ?? 0)),
@@ -853,7 +853,7 @@ export default function LiveDataPage() {
                 <select
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   value="IND"
-                  readOnly
+                  onChange={() => {}}
                   data-testid="filter-country"
                 >
                   <option value="IND">India</option>

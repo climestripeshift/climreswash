@@ -4,21 +4,22 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { 
-  ArrowRight, 
-  Activity, 
-  MapPin, 
-  AlertTriangle, 
-  Droplets, 
-  Banknote, 
-  Users, 
-  Zap, 
-  ShieldCheck, 
-  Sparkles, 
+import {
+  ArrowRight,
+  Activity,
+  MapPin,
+  AlertTriangle,
+  Droplets,
+  Banknote,
+  Users,
+  Zap,
+  ShieldCheck,
+  Sparkles,
   Globe,
   LineChart,
   BookOpen,
-  Leaf
+  Leaf,
+  Grid3X3,
 } from "lucide-react";
 
 // --- Utility Components ---
@@ -74,6 +75,7 @@ const FEATURES = [
   { icon: <Activity className="w-5 h-5 text-primary" />, title: "2050 Stress Test", desc: "AR6-based projections under 3 IPCC scenarios. Ranks districts by deterioration to 2050.", tag: "New", link: "/stress-test", highlight: true },
   { icon: <AlertTriangle className="w-5 h-5 text-primary" />, title: "Climate Risk Map", desc: "Interactive choropleth of 735 districts by Hazard, Exposure, Vulnerability and composite IPCC AR6 risk.", tag: "New", link: "/risk-map", highlight: true },
   { icon: <Leaf className="w-5 h-5 text-primary" />, title: "Adaptation Planner", desc: "Python-powered compound-risk engine. District-level WASH, DRR, Policy, and Health recommendations.", tag: "Beta", link: "/adapt", highlight: true },
+  { icon: <Grid3X3 className="w-5 h-5 text-primary" />, title: "Hex Grid Base Map", desc: "12,705 H3 res-5 hexagons (~252 km² each) coloured by elevation, NDVI, or land use class.", tag: "New", link: "/grid", highlight: true },
 ];
 
 const METHODOLOGY = [
@@ -124,6 +126,9 @@ export default function HomePage() {
               </Link>
               <Link href="/adapt" className="text-sm font-semibold flex items-center gap-1.5 text-emerald-600 hover:text-emerald-500 transition-colors">
                 <Leaf className="w-3.5 h-3.5" /> Adapt
+              </Link>
+              <Link href="/grid" className="text-sm font-semibold flex items-center gap-1.5 text-teal-500 hover:text-teal-400 transition-colors">
+                <Grid3X3 className="w-3.5 h-3.5" /> Hex Grid
               </Link>
             </div>
 
