@@ -21,15 +21,17 @@ const ATTRIBUTES = [
     icon:   "⛰️",
     unit:   "m",
     domain: [0, 5000] as [number, number],
-    desc:   "Mean elevation per hex (SRTM 90m) — mock data",
+    desc:   "Mean elevation per hex (SRTM 90m, real data)",
+    group:  "terrain" as const,
   },
   {
     key:    "ndvi_mean" as const,
-    label:  "Vegetation (NDVI)",
+    label:  "NDVI",
     icon:   "🌿",
     unit:   "",
     domain: [0, 0.8] as [number, number],
-    desc:   "Mean annual NDVI (MODIS 2023, 0–0.8 scale) — mock data",
+    desc:   "Mean annual NDVI (0–0.8 scale) — mock data",
+    group:  "terrain" as const,
   },
   {
     key:    "land_use" as const,
@@ -37,7 +39,44 @@ const ATTRIBUTES = [
     icon:   "🗺️",
     unit:   "",
     domain: [0, 1] as [number, number],
-    desc:   "Dominant ESA WorldCover class per hex — mock data",
+    desc:   "Dominant land cover class per hex — mock data",
+    group:  "terrain" as const,
+  },
+  {
+    key:    "flood_sensitivity" as const,
+    label:  "Flood Sens.",
+    icon:   "🌊",
+    unit:   "",
+    domain: [0, 1] as [number, number],
+    desc:   "Terrain flood sensitivity (flat + clay + built-up + near water = high)",
+    group:  "risk" as const,
+  },
+  {
+    key:    "heat_sensitivity" as const,
+    label:  "Heat Sens.",
+    icon:   "🔥",
+    unit:   "",
+    domain: [0, 1] as [number, number],
+    desc:   "Terrain heat sensitivity (built-up + no trees + far from water = high)",
+    group:  "risk" as const,
+  },
+  {
+    key:    "flood_risk_50mm" as const,
+    label:  "Flood 50mm",
+    icon:   "⛈️",
+    unit:   "",
+    domain: [0, 10] as [number, number],
+    desc:   "Pluvial flood score if 50mm rain hits this hex (0–10 hazard scale)",
+    group:  "risk" as const,
+  },
+  {
+    key:    "heat_risk_44c" as const,
+    label:  "Heat 44°C",
+    icon:   "🌡️",
+    unit:   "",
+    domain: [0, 10] as [number, number],
+    desc:   "Heatwave score if 44°C hits for 3 days (0–10 hazard scale)",
+    group:  "risk" as const,
   },
 ] as const;
 
@@ -61,6 +100,33 @@ const GREENS: [number, number, number][] = [
   [116, 196, 118],  // medium green
   [49,  163, 84 ],  // dark green
   [0,   109, 44 ],  // very dark green
+];
+
+// Blues for flood sensitivity (5 stops)
+const BLUES: [number, number, number][] = [
+  [240, 249, 255],
+  [189, 215, 231],
+  [107, 174, 214],
+  [33,  113, 181],
+  [8,   48,  107],
+];
+
+// Oranges for heat sensitivity (5 stops)
+const ORANGES: [number, number, number][] = [
+  [255, 255, 229],
+  [254, 217, 142],
+  [254, 153, 41 ],
+  [217, 95,  14 ],
+  [153, 52,  4  ],
+];
+
+// Risk gradient for hazard scores 0–10 (green → red → dark)
+const RISK: [number, number, number][] = [
+  [34,  197, 94 ],
+  [234, 179, 8  ],
+  [249, 115, 22 ],
+  [239, 68,  68 ],
+  [153, 27,  27 ],
 ];
 
 const LAND_USE_COLORS: Record<string, string> = {
@@ -96,16 +162,24 @@ function gradientColor(
 }
 
 function hexColor(props: any, attr: AttrKey): string {
-  if (attr === "elevation_mean") {
-    const val = props.elevation_mean ?? 0;
-    return gradientColor(VIRIDIS, val / 5000);
+  switch (attr) {
+    case "elevation_mean":
+      return gradientColor(VIRIDIS, (props.elevation_mean ?? 0) / 5000);
+    case "ndvi_mean":
+      return gradientColor(GREENS, (props.ndvi_mean ?? 0) / 0.8);
+    case "flood_sensitivity":
+      return gradientColor(BLUES, (props.flood_sensitivity ?? 0));
+    case "heat_sensitivity":
+      return gradientColor(ORANGES, (props.heat_sensitivity ?? 0));
+    case "flood_risk_50mm":
+      return gradientColor(RISK, (props.flood_risk_50mm ?? 0) / 10);
+    case "heat_risk_44c":
+      return gradientColor(RISK, (props.heat_risk_44c ?? 0) / 10);
+    case "land_use":
+      return LAND_USE_COLORS[props.land_use] ?? "#94a3b8";
+    default:
+      return "#94a3b8";
   }
-  if (attr === "ndvi_mean") {
-    const val = props.ndvi_mean ?? 0;
-    return gradientColor(GREENS, val / 0.8);
-  }
-  // land_use
-  return LAND_USE_COLORS[props.land_use] ?? "#94a3b8";
 }
 
 // ── Attribute selector ────────────────────────────────────────────────────────
@@ -117,22 +191,29 @@ function AttributeSelector({
   active: AttrKey;
   onChange: (k: AttrKey) => void;
 }) {
+  const terrain = ATTRIBUTES.filter((a) => a.group === "terrain");
+  const risk    = ATTRIBUTES.filter((a) => a.group === "risk");
+
+  const btn = (a: typeof ATTRIBUTES[number], activeColor: string) => (
+    <button
+      key={a.key}
+      onClick={() => onChange(a.key)}
+      className={`px-2 py-1 rounded-md text-[11px] font-semibold transition-colors flex items-center gap-1 ${
+        active === a.key
+          ? `${activeColor} text-white`
+          : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+      }`}
+    >
+      <span className="text-xs">{a.icon}</span>
+      {a.label}
+    </button>
+  );
+
   return (
     <div className="flex items-center gap-1">
-      {ATTRIBUTES.map((a) => (
-        <button
-          key={a.key}
-          onClick={() => onChange(a.key)}
-          className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center gap-1.5 ${
-            active === a.key
-              ? "bg-emerald-600 text-white"
-              : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
-          }`}
-        >
-          <span>{a.icon}</span>
-          {a.label}
-        </button>
-      ))}
+      {terrain.map((a) => btn(a, "bg-emerald-600"))}
+      <div className="h-4 w-px bg-border/50 mx-0.5" />
+      {risk.map((a) => btn(a, "bg-red-600"))}
     </div>
   );
 }
@@ -187,7 +268,15 @@ function Legend({ attr }: { attr: AttrKey }) {
     );
   }
 
-  const ramp = attr === "elevation_mean" ? VIRIDIS : GREENS;
+  const rampMap: Record<string, [number, number, number][]> = {
+    elevation_mean:    VIRIDIS,
+    ndvi_mean:         GREENS,
+    flood_sensitivity: BLUES,
+    heat_sensitivity:  ORANGES,
+    flood_risk_50mm:   RISK,
+    heat_risk_44c:     RISK,
+  };
+  const ramp = rampMap[attr] ?? GREENS;
   const stops = Array.from({ length: 5 }, (_, i) => gradientColor(ramp, i / 4));
   const [lo, hi] = meta.domain;
   const fmtVal = (v: number) =>
@@ -243,6 +332,23 @@ function HexInfoPanel({ props, onClose }: { props: any; onClose: () => void }) {
         <div className="flex justify-between">
           <span className="text-muted-foreground">🗺️ Land Use</span>
           <span className="font-medium capitalize">{props.land_use}</span>
+        </div>
+        <div className="border-t border-border/30 my-1 pt-1" />
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">🌊 Flood Sens.</span>
+          <span className="font-medium">{props.flood_sensitivity ?? "—"}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">🔥 Heat Sens.</span>
+          <span className="font-medium">{props.heat_sensitivity ?? "—"}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">⛈️ Flood 50mm</span>
+          <span className="font-medium">{props.flood_risk_50mm ?? "—"}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">🌡️ Heat 44°C</span>
+          <span className="font-medium">{props.heat_risk_44c ?? "—"}</span>
         </div>
       </div>
       <div className="mt-2 text-[9px] text-muted-foreground/50 truncate">{props.h3_id}</div>
