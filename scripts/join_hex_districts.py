@@ -12,16 +12,20 @@ import sys
 from pathlib import Path
 
 import geopandas as gpd
+import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from risk.formulas import (
     adaptive_capacity,
     compute_risk,
+    cyclone_score,
+    drought_score,
     exposure_score,
     flood_sensitivity,
     heat_sensitivity,
     heatwave_score,
     pluvial_flood_score,
+    wet_bulb_score,
 )
 
 ROOT         = Path(__file__).resolve().parent.parent
@@ -107,17 +111,47 @@ def main():
         hexes["district_id"]   = hexes["district_id"].fillna("unknown")
         hexes["district_name"] = hexes["district_name"].fillna("Unknown")
 
-    # 3. Compute per-hex risk using terrain + district data
-    print("Computing per-hex risk scores...")
+    # 3. Estimate distance to coast (rough: hexes near sea level + near edges)
+    print("Estimating coastal proximity...")
+    centroids = hexes.geometry.centroid
+    hex_lats = [c.y for c in centroids]
+    hex_lons = [c.x for c in centroids]
 
-    flood_sens_list = []
-    heat_sens_list  = []
-    hex_risk_list   = []
+    def estimate_coast_dist(lat: float, lon: float, elev: float) -> float:
+        """Rough coastal distance in metres from geography."""
+        coastal_proximity = 1e6  # default: far inland
+        # West coast (Konkan, Malabar, Gujarat)
+        if lon < 74 and lat < 22:
+            coastal_proximity = max(5000, (lon - 68) * 111000)
+        elif lon < 74 and lat < 16:
+            coastal_proximity = max(5000, (lon - 73) * 111000)
+        # East coast (Coromandel, Odisha, Bengal)
+        if lat < 20 and lon > 80:
+            coastal_proximity = min(coastal_proximity, max(5000, (85 - lon) * 111000))
+        if lat < 22 and lon > 86:
+            coastal_proximity = min(coastal_proximity, max(5000, (89 - lon) * 111000))
+        # Very low elevation = likely near coast
+        if elev < 10:
+            coastal_proximity = min(coastal_proximity, 10000)
+        elif elev < 30:
+            coastal_proximity = min(coastal_proximity, 50000)
+        return coastal_proximity
 
-    for _, row in hexes.iterrows():
-        elev = row.get("elevation_mean", 200) or 200
-        lu   = row.get("land_use", "crop") or "crop"
-        ndvi = row.get("ndvi_mean", 0.3) or 0.3
+    # 4. Compute per-hex risk: ALL 5 hazard types
+    print("Computing per-hex risk scores (flood + heat + cyclone + drought + wet-bulb)...")
+
+    results: dict[str, list] = {
+        "flood_sensitivity": [], "heat_sensitivity": [],
+        "flood_risk": [], "heat_risk": [], "cyclone_risk": [],
+        "drought_risk": [], "wetbulb_risk": [], "hex_risk": [],
+    }
+
+    for i, (_, row) in enumerate(hexes.iterrows()):
+        elev = float(row.get("elevation_mean", 200) or 200)
+        lu   = str(row.get("land_use", "crop") or "crop")
+        ndvi = float(row.get("ndvi_mean", 0.3) or 0.3)
+        lat  = hex_lats[i]
+        lon  = hex_lons[i]
 
         params    = LAND_USE_PARAMS.get(lu, DEFAULT_PARAMS)
         tree_pct  = max(params["tree_pct"], ndvi * 100 * 0.8)
@@ -125,51 +159,75 @@ def main():
         sand_pct  = params["sand_pct"]
         slope     = estimate_slope(elev)
         dist_w    = estimate_dist_water(lu, elev)
+        dist_coast = estimate_coast_dist(lat, lon, elev)
 
-        # Terrain-based sensitivity
+        # Sensitivity
         fs = flood_sensitivity(slope, sand_pct, built_pct, dist_w)
         hs = heat_sensitivity(tree_pct, built_pct, dist_w)
 
-        # District-level hazard and exposure (from GeoJSON)
+        # District-level inputs
         d_hazard = float(row.get("district_hazard", 0.25) or 0.25)
-        d_vuln   = float(row.get("district_vulnerability", 0.5) or 0.5)
+        d_exposure = float(row.get("district_exposure", 0.4) or 0.4)
+        d_vuln = float(row.get("district_vulnerability", 0.5) or 0.5)
+        exposure_10 = d_exposure * 10
+        ac = max(0.1, 1 - d_vuln)
 
-        # Combine: district hazard × hex sensitivity → localized risk
-        # Scale hazard from 0-1 to 0-10, vulnerability as AC inverse
-        hazard_10 = d_hazard * 10
-        exposure_10 = float(row.get("district_exposure", 0.4) or 0.4) * 10
-        ac = 1 - d_vuln  # high vulnerability = low adaptive capacity
+        # ── Hazard 1: Pluvial flood (assume 50mm monsoon rain) ──
+        flood_haz = pluvial_flood_score(50, sand_pct, built_pct, slope)
+        flood_r = compute_risk(flood_haz, exposure_10, fs, ac)
 
-        # Flood risk for this hex
-        flood_risk = compute_risk(
-            hazard_score=hazard_10,
-            exposure=exposure_10,
-            sensitivity=fs,
-            ac=max(0.1, ac),
-        )
+        # ── Hazard 2: Heatwave (assume 44°C day 3, plains threshold) ──
+        threshold = 30.0 if elev > 800 else (37.0 if dist_coast < 50000 else 40.0)
+        heat_haz = heatwave_score(44, threshold, 3, built_pct, tree_pct, dist_w)
+        heat_r = compute_risk(heat_haz, exposure_10, hs, ac)
 
-        # Heat risk for this hex
-        heat_risk = compute_risk(
-            hazard_score=hazard_10,
-            exposure=exposure_10,
-            sensitivity=hs,
-            ac=max(0.1, ac),
-        )
+        # ── Hazard 3: Cyclone (coastal hexes, assume cat-3 storm) ──
+        if dist_coast < 300000:  # within 300km of coast
+            cyc_haz = cyclone_score(
+                wind_max_kmh=150, dist_track_km=dist_coast / 1000,
+                rainfall_24h_mm=100, sand_pct=sand_pct, built_pct=built_pct,
+                slope_deg=slope, dist_coast_m=dist_coast, elev_m=elev,
+                bay_factor=1.3 if lon > 80 else 1.0  # Bay of Bengal funnel
+            )
+        else:
+            cyc_haz = 0.0
+        cyc_r = compute_risk(cyc_haz, exposure_10, fs, ac)
 
-        # Combined risk (max of flood and heat, as different hazards)
-        combined = max(flood_risk, heat_risk)
+        # ── Hazard 4: Drought (arid/semi-arid regions) ──
+        # Low NDVI + low rainfall zones → negative SPI proxy
+        spi_proxy = (ndvi - 0.4) * 3  # ndvi 0.1 → SPI -0.9, ndvi 0.6 → SPI +0.6
+        if sand_pct > 50:
+            spi_proxy -= 0.5  # sandy regions more drought-prone
+        drought_haz = drought_score(spi_proxy)
+        drought_sens = 0.5 + 0.3 * (1 - ndvi) + 0.2 * (sand_pct / 100)
+        drought_r = compute_risk(drought_haz, exposure_10, drought_sens, ac)
 
-        flood_sens_list.append(round(fs, 3))
-        heat_sens_list.append(round(hs, 3))
-        hex_risk_list.append(round(combined, 2))
+        # ── Hazard 5: Wet bulb (humid heat — coastal + riverine) ──
+        # Estimate RH from NDVI + coast: high NDVI + near water = humid
+        rh_proxy = 40 + ndvi * 40 + max(0, 20 - dist_coast / 10000)
+        rh_proxy = min(95, rh_proxy)
+        wb_haz = wet_bulb_score(38, rh_proxy)  # 38°C with estimated humidity
+        wb_r = compute_risk(wb_haz, exposure_10, hs, ac)
 
-    hexes["flood_sensitivity"] = flood_sens_list
-    hexes["heat_sensitivity"]  = heat_sens_list
-    hexes["hex_risk"]          = hex_risk_list
+        # Combined: max of all 5 hazard channels
+        combined = max(flood_r, heat_r, cyc_r, drought_r, wb_r)
 
-    # 4. Stats
+        results["flood_sensitivity"].append(round(fs, 3))
+        results["heat_sensitivity"].append(round(hs, 3))
+        results["flood_risk"].append(round(flood_r, 2))
+        results["heat_risk"].append(round(heat_r, 2))
+        results["cyclone_risk"].append(round(cyc_r, 2))
+        results["drought_risk"].append(round(drought_r, 2))
+        results["wetbulb_risk"].append(round(wb_r, 2))
+        results["hex_risk"].append(round(combined, 2))
+
+    for col, vals in results.items():
+        hexes[col] = vals
+
+    # 5. Stats
     print("\nResults:")
-    for col in ["flood_sensitivity", "heat_sensitivity", "hex_risk"]:
+    for col in ["flood_sensitivity", "heat_sensitivity", "flood_risk", "heat_risk",
+                 "cyclone_risk", "drought_risk", "wetbulb_risk", "hex_risk"]:
         vals = hexes[col].dropna()
         print(f"  {col:22s}: {vals.min():.3f} – {vals.max():.3f}  (mean {vals.mean():.3f})")
 

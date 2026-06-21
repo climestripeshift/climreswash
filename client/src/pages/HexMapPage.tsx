@@ -43,48 +43,57 @@ const ATTRIBUTES = [
     group:  "terrain" as const,
   },
   {
-    key:    "flood_sensitivity" as const,
-    label:  "Flood Sens.",
+    key:    "flood_risk" as const,
+    label:  "Flood",
     icon:   "🌊",
     unit:   "",
-    domain: [0, 1] as [number, number],
-    desc:   "Terrain flood sensitivity (flat + clay + built-up + near water = high)",
+    domain: [0, 3] as [number, number],
+    desc:   "Pluvial flood risk (50mm monsoon scenario × terrain × district exposure)",
     group:  "risk" as const,
   },
   {
-    key:    "heat_sensitivity" as const,
-    label:  "Heat Sens.",
+    key:    "heat_risk" as const,
+    label:  "Heat",
     icon:   "🔥",
     unit:   "",
+    domain: [0, 2] as [number, number],
+    desc:   "Heatwave risk (44°C × urban heat × district exposure)",
+    group:  "risk" as const,
+  },
+  {
+    key:    "cyclone_risk" as const,
+    label:  "Cyclone",
+    icon:   "🌀",
+    unit:   "",
+    domain: [0, 3] as [number, number],
+    desc:   "Cyclone risk (cat-3 storm × coastal proximity × Bay of Bengal funnel)",
+    group:  "risk" as const,
+  },
+  {
+    key:    "drought_risk" as const,
+    label:  "Drought",
+    icon:   "☀️",
+    unit:   "",
+    domain: [0, 2] as [number, number],
+    desc:   "Drought risk (aridity proxy from NDVI + sand content)",
+    group:  "risk" as const,
+  },
+  {
+    key:    "wetbulb_risk" as const,
+    label:  "Wet Bulb",
+    icon:   "💧",
+    unit:   "",
     domain: [0, 1] as [number, number],
-    desc:   "Terrain heat sensitivity (built-up + no trees + far from water = high)",
-    group:  "risk" as const,
-  },
-  {
-    key:    "flood_risk_50mm" as const,
-    label:  "Flood 50mm",
-    icon:   "⛈️",
-    unit:   "",
-    domain: [0, 10] as [number, number],
-    desc:   "Pluvial flood score if 50mm rain hits this hex (0–10 hazard scale)",
-    group:  "risk" as const,
-  },
-  {
-    key:    "heat_risk_44c" as const,
-    label:  "Heat 44°C",
-    icon:   "🌡️",
-    unit:   "",
-    domain: [0, 10] as [number, number],
-    desc:   "Heatwave score if 44°C hits for 3 days (0–10 hazard scale)",
+    desc:   "Wet-bulb heat stress (lethal humidity × heat combo, coastal + riverine)",
     group:  "risk" as const,
   },
   {
     key:    "hex_risk" as const,
-    label:  "Combined Risk",
+    label:  "Max Risk",
     icon:   "⚠️",
     unit:   "",
-    domain: [0, 1] as [number, number],
-    desc:   "Per-hex risk = district hazard × exposure × terrain sensitivity ÷ adaptive capacity",
+    domain: [0, 3] as [number, number],
+    desc:   "Highest risk across all 5 hazard channels for this hex",
     group:  "risk" as const,
   },
 ] as const;
@@ -175,8 +184,11 @@ const ATTR_RAMP: Record<string, [number, number, number][]> = {
   ndvi_mean:         GREENS,
   flood_sensitivity: BLUES,
   heat_sensitivity:  ORANGES,
-  flood_risk_50mm:   RISK,
-  heat_risk_44c:     RISK,
+  flood_risk:        BLUES,
+  heat_risk:         ORANGES,
+  cyclone_risk:      RISK,
+  drought_risk:      ORANGES,
+  wetbulb_risk:      BLUES,
   hex_risk:          RISK,
 };
 
@@ -226,14 +238,18 @@ function AttributeSelector({
 
 // ── State filter ──────────────────────────────────────────────────────────────
 
-function StateFilter({
-  states,
+function DropdownFilter({
+  items,
   selected,
   onChange,
+  allLabel = "All India",
+  allValue = "All India",
 }: {
-  states: string[];
+  items: string[];
   selected: string;
   onChange: (s: string) => void;
+  allLabel?: string;
+  allValue?: string;
 }) {
   return (
     <div className="relative flex items-center gap-1.5">
@@ -241,10 +257,10 @@ function StateFilter({
       <select
         value={selected}
         onChange={(e) => onChange(e.target.value)}
-        className="appearance-none rounded-md border border-border/50 bg-muted/40 pl-2.5 pr-7 py-1.5 text-xs outline-none cursor-pointer text-foreground"
+        className="appearance-none rounded-md border border-border/50 bg-muted/40 pl-2.5 pr-7 py-1.5 text-xs outline-none cursor-pointer text-foreground max-w-[160px]"
       >
-        <option value="All India">All India</option>
-        {states.map((s) => (
+        <option value={allValue}>{allLabel}</option>
+        {items.map((s) => (
           <option key={s} value={s}>{s}</option>
         ))}
       </select>
@@ -344,18 +360,30 @@ function HexInfoPanel({ props, onClose }: { props: any; onClose: () => void }) {
           <span className="font-medium capitalize">{props.land_use}</span>
         </div>
         <div className="border-t border-border/30 my-1 pt-1" />
-        <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wide">Risk (hex-level)</div>
+        <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wide">Risk by hazard</div>
         <div className="flex justify-between">
-          <span className="text-muted-foreground">🌊 Flood Sens.</span>
-          <span className="font-medium">{props.flood_sensitivity ?? "—"}</span>
+          <span className="text-muted-foreground">🌊 Flood</span>
+          <span className="font-medium">{props.flood_risk ?? "—"}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-muted-foreground">🔥 Heat Sens.</span>
-          <span className="font-medium">{props.heat_sensitivity ?? "—"}</span>
+          <span className="text-muted-foreground">🔥 Heat</span>
+          <span className="font-medium">{props.heat_risk ?? "—"}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-muted-foreground">⚠️ Combined Risk</span>
-          <span className="font-bold">{props.hex_risk ?? "—"}</span>
+          <span className="text-muted-foreground">🌀 Cyclone</span>
+          <span className="font-medium">{props.cyclone_risk ?? "—"}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">☀️ Drought</span>
+          <span className="font-medium">{props.drought_risk ?? "—"}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">💧 Wet Bulb</span>
+          <span className="font-medium">{props.wetbulb_risk ?? "—"}</span>
+        </div>
+        <div className="flex justify-between font-bold">
+          <span className="text-muted-foreground">⚠️ Max Risk</span>
+          <span>{props.hex_risk ?? "—"}</span>
         </div>
         <div className="border-t border-border/30 my-1 pt-1" />
         <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wide">District baseline</div>
@@ -385,6 +413,7 @@ function HexMap({
   geoData,
   attr,
   selectedState,
+  selectedDistrict,
   mapRef,
   onHexClick,
   domain,
@@ -392,6 +421,7 @@ function HexMap({
   geoData: any;
   attr: AttrKey;
   selectedState: string;
+  selectedDistrict: string;
   mapRef: React.MutableRefObject<LeafletMap | null>;
   onHexClick: (props: any) => void;
   domain: [number, number];
@@ -400,14 +430,13 @@ function HexMap({
 
   const filtered = useMemo(() => {
     if (!geoData) return null;
-    if (selectedState === "All India") return geoData;
-    return {
-      ...geoData,
-      features: geoData.features.filter(
-        (f: any) => f.properties.state === selectedState
-      ),
-    };
-  }, [geoData, selectedState]);
+    let feats = geoData.features;
+    if (selectedState !== "All India")
+      feats = feats.filter((f: any) => f.properties.state === selectedState);
+    if (selectedDistrict !== "All")
+      feats = feats.filter((f: any) => f.properties.district_name === selectedDistrict);
+    return { ...geoData, features: feats };
+  }, [geoData, selectedState, selectedDistrict]);
 
   const styleFeature = useCallback(
     (feature: any) => ({
@@ -457,7 +486,7 @@ function HexMap({
       />
       <GeoJSON
         ref={geoJsonRef}
-        key={selectedState}
+        key={`${selectedState}-${selectedDistrict}`}
         data={filtered}
         style={styleFeature}
         onEachFeature={onEachFeature}
@@ -469,9 +498,10 @@ function HexMap({
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function HexMapPage() {
-  const [attr, setAttr]                   = useState<AttrKey>("elevation_mean");
-  const [selectedState, setSelectedState] = useState("All India");
-  const [clickedHex, setClickedHex]       = useState<any | null>(null);
+  const [attr, setAttr]                       = useState<AttrKey>("hex_risk");
+  const [selectedState, setSelectedState]     = useState("All India");
+  const [selectedDistrict, setSelectedDistrict] = useState("All");
+  const [clickedHex, setClickedHex]           = useState<any | null>(null);
   const mapRef = useRef<LeafletMap | null>(null);
 
   const hexQ = useQuery<any>({
@@ -488,30 +518,43 @@ export default function HexMapPage() {
     [features]
   );
 
+  const districtList = useMemo(() => {
+    if (selectedState === "All India") return [];
+    return Array.from(
+      new Set(
+        features
+          .filter((f: any) => f.properties.state === selectedState)
+          .map((f: any) => f.properties.district_name)
+          .filter(Boolean)
+      )
+    ).sort() as string[];
+  }, [features, selectedState]);
+
+  // Effective filter key for GeoJSON layer
+  const filterKey = selectedDistrict !== "All"
+    ? `district:${selectedDistrict}`
+    : selectedState;
+
   // Dynamic domain: actual min/max for the active attribute across visible features
   const dataDomain = useMemo((): [number, number] => {
     if (!features.length || attr === "land_use") return [0, 1];
-    const visible = selectedState === "All India"
-      ? features
-      : features.filter((f: any) => f.properties.state === selectedState);
+    let visible = features;
+    if (selectedState !== "All India")
+      visible = visible.filter((f: any) => f.properties.state === selectedState);
+    if (selectedDistrict !== "All")
+      visible = visible.filter((f: any) => f.properties.district_name === selectedDistrict);
     const vals = visible
       .map((f: any) => f.properties[attr])
       .filter((v: any) => v != null && isFinite(v));
     if (!vals.length) return [0, 1];
     return [Math.min(...vals), Math.max(...vals)];
-  }, [features, attr, selectedState]);
+  }, [features, attr, selectedState, selectedDistrict]);
 
-  const handleStateChange = useCallback(
-    (state: string) => {
-      setSelectedState(state);
-      if (state === "All India" || !mapRef.current || !hexQ.data) return;
-      const stateFeatues = hexQ.data.features.filter(
-        (f: any) => f.properties.state === state
-      );
-      if (!stateFeatues.length) return;
-      // Compute bounding box of state hexes and fit
+  const fitToFeatures = useCallback(
+    (feats: any[]) => {
+      if (!mapRef.current || !feats.length) return;
       let minLat = 90, maxLat = -90, minLng = 180, maxLng = -180;
-      for (const f of stateFeatues) {
+      for (const f of feats) {
         for (const ring of (f.geometry.type === "Polygon"
           ? f.geometry.coordinates
           : f.geometry.coordinates.flat())) {
@@ -524,8 +567,26 @@ export default function HexMapPage() {
         }
       }
       mapRef.current.fitBounds([[minLat, minLng], [maxLat, maxLng]], { padding: [20, 20] });
+    }, []
+  );
+
+  const handleStateChange = useCallback(
+    (state: string) => {
+      setSelectedState(state);
+      setSelectedDistrict("All");
+      if (state === "All India" || !hexQ.data) return;
+      fitToFeatures(hexQ.data.features.filter((f: any) => f.properties.state === state));
     },
-    [hexQ.data]
+    [hexQ.data, fitToFeatures]
+  );
+
+  const handleDistrictChange = useCallback(
+    (district: string) => {
+      setSelectedDistrict(district);
+      if (district === "All" || !hexQ.data) return;
+      fitToFeatures(hexQ.data.features.filter((f: any) => f.properties.district_name === district));
+    },
+    [hexQ.data, fitToFeatures]
   );
 
   const activeMeta = ATTRIBUTES.find((a) => a.key === attr)!;
@@ -558,12 +619,23 @@ export default function HexMapPage() {
 
           <div className="flex-1" />
 
-          {/* State filter */}
+          {/* State + District filters */}
           {stateList.length > 0 && (
-            <StateFilter
-              states={stateList}
+            <DropdownFilter
+              items={stateList}
               selected={selectedState}
               onChange={handleStateChange}
+              allLabel="All India"
+              allValue="All India"
+            />
+          )}
+          {districtList.length > 0 && (
+            <DropdownFilter
+              items={districtList}
+              selected={selectedDistrict}
+              onChange={handleDistrictChange}
+              allLabel="All Districts"
+              allValue="All"
             />
           )}
 
@@ -596,6 +668,7 @@ export default function HexMapPage() {
             geoData={hexQ.data}
             attr={attr}
             selectedState={selectedState}
+            selectedDistrict={selectedDistrict}
             mapRef={mapRef}
             onHexClick={setClickedHex}
             domain={dataDomain}
