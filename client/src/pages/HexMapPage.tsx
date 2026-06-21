@@ -161,25 +161,21 @@ function gradientColor(
   return lerp3(ramp[lo], ramp[hi], scaled - lo);
 }
 
-function hexColor(props: any, attr: AttrKey): string {
-  switch (attr) {
-    case "elevation_mean":
-      return gradientColor(VIRIDIS, (props.elevation_mean ?? 0) / 5000);
-    case "ndvi_mean":
-      return gradientColor(GREENS, (props.ndvi_mean ?? 0) / 0.8);
-    case "flood_sensitivity":
-      return gradientColor(BLUES, (props.flood_sensitivity ?? 0));
-    case "heat_sensitivity":
-      return gradientColor(ORANGES, (props.heat_sensitivity ?? 0));
-    case "flood_risk_50mm":
-      return gradientColor(RISK, (props.flood_risk_50mm ?? 0) / 10);
-    case "heat_risk_44c":
-      return gradientColor(RISK, (props.heat_risk_44c ?? 0) / 10);
-    case "land_use":
-      return LAND_USE_COLORS[props.land_use] ?? "#94a3b8";
-    default:
-      return "#94a3b8";
-  }
+const ATTR_RAMP: Record<string, [number, number, number][]> = {
+  elevation_mean:    VIRIDIS,
+  ndvi_mean:         GREENS,
+  flood_sensitivity: BLUES,
+  heat_sensitivity:  ORANGES,
+  flood_risk_50mm:   RISK,
+  heat_risk_44c:     RISK,
+};
+
+function hexColor(props: any, attr: AttrKey, domain: [number, number]): string {
+  if (attr === "land_use") return LAND_USE_COLORS[props.land_use] ?? "#94a3b8";
+  const val = props[attr] ?? 0;
+  const [lo, hi] = domain;
+  const t = hi > lo ? (val - lo) / (hi - lo) : 0;
+  return gradientColor(ATTR_RAMP[attr] ?? GREENS, t);
 }
 
 // ── Attribute selector ────────────────────────────────────────────────────────
@@ -248,7 +244,7 @@ function StateFilter({
 
 // ── Legend ────────────────────────────────────────────────────────────────────
 
-function Legend({ attr }: { attr: AttrKey }) {
+function Legend({ attr, domain }: { attr: AttrKey; domain: [number, number] }) {
   const meta = ATTRIBUTES.find((a) => a.key === attr)!;
 
   if (attr === "land_use") {
@@ -278,9 +274,9 @@ function Legend({ attr }: { attr: AttrKey }) {
   };
   const ramp = rampMap[attr] ?? GREENS;
   const stops = Array.from({ length: 5 }, (_, i) => gradientColor(ramp, i / 4));
-  const [lo, hi] = meta.domain;
+  const [lo, hi] = domain;
   const fmtVal = (v: number) =>
-    attr === "elevation_mean" ? `${v}m` : v.toFixed(1);
+    attr === "elevation_mean" ? `${v}m` : v.toFixed(2);
 
   return (
     <div className="bg-background/90 backdrop-blur border border-border/40 rounded-lg p-3 shadow-lg w-48">
@@ -364,12 +360,14 @@ function HexMap({
   selectedState,
   mapRef,
   onHexClick,
+  domain,
 }: {
   geoData: any;
   attr: AttrKey;
   selectedState: string;
   mapRef: React.MutableRefObject<LeafletMap | null>;
   onHexClick: (props: any) => void;
+  domain: [number, number];
 }) {
   const geoJsonRef = useRef<LeafletGeoJSONLayer | null>(null);
 
@@ -386,13 +384,13 @@ function HexMap({
 
   const styleFeature = useCallback(
     (feature: any) => ({
-      fillColor:   hexColor(feature.properties, attr),
+      fillColor:   hexColor(feature.properties, attr, domain),
       fillOpacity: 0.75,
       color:       "#64748b",
       weight:      0.3,
       renderer:    canvasRenderer,
     }),
-    [attr]
+    [attr, domain]
   );
 
   // Re-colour without rebuilding the layer when attribute changes
@@ -463,6 +461,19 @@ export default function HexMapPage() {
       Array.from(new Set(features.map((f: any) => f.properties.state).filter(Boolean))).sort() as string[],
     [features]
   );
+
+  // Dynamic domain: actual min/max for the active attribute across visible features
+  const dataDomain = useMemo((): [number, number] => {
+    if (!features.length || attr === "land_use") return [0, 1];
+    const visible = selectedState === "All India"
+      ? features
+      : features.filter((f: any) => f.properties.state === selectedState);
+    const vals = visible
+      .map((f: any) => f.properties[attr])
+      .filter((v: any) => v != null && isFinite(v));
+    if (!vals.length) return [0, 1];
+    return [Math.min(...vals), Math.max(...vals)];
+  }, [features, attr, selectedState]);
 
   const handleStateChange = useCallback(
     (state: string) => {
@@ -561,6 +572,7 @@ export default function HexMapPage() {
             selectedState={selectedState}
             mapRef={mapRef}
             onHexClick={setClickedHex}
+            domain={dataDomain}
           />
         )}
 
@@ -574,7 +586,7 @@ export default function HexMapPage() {
         {/* Legend — bottom-left */}
         {features.length > 0 && (
           <div className="absolute bottom-8 left-3 z-[800]">
-            <Legend attr={attr} />
+            <Legend attr={attr} domain={dataDomain} />
           </div>
         )}
       </div>
