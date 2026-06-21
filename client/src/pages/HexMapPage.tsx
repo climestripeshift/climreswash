@@ -78,6 +78,15 @@ const ATTRIBUTES = [
     desc:   "Heatwave score if 44°C hits for 3 days (0–10 hazard scale)",
     group:  "risk" as const,
   },
+  {
+    key:    "hex_risk" as const,
+    label:  "Combined Risk",
+    icon:   "⚠️",
+    unit:   "",
+    domain: [0, 1] as [number, number],
+    desc:   "Per-hex risk = district hazard × exposure × terrain sensitivity ÷ adaptive capacity",
+    group:  "risk" as const,
+  },
 ] as const;
 
 type AttrKey = typeof ATTRIBUTES[number]["key"];
@@ -168,6 +177,7 @@ const ATTR_RAMP: Record<string, [number, number, number][]> = {
   heat_sensitivity:  ORANGES,
   flood_risk_50mm:   RISK,
   heat_risk_44c:     RISK,
+  hex_risk:          RISK,
 };
 
 function hexColor(props: any, attr: AttrKey, domain: [number, number]): string {
@@ -311,12 +321,16 @@ function HexInfoPanel({ props, onClose }: { props: any; onClose: () => void }) {
   return (
     <div className="bg-background/95 backdrop-blur border border-border/40 rounded-lg shadow-lg p-3 w-52">
       <div className="flex items-start justify-between mb-2">
-        <span className="text-xs font-semibold">{props.state}</span>
+        <div>
+          <div className="text-xs font-semibold">{props.district_name ?? props.state}</div>
+          <div className="text-[10px] text-muted-foreground">{props.state}</div>
+        </div>
         <button onClick={onClose} className="text-muted-foreground hover:text-foreground ml-2">
           <span className="text-xs">✕</span>
         </button>
       </div>
       <div className="space-y-1 text-[11px]">
+        <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wide">Terrain</div>
         <div className="flex justify-between">
           <span className="text-muted-foreground">⛰️ Elevation</span>
           <span className="font-medium">{props.elevation_mean}m</span>
@@ -330,6 +344,7 @@ function HexInfoPanel({ props, onClose }: { props: any; onClose: () => void }) {
           <span className="font-medium capitalize">{props.land_use}</span>
         </div>
         <div className="border-t border-border/30 my-1 pt-1" />
+        <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wide">Risk (hex-level)</div>
         <div className="flex justify-between">
           <span className="text-muted-foreground">🌊 Flood Sens.</span>
           <span className="font-medium">{props.flood_sensitivity ?? "—"}</span>
@@ -339,15 +354,27 @@ function HexInfoPanel({ props, onClose }: { props: any; onClose: () => void }) {
           <span className="font-medium">{props.heat_sensitivity ?? "—"}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-muted-foreground">⛈️ Flood 50mm</span>
-          <span className="font-medium">{props.flood_risk_50mm ?? "—"}</span>
+          <span className="text-muted-foreground">⚠️ Combined Risk</span>
+          <span className="font-bold">{props.hex_risk ?? "—"}</span>
+        </div>
+        <div className="border-t border-border/30 my-1 pt-1" />
+        <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wide">District baseline</div>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Hazard</span>
+          <span className="font-medium">{props.district_hazard ?? "—"}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-muted-foreground">🌡️ Heat 44°C</span>
-          <span className="font-medium">{props.heat_risk_44c ?? "—"}</span>
+          <span className="text-muted-foreground">Exposure</span>
+          <span className="font-medium">{props.district_exposure ?? "—"}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Vulnerability</span>
+          <span className="font-medium">{props.district_vulnerability ?? "—"}</span>
         </div>
       </div>
-      <div className="mt-2 text-[9px] text-muted-foreground/50 truncate">{props.h3_id}</div>
+      <div className="mt-2 text-[9px] text-muted-foreground/50 truncate">
+        {props.district_name} · {props.h3_id}
+      </div>
     </div>
   );
 }
@@ -401,11 +428,10 @@ function HexMap({
   const onEachFeature = useCallback(
     (feature: any, layer: any) => {
       const p = feature.properties;
-      const label =
-        attr === "elevation_mean" ? `${p.elevation_mean}m`
-        : attr === "ndvi_mean"   ? `NDVI ${p.ndvi_mean}`
-        : p.land_use;
-      layer.bindTooltip(`<b>${p.state}</b> · ${label}`, { sticky: true });
+      const val = attr === "land_use" ? p.land_use : p[attr];
+      const label = attr === "elevation_mean" ? `${val}m` : `${val}`;
+      const district = p.district_name ? `${p.district_name}, ` : "";
+      layer.bindTooltip(`<b>${district}${p.state}</b><br/>${label}`, { sticky: true });
       layer.on("click", () => onHexClick(p));
     },
     [attr, onHexClick]
