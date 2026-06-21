@@ -137,14 +137,15 @@ def main():
             coastal_proximity = min(coastal_proximity, 50000)
         return coastal_proximity
 
-    # 4. Compute per-hex risk: ALL 5 hazard types
-    print("Computing per-hex risk scores (flood + heat + cyclone + drought + wet-bulb)...")
+    # 4. Compute per-hex risk: ALL 10 hazard types
+    print("Computing per-hex risk scores (10 hazard channels)...")
 
-    results: dict[str, list] = {
-        "flood_sensitivity": [], "heat_sensitivity": [],
-        "flood_risk": [], "heat_risk": [], "cyclone_risk": [],
-        "drought_risk": [], "wetbulb_risk": [], "hex_risk": [],
-    }
+    RISK_COLS = [
+        "flood_risk", "heat_risk", "cyclone_risk", "drought_risk", "wetbulb_risk",
+        "landslide_risk", "coldwave_risk", "flashflood_risk", "sealevel_risk", "fire_risk",
+        "hex_risk",
+    ]
+    results: dict[str, list] = {c: [] for c in RISK_COLS}
 
     for i, (_, row) in enumerate(hexes.iterrows()):
         elev = float(row.get("elevation_mean", 200) or 200)
@@ -166,59 +167,99 @@ def main():
         hs = heat_sensitivity(tree_pct, built_pct, dist_w)
 
         # District-level inputs
-        d_hazard = float(row.get("district_hazard", 0.25) or 0.25)
         d_exposure = float(row.get("district_exposure", 0.4) or 0.4)
         d_vuln = float(row.get("district_vulnerability", 0.5) or 0.5)
         exposure_10 = d_exposure * 10
         ac = max(0.1, 1 - d_vuln)
 
-        # ── Hazard 1: Pluvial flood (assume 50mm monsoon rain) ──
+        # ── 1. Pluvial flood (50mm monsoon rain) ──
         flood_haz = pluvial_flood_score(50, sand_pct, built_pct, slope)
         flood_r = compute_risk(flood_haz, exposure_10, fs, ac)
 
-        # ── Hazard 2: Heatwave (assume 44°C day 3, plains threshold) ──
+        # ── 2. Heatwave (44°C day 3) ──
         threshold = 30.0 if elev > 800 else (37.0 if dist_coast < 50000 else 40.0)
         heat_haz = heatwave_score(44, threshold, 3, built_pct, tree_pct, dist_w)
         heat_r = compute_risk(heat_haz, exposure_10, hs, ac)
 
-        # ── Hazard 3: Cyclone (coastal hexes, assume cat-3 storm) ──
-        if dist_coast < 300000:  # within 300km of coast
+        # ── 3. Cyclone (cat-3 storm, coastal) ──
+        if dist_coast < 300000:
             cyc_haz = cyclone_score(
                 wind_max_kmh=150, dist_track_km=dist_coast / 1000,
                 rainfall_24h_mm=100, sand_pct=sand_pct, built_pct=built_pct,
                 slope_deg=slope, dist_coast_m=dist_coast, elev_m=elev,
-                bay_factor=1.3 if lon > 80 else 1.0  # Bay of Bengal funnel
+                bay_factor=1.3 if lon > 80 else 1.0,
             )
         else:
             cyc_haz = 0.0
         cyc_r = compute_risk(cyc_haz, exposure_10, fs, ac)
 
-        # ── Hazard 4: Drought (arid/semi-arid regions) ──
-        # Low NDVI + low rainfall zones → negative SPI proxy
-        spi_proxy = (ndvi - 0.4) * 3  # ndvi 0.1 → SPI -0.9, ndvi 0.6 → SPI +0.6
+        # ── 4. Drought (aridity proxy) ──
+        spi_proxy = (ndvi - 0.4) * 3
         if sand_pct > 50:
-            spi_proxy -= 0.5  # sandy regions more drought-prone
+            spi_proxy -= 0.5
         drought_haz = drought_score(spi_proxy)
         drought_sens = 0.5 + 0.3 * (1 - ndvi) + 0.2 * (sand_pct / 100)
         drought_r = compute_risk(drought_haz, exposure_10, drought_sens, ac)
 
-        # ── Hazard 5: Wet bulb (humid heat — coastal + riverine) ──
-        # Estimate RH from NDVI + coast: high NDVI + near water = humid
-        rh_proxy = 40 + ndvi * 40 + max(0, 20 - dist_coast / 10000)
-        rh_proxy = min(95, rh_proxy)
-        wb_haz = wet_bulb_score(38, rh_proxy)  # 38°C with estimated humidity
+        # ── 5. Wet bulb (humid heat) ──
+        rh_proxy = min(95, 40 + ndvi * 40 + max(0, 20 - dist_coast / 10000))
+        wb_haz = wet_bulb_score(38, rh_proxy)
         wb_r = compute_risk(wb_haz, exposure_10, hs, ac)
 
-        # Combined: max of all 5 hazard channels
-        combined = max(flood_r, heat_r, cyc_r, drought_r, wb_r)
+        # ── 6. Landslide (steep + deforested + wet) ──
+        if slope > 5:
+            ls_haz = min(10.0, (slope / 3) * (1.2 - ndvi) * 3)
+            ls_sens = 0.4 * (slope / 30) + 0.3 * (1 - ndvi) + 0.3 * math.exp(-dist_w / 2000)
+            ls_r = compute_risk(ls_haz, exposure_10, ls_sens, ac)
+        else:
+            ls_r = 0.0
 
-        results["flood_sensitivity"].append(round(fs, 3))
-        results["heat_sensitivity"].append(round(hs, 3))
+        # ── 7. Cold wave (northern plains + high altitude, winter) ──
+        if lat > 22 or elev > 1500:
+            cold_haz = min(10.0, max(0, (lat - 22) / 15 * 4 + elev / 2000 * 4))
+            cold_sens = 0.4 * (1 - built_pct / 100) + 0.3 * min(1, elev / 3000) + 0.3 * max(0, (lat - 25) / 12)
+            cw_r = compute_risk(cold_haz, exposure_10, cold_sens, ac)
+        else:
+            cw_r = 0.0
+
+        # ── 8. Flash flood (steep terrain + monsoon) ──
+        if slope > 3:
+            ff_haz = min(10.0, slope / 4 * 5 * (0.5 + ndvi))
+            ff_sens = 0.4 * (slope / 30) + 0.3 * math.exp(-dist_w / 1500) + 0.3 * (1 - sand_pct / 100)
+            ff_r = compute_risk(ff_haz, exposure_10, ff_sens, ac)
+        else:
+            ff_r = 0.0
+
+        # ── 9. Sea level rise (low-elevation coastal) ──
+        if elev < 20 and dist_coast < 100000:
+            slr_haz = min(10.0, max(0, (20 - elev) / 2) * math.exp(-dist_coast / 30000) * 3)
+            slr_sens = 0.5 * max(0, 1 - elev / 20) + 0.3 * math.exp(-dist_coast / 20000) + 0.2
+            slr_r = compute_risk(slr_haz, exposure_10, slr_sens, ac)
+        else:
+            slr_r = 0.0
+
+        # ── 10. Forest fire (dry forest + scrubland) ──
+        if lu in ("tree", "shrub", "grass") and ndvi < 0.6:
+            fire_haz = min(10.0, (0.7 - ndvi) * 8 + (1 if lu == "shrub" else 0) * 2)
+            fire_sens = 0.4 * (1 if lu in ("tree", "shrub") else 0.3) + 0.3 * (0.7 - ndvi) + 0.3 * (sand_pct / 100)
+            fire_r = compute_risk(fire_haz, exposure_10, fire_sens, ac)
+        else:
+            fire_r = 0.0
+
+        # Combined: max of all 10 hazard channels
+        all_risks = [flood_r, heat_r, cyc_r, drought_r, wb_r, ls_r, cw_r, ff_r, slr_r, fire_r]
+        combined = max(all_risks)
+
         results["flood_risk"].append(round(flood_r, 2))
         results["heat_risk"].append(round(heat_r, 2))
         results["cyclone_risk"].append(round(cyc_r, 2))
         results["drought_risk"].append(round(drought_r, 2))
         results["wetbulb_risk"].append(round(wb_r, 2))
+        results["landslide_risk"].append(round(ls_r, 2))
+        results["coldwave_risk"].append(round(cw_r, 2))
+        results["flashflood_risk"].append(round(ff_r, 2))
+        results["sealevel_risk"].append(round(slr_r, 2))
+        results["fire_risk"].append(round(fire_r, 2))
         results["hex_risk"].append(round(combined, 2))
 
     for col, vals in results.items():
@@ -226,8 +267,7 @@ def main():
 
     # 5. Stats
     print("\nResults:")
-    for col in ["flood_sensitivity", "heat_sensitivity", "flood_risk", "heat_risk",
-                 "cyclone_risk", "drought_risk", "wetbulb_risk", "hex_risk"]:
+    for col in RISK_COLS:
         vals = hexes[col].dropna()
         print(f"  {col:22s}: {vals.min():.3f} – {vals.max():.3f}  (mean {vals.mean():.3f})")
 

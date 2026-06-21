@@ -88,12 +88,57 @@ const ATTRIBUTES = [
     group:  "risk" as const,
   },
   {
+    key:    "landslide_risk" as const,
+    label:  "Landslide",
+    icon:   "⛰️",
+    unit:   "",
+    domain: [0, 2] as [number, number],
+    desc:   "Landslide risk (steep slope + deforestation + monsoon)",
+    group:  "risk" as const,
+  },
+  {
+    key:    "coldwave_risk" as const,
+    label:  "Cold Wave",
+    icon:   "❄️",
+    unit:   "",
+    domain: [0, 3] as [number, number],
+    desc:   "Cold wave risk (northern plains + high altitude winter exposure)",
+    group:  "risk" as const,
+  },
+  {
+    key:    "flashflood_risk" as const,
+    label:  "Flash Flood",
+    icon:   "⚡",
+    unit:   "",
+    domain: [0, 2] as [number, number],
+    desc:   "Flash flood risk (steep terrain + sudden monsoon runoff)",
+    group:  "risk" as const,
+  },
+  {
+    key:    "sealevel_risk" as const,
+    label:  "Sea Level",
+    icon:   "🌊",
+    unit:   "",
+    domain: [0, 4] as [number, number],
+    desc:   "Sea level rise exposure (low-elevation coastal hexes)",
+    group:  "risk" as const,
+  },
+  {
+    key:    "fire_risk" as const,
+    label:  "Fire",
+    icon:   "🔥",
+    unit:   "",
+    domain: [0, 2] as [number, number],
+    desc:   "Forest fire risk (dry deciduous forests + scrubland)",
+    group:  "risk" as const,
+  },
+  {
     key:    "hex_risk" as const,
     label:  "Max Risk",
     icon:   "⚠️",
     unit:   "",
-    domain: [0, 3] as [number, number],
-    desc:   "Highest risk across all 5 hazard channels for this hex",
+    domain: [0, 4] as [number, number],
+    desc:   "Highest risk across all 10 hazard channels for this hex",
     group:  "risk" as const,
   },
 ] as const;
@@ -182,13 +227,16 @@ function gradientColor(
 const ATTR_RAMP: Record<string, [number, number, number][]> = {
   elevation_mean:    VIRIDIS,
   ndvi_mean:         GREENS,
-  flood_sensitivity: BLUES,
-  heat_sensitivity:  ORANGES,
   flood_risk:        BLUES,
   heat_risk:         ORANGES,
   cyclone_risk:      RISK,
   drought_risk:      ORANGES,
   wetbulb_risk:      BLUES,
+  landslide_risk:    VIRIDIS,
+  coldwave_risk:     BLUES,
+  flashflood_risk:   BLUES,
+  sealevel_risk:     BLUES,
+  fire_risk:         ORANGES,
   hex_risk:          RISK,
 };
 
@@ -361,27 +409,24 @@ function HexInfoPanel({ props, onClose }: { props: any; onClose: () => void }) {
         </div>
         <div className="border-t border-border/30 my-1 pt-1" />
         <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wide">Risk by hazard</div>
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">🌊 Flood</span>
-          <span className="font-medium">{props.flood_risk ?? "—"}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">🔥 Heat</span>
-          <span className="font-medium">{props.heat_risk ?? "—"}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">🌀 Cyclone</span>
-          <span className="font-medium">{props.cyclone_risk ?? "—"}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">☀️ Drought</span>
-          <span className="font-medium">{props.drought_risk ?? "—"}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">💧 Wet Bulb</span>
-          <span className="font-medium">{props.wetbulb_risk ?? "—"}</span>
-        </div>
-        <div className="flex justify-between font-bold">
+        {[
+          ["🌊", "Flood",      "flood_risk"],
+          ["🔥", "Heat",       "heat_risk"],
+          ["🌀", "Cyclone",    "cyclone_risk"],
+          ["☀️", "Drought",    "drought_risk"],
+          ["💧", "Wet Bulb",   "wetbulb_risk"],
+          ["⛰️", "Landslide",  "landslide_risk"],
+          ["❄️", "Cold Wave",  "coldwave_risk"],
+          ["⚡", "Flash Flood", "flashflood_risk"],
+          ["🌊", "Sea Level",  "sealevel_risk"],
+          ["🔥", "Fire",       "fire_risk"],
+        ].map(([icon, label, key]) => (
+          <div key={key} className="flex justify-between">
+            <span className="text-muted-foreground">{icon} {label}</span>
+            <span className={`font-medium ${props[key] > 0.5 ? "text-red-400" : ""}`}>{props[key] ?? "—"}</span>
+          </div>
+        ))}
+        <div className="flex justify-between font-bold border-t border-border/30 pt-1 mt-1">
           <span className="text-muted-foreground">⚠️ Max Risk</span>
           <span>{props.hex_risk ?? "—"}</span>
         </div>
