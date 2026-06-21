@@ -16,7 +16,7 @@ ROOT     = Path(__file__).resolve().parent.parent
 HEX_FILE = ROOT / "client/public/data/india_hex_grid.geojson"
 API_URL  = "https://bhuvan-app1.nrsc.gov.in/api/lulc250k/curl_lulc250k_point.php"
 YEAR     = "2018_19"
-WORKERS  = 5
+WORKERS  = 2
 
 
 def map_lulc(desc: str) -> str:
@@ -122,7 +122,7 @@ def main():
             else:
                 failed += 1
 
-            if done % 500 == 0 or done == total:
+            if done % 200 == 0 or done == total:
                 pct = done / total * 100
                 print(f"  [{done:5d}/{total}] ({pct:.0f}%)  ok={len(results)}  failed={failed}")
 
