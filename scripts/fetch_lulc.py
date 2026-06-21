@@ -47,22 +47,25 @@ def map_lulc(desc: str) -> str:
 
 def fetch_one(idx: int, lat: float, lon: float, token: str) -> tuple[int, str | None]:
     """Query Bhuvan for a single point. Returns (index, land_use_class)."""
-    try:
-        r = requests.get(
-            API_URL,
-            params={"lon": round(lon, 4), "lat": round(lat, 4), "year": YEAR, "token": token},
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
-            timeout=15,
-        )
-        if r.status_code == 200:
-            data = r.json()
-            if isinstance(data, list) and data:
-                desc = data[0].get("Description", "")
-                return idx, map_lulc(desc)
+    for attempt in range(3):
+        try:
+            r = requests.get(
+                API_URL,
+                params={"lon": round(lon, 4), "lat": round(lat, 4), "year": YEAR, "token": token},
+                timeout=30,
+            )
+            if r.status_code == 200:
+                data = r.json()
+                if isinstance(data, list) and data:
+                    desc = data[0].get("Description", "")
+                    return idx, map_lulc(desc)
+                return idx, None
             return idx, None
-        return idx, None
-    except Exception:
-        return idx, None
+        except Exception:
+            if attempt < 2:
+                import time
+                time.sleep(2)
+    return idx, None
 
 
 def centroid(coords: list) -> tuple[float, float]:
