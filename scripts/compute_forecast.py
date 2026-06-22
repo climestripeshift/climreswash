@@ -306,9 +306,11 @@ def main():
     if final_alerts:
         print("\nTop alerts:")
         for a in final_alerts[:10]:
-            detail = f"rain {a['rain_mm']}mm" if a["rain_mm"] else f"temp {a['temp_c']}°C"
-            print(f"  Day {a['day']} ({a['date']}): {a['district']}, {a['state']} — "
-                  f"{a['hazard']} risk {a['risk']} ({detail})")
+            parts = [f"{a['hazard']} risk {a['risk']}"]
+            if a.get("rain_mm"): parts.append(f"rain {a['rain_mm']}mm")
+            if a.get("temp_c"):  parts.append(f"temp {a['temp_c']}°C")
+            if a.get("rh_pct"):  parts.append(f"RH {a['rh_pct']}%")
+            print(f"  Day {a['day']} ({a['date']}): {a['district']}, {a['state']} — {', '.join(parts)}")
 
 
 if __name__ == "__main__":

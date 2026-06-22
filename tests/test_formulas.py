@@ -119,7 +119,7 @@ def test_adaptive_capacity_madhepura():
 # ── 9. End-to-end risk ───────────────────────────────────────────────────────
 
 def test_compute_risk_patna():
-    """Patna flood + cascade amplifier → 3.9."""
+    """Patna flood + cascade amplifier. AC dampening at H=8: max(0.2, 1-8/12)=0.333."""
     risk = compute_risk(
         hazard_score=8.0,
         exposure=9.0,
@@ -127,4 +127,6 @@ def test_compute_risk_patna():
         ac=0.55,
         cascade_amplifiers=1.5,
     )
-    assert risk == pytest.approx(3.9, rel=0.10)
+    # With AC dampening: effective_ac = 0.55 × 0.333 = 0.183
+    # risk = (8×9×0.74) × (1-0.183) / 10 + 1.5 = 53.28 × 0.817 / 10 + 1.5 = 5.85
+    assert risk == pytest.approx(5.85, rel=0.10)

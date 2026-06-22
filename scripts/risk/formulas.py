@@ -204,6 +204,12 @@ def compute_risk(
     ac: float,
     cascade_amplifiers: float = 0.0,
 ) -> float:
-    """§9–10 — Risk = H × E × S × (1−AC) ÷ 10 + cascades. Output 0–10."""
-    risk = (hazard_score * exposure * sensitivity) * (1 - ac) / 10
+    """§9–10 — Risk with hazard-intensity AC dampening.
+    At extreme hazard (H≥10), AC effectiveness drops to 33% — catastrophic
+    events overwhelm even good infrastructure. At low hazard (H≤5), AC
+    applies fully. This prevents well-served areas from scoring near-zero
+    during genuine disasters (Mumbai 2005, Kerala 2018)."""
+    ac_dampening = max(0.2, 1 - hazard_score / 12)
+    effective_ac = ac * ac_dampening
+    risk = (hazard_score * exposure * sensitivity) * (1 - effective_ac) / 10
     return max(0.0, min(10.0, risk + cascade_amplifiers))
