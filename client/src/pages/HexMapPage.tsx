@@ -84,6 +84,17 @@ const LAND_USE_COLORS: Record<string, string> = {
   snow: "#dbeafe", mangrove: "#52b788",
 };
 
+// Fixed absolute domains — green always means safe, red always means danger
+const FIXED_DOMAIN: Record<string, [number, number]> = {
+  hex_risk: [0, 10], population: [0, 5000000], cascade_count: [0, 4],
+  elevation_mean: [0, 5000], ndvi_mean: [0, 0.8], land_use: [0, 1],
+  flood_risk: [0, 10], heat_risk: [0, 10], cyclone_risk: [0, 10],
+  drought_risk: [0, 10], wetbulb_risk: [0, 10], landslide_risk: [0, 10],
+  coldwave_risk: [0, 10], flashflood_risk: [0, 10], sealevel_risk: [0, 10],
+  fire_risk: [0, 10],
+  district_hazard: [0, 1], district_exposure: [0, 1], district_vulnerability: [0, 1],
+};
+
 function lerp3(a: [number,number,number], b: [number,number,number], t: number) {
   return `rgb(${a.map((c,i) => Math.round(c + t * (b[i] - c))).join(",")})`;
 }
@@ -96,10 +107,10 @@ function gradientColor(ramp: [number,number,number][], t: number) {
   return lerp3(ramp[lo], ramp[hi], s - lo);
 }
 
-function hexColor(props: any, attr: string, domain: [number,number]) {
+function hexColor(props: any, attr: string) {
   if (attr === "land_use") return LAND_USE_COLORS[props.land_use] ?? "#94a3b8";
   const val = props[attr] ?? 0;
-  const [lo, hi] = domain;
+  const [lo, hi] = FIXED_DOMAIN[attr] ?? [0, 10];
   const t = hi > lo ? (val - lo) / (hi - lo) : 0;
   return gradientColor(ATTR_RAMP[attr] ?? GREENS, t);
 }
@@ -283,7 +294,7 @@ function HexInfoPanel({ props, onClose }: { props: any; onClose: () => void }) {
 
 // ── Legend ─────────────────────────────────────────────────────────────────────
 
-function Legend({ attr, domain }: { attr: string; domain: [number,number] }) {
+function Legend({ attr }: { attr: string }) {
   const meta = ATTRIBUTES.find((a) => a.key === attr);
   if (!meta) return null;
 
@@ -305,7 +316,7 @@ function Legend({ attr, domain }: { attr: string; domain: [number,number] }) {
 
   const ramp = ATTR_RAMP[attr] ?? GREENS;
   const stops = Array.from({ length: 5 }, (_, i) => gradientColor(ramp, i / 4));
-  const [lo, hi] = domain;
+  const [lo, hi] = FIXED_DOMAIN[attr] ?? [0, 10];
   const fmt = (v: number) => attr === "elevation_mean" ? `${Math.round(v)}m` : v.toFixed(2);
 
   return (
@@ -350,10 +361,10 @@ function DistrictSummary({ features, district, state }: { features: any[]; distr
 // ── Leaflet map ───────────────────────────────────────────────────────────────
 
 function HexMap({
-  geoData, attr, selectedState, selectedDistrict, domain, mapRef, onHexClick,
+  geoData, attr, selectedState, selectedDistrict, mapRef, onHexClick,
 }: {
   geoData: any; attr: string; selectedState: string; selectedDistrict: string;
-  domain: [number,number]; mapRef: React.MutableRefObject<LeafletMap | null>;
+  mapRef: React.MutableRefObject<LeafletMap | null>;
   onHexClick: (p: any) => void;
 }) {
   const geoJsonRef = useRef<LeafletGeoJSONLayer | null>(null);
@@ -367,9 +378,9 @@ function HexMap({
   }, [geoData, selectedState, selectedDistrict]);
 
   const styleFeature = useCallback((feature: any) => ({
-    fillColor: hexColor(feature.properties, attr, domain),
+    fillColor: hexColor(feature.properties, attr),
     fillOpacity: 0.75, color: "#64748b", weight: 0.3, renderer: canvasRenderer,
-  }), [attr, domain]);
+  }), [attr]);
 
   useEffect(() => { geoJsonRef.current?.setStyle(styleFeature); }, [styleFeature]);
 
@@ -431,15 +442,6 @@ export default function HexMapPage() {
     )).sort() as string[];
   }, [features, selectedState]);
 
-  const dataDomain = useMemo((): [number,number] => {
-    if (!features.length || attr === "land_use") return [0, 1];
-    let visible = features;
-    if (selectedState !== "All India") visible = visible.filter((f: any) => f.properties.state === selectedState);
-    if (selectedDistrict !== "All") visible = visible.filter((f: any) => f.properties.district_name === selectedDistrict);
-    const vals = visible.map((f: any) => f.properties[attr]).filter((v: any) => v != null && isFinite(v));
-    if (!vals.length) return [0, 1];
-    return [Math.min(...vals), Math.max(...vals)];
-  }, [features, attr, selectedState, selectedDistrict]);
 
   const fitToFeatures = useCallback((feats: any[]) => {
     if (!mapRef.current || !feats.length) return;
@@ -510,7 +512,7 @@ export default function HexMapPage() {
             </div>
           ) : (
             <HexMap geoData={hexQ.data} attr={attr} selectedState={selectedState}
-              selectedDistrict={selectedDistrict} domain={dataDomain} mapRef={mapRef}
+              selectedDistrict={selectedDistrict} mapRef={mapRef}
               onHexClick={setClickedHex} />
           )}
 
@@ -531,7 +533,7 @@ export default function HexMapPage() {
           {/* Legend */}
           {features.length > 0 && (
             <div className="absolute bottom-8 left-3 z-[800]">
-              <Legend attr={attr} domain={dataDomain} />
+              <Legend attr={attr} />
             </div>
           )}
         </div>
