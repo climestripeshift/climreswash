@@ -15,6 +15,7 @@ import StressTestPage from "@/pages/StressTestPage";
 import AdaptPage from "@/pages/AdaptPage";
 import RiskMapPage from "@/pages/RiskMapPage";
 import HexMapPage from "@/pages/HexMapPage";
+import ForecastPage from "@/pages/ForecastPage";
 
 function Router() {
   return (
@@ -26,6 +27,7 @@ function Router() {
       <Route path="/adapt" component={AdaptPage} />
       <Route path="/risk-map" component={RiskMapPage} />
       <Route path="/grid" component={HexMapPage} />
+      <Route path="/forecast" component={ForecastPage} />
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/technology" component={TechnologyPage} />

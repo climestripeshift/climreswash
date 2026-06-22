@@ -20,6 +20,7 @@ import {
   BookOpen,
   Leaf,
   Grid3X3,
+  Radio,
 } from "lucide-react";
 
 // --- Utility Components ---
@@ -76,6 +77,7 @@ const FEATURES = [
   { icon: <AlertTriangle className="w-5 h-5 text-primary" />, title: "Climate Risk Map", desc: "Interactive choropleth of 735 districts by Hazard, Exposure, Vulnerability and composite IPCC AR6 risk.", tag: "New", link: "/risk-map", highlight: true },
   { icon: <Leaf className="w-5 h-5 text-primary" />, title: "Adaptation Planner", desc: "Python-powered compound-risk engine. District-level WASH, DRR, Policy, and Health recommendations.", tag: "Beta", link: "/adapt", highlight: true },
   { icon: <Grid3X3 className="w-5 h-5 text-primary" />, title: "Hex Grid Base Map", desc: "12,705 H3 res-5 hexagons (~252 km² each) coloured by elevation, NDVI, or land use class.", tag: "New", link: "/grid", highlight: true },
+  { icon: <Radio className="w-5 h-5 text-primary" />, title: "Forecast Early Warning", desc: "7-day weather forecast × risk formulas = live flood, heat, and wet-bulb alerts at hex resolution.", tag: "Live", link: "/forecast", highlight: true },
 ];
 
 const METHODOLOGY = [
@@ -129,6 +131,9 @@ export default function HomePage() {
               </Link>
               <Link href="/grid" className="text-sm font-semibold flex items-center gap-1.5 text-teal-500 hover:text-teal-400 transition-colors">
                 <Grid3X3 className="w-3.5 h-3.5" /> Hex Grid
+              </Link>
+              <Link href="/forecast" className="text-sm font-semibold flex items-center gap-1.5 text-red-500 hover:text-red-400 transition-colors">
+                <Radio className="w-3.5 h-3.5 animate-pulse" /> Forecast
               </Link>
             </div>
 
