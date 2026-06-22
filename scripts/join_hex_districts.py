@@ -209,8 +209,9 @@ def main():
         tree_pct  = max(params["tree_pct"], ndvi * 100 * 0.8)
         built_pct = params["built_pct"]
         sand_pct  = params["sand_pct"]
-        slope     = estimate_slope(elev)
-        dist_w    = estimate_dist_water(lu, elev)
+        # Use real slope/dist_water if available, else estimate
+        slope     = float(row.get("slope_deg", 0) or 0) or estimate_slope(elev)
+        dist_w    = float(row.get("dist_water_m", 0) or 0) or estimate_dist_water(lu, elev)
         dist_coast = estimate_coast_dist(lat, lon, elev)
 
         # Sensitivity

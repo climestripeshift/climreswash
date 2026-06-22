@@ -5,6 +5,7 @@ import { MapContainer, TileLayer, GeoJSON, useMap } from "react-leaflet";
 import type { Map as LeafletMap, GeoJSON as LeafletGeoJSONLayer } from "leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { cellToBoundary } from "h3-js";
 import {
   ArrowLeft, ChevronDown, ChevronRight, AlertTriangle, Loader2,
   Grid3X3, PanelLeftClose, PanelLeft,
@@ -422,8 +423,17 @@ export default function HexMapPage() {
   const mapRef = useRef<LeafletMap | null>(null);
 
   const hexQ = useQuery<any>({
-    queryKey: ["india-hex-grid"],
-    queryFn: () => fetch("/data/india_hex_grid.geojson").then((r) => r.json()),
+    queryKey: ["india-hex-props"],
+    queryFn: async () => {
+      const props: any[] = await fetch("/data/india_hex_props.json").then((r) => r.json());
+      const features = props.map((p) => {
+        const boundary = cellToBoundary(p.h3_id);
+        const coords = boundary.map(([lat, lng]) => [lng, lat]);
+        coords.push(coords[0]);
+        return { type: "Feature", properties: p, geometry: { type: "Polygon", coordinates: [coords] } };
+      });
+      return { type: "FeatureCollection", features };
+    },
     staleTime: Infinity,
   });
 
