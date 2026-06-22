@@ -287,7 +287,7 @@ def main():
 
     # Save
     output = {
-        "generated_at": datetime.utcnow().isoformat() + "Z",
+        "generated_at": datetime.now().astimezone().isoformat(),
         "days": dates,
         "risk": hex_risks,
         "dominant": hex_dominant,

@@ -1,0 +1,289 @@
+{
+  "New Delhi": {
+    "toilet_pct": 94.4,
+    "piped_water_pct": 98.8,
+    "health_access_pct": 93.3,
+    "electricity_pct": 99.9,
+    "female_literacy_pct": 83.7
+  },
+  "Haryana": {
+    "toilet_pct": 94.9,
+    "piped_water_pct": 96.3,
+    "health_access_pct": 96.5,
+    "electricity_pct": 99.5,
+    "female_literacy_pct": 79.7
+  },
+  "Himachal Pradesh": {
+    "toilet_pct": 92.4,
+    "piped_water_pct": 95.9,
+    "health_access_pct": 92.2,
+    "electricity_pct": 99.4,
+    "female_literacy_pct": 90.7
+  },
+  "Jammu, Kashmir & Ladakh": {
+    "toilet_pct": 78.4,
+    "piped_water_pct": 90.8,
+    "health_access_pct": 94.3,
+    "electricity_pct": 99.3,
+    "female_literacy_pct": 74.3
+  },
+  "..Jammu & Kashmir": {
+    "toilet_pct": 79.0,
+    "piped_water_pct": 90.9,
+    "health_access_pct": 94.3,
+    "electricity_pct": 99.3,
+    "female_literacy_pct": 74.3
+  },
+  "..Ladakh": {
+    "toilet_pct": 43.4,
+    "piped_water_pct": 86.8,
+    "health_access_pct": 95.9,
+    "electricity_pct": 99.4,
+    "female_literacy_pct": 74.6
+  },
+  "Punjab": {
+    "toilet_pct": 95.7,
+    "piped_water_pct": 98.6,
+    "health_access_pct": 96.1,
+    "electricity_pct": 99.6,
+    "female_literacy_pct": 79.4
+  },
+  "Rajasthan": {
+    "toilet_pct": 76.3,
+    "piped_water_pct": 93.3,
+    "health_access_pct": 96.3,
+    "electricity_pct": 97.9,
+    "female_literacy_pct": 64.7
+  },
+  "Madhya Pradesh, inc Chhattisgarh": {
+    "toilet_pct": 74.3,
+    "piped_water_pct": 87.7,
+    "health_access_pct": 91.1,
+    "electricity_pct": 98.2,
+    "female_literacy_pct": 67.4
+  },
+  "..Madhya Pradesh": {
+    "toilet_pct": 71.3,
+    "piped_water_pct": 84.9,
+    "health_access_pct": 92.2,
+    "electricity_pct": 98.1,
+    "female_literacy_pct": 65.4
+  },
+  "..Chhattisgarh": {
+    "toilet_pct": 81.7,
+    "piped_water_pct": 94.9,
+    "health_access_pct": 88.1,
+    "electricity_pct": 98.5,
+    "female_literacy_pct": 72.5
+  },
+  "Uttar Pradesh, inc Uttarakhand": {
+    "toilet_pct": 76.3,
+    "piped_water_pct": 98.7,
+    "health_access_pct": 86.1,
+    "electricity_pct": 90.3,
+    "female_literacy_pct": 66.7
+  },
+  "..Uttar Pradesh": {
+    "toilet_pct": 75.3,
+    "piped_water_pct": 98.9,
+    "health_access_pct": 86.1,
+    "electricity_pct": 89.8,
+    "female_literacy_pct": 66.1
+  },
+  "..Uttarakhand": {
+    "toilet_pct": 92.5,
+    "piped_water_pct": 95.2,
+    "health_access_pct": 84.3,
+    "electricity_pct": 99.4,
+    "female_literacy_pct": 79.8
+  },
+  "Bihar, inc Jharkhand": {
+    "toilet_pct": 59.3,
+    "piped_water_pct": 95.9,
+    "health_access_pct": 79.1,
+    "electricity_pct": 95.2,
+    "female_literacy_pct": 56.5
+  },
+  "..Bihar": {
+    "toilet_pct": 58.3,
+    "piped_water_pct": 98.9,
+    "health_access_pct": 79.3,
+    "electricity_pct": 95.6,
+    "female_literacy_pct": 55.0
+  },
+  "..Jharkhand": {
+    "toilet_pct": 62.3,
+    "piped_water_pct": 85.4,
+    "health_access_pct": 78.2,
+    "electricity_pct": 93.8,
+    "female_literacy_pct": 61.7
+  },
+  "Odisha": {
+    "toilet_pct": 65.1,
+    "piped_water_pct": 89.8,
+    "health_access_pct": 93.3,
+    "electricity_pct": 96.3,
+    "female_literacy_pct": 69.5
+  },
+  "West Bengal": {
+    "toilet_pct": 83.4,
+    "piped_water_pct": 96.8,
+    "health_access_pct": 93.6,
+    "electricity_pct": 97.0,
+    "female_literacy_pct": 72.9
+  },
+  "Arunachal Pradesh": {
+    "toilet_pct": 92.0,
+    "piped_water_pct": 93.5,
+    "health_access_pct": 82.1,
+    "electricity_pct": 94.7,
+    "female_literacy_pct": 71.3
+  },
+  "Assam": {
+    "toilet_pct": 79.1,
+    "piped_water_pct": 85.8,
+    "health_access_pct": 86.5,
+    "electricity_pct": 92.7,
+    "female_literacy_pct": 75.1
+  },
+  "Manipur": {
+    "toilet_pct": 94.4,
+    "piped_water_pct": 73.7,
+    "health_access_pct": 82.0,
+    "electricity_pct": 97.8,
+    "female_literacy_pct": 85.3
+  },
+  "Meghalaya": {
+    "toilet_pct": 89.6,
+    "piped_water_pct": 77.7,
+    "health_access_pct": 58.8,
+    "electricity_pct": 92.0,
+    "female_literacy_pct": 87.6
+  },
+  "Mizoram": {
+    "toilet_pct": 97.8,
+    "piped_water_pct": 95.6,
+    "health_access_pct": 86.7,
+    "electricity_pct": 98.0,
+    "female_literacy_pct": 94.0
+  },
+  "Nagaland": {
+    "toilet_pct": 95.6,
+    "piped_water_pct": 90.4,
+    "health_access_pct": 48.3,
+    "electricity_pct": 98.6,
+    "female_literacy_pct": 83.4
+  },
+  "Sikkim": {
+    "toilet_pct": 98.0,
+    "piped_water_pct": 92.6,
+    "health_access_pct": 97.2,
+    "electricity_pct": 99.3,
+    "female_literacy_pct": 87.1
+  },
+  "Tripura": {
+    "toilet_pct": 88.5,
+    "piped_water_pct": 87.4,
+    "health_access_pct": 91.6,
+    "electricity_pct": 97.9,
+    "female_literacy_pct": 78.3
+  },
+  "Goa": {
+    "toilet_pct": 94.9,
+    "piped_water_pct": 98.4,
+    "health_access_pct": 100.0,
+    "electricity_pct": 100.0,
+    "female_literacy_pct": 92.2
+  },
+  "Gujarat": {
+    "toilet_pct": 77.8,
+    "piped_water_pct": 96.2,
+    "health_access_pct": 95.6,
+    "electricity_pct": 97.2,
+    "female_literacy_pct": 73.4
+  },
+  "Maharashtra": {
+    "toilet_pct": 80.0,
+    "piped_water_pct": 92.6,
+    "health_access_pct": 95.9,
+    "electricity_pct": 97.4,
+    "female_literacy_pct": 82.3
+  },
+  "Andhra Pradesh including Telangana": {
+    "toilet_pct": 83.2,
+    "piped_water_pct": 96.4,
+    "health_access_pct": 98.0,
+    "electricity_pct": 99.2,
+    "female_literacy_pct": 66.0
+  },
+  "..Andhra Pradesh": {
+    "toilet_pct": 82.4,
+    "piped_water_pct": 95.1,
+    "health_access_pct": 98.0,
+    "electricity_pct": 99.1,
+    "female_literacy_pct": 66.7
+  },
+  "..Telangana": {
+    "toilet_pct": 84.5,
+    "piped_water_pct": 98.4,
+    "health_access_pct": 98.1,
+    "electricity_pct": 99.3,
+    "female_literacy_pct": 64.8
+  },
+  "Karnataka": {
+    "toilet_pct": 78.7,
+    "piped_water_pct": 94.8,
+    "health_access_pct": 97.9,
+    "electricity_pct": 98.8,
+    "female_literacy_pct": 73.4
+  },
+  "Kerala": {
+    "toilet_pct": 99.1,
+    "piped_water_pct": 94.8,
+    "health_access_pct": 99.8,
+    "electricity_pct": 99.5,
+    "female_literacy_pct": 97.4
+  },
+  "Tamil Nadu": {
+    "toilet_pct": 75.8,
+    "piped_water_pct": 97.4,
+    "health_access_pct": 99.7,
+    "electricity_pct": 99.0,
+    "female_literacy_pct": 84.0
+  },
+  "Andaman and Nicobar Islands": {
+    "toilet_pct": 95.9,
+    "piped_water_pct": 95.7,
+    "health_access_pct": 99.0,
+    "electricity_pct": 97.5,
+    "female_literacy_pct": 80.5
+  },
+  "Chandigarh": {
+    "toilet_pct": 96.0,
+    "piped_water_pct": 98.4,
+    "health_access_pct": 96.6,
+    "electricity_pct": 99.7,
+    "female_literacy_pct": 78.7
+  },
+  "Dadra and Nagar Haveli, Daman and Diu": {
+    "toilet_pct": 86.3,
+    "piped_water_pct": 95.0,
+    "health_access_pct": 98.8,
+    "electricity_pct": 99.6,
+    "female_literacy_pct": 75.6
+  },
+  "Lakshadweep": {
+    "toilet_pct": 99.9,
+    "piped_water_pct": 92.9,
+    "health_access_pct": 100.0,
+    "electricity_pct": 99.7,
+    "female_literacy_pct": 95.2
+  },
+  "Puducherry": {
+    "toilet_pct": 88.9,
+    "piped_water_pct": 99.7,
+    "health_access_pct": 99.8,
+    "electricity_pct": 99.8,
+    "female_literacy_pct": 89.7
+  }
+}

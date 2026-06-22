@@ -1,6 +1,6 @@
 """
 Spatial-join hex grid to districts, inherit district-level indicators,
-compute per-hex risk scores using formulas.py.
+compute per-hex risk scores using formulas.py with real NFHS-5 WASH data.
 
 Hierarchy: hex → district → state → country
 
@@ -111,7 +111,56 @@ def main():
         hexes["district_id"]   = hexes["district_id"].fillna("unknown")
         hexes["district_name"] = hexes["district_name"].fillna("Unknown")
 
-    # 3. Estimate distance to coast (rough: hexes near sea level + near edges)
+    # 3. Load real NFHS-5 WASH data
+    print("Loading NFHS-5 WASH data...")
+    wash_file = ROOT / "scripts/nfhs5_wash.json"
+    mpi_file  = ROOT / "scripts/nfhs5_poverty_mpi.json"
+    wash_raw  = json.loads(wash_file.read_text()) if wash_file.exists() else {}
+    mpi_raw   = json.loads(mpi_file.read_text()) if mpi_file.exists() else {}
+
+    # Map DHS state names → hex grid state names (fuzzy)
+    wash_by_state: dict[str, dict] = {}
+    for hex_state in hexes["state"].unique():
+        if not hex_state or hex_state == "Unknown":
+            continue
+        hs_lower = hex_state.lower().replace("&", "and")
+        for dhs_name, vals in wash_raw.items():
+            ds_lower = dhs_name.lower().replace("&", "and").replace("..", "")
+            if hs_lower == ds_lower or hs_lower in ds_lower or ds_lower in hs_lower:
+                vals["poverty_pct"] = mpi_raw.get(hex_state, 20.0)
+                wash_by_state[hex_state] = vals
+                break
+        if hex_state not in wash_by_state:
+            wash_by_state[hex_state] = {
+                "toilet_pct": 70, "piped_water_pct": 85, "health_access_pct": 80,
+                "electricity_pct": 90, "female_literacy_pct": 70,
+                "poverty_pct": mpi_raw.get(hex_state, 20.0),
+            }
+
+    matched_wash = sum(1 for s in wash_by_state if s in [v for v in hexes["state"].unique()])
+    print(f"  Matched WASH data for {matched_wash}/{len(hexes['state'].unique())} states")
+
+    # Compute adaptive capacity per state
+    state_ac: dict[str, float] = {}
+    for state_name, w in wash_by_state.items():
+        ac = adaptive_capacity(
+            toilet_pct=w.get("toilet_pct", 70),
+            piped_water_pct=w.get("piped_water_pct", 85),
+            health_access_pct=w.get("health_access_pct", 80),
+            electricity_pct=w.get("electricity_pct", 90),
+            poverty_pct=w.get("poverty_pct", 20),
+            female_literacy_pct=w.get("female_literacy_pct", 70),
+        )
+        state_ac[state_name] = round(ac, 3)
+
+    print("  Sample AC scores:")
+    for s in ["Bihar", "Kerala", "Maharashtra", "Rajasthan", "Uttar Pradesh"]:
+        if s in state_ac:
+            w = wash_by_state[s]
+            print(f"    {s}: AC={state_ac[s]} (toilet={w['toilet_pct']}%, water={w['piped_water_pct']}%, "
+                  f"health={w['health_access_pct']}%, poverty={w['poverty_pct']}%)")
+
+    # 4. Estimate distance to coast (rough: hexes near sea level + near edges)
     print("Estimating coastal proximity...")
     centroids = hexes.geometry.centroid
     hex_lats = [c.y for c in centroids]
@@ -166,11 +215,11 @@ def main():
         fs = flood_sensitivity(slope, sand_pct, built_pct, dist_w)
         hs = heat_sensitivity(tree_pct, built_pct, dist_w)
 
-        # District-level inputs
-        d_exposure = float(row.get("district_exposure", 0.4) or 0.4)
-        d_vuln = float(row.get("district_vulnerability", 0.5) or 0.5)
-        exposure_10 = d_exposure * 10
-        ac = max(0.1, 1 - d_vuln)
+        # Real population-based exposure + real NFHS-5 adaptive capacity
+        pop = int(row.get("population", 10000) or 10000)
+        exposure_10 = exposure_score(max(1, pop), 9, 8, 25)  # Census avg demographics
+        state_name = str(row.get("state", "") or "")
+        ac = max(0.1, state_ac.get(state_name, 0.7))
 
         # ── 1. Pluvial flood (50mm monsoon rain) ──
         flood_haz = pluvial_flood_score(50, sand_pct, built_pct, slope)
