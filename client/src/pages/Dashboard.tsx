@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { MapComponent } from "@/components/MapComponent";
 import { Sidebar } from "@/components/Sidebar";
 import { GeographicNavigation } from "@/components/GeographicNavigation";
@@ -24,6 +25,35 @@ interface GeographicBreadcrumb {
   level: GeographicLevel;
   id: string;
   name: string;
+}
+
+function HexGridBanner() {
+  const hexQ = useQuery<any[]>({
+    queryKey: ["hex-props-dashboard"],
+    queryFn: () => fetch("/data/india_hex_props.json").then((r) => r.json()),
+    staleTime: Infinity,
+  });
+  if (!hexQ.data) return null;
+  const props = hexQ.data;
+  const total = props.length;
+  const totalPop = props.reduce((s: number, p: any) => s + (p.population || 0), 0);
+  const avgRisk = props.reduce((s: number, p: any) => s + (p.hex_risk || 0), 0) / total;
+  const highRisk = props.filter((p: any) => (p.hex_risk || 0) >= 5).length;
+  const cascades = props.filter((p: any) => (p.cascade_count || 0) > 0).length;
+  return (
+    <div className="w-full bg-emerald-500/10 border-b border-emerald-500/30 px-4 py-1.5">
+      <div className="flex items-center gap-4 text-[11px]">
+        <span className="font-semibold text-emerald-400">📊 Hex Grid Intelligence</span>
+        <span className="text-muted-foreground">{total.toLocaleString()} hexes · {totalPop.toLocaleString()} pop</span>
+        <span className="text-muted-foreground">Avg risk: <b className="text-foreground">{avgRisk.toFixed(1)}/10</b></span>
+        <span className="text-red-400">🔴 {highRisk.toLocaleString()} high-risk hexes</span>
+        <span className="text-amber-400">🔗 {cascades.toLocaleString()} WASH cascades</span>
+        <div className="flex-1" />
+        <Link href="/grid" className="text-emerald-400 hover:text-emerald-300 font-semibold">Open Hex Grid →</Link>
+        <Link href="/forecast" className="text-red-400 hover:text-red-300 font-semibold">Live Forecast →</Link>
+      </div>
+    </div>
+  );
 }
 
 export default function Dashboard() {
@@ -328,6 +358,8 @@ export default function Dashboard() {
         onNavigate={handleNavigate}
         stats={navStats}
       />
+
+      <HexGridBanner />
       
       <AnimatePresence>
         {showAlertBanner && highPriorityAlerts.length > 0 && (

@@ -334,26 +334,71 @@ function Legend({ attr }: { attr: string }) {
 // ── District summary ──────────────────────────────────────────────────────────
 
 function DistrictSummary({ features, district, state }: { features: any[]; district: string; state: string }) {
+  const [expanded, setExpanded] = useState(false);
   const d = features.filter((f: any) => f.properties.district_name === district);
   if (!d.length) return null;
+
   const pop = d.reduce((s: number, f: any) => s + (f.properties.population || 0), 0);
   const avg = d.reduce((s: number, f: any) => s + (f.properties.hex_risk || 0), 0) / d.length;
   const mx = Math.max(...d.map((f: any) => f.properties.hex_risk || 0));
   const cas = d.filter((f: any) => (f.properties.cascade_count || 0) > 0).length;
-  const hazards = ["flood_risk","heat_risk","cyclone_risk","drought_risk","wetbulb_risk","landslide_risk","coldwave_risk"];
-  const top = hazards.map((h) => ({ h, s: d.reduce((s: number, f: any) => s + (f.properties[h] || 0), 0) }))
-    .sort((a,b) => b.s - a.s)[0]?.h?.replace("_risk","") || "flood";
+
+  const hazardKeys = ["flood_risk","heat_risk","cyclone_risk","drought_risk","wetbulb_risk","landslide_risk","coldwave_risk","flashflood_risk","sealevel_risk","fire_risk"];
+  const hazardAvgs = hazardKeys.map((h) => ({
+    key: h, label: h.replace("_risk",""),
+    avg: d.reduce((s: number, f: any) => s + (f.properties[h] || 0), 0) / d.length,
+    max: Math.max(...d.map((f: any) => f.properties[h] || 0)),
+  })).sort((a,b) => b.avg - a.avg);
+
+  const riskLevel = avg >= 7 ? "EXTREME" : avg >= 5 ? "HIGH" : avg >= 3 ? "MODERATE" : "LOW";
+  const riskClr = avg >= 7 ? "text-red-500" : avg >= 5 ? "text-orange-400" : avg >= 3 ? "text-amber-400" : "text-emerald-400";
 
   return (
-    <div className="bg-background/95 backdrop-blur border border-border/40 rounded-lg shadow-lg p-3 w-52">
-      <div className="text-xs font-bold">{district}</div>
-      <div className="text-[10px] text-muted-foreground mb-2">{state} · {d.length} hexes</div>
-      <div className="space-y-1 text-[11px]">
-        <div className="flex justify-between"><span className="text-muted-foreground">Population</span><span className="font-medium">{pop.toLocaleString()}</span></div>
-        <div className="flex justify-between"><span className="text-muted-foreground">Avg Risk</span><span className="font-bold">{avg.toFixed(2)}</span></div>
-        <div className="flex justify-between"><span className="text-muted-foreground">Max Risk</span><span className="font-bold text-red-400">{mx.toFixed(2)}</span></div>
-        <div className="flex justify-between"><span className="text-muted-foreground">Top Hazard</span><span className="capitalize">{top}</span></div>
-        {cas > 0 && <div className="flex justify-between"><span className="text-red-400">🔗 Cascades</span><span className="text-red-400 font-bold">{cas} hexes</span></div>}
+    <div className={`bg-background/95 backdrop-blur border border-border/40 rounded-lg shadow-lg p-3 ${expanded ? "w-72" : "w-56"} max-h-[70vh] overflow-y-auto print:w-full print:max-h-none print:shadow-none print:border-0`}>
+      <div className="flex items-start justify-between">
+        <div>
+          <div className="text-xs font-bold">{district}</div>
+          <div className="text-[10px] text-muted-foreground">{state} · {d.length} hexes</div>
+        </div>
+        <span className={`text-[10px] font-bold ${riskClr}`}>{riskLevel}</span>
+      </div>
+
+      <div className="space-y-1 text-[11px] mt-2">
+        <div className="flex justify-between"><span className="text-muted-foreground">👥 Population</span><span className="font-medium">{pop.toLocaleString()}</span></div>
+        <div className="flex justify-between"><span className="text-muted-foreground">⚠️ Avg Risk</span><span className="font-bold">{avg.toFixed(2)}/10</span></div>
+        <div className="flex justify-between"><span className="text-muted-foreground">🔴 Max Risk</span><span className="font-bold text-red-400">{mx.toFixed(2)}/10</span></div>
+        {cas > 0 && <div className="flex justify-between"><span className="text-red-400">🔗 WASH Cascades</span><span className="text-red-400 font-bold">{cas}/{d.length} hexes</span></div>}
+      </div>
+
+      {/* Hazard breakdown */}
+      <button onClick={() => setExpanded((v) => !v)}
+        className="w-full mt-2 text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1">
+        {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+        Hazard breakdown
+      </button>
+      {expanded && (
+        <div className="mt-1 space-y-1">
+          {hazardAvgs.filter((h) => h.avg > 0.01).map((h) => (
+            <div key={h.key} className="flex items-center gap-1.5 text-[10px]">
+              <span className="w-16 text-muted-foreground capitalize truncate">{h.label}</span>
+              <div className="flex-1 h-1.5 bg-muted/40 rounded-full overflow-hidden">
+                <div className="h-full rounded-full" style={{ width: `${Math.min(100, h.avg * 10)}%`, background: gradientColor(RISK, h.avg / 10) }} />
+              </div>
+              <span className="w-8 text-right font-mono" style={{ color: gradientColor(RISK, h.avg / 10) }}>{h.avg.toFixed(1)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="flex gap-1.5 mt-2 print:hidden">
+        <button onClick={() => window.print()}
+          className="flex-1 px-2 py-1 rounded-md bg-muted/60 text-[10px] text-muted-foreground hover:bg-muted transition-colors">
+          🖨️ Print
+        </button>
+        <Link href={`/forecast?state=${encodeURIComponent(state)}`}
+          className="flex-1 px-2 py-1 rounded-md bg-red-600/20 text-[10px] text-red-400 hover:bg-red-600/30 text-center transition-colors">
+          📡 Forecast
+        </Link>
       </div>
     </div>
   );
@@ -419,7 +464,7 @@ export default function HexMapPage() {
   const [selectedState, setSelectedState]     = useState(initialState);
   const [selectedDistrict, setSelectedDistrict] = useState(initialDistrict);
   const [clickedHex, setClickedHex]           = useState<any | null>(null);
-  const [sidebarOpen, setSidebarOpen]         = useState(true);
+  const [sidebarOpen, setSidebarOpen]         = useState(window.innerWidth > 768);
   const mapRef = useRef<LeafletMap | null>(null);
 
   const hexQ = useQuery<any>({
