@@ -11,10 +11,10 @@ import json
 import os
 from pathlib import Path
 
-import geopandas as gpd
 import h3
-from rasterstats import zonal_stats
-from shapely.geometry import Polygon
+import numpy as np
+import rasterio
+from rasterio.windows import from_bounds
 
 ROOT       = Path(__file__).resolve().parent.parent
 HEX_PROPS  = ROOT / "client/public/data/india_hex_props.json"
@@ -22,11 +22,25 @@ HEX_GEO    = ROOT / "client/public/data/india_hex_grid.geojson"
 POP_RASTER = ROOT / "data/raw/worldpop/ind_ppp_2020_UNadj_constrained.tif"
 
 
-def h3_to_polygon(h3_id: str) -> Polygon:
-    boundary = h3.cell_to_boundary(h3_id)
-    coords = [(lng, lat) for lat, lng in boundary]
-    coords.append(coords[0])
-    return Polygon(coords)
+def sum_population_in_hex(src, h3_id: str) -> float:
+    """Read raster window for hex bounding box and sum valid pixels."""
+    boundary = h3.cell_to_boundary(h3_id)  # [(lat, lng), ...]
+    lats = [b[0] for b in boundary]
+    lngs = [b[1] for b in boundary]
+    min_lng, max_lng = min(lngs), max(lngs)
+    min_lat, max_lat = min(lats), max(lats)
+
+    try:
+        window = from_bounds(min_lng, min_lat, max_lng, max_lat, src.transform)
+        # Clamp to raster bounds
+        window = window.intersection(rasterio.windows.Window(0, 0, src.width, src.height))
+        if window.width < 1 or window.height < 1:
+            return 0.0
+        data = src.read(1, window=window)
+        valid = data[data != src.nodata]
+        return float(valid.sum()) if len(valid) > 0 else 0.0
+    except Exception:
+        return 0.0
 
 
 def main():
@@ -40,34 +54,23 @@ def main():
         props = json.load(f)
     print(f"  {len(props)} hexes")
 
-    # Build GeoDataFrame from hex props
-    print("Building hex polygons from h3_id...")
-    geometries = [h3_to_polygon(p["h3_id"]) for p in props]
-    gdf = gpd.GeoDataFrame(props, geometry=geometries, crs="EPSG:4326")
-
-    # Zonal stats: sum population pixels per hex
-    print(f"Computing zonal stats from {POP_RASTER.name} (this may take 5-10 min)...")
-    results = zonal_stats(
-        gdf, str(POP_RASTER),
-        stats=["sum"],
-        nodata=-99999,
-        all_touched=True,
-    )
-
-    # Apply results
+    print(f"Computing population from {POP_RASTER.name}...")
     updated = 0
     pops = []
-    for i, (p, r) in enumerate(zip(props, results)):
-        pop = r.get("sum")
-        if pop is not None and pop > 0:
-            p["population"] = round(pop)
-            pops.append(round(pop))
-            updated += 1
-        else:
-            p["population"] = p.get("population", 0)
 
-        if (i + 1) % 2000 == 0 or i == len(props) - 1:
-            print(f"  [{i+1}/{len(props)}] {updated} hexes with population data")
+    with rasterio.open(str(POP_RASTER)) as src:
+        print(f"  Raster: {src.shape}, bounds: {src.bounds}")
+        for i, p in enumerate(props):
+            pop = sum_population_in_hex(src, p["h3_id"])
+            if pop > 0:
+                p["population"] = round(pop)
+                pops.append(round(pop))
+                updated += 1
+            else:
+                p["population"] = p.get("population", 0)
+
+            if (i + 1) % 2000 == 0 or i == len(props) - 1:
+                print(f"  [{i+1}/{len(props)}] {updated} hexes with population data")
 
     # Stats
     if pops:
