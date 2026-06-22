@@ -338,15 +338,7 @@ function Legend({ attr, domain }: { attr: AttrKey; domain: [number, number] }) {
     );
   }
 
-  const rampMap: Record<string, [number, number, number][]> = {
-    elevation_mean:    VIRIDIS,
-    ndvi_mean:         GREENS,
-    flood_sensitivity: BLUES,
-    heat_sensitivity:  ORANGES,
-    flood_risk_50mm:   RISK,
-    heat_risk_44c:     RISK,
-  };
-  const ramp = rampMap[attr] ?? GREENS;
+  const ramp = ATTR_RAMP[attr] ?? GREENS;
   const stops = Array.from({ length: 5 }, (_, i) => gradientColor(ramp, i / 4));
   const [lo, hi] = domain;
   const fmtVal = (v: number) =>

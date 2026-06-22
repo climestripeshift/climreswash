@@ -187,6 +187,7 @@ def main():
         exposure_10 = d_exposure * 10
         ac = max(0.1, 1 - d_vuln)
 
+        lat, lon = centroids[i]
         wx_idx = hex_weather_idx[i]
         wx_days = weather.get(wx_idx, [])
 
@@ -203,20 +204,51 @@ def main():
             else:
                 rain, temp, rh, wind = 0, 35, 50, 5
 
-            # Flood risk from forecasted rainfall
+            # ── Flood (from forecasted rainfall) ──
             flood_haz = pluvial_flood_score(rain, sand_pct, built_pct, slope)
             flood_r = compute_risk(flood_haz, exposure_10, fs, ac)
 
-            # Heat risk from forecasted temperature
+            # ── Heat (from forecasted temperature) ──
             threshold = 30.0 if elev > 800 else (37.0 if elev < 30 else 40.0)
             heat_haz = heatwave_score(temp, threshold, 3, built_pct, tree_pct, dist_w)
             heat_r = compute_risk(heat_haz, exposure_10, hs, ac)
 
-            # Wet-bulb risk from forecasted temp + humidity
+            # ── Wet-bulb (from temp + humidity) ──
             wb_haz = wet_bulb_score(temp, rh)
             wb_r = compute_risk(wb_haz, exposure_10, hs, ac)
 
-            risks = {"flood": flood_r, "heat": heat_r, "wetbulb": wb_r}
+            # ── Flash flood (rainfall + steep terrain) ──
+            ff_r = 0.0
+            if slope > 3 and rain > 10:
+                ff_haz = min(10.0, slope / 4 * 5 * (rain / 50))
+                ff_sens = 0.4 * (slope / 30) + 0.3 * math.exp(-dist_w / 1500) + 0.3 * (1 - sand_pct / 100)
+                ff_r = compute_risk(ff_haz, exposure_10, ff_sens, ac)
+
+            # ── Cold wave (low temperature in winter-prone areas) ──
+            cw_r = 0.0
+            if temp < 15 and (lat > 22 or elev > 1500):
+                cold_haz = min(10.0, max(0, (15 - temp) / 2))
+                cold_sens = 0.4 * (1 - built_pct / 100) + 0.3 * min(1, elev / 3000) + 0.3 * max(0, (lat - 25) / 12)
+                cw_r = compute_risk(cold_haz, exposure_10, cold_sens, ac)
+
+            # ── Landslide (rain + steep slope) ──
+            ls_r = 0.0
+            if slope > 10 and rain > 20:
+                ls_haz = min(10.0, (slope / 5) * (rain / 30) * (1.2 - ndvi))
+                ls_sens = 0.4 * (slope / 30) + 0.3 * (1 - ndvi) + 0.3 * math.exp(-dist_w / 2000)
+                ls_r = compute_risk(ls_haz, exposure_10, ls_sens, ac)
+
+            # ── Fire (high temp + low humidity + dry vegetation) ──
+            fire_r = 0.0
+            if temp > 35 and rh < 30 and lu in ("tree", "shrub", "grass") and ndvi < 0.5:
+                fire_haz = min(10.0, (temp - 35) / 5 * (30 - rh) / 30 * 5)
+                fire_sens = 0.4 * (1 if lu in ("tree", "shrub") else 0.3) + 0.3 * (0.6 - ndvi) + 0.3 * (sand_pct / 100)
+                fire_r = compute_risk(fire_haz, exposure_10, fire_sens, ac)
+
+            risks = {
+                "flood": flood_r, "heat": heat_r, "wetbulb": wb_r,
+                "flashflood": ff_r, "coldwave": cw_r, "landslide": ls_r, "fire": fire_r,
+            }
             max_r = max(risks.values())
             dominant = max(risks, key=risks.get)
 
@@ -224,7 +256,13 @@ def main():
             day_dominant.append(dominant)
 
             # Generate alert if above threshold
-            if max_r >= ALERT_THRESHOLD and d <= 2:  # alerts for next 3 days only
+            if max_r >= ALERT_THRESHOLD and d <= 2:
+                detail = {}
+                if rain > 0: detail["rain_mm"] = round(rain, 1)
+                if temp > 35 or dominant in ("heat", "wetbulb", "fire", "coldwave"):
+                    detail["temp_c"] = round(temp, 1)
+                if dominant == "wetbulb": detail["rh_pct"] = round(rh)
+                if wind > 20: detail["wind_kmh"] = round(wind, 1)
                 alerts.append({
                     "h3_id": h3_id,
                     "district": p.get("district_name", "Unknown"),
@@ -233,21 +271,19 @@ def main():
                     "risk": round(max_r, 2),
                     "day": d,
                     "date": dates[d] if d < len(dates) else "",
-                    "rain_mm": round(rain, 1) if dominant == "flood" else None,
-                    "temp_c": round(temp, 1) if dominant in ("heat", "wetbulb") else None,
-                    "rh_pct": round(rh) if dominant == "wetbulb" else None,
+                    **detail,
                 })
 
         hex_risks[h3_id] = day_risks
         hex_dominant[h3_id] = day_dominant
 
-    # Deduplicate alerts: keep top alert per district per day
+    # Deduplicate: keep top alert per district per hazard per day
     district_alerts: dict[str, dict] = {}
     for a in sorted(alerts, key=lambda x: -x["risk"]):
-        key = f"{a['district']}_{a['day']}"
+        key = f"{a['district']}_{a['hazard']}_{a['day']}"
         if key not in district_alerts:
             district_alerts[key] = a
-    final_alerts = sorted(district_alerts.values(), key=lambda x: (-x["risk"], x["day"]))[:50]
+    final_alerts = sorted(district_alerts.values(), key=lambda x: (-x["risk"], x["day"]))[:100]
 
     # Save
     output = {
