@@ -108,47 +108,28 @@ function DaySelector({
 function AlertPanel({
   alerts,
   selectedDay,
+  hazardFilter,
 }: {
   alerts: Alert[];
   selectedDay: number;
+  hazardFilter: string;
 }) {
-  const [hazardFilter, setHazardFilter] = useState("all");
-
   const dayAlerts = alerts.filter((a) => a.day === selectedDay);
   const allDayAlerts = alerts.filter((a) => a.day <= 2);
   const base = dayAlerts.length > 0 ? dayAlerts : allDayAlerts;
   const display = hazardFilter === "all" ? base : base.filter((a) => a.hazard === hazardFilter);
-
-  const hazardTypes = Array.from(new Set(alerts.map((a) => a.hazard)));
 
   return (
     <div className="bg-background/95 backdrop-blur border border-border/40 rounded-lg shadow-lg w-72 max-h-[60vh] overflow-hidden flex flex-col">
       <div className="px-3 py-2 border-b border-border/30 flex items-center gap-2">
         <AlertTriangle className="h-3.5 w-3.5 text-red-400" />
         <span className="text-xs font-semibold">
-          {dayAlerts.length > 0 ? `Alerts — Day ${selectedDay}` : "Alerts — Next 3 days"}
+          {hazardFilter !== "all" ? `${HAZARD_ICONS[hazardFilter] || ""} ${hazardFilter}` : "All hazards"}
+          {" — "}{dayAlerts.length > 0 ? `Day ${selectedDay}` : "Next 3 days"}
         </span>
         <Badge variant="outline" className="ml-auto text-[9px] h-4 border-red-500/30 text-red-400">
           {display.length}
         </Badge>
-      </div>
-      {/* Hazard type filter */}
-      <div className="px-3 py-1.5 border-b border-border/20 flex flex-wrap gap-1">
-        <button
-          onClick={() => setHazardFilter("all")}
-          className={`px-1.5 py-0.5 rounded text-[9px] font-medium ${hazardFilter === "all" ? "bg-red-600 text-white" : "bg-muted/60 text-muted-foreground"}`}
-        >
-          All
-        </button>
-        {hazardTypes.map((h) => (
-          <button
-            key={h}
-            onClick={() => setHazardFilter(h)}
-            className={`px-1.5 py-0.5 rounded text-[9px] font-medium ${hazardFilter === h ? "bg-red-600 text-white" : "bg-muted/60 text-muted-foreground"}`}
-          >
-            {HAZARD_ICONS[h] || ""} {h}
-          </button>
-        ))}
       </div>
       <div className="overflow-y-auto flex-1">
         {display.length === 0 ? (
@@ -211,6 +192,7 @@ function ForecastMap({
   forecast,
   selectedDay,
   selectedState,
+  hazardFilter,
   significantOnly,
   domain,
   mapRef,
@@ -219,6 +201,7 @@ function ForecastMap({
   forecast: ForecastData;
   selectedDay: number;
   selectedState: string;
+  hazardFilter: string;
   significantOnly: boolean;
   domain: [number, number];
   mapRef: React.MutableRefObject<LeafletMap | null>;
@@ -230,14 +213,20 @@ function ForecastMap({
     let feats = geoData.features;
     if (selectedState !== "All India")
       feats = feats.filter((f: any) => f.properties.state === selectedState);
+    if (hazardFilter !== "all") {
+      feats = feats.filter((f: any) => {
+        const dom = forecast.dominant[f.properties.h3_id];
+        return dom && dom[selectedDay] === hazardFilter;
+      });
+    }
     if (significantOnly) {
       feats = feats.filter((f: any) => {
         const risks = forecast.risk[f.properties.h3_id];
-        return risks && risks[selectedDay] > 0.5;
+        return risks && risks[selectedDay] > 1.0;
       });
     }
     return { ...geoData, features: feats };
-  }, [geoData, selectedState, significantOnly, forecast, selectedDay]);
+  }, [geoData, selectedState, hazardFilter, significantOnly, forecast, selectedDay]);
 
   const styleFeature = useCallback(
     (feature: any) => {
@@ -299,7 +288,7 @@ function ForecastMap({
       />
       <GeoJSON
         ref={geoJsonRef}
-        key={`${selectedState}-${significantOnly}-${selectedDay}`}
+        key={`${selectedState}-${hazardFilter}-${significantOnly}-${selectedDay}`}
         data={filtered}
         style={styleFeature}
         onEachFeature={onEachFeature}
@@ -310,9 +299,13 @@ function ForecastMap({
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
+const HAZARD_TYPES = ["all", "flood", "heat", "wetbulb", "flashflood", "coldwave", "landslide", "fire"] as const;
+type HazardFilter = typeof HAZARD_TYPES[number];
+
 export default function ForecastPage() {
-  const [selectedDay, setSelectedDay]     = useState(0);
-  const [selectedState, setSelectedState] = useState("All India");
+  const [selectedDay, setSelectedDay]       = useState(0);
+  const [selectedState, setSelectedState]   = useState("All India");
+  const [hazardFilter, setHazardFilter]     = useState<HazardFilter>("all");
   const [significantOnly, setSignificantOnly] = useState(false);
   const mapRef = useRef<LeafletMap | null>(null);
 
@@ -386,6 +379,25 @@ export default function ForecastPage() {
             />
           )}
 
+          <div className="h-4 w-px bg-border/50 shrink-0" />
+
+          {/* Hazard filter — filters BOTH map and alerts */}
+          <div className="flex items-center gap-1">
+            {HAZARD_TYPES.map((h) => (
+              <button
+                key={h}
+                onClick={() => setHazardFilter(h)}
+                className={`px-1.5 py-1 rounded-md text-[10px] font-semibold transition-colors ${
+                  hazardFilter === h
+                    ? "bg-red-600 text-white"
+                    : "bg-muted/60 text-muted-foreground hover:bg-muted"
+                }`}
+              >
+                {h === "all" ? "All" : `${HAZARD_ICONS[h] || ""} ${h}`}
+              </button>
+            ))}
+          </div>
+
           <div className="flex-1" />
 
           {stateList.length > 0 && (
@@ -443,6 +455,7 @@ export default function ForecastPage() {
             forecast={forecastQ.data}
             selectedDay={selectedDay}
             selectedState={selectedState}
+            hazardFilter={hazardFilter}
             significantOnly={significantOnly}
             domain={domain}
             mapRef={mapRef}
@@ -452,7 +465,7 @@ export default function ForecastPage() {
         {/* Alert panel — top right */}
         {forecastQ.data && (
           <div className="absolute top-3 right-3 z-[800]">
-            <AlertPanel alerts={forecastQ.data.alerts} selectedDay={selectedDay} />
+            <AlertPanel alerts={forecastQ.data.alerts} selectedDay={selectedDay} hazardFilter={hazardFilter} />
           </div>
         )}
 
