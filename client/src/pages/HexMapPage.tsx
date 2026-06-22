@@ -24,18 +24,24 @@ interface AttrDef {
 }
 
 const CATEGORIES = [
-  { id: "overview",   label: "Overview",            icon: "⚠️" },
-  { id: "terrain",    label: "Terrain & Land",      icon: "⛰️" },
-  { id: "climate",    label: "Climate Hazards",     icon: "🌀" },
-  { id: "geographic", label: "Geographic Hazards",  icon: "🏔️" },
-  { id: "wash",       label: "WASH & Capacity",     icon: "🚰" },
+  { id: "overview",     label: "Overview",            icon: "⚠️" },
+  { id: "demographics", label: "Demographics",        icon: "👥" },
+  { id: "terrain",      label: "Terrain & Land",      icon: "⛰️" },
+  { id: "climate",      label: "Climate Hazards",     icon: "🌀" },
+  { id: "geographic",   label: "Geographic Hazards",  icon: "🏔️" },
+  { id: "wash",         label: "WASH & Capacity",     icon: "🚰" },
 ];
 
 const ATTRIBUTES: AttrDef[] = [
   // Overview
   { key: "hex_risk",      label: "Max Risk (all hazards)", icon: "⚠️",  category: "overview", desc: "Highest risk across all 10 hazard channels + cascade amplifiers" },
-  { key: "population",    label: "Population",             icon: "👥",  category: "overview", desc: "Estimated population per hex (Census, land-use weighted)" },
+  { key: "population",    label: "Total Population",       icon: "👥",  category: "overview", desc: "WorldPop 2020 UN-adjusted 100m resolution" },
   { key: "cascade_count", label: "WASH Cascades",          icon: "🔗",  category: "overview", desc: "Number of WASH cascade rules triggered in this hex" },
+
+  // Demographics
+  { key: "pop_children_under_5", label: "Children Under 5",  icon: "👶", category: "demographics", desc: "Children aged 0-4 (WorldPop × Census age ratios)" },
+  { key: "pop_elderly_60plus",   label: "Elderly 60+",       icon: "🧓", category: "demographics", desc: "Population aged 60+ (WorldPop × Census age ratios)" },
+  { key: "pop_women_15_49",      label: "Women 15-49",       icon: "👩", category: "demographics", desc: "Women of reproductive age (WorldPop × Census age ratios)" },
 
   // Terrain
   { key: "elevation_mean", label: "Elevation (SRTM)",  icon: "⛰️",  category: "terrain", desc: "Mean elevation per hex — real SRTM 90m data" },
@@ -72,6 +78,7 @@ const RISK:    [number,number,number][] = [[34,197,94],[234,179,8],[249,115,22],
 
 const ATTR_RAMP: Record<string, [number,number,number][]> = {
   elevation_mean: VIRIDIS, ndvi_mean: GREENS, population: ORANGES,
+  pop_children_under_5: ORANGES, pop_elderly_60plus: ORANGES, pop_women_15_49: ORANGES,
   flood_risk: BLUES, heat_risk: ORANGES, cyclone_risk: RISK, drought_risk: ORANGES,
   wetbulb_risk: BLUES, landslide_risk: VIRIDIS, coldwave_risk: BLUES,
   flashflood_risk: BLUES, sealevel_risk: BLUES, fire_risk: ORANGES,
@@ -88,6 +95,7 @@ const LAND_USE_COLORS: Record<string, string> = {
 // Fixed absolute domains — green always means safe, red always means danger
 const FIXED_DOMAIN: Record<string, [number, number]> = {
   hex_risk: [0, 10], population: [0, 5000000], cascade_count: [0, 4],
+  pop_children_under_5: [0, 500000], pop_elderly_60plus: [0, 500000], pop_women_15_49: [0, 1500000],
   elevation_mean: [0, 5000], ndvi_mean: [0, 0.8], land_use: [0, 1],
   flood_risk: [0, 10], heat_risk: [0, 10], cyclone_risk: [0, 10],
   drought_risk: [0, 10], wetbulb_risk: [0, 10], landslide_risk: [0, 10],
@@ -267,6 +275,9 @@ function HexInfoPanel({ props, onClose }: { props: any; onClose: () => void }) {
         <div className="flex justify-between"><span className="text-muted-foreground">🌿 NDVI</span><span className="font-medium">{props.ndvi_mean}</span></div>
         <div className="flex justify-between"><span className="text-muted-foreground">🗺️ Land Use</span><span className="font-medium capitalize">{props.land_use}</span></div>
         <div className="flex justify-between"><span className="text-muted-foreground">👥 Population</span><span className="font-medium">{(props.population ?? 0).toLocaleString()}</span></div>
+        <div className="flex justify-between"><span className="text-muted-foreground">👶 Children &lt;5</span><span className="font-medium">{(props.pop_children_under_5 ?? 0).toLocaleString()}</span></div>
+        <div className="flex justify-between"><span className="text-muted-foreground">🧓 Elderly 60+</span><span className="font-medium">{(props.pop_elderly_60plus ?? 0).toLocaleString()}</span></div>
+        <div className="flex justify-between"><span className="text-muted-foreground">👩 Women 15-49</span><span className="font-medium">{(props.pop_women_15_49 ?? 0).toLocaleString()}</span></div>
         <div className="border-t border-border/30 my-1 pt-1" />
         {["flood_risk","heat_risk","cyclone_risk","drought_risk","wetbulb_risk","landslide_risk","coldwave_risk","flashflood_risk","sealevel_risk","fire_risk"].map((k) => {
           const v = props[k];
