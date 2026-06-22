@@ -6,241 +6,97 @@ import type { Map as LeafletMap, GeoJSON as LeafletGeoJSONLayer } from "leaflet"
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import {
-  ArrowLeft, ChevronDown, AlertTriangle, Loader2, Grid3X3,
+  ArrowLeft, ChevronDown, ChevronRight, AlertTriangle, Loader2,
+  Grid3X3, PanelLeftClose, PanelLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
-// ── Attribute definitions ─────────────────────────────────────────────────────
+// ── Attribute + category definitions ──────────────────────────────────────────
 
-const ATTRIBUTES = [
-  {
-    key:    "elevation_mean" as const,
-    label:  "Elevation",
-    icon:   "⛰️",
-    unit:   "m",
-    domain: [0, 5000] as [number, number],
-    desc:   "Mean elevation per hex (SRTM 90m, real data)",
-    group:  "terrain" as const,
-  },
-  {
-    key:    "ndvi_mean" as const,
-    label:  "NDVI",
-    icon:   "🌿",
-    unit:   "",
-    domain: [0, 0.8] as [number, number],
-    desc:   "Mean annual NDVI (0–0.8 scale) — mock data",
-    group:  "terrain" as const,
-  },
-  {
-    key:    "land_use" as const,
-    label:  "Land Use",
-    icon:   "🗺️",
-    unit:   "",
-    domain: [0, 1] as [number, number],
-    desc:   "Dominant land cover class per hex — mock data",
-    group:  "terrain" as const,
-  },
-  {
-    key:    "flood_risk" as const,
-    label:  "Flood",
-    icon:   "🌊",
-    unit:   "",
-    domain: [0, 3] as [number, number],
-    desc:   "Pluvial flood risk (50mm monsoon scenario × terrain × district exposure)",
-    group:  "risk" as const,
-  },
-  {
-    key:    "heat_risk" as const,
-    label:  "Heat",
-    icon:   "🔥",
-    unit:   "",
-    domain: [0, 2] as [number, number],
-    desc:   "Heatwave risk (44°C × urban heat × district exposure)",
-    group:  "risk" as const,
-  },
-  {
-    key:    "cyclone_risk" as const,
-    label:  "Cyclone",
-    icon:   "🌀",
-    unit:   "",
-    domain: [0, 3] as [number, number],
-    desc:   "Cyclone risk (cat-3 storm × coastal proximity × Bay of Bengal funnel)",
-    group:  "risk" as const,
-  },
-  {
-    key:    "drought_risk" as const,
-    label:  "Drought",
-    icon:   "☀️",
-    unit:   "",
-    domain: [0, 2] as [number, number],
-    desc:   "Drought risk (aridity proxy from NDVI + sand content)",
-    group:  "risk" as const,
-  },
-  {
-    key:    "wetbulb_risk" as const,
-    label:  "Wet Bulb",
-    icon:   "💧",
-    unit:   "",
-    domain: [0, 1] as [number, number],
-    desc:   "Wet-bulb heat stress (lethal humidity × heat combo, coastal + riverine)",
-    group:  "risk" as const,
-  },
-  {
-    key:    "landslide_risk" as const,
-    label:  "Landslide",
-    icon:   "⛰️",
-    unit:   "",
-    domain: [0, 2] as [number, number],
-    desc:   "Landslide risk (steep slope + deforestation + monsoon)",
-    group:  "risk" as const,
-  },
-  {
-    key:    "coldwave_risk" as const,
-    label:  "Cold Wave",
-    icon:   "❄️",
-    unit:   "",
-    domain: [0, 3] as [number, number],
-    desc:   "Cold wave risk (northern plains + high altitude winter exposure)",
-    group:  "risk" as const,
-  },
-  {
-    key:    "flashflood_risk" as const,
-    label:  "Flash Flood",
-    icon:   "⚡",
-    unit:   "",
-    domain: [0, 2] as [number, number],
-    desc:   "Flash flood risk (steep terrain + sudden monsoon runoff)",
-    group:  "risk" as const,
-  },
-  {
-    key:    "sealevel_risk" as const,
-    label:  "Sea Level",
-    icon:   "🌊",
-    unit:   "",
-    domain: [0, 4] as [number, number],
-    desc:   "Sea level rise exposure (low-elevation coastal hexes)",
-    group:  "risk" as const,
-  },
-  {
-    key:    "fire_risk" as const,
-    label:  "Fire",
-    icon:   "🔥",
-    unit:   "",
-    domain: [0, 2] as [number, number],
-    desc:   "Forest fire risk (dry deciduous forests + scrubland)",
-    group:  "risk" as const,
-  },
-  {
-    key:    "hex_risk" as const,
-    label:  "Max Risk",
-    icon:   "⚠️",
-    unit:   "",
-    domain: [0, 4] as [number, number],
-    desc:   "Highest risk across all 10 hazard channels for this hex",
-    group:  "risk" as const,
-  },
-] as const;
+interface AttrDef {
+  key: string;
+  label: string;
+  icon: string;
+  desc: string;
+  category: string;
+}
 
-type AttrKey = typeof ATTRIBUTES[number]["key"];
+const CATEGORIES = [
+  { id: "overview",   label: "Overview",            icon: "⚠️" },
+  { id: "terrain",    label: "Terrain & Land",      icon: "⛰️" },
+  { id: "climate",    label: "Climate Hazards",     icon: "🌀" },
+  { id: "geographic", label: "Geographic Hazards",  icon: "🏔️" },
+  { id: "wash",       label: "WASH & Capacity",     icon: "🚰" },
+];
+
+const ATTRIBUTES: AttrDef[] = [
+  // Overview
+  { key: "hex_risk",      label: "Max Risk (all hazards)", icon: "⚠️",  category: "overview", desc: "Highest risk across all 10 hazard channels + cascade amplifiers" },
+  { key: "population",    label: "Population",             icon: "👥",  category: "overview", desc: "Estimated population per hex (Census, land-use weighted)" },
+  { key: "cascade_count", label: "WASH Cascades",          icon: "🔗",  category: "overview", desc: "Number of WASH cascade rules triggered in this hex" },
+
+  // Terrain
+  { key: "elevation_mean", label: "Elevation (SRTM)",  icon: "⛰️",  category: "terrain", desc: "Mean elevation per hex — real SRTM 90m data" },
+  { key: "ndvi_mean",      label: "Vegetation (NDVI)", icon: "🌿",  category: "terrain", desc: "Mean annual NDVI — real MODIS 2023 data" },
+  { key: "land_use",       label: "Land Use (ESA)",    icon: "🗺️",  category: "terrain", desc: "Dominant land cover — real ESA WorldCover 2021" },
+
+  // Climate hazards
+  { key: "flood_risk",   label: "Pluvial Flood",    icon: "🌊", category: "climate", desc: "Flood risk from 50mm monsoon rainfall scenario" },
+  { key: "heat_risk",    label: "Heatwave",          icon: "🔥", category: "climate", desc: "Heatwave risk at 44°C for 3 days" },
+  { key: "cyclone_risk", label: "Cyclone",           icon: "🌀", category: "climate", desc: "Cat-3 cyclone risk (wind + rain band + coastal surge)" },
+  { key: "drought_risk", label: "Drought",           icon: "☀️", category: "climate", desc: "Meteorological drought from aridity + low NDVI" },
+  { key: "wetbulb_risk", label: "Wet-Bulb Heat",     icon: "💧", category: "climate", desc: "Lethal humidity × heat combination" },
+
+  // Geographic hazards
+  { key: "landslide_risk",  label: "Landslide",      icon: "🏔️", category: "geographic", desc: "Steep slope + deforestation + monsoon trigger" },
+  { key: "coldwave_risk",   label: "Cold Wave",      icon: "❄️", category: "geographic", desc: "Northern plains + high altitude winter exposure" },
+  { key: "flashflood_risk", label: "Flash Flood",    icon: "⚡", category: "geographic", desc: "Steep terrain + sudden monsoon runoff" },
+  { key: "sealevel_risk",   label: "Sea Level Rise", icon: "🌊", category: "geographic", desc: "Low-elevation coastal inundation exposure" },
+  { key: "fire_risk",       label: "Forest Fire",    icon: "🔥", category: "geographic", desc: "Dry deciduous forest + scrubland fire risk" },
+
+  // WASH & district baseline
+  { key: "district_hazard",        label: "District Hazard",        icon: "📊", category: "wash", desc: "Composite hazard from original GeoJSON (IPCC AR6)" },
+  { key: "district_exposure",      label: "District Exposure",      icon: "📊", category: "wash", desc: "Population exposure from original GeoJSON" },
+  { key: "district_vulnerability", label: "District Vulnerability", icon: "📊", category: "wash", desc: "Social & infrastructural vulnerability" },
+];
 
 // ── Color scales ──────────────────────────────────────────────────────────────
 
-// Viridis-approximated for elevation (5 stops)
-const VIRIDIS: [number, number, number][] = [
-  [68,  1,   84 ],  // deep purple
-  [59,  82,  139],  // blue
-  [33,  145, 140],  // teal
-  [94,  201, 98 ],  // green
-  [253, 231, 37 ],  // bright yellow
-];
+const VIRIDIS: [number,number,number][] = [[68,1,84],[59,82,139],[33,145,140],[94,201,98],[253,231,37]];
+const GREENS:  [number,number,number][] = [[255,255,255],[199,233,192],[116,196,118],[49,163,84],[0,109,44]];
+const BLUES:   [number,number,number][] = [[240,249,255],[189,215,231],[107,174,214],[33,113,181],[8,48,107]];
+const ORANGES: [number,number,number][] = [[255,255,229],[254,217,142],[254,153,41],[217,95,14],[153,52,4]];
+const RISK:    [number,number,number][] = [[34,197,94],[234,179,8],[249,115,22],[239,68,68],[153,27,27]];
 
-// Greens for NDVI (5 stops)
-const GREENS: [number, number, number][] = [
-  [255, 255, 255],  // white
-  [199, 233, 192],  // very light green
-  [116, 196, 118],  // medium green
-  [49,  163, 84 ],  // dark green
-  [0,   109, 44 ],  // very dark green
-];
-
-// Blues for flood sensitivity (5 stops)
-const BLUES: [number, number, number][] = [
-  [240, 249, 255],
-  [189, 215, 231],
-  [107, 174, 214],
-  [33,  113, 181],
-  [8,   48,  107],
-];
-
-// Oranges for heat sensitivity (5 stops)
-const ORANGES: [number, number, number][] = [
-  [255, 255, 229],
-  [254, 217, 142],
-  [254, 153, 41 ],
-  [217, 95,  14 ],
-  [153, 52,  4  ],
-];
-
-// Risk gradient for hazard scores 0–10 (green → red → dark)
-const RISK: [number, number, number][] = [
-  [34,  197, 94 ],
-  [234, 179, 8  ],
-  [249, 115, 22 ],
-  [239, 68,  68 ],
-  [153, 27,  27 ],
-];
+const ATTR_RAMP: Record<string, [number,number,number][]> = {
+  elevation_mean: VIRIDIS, ndvi_mean: GREENS, population: ORANGES,
+  flood_risk: BLUES, heat_risk: ORANGES, cyclone_risk: RISK, drought_risk: ORANGES,
+  wetbulb_risk: BLUES, landslide_risk: VIRIDIS, coldwave_risk: BLUES,
+  flashflood_risk: BLUES, sealevel_risk: BLUES, fire_risk: ORANGES,
+  hex_risk: RISK, cascade_count: RISK,
+  district_hazard: RISK, district_exposure: ORANGES, district_vulnerability: RISK,
+};
 
 const LAND_USE_COLORS: Record<string, string> = {
-  tree:     "#2d6a4f",
-  shrub:    "#95d5b2",
-  grass:    "#d8f3dc",
-  crop:     "#f4d35e",
-  built:    "#d62828",
-  barren:   "#c9b79c",
-  water:    "#1d4e89",
-  wetland:  "#84a59d",
-  snow:     "#dbeafe",
-  mangrove: "#52b788",
+  tree: "#2d6a4f", shrub: "#95d5b2", grass: "#d8f3dc", crop: "#f4d35e",
+  built: "#d62828", barren: "#c9b79c", water: "#1d4e89", wetland: "#84a59d",
+  snow: "#dbeafe", mangrove: "#52b788",
 };
 
-function lerp3(
-  a: [number, number, number],
-  b: [number, number, number],
-  t: number
-): string {
-  return `rgb(${a.map((c, i) => Math.round(c + t * (b[i] - c))).join(",")})`;
+function lerp3(a: [number,number,number], b: [number,number,number], t: number) {
+  return `rgb(${a.map((c,i) => Math.round(c + t * (b[i] - c))).join(",")})`;
 }
 
-function gradientColor(
-  ramp: [number, number, number][],
-  t: number
-): string {
+function gradientColor(ramp: [number,number,number][], t: number) {
   t = Math.max(0, Math.min(1, t));
-  const scaled = t * (ramp.length - 1);
-  const lo = Math.floor(scaled);
+  const s = t * (ramp.length - 1);
+  const lo = Math.floor(s);
   const hi = Math.min(lo + 1, ramp.length - 1);
-  return lerp3(ramp[lo], ramp[hi], scaled - lo);
+  return lerp3(ramp[lo], ramp[hi], s - lo);
 }
 
-const ATTR_RAMP: Record<string, [number, number, number][]> = {
-  elevation_mean:    VIRIDIS,
-  ndvi_mean:         GREENS,
-  flood_risk:        BLUES,
-  heat_risk:         ORANGES,
-  cyclone_risk:      RISK,
-  drought_risk:      ORANGES,
-  wetbulb_risk:      BLUES,
-  landslide_risk:    VIRIDIS,
-  coldwave_risk:     BLUES,
-  flashflood_risk:   BLUES,
-  sealevel_risk:     BLUES,
-  fire_risk:         ORANGES,
-  hex_risk:          RISK,
-};
-
-function hexColor(props: any, attr: AttrKey, domain: [number, number]): string {
+function hexColor(props: any, attr: string, domain: [number,number]) {
   if (attr === "land_use") return LAND_USE_COLORS[props.land_use] ?? "#94a3b8";
   const val = props[attr] ?? 0;
   const [lo, hi] = domain;
@@ -248,134 +104,143 @@ function hexColor(props: any, attr: AttrKey, domain: [number, number]): string {
   return gradientColor(ATTR_RAMP[attr] ?? GREENS, t);
 }
 
-// ── Attribute selector ────────────────────────────────────────────────────────
+// ── Sidebar ───────────────────────────────────────────────────────────────────
 
-function AttributeSelector({
-  active,
-  onChange,
+function FilterSidebar({
+  collapsed, onToggle,
+  attr, onAttrChange,
+  selectedState, states, onStateChange,
+  selectedDistrict, districts, onDistrictChange,
 }: {
-  active: AttrKey;
-  onChange: (k: AttrKey) => void;
+  collapsed: boolean; onToggle: () => void;
+  attr: string; onAttrChange: (k: string) => void;
+  selectedState: string; states: string[]; onStateChange: (s: string) => void;
+  selectedDistrict: string; districts: string[]; onDistrictChange: (d: string) => void;
 }) {
-  const terrain = ATTRIBUTES.filter((a) => a.group === "terrain");
-  const risk    = ATTRIBUTES.filter((a) => a.group === "risk");
+  const [openCats, setOpenCats] = useState<Record<string, boolean>>({ overview: true, climate: true });
 
-  const btn = (a: typeof ATTRIBUTES[number], activeColor: string) => (
-    <button
-      key={a.key}
-      onClick={() => onChange(a.key)}
-      className={`px-2 py-1 rounded-md text-[11px] font-semibold transition-colors flex items-center gap-1 ${
-        active === a.key
-          ? `${activeColor} text-white`
-          : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
-      }`}
-    >
-      <span className="text-xs">{a.icon}</span>
-      {a.label}
-    </button>
-  );
+  const toggleCat = (id: string) => setOpenCats((prev) => ({ ...prev, [id]: !prev[id] }));
 
-  return (
-    <div className="flex items-center gap-1">
-      {terrain.map((a) => btn(a, "bg-emerald-600"))}
-      <div className="h-4 w-px bg-border/50 mx-0.5" />
-      {risk.map((a) => btn(a, "bg-red-600"))}
-    </div>
-  );
-}
-
-// ── State filter ──────────────────────────────────────────────────────────────
-
-function DropdownFilter({
-  items,
-  selected,
-  onChange,
-  allLabel = "All India",
-  allValue = "All India",
-}: {
-  items: string[];
-  selected: string;
-  onChange: (s: string) => void;
-  allLabel?: string;
-  allValue?: string;
-}) {
-  return (
-    <div className="relative flex items-center gap-1.5">
-      <ChevronDown className="pointer-events-none absolute right-2 h-3.5 w-3.5 text-muted-foreground" />
-      <select
-        value={selected}
-        onChange={(e) => onChange(e.target.value)}
-        className="appearance-none rounded-md border border-border/50 bg-muted/40 pl-2.5 pr-7 py-1.5 text-xs outline-none cursor-pointer text-foreground max-w-[160px]"
-      >
-        <option value={allValue}>{allLabel}</option>
-        {items.map((s) => (
-          <option key={s} value={s}>{s}</option>
-        ))}
-      </select>
-    </div>
-  );
-}
-
-// ── Legend ────────────────────────────────────────────────────────────────────
-
-function Legend({ attr, domain }: { attr: AttrKey; domain: [number, number] }) {
-  const meta = ATTRIBUTES.find((a) => a.key === attr)!;
-
-  if (attr === "land_use") {
-    const classes = Object.entries(LAND_USE_COLORS);
+  if (collapsed) {
     return (
-      <div className="bg-background/90 backdrop-blur border border-border/40 rounded-lg p-3 shadow-lg w-44">
-        <p className="text-[10px] font-semibold text-foreground mb-2">{meta.icon} {meta.label}</p>
-        <div className="space-y-1">
-          {classes.map(([cls, color]) => (
-            <div key={cls} className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-sm shrink-0" style={{ background: color }} />
-              <span className="text-[10px] capitalize text-muted-foreground">{cls}</span>
-            </div>
-          ))}
-        </div>
+      <div className="w-10 border-r border-border/40 bg-background flex flex-col items-center py-3 shrink-0">
+        <button onClick={onToggle} className="text-muted-foreground hover:text-foreground mb-4">
+          <PanelLeft className="h-4 w-4" />
+        </button>
+        {CATEGORIES.map((c) => (
+          <div key={c.id} className="text-sm mb-2 cursor-pointer" title={c.label}
+               onClick={() => { onToggle(); setOpenCats((p) => ({ ...p, [c.id]: true })); }}>
+            {c.icon}
+          </div>
+        ))}
       </div>
     );
   }
 
-  const ramp = ATTR_RAMP[attr] ?? GREENS;
-  const stops = Array.from({ length: 5 }, (_, i) => gradientColor(ramp, i / 4));
-  const [lo, hi] = domain;
-  const fmtVal = (v: number) =>
-    attr === "elevation_mean" ? `${v}m` : v.toFixed(2);
-
   return (
-    <div className="bg-background/90 backdrop-blur border border-border/40 rounded-lg p-3 shadow-lg w-48">
-      <p className="text-[10px] font-semibold text-foreground mb-1.5">{meta.icon} {meta.label}</p>
-      <div
-        className="h-3 w-full rounded-sm mb-1"
-        style={{ background: `linear-gradient(to right, ${stops.join(", ")})` }}
-      />
-      <div className="flex justify-between text-[9px] text-muted-foreground">
-        <span>{fmtVal(lo)}</span>
-        <span>{fmtVal(hi)}</span>
+    <div className="w-64 border-r border-border/40 bg-background flex flex-col shrink-0 overflow-hidden">
+      {/* Header */}
+      <div className="px-3 py-2.5 border-b border-border/30 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Grid3X3 className="h-4 w-4 text-emerald-500" />
+          <span className="text-sm font-semibold">Layers</span>
+        </div>
+        <button onClick={onToggle} className="text-muted-foreground hover:text-foreground">
+          <PanelLeftClose className="h-4 w-4" />
+        </button>
       </div>
+
+      {/* Location filters */}
+      <div className="px-3 py-2 border-b border-border/30 space-y-1.5">
+        <div className="relative">
+          <ChevronDown className="pointer-events-none absolute right-2 top-1.5 h-3 w-3 text-muted-foreground" />
+          <select value={selectedState} onChange={(e) => onStateChange(e.target.value)}
+            className="w-full appearance-none rounded-md border border-border/50 bg-muted/40 pl-2 pr-6 py-1 text-xs outline-none cursor-pointer text-foreground">
+            <option value="All India">All India</option>
+            {states.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+        {districts.length > 0 && (
+          <div className="relative">
+            <ChevronDown className="pointer-events-none absolute right-2 top-1.5 h-3 w-3 text-muted-foreground" />
+            <select value={selectedDistrict} onChange={(e) => onDistrictChange(e.target.value)}
+              className="w-full appearance-none rounded-md border border-border/50 bg-muted/40 pl-2 pr-6 py-1 text-xs outline-none cursor-pointer text-foreground">
+              <option value="All">All Districts</option>
+              {districts.map((d) => <option key={d} value={d}>{d}</option>)}
+            </select>
+          </div>
+        )}
+      </div>
+
+      {/* Category sections */}
+      <div className="flex-1 overflow-y-auto">
+        {CATEGORIES.map((cat) => {
+          const catAttrs = ATTRIBUTES.filter((a) => a.category === cat.id);
+          const isOpen = openCats[cat.id] ?? false;
+          return (
+            <div key={cat.id} className="border-b border-border/20">
+              <button
+                onClick={() => toggleCat(cat.id)}
+                className="w-full px-3 py-2 flex items-center gap-2 text-left hover:bg-muted/30 transition-colors"
+              >
+                {isOpen ? <ChevronDown className="h-3 w-3 text-muted-foreground" /> : <ChevronRight className="h-3 w-3 text-muted-foreground" />}
+                <span className="text-xs">{cat.icon}</span>
+                <span className="text-[11px] font-semibold flex-1">{cat.label}</span>
+                <span className="text-[9px] text-muted-foreground">{catAttrs.length}</span>
+              </button>
+              {isOpen && (
+                <div className="px-2 pb-2">
+                  {catAttrs.map((a) => (
+                    <button
+                      key={a.key}
+                      onClick={() => onAttrChange(a.key)}
+                      className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] flex items-center gap-2 transition-colors mb-0.5 ${
+                        attr === a.key
+                          ? "bg-emerald-600/15 text-emerald-400 font-semibold"
+                          : "text-muted-foreground hover:bg-muted/30 hover:text-foreground"
+                      }`}
+                    >
+                      <span className="text-xs w-4 text-center">{a.icon}</span>
+                      <span className="flex-1">{a.label}</span>
+                      {attr === a.key && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Active layer info */}
+      {(() => {
+        const active = ATTRIBUTES.find((a) => a.key === attr);
+        return active ? (
+          <div className="px-3 py-2 border-t border-border/30 bg-muted/20">
+            <div className="text-[10px] font-semibold text-foreground">{active.icon} {active.label}</div>
+            <div className="text-[9px] text-muted-foreground mt-0.5">{active.desc}</div>
+          </div>
+        ) : null;
+      })()}
     </div>
   );
 }
 
-// ── Canvas renderer setup (runs once inside MapContainer) ────────────────────
+// ── Canvas + map setup ────────────────────────────────────────────────────────
 
 const canvasRenderer = L.canvas({ padding: 0.5 });
 
 function SetupCanvas() {
   const map = useMap();
-  useEffect(() => {
-    (map as any).options.renderer = canvasRenderer;
-  }, [map]);
+  useEffect(() => { (map as any).options.renderer = canvasRenderer; }, [map]);
   return null;
 }
 
-// ── Clicked hex info panel ────────────────────────────────────────────────────
+// ── Hex info panel ────────────────────────────────────────────────────────────
 
 function HexInfoPanel({ props, onClose }: { props: any; onClose: () => void }) {
   return (
-    <div className="bg-background/95 backdrop-blur border border-border/40 rounded-lg shadow-lg p-3 w-52">
+    <div className="bg-background/95 backdrop-blur border border-border/40 rounded-lg shadow-lg p-3 w-56 max-h-[70vh] overflow-y-auto">
       <div className="flex items-start justify-between mb-2">
         <div>
           <div className="text-xs font-semibold">{props.district_name ?? props.state}</div>
@@ -386,74 +251,97 @@ function HexInfoPanel({ props, onClose }: { props: any; onClose: () => void }) {
         </button>
       </div>
       <div className="space-y-1 text-[11px]">
-        <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wide">Terrain</div>
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">⛰️ Elevation</span>
-          <span className="font-medium">{props.elevation_mean}m</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">🌿 NDVI</span>
-          <span className="font-medium">{props.ndvi_mean}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">🗺️ Land Use</span>
-          <span className="font-medium capitalize">{props.land_use}</span>
-        </div>
+        <div className="flex justify-between"><span className="text-muted-foreground">⛰️ Elevation</span><span className="font-medium">{props.elevation_mean}m</span></div>
+        <div className="flex justify-between"><span className="text-muted-foreground">🌿 NDVI</span><span className="font-medium">{props.ndvi_mean}</span></div>
+        <div className="flex justify-between"><span className="text-muted-foreground">🗺️ Land Use</span><span className="font-medium capitalize">{props.land_use}</span></div>
+        <div className="flex justify-between"><span className="text-muted-foreground">👥 Population</span><span className="font-medium">{(props.population ?? 0).toLocaleString()}</span></div>
         <div className="border-t border-border/30 my-1 pt-1" />
-        <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wide">Risk by hazard</div>
-        {[
-          ["🌊", "Flood",      "flood_risk"],
-          ["🔥", "Heat",       "heat_risk"],
-          ["🌀", "Cyclone",    "cyclone_risk"],
-          ["☀️", "Drought",    "drought_risk"],
-          ["💧", "Wet Bulb",   "wetbulb_risk"],
-          ["⛰️", "Landslide",  "landslide_risk"],
-          ["❄️", "Cold Wave",  "coldwave_risk"],
-          ["⚡", "Flash Flood", "flashflood_risk"],
-          ["🌊", "Sea Level",  "sealevel_risk"],
-          ["🔥", "Fire",       "fire_risk"],
-        ].map(([icon, label, key]) => (
-          <div key={key} className="flex justify-between">
-            <span className="text-muted-foreground">{icon} {label}</span>
-            <span className={`font-medium ${props[key] > 0.5 ? "text-red-400" : ""}`}>{props[key] ?? "—"}</span>
-          </div>
-        ))}
+        {["flood_risk","heat_risk","cyclone_risk","drought_risk","wetbulb_risk","landslide_risk","coldwave_risk","flashflood_risk","sealevel_risk","fire_risk"].map((k) => {
+          const v = props[k];
+          if (!v || v < 0.01) return null;
+          const label = k.replace("_risk","").replace("flood","Flood").replace("heat","Heat").replace("cyclone","Cyclone").replace("drought","Drought").replace("wetbulb","Wet Bulb").replace("landslide","Landslide").replace("coldwave","Cold Wave").replace("flashflood","Flash Flood").replace("sealevel","Sea Level").replace("fire","Fire");
+          return (
+            <div key={k} className="flex justify-between">
+              <span className="text-muted-foreground">{label}</span>
+              <span className={`font-medium ${v > 2 ? "text-red-400" : v > 1 ? "text-amber-400" : ""}`}>{v}</span>
+            </div>
+          );
+        })}
         <div className="flex justify-between font-bold border-t border-border/30 pt-1 mt-1">
-          <span className="text-muted-foreground">⚠️ Max Risk</span>
-          <span>{props.hex_risk ?? "—"}</span>
-        </div>
-        <div className="border-t border-border/30 my-1 pt-1" />
-        <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wide">District baseline</div>
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Hazard</span>
-          <span className="font-medium">{props.district_hazard ?? "—"}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Exposure</span>
-          <span className="font-medium">{props.district_exposure ?? "—"}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Vulnerability</span>
-          <span className="font-medium">{props.district_vulnerability ?? "—"}</span>
+          <span>⚠️ Max Risk</span><span>{props.hex_risk ?? "—"}</span>
         </div>
         {props.cascade_count > 0 && (
-          <>
-            <div className="border-t border-red-500/30 my-1 pt-1" />
-            <div className="text-[9px] font-semibold text-red-400 uppercase tracking-wide">
-              ⚠️ {props.cascade_count} WASH Cascade{props.cascade_count > 1 ? "s" : ""} Active
-            </div>
-            <div className="text-[10px] text-red-300/80">
-              Compound risk amplifier applied
-            </div>
-          </>
+          <div className="text-[10px] text-red-400 font-semibold mt-1">
+            🔗 {props.cascade_count} WASH cascade{props.cascade_count > 1 ? "s" : ""} active
+          </div>
         )}
-        <div className="flex justify-between mt-1">
-          <span className="text-muted-foreground">👥 Population</span>
-          <span className="font-medium">{(props.population ?? 0).toLocaleString()}</span>
+      </div>
+      <div className="mt-2 text-[9px] text-muted-foreground/50 truncate">{props.h3_id}</div>
+    </div>
+  );
+}
+
+// ── Legend ─────────────────────────────────────────────────────────────────────
+
+function Legend({ attr, domain }: { attr: string; domain: [number,number] }) {
+  const meta = ATTRIBUTES.find((a) => a.key === attr);
+  if (!meta) return null;
+
+  if (attr === "land_use") {
+    return (
+      <div className="bg-background/90 backdrop-blur border border-border/40 rounded-lg p-2.5 shadow-lg w-40">
+        <p className="text-[10px] font-semibold mb-1.5">{meta.icon} {meta.label}</p>
+        <div className="grid grid-cols-2 gap-1">
+          {Object.entries(LAND_USE_COLORS).map(([cls, color]) => (
+            <div key={cls} className="flex items-center gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-sm" style={{ background: color }} />
+              <span className="text-[9px] capitalize text-muted-foreground">{cls}</span>
+            </div>
+          ))}
         </div>
       </div>
-      <div className="mt-2 text-[9px] text-muted-foreground/50 truncate">
-        {props.district_name} · {props.h3_id}
+    );
+  }
+
+  const ramp = ATTR_RAMP[attr] ?? GREENS;
+  const stops = Array.from({ length: 5 }, (_, i) => gradientColor(ramp, i / 4));
+  const [lo, hi] = domain;
+  const fmt = (v: number) => attr === "elevation_mean" ? `${Math.round(v)}m` : v.toFixed(2);
+
+  return (
+    <div className="bg-background/90 backdrop-blur border border-border/40 rounded-lg p-2.5 shadow-lg w-44">
+      <p className="text-[10px] font-semibold mb-1">{meta.icon} {meta.label}</p>
+      <div className="h-2.5 w-full rounded-sm mb-1" style={{ background: `linear-gradient(to right, ${stops.join(", ")})` }} />
+      <div className="flex justify-between text-[9px] text-muted-foreground">
+        <span>{fmt(lo)}</span><span>{fmt(hi)}</span>
+      </div>
+    </div>
+  );
+}
+
+// ── District summary ──────────────────────────────────────────────────────────
+
+function DistrictSummary({ features, district, state }: { features: any[]; district: string; state: string }) {
+  const d = features.filter((f: any) => f.properties.district_name === district);
+  if (!d.length) return null;
+  const pop = d.reduce((s: number, f: any) => s + (f.properties.population || 0), 0);
+  const avg = d.reduce((s: number, f: any) => s + (f.properties.hex_risk || 0), 0) / d.length;
+  const mx = Math.max(...d.map((f: any) => f.properties.hex_risk || 0));
+  const cas = d.filter((f: any) => (f.properties.cascade_count || 0) > 0).length;
+  const hazards = ["flood_risk","heat_risk","cyclone_risk","drought_risk","wetbulb_risk","landslide_risk","coldwave_risk"];
+  const top = hazards.map((h) => ({ h, s: d.reduce((s: number, f: any) => s + (f.properties[h] || 0), 0) }))
+    .sort((a,b) => b.s - a.s)[0]?.h?.replace("_risk","") || "flood";
+
+  return (
+    <div className="bg-background/95 backdrop-blur border border-border/40 rounded-lg shadow-lg p-3 w-52">
+      <div className="text-xs font-bold">{district}</div>
+      <div className="text-[10px] text-muted-foreground mb-2">{state} · {d.length} hexes</div>
+      <div className="space-y-1 text-[11px]">
+        <div className="flex justify-between"><span className="text-muted-foreground">Population</span><span className="font-medium">{pop.toLocaleString()}</span></div>
+        <div className="flex justify-between"><span className="text-muted-foreground">Avg Risk</span><span className="font-bold">{avg.toFixed(2)}</span></div>
+        <div className="flex justify-between"><span className="text-muted-foreground">Max Risk</span><span className="font-bold text-red-400">{mx.toFixed(2)}</span></div>
+        <div className="flex justify-between"><span className="text-muted-foreground">Top Hazard</span><span className="capitalize">{top}</span></div>
+        {cas > 0 && <div className="flex justify-between"><span className="text-red-400">🔗 Cascades</span><span className="text-red-400 font-bold">{cas} hexes</span></div>}
       </div>
     </div>
   );
@@ -462,128 +350,48 @@ function HexInfoPanel({ props, onClose }: { props: any; onClose: () => void }) {
 // ── Leaflet map ───────────────────────────────────────────────────────────────
 
 function HexMap({
-  geoData,
-  attr,
-  selectedState,
-  selectedDistrict,
-  mapRef,
-  onHexClick,
-  domain,
+  geoData, attr, selectedState, selectedDistrict, domain, mapRef, onHexClick,
 }: {
-  geoData: any;
-  attr: AttrKey;
-  selectedState: string;
-  selectedDistrict: string;
-  mapRef: React.MutableRefObject<LeafletMap | null>;
-  onHexClick: (props: any) => void;
-  domain: [number, number];
+  geoData: any; attr: string; selectedState: string; selectedDistrict: string;
+  domain: [number,number]; mapRef: React.MutableRefObject<LeafletMap | null>;
+  onHexClick: (p: any) => void;
 }) {
   const geoJsonRef = useRef<LeafletGeoJSONLayer | null>(null);
 
   const filtered = useMemo(() => {
     if (!geoData) return null;
     let feats = geoData.features;
-    if (selectedState !== "All India")
-      feats = feats.filter((f: any) => f.properties.state === selectedState);
-    if (selectedDistrict !== "All")
-      feats = feats.filter((f: any) => f.properties.district_name === selectedDistrict);
+    if (selectedState !== "All India") feats = feats.filter((f: any) => f.properties.state === selectedState);
+    if (selectedDistrict !== "All") feats = feats.filter((f: any) => f.properties.district_name === selectedDistrict);
     return { ...geoData, features: feats };
   }, [geoData, selectedState, selectedDistrict]);
 
-  const styleFeature = useCallback(
-    (feature: any) => ({
-      fillColor:   hexColor(feature.properties, attr, domain),
-      fillOpacity: 0.75,
-      color:       "#64748b",
-      weight:      0.3,
-      renderer:    canvasRenderer,
-    }),
-    [attr, domain]
-  );
+  const styleFeature = useCallback((feature: any) => ({
+    fillColor: hexColor(feature.properties, attr, domain),
+    fillOpacity: 0.75, color: "#64748b", weight: 0.3, renderer: canvasRenderer,
+  }), [attr, domain]);
 
-  // Re-colour without rebuilding the layer when attribute changes
-  useEffect(() => {
-    geoJsonRef.current?.setStyle(styleFeature);
-  }, [styleFeature]);
+  useEffect(() => { geoJsonRef.current?.setStyle(styleFeature); }, [styleFeature]);
 
-  const onEachFeature = useCallback(
-    (feature: any, layer: any) => {
-      const p = feature.properties;
-      const val = attr === "land_use" ? p.land_use : p[attr];
-      const label = attr === "elevation_mean" ? `${val}m` : `${val}`;
-      const district = p.district_name ? `${p.district_name}, ` : "";
-      layer.bindTooltip(`<b>${district}${p.state}</b><br/>${label}`, { sticky: true });
-      layer.on("click", () => onHexClick(p));
-    },
-    [attr, onHexClick]
-  );
+  const onEachFeature = useCallback((feature: any, layer: any) => {
+    const p = feature.properties;
+    const val = attr === "land_use" ? p.land_use : p[attr];
+    const district = p.district_name ? `${p.district_name}, ` : "";
+    layer.bindTooltip(`<b>${district}${p.state}</b><br/>${val}`, { sticky: true });
+    layer.on("click", () => onHexClick(p));
+  }, [attr, onHexClick]);
 
   if (!filtered) return null;
 
   return (
-    <MapContainer
-      center={[22.5, 80]}
-      zoom={5}
-      style={{ height: "100%", width: "100%" }}
-      scrollWheelZoom
-      maxBounds={[[6, 68], [37, 98]]}
-      minZoom={4}
-      maxZoom={10}
-      ref={mapRef}
-    >
+    <MapContainer center={[22.5, 80]} zoom={5} style={{ height: "100%", width: "100%" }}
+      scrollWheelZoom maxBounds={[[6,68],[37,98]]} minZoom={4} maxZoom={10} ref={mapRef}>
       <SetupCanvas />
-      <TileLayer
-        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-        attribution='&copy; <a href="https://www.openstreetmap.org/">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>'
-      />
-      <GeoJSON
-        ref={geoJsonRef}
-        key={`${selectedState}-${selectedDistrict}`}
-        data={filtered}
-        style={styleFeature}
-        onEachFeature={onEachFeature}
-      />
+      <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>' />
+      <GeoJSON ref={geoJsonRef} key={`${selectedState}-${selectedDistrict}`}
+        data={filtered} style={styleFeature} onEachFeature={onEachFeature} />
     </MapContainer>
-  );
-}
-
-// ── District summary panel ────────────────────────────────────────────────────
-
-function DistrictSummary({ features, district, state }: { features: any[]; district: string; state: string }) {
-  const distFeats = features.filter((f: any) => f.properties.district_name === district);
-  if (!distFeats.length) return null;
-
-  const totalPop = distFeats.reduce((s: number, f: any) => s + (f.properties.population || 0), 0);
-  const avgRisk = distFeats.reduce((s: number, f: any) => s + (f.properties.hex_risk || 0), 0) / distFeats.length;
-  const maxRisk = Math.max(...distFeats.map((f: any) => f.properties.hex_risk || 0));
-  const cascadeHexes = distFeats.filter((f: any) => (f.properties.cascade_count || 0) > 0).length;
-
-  const hazards = ["flood_risk", "heat_risk", "cyclone_risk", "drought_risk", "wetbulb_risk", "landslide_risk", "coldwave_risk"];
-  const sums = hazards.map((h) => ({
-    h, sum: distFeats.reduce((s: number, f: any) => s + (f.properties[h] || 0), 0),
-  }));
-  const topHazard = sums.sort((a, b) => b.sum - a.sum)[0]?.h?.replace("_risk", "") || "flood";
-
-  return (
-    <div className="absolute bottom-8 right-3 z-[800] bg-background/95 backdrop-blur border border-border/40 rounded-lg shadow-lg p-3 w-56">
-      <div className="text-xs font-bold mb-1">{district}</div>
-      <div className="text-[10px] text-muted-foreground mb-2">{state} · {distFeats.length} hexes</div>
-      <div className="space-y-1 text-[11px]">
-        <div className="flex justify-between"><span className="text-muted-foreground">Population</span><span className="font-medium">{totalPop.toLocaleString()}</span></div>
-        <div className="flex justify-between"><span className="text-muted-foreground">Avg Risk</span><span className="font-bold">{avgRisk.toFixed(2)}</span></div>
-        <div className="flex justify-between"><span className="text-muted-foreground">Max Risk</span><span className="font-bold text-red-400">{maxRisk.toFixed(2)}</span></div>
-        <div className="flex justify-between"><span className="text-muted-foreground">Top Hazard</span><span className="font-medium capitalize">{topHazard}</span></div>
-        {cascadeHexes > 0 && (
-          <div className="flex justify-between"><span className="text-red-400">⚠️ WASH Cascades</span><span className="font-bold text-red-400">{cascadeHexes} hexes</span></div>
-        )}
-      </div>
-      <button
-        onClick={() => window.print()}
-        className="w-full mt-2 px-2 py-1 rounded-md bg-muted/60 text-xs text-muted-foreground hover:bg-muted transition-colors"
-      >
-        Print Report
-      </button>
-    </div>
   );
 }
 
@@ -595,98 +403,70 @@ export default function HexMapPage() {
   const initialState = urlParams.get("state") || "All India";
   const initialDistrict = urlParams.get("district") || "All";
 
-  const [attr, setAttr]                       = useState<AttrKey>("hex_risk");
+  const [attr, setAttr]                       = useState("hex_risk");
   const [selectedState, setSelectedState]     = useState(initialState);
   const [selectedDistrict, setSelectedDistrict] = useState(initialDistrict);
   const [clickedHex, setClickedHex]           = useState<any | null>(null);
+  const [sidebarOpen, setSidebarOpen]         = useState(true);
   const mapRef = useRef<LeafletMap | null>(null);
 
   const hexQ = useQuery<any>({
     queryKey: ["india-hex-grid"],
-    queryFn:  () => fetch("/data/india_hex_grid.geojson").then((r) => r.json()),
+    queryFn: () => fetch("/data/india_hex_grid.geojson").then((r) => r.json()),
     staleTime: Infinity,
   });
 
   const features: any[] = hexQ.data?.features ?? [];
 
   const stateList = useMemo(
-    () =>
-      Array.from(new Set(features.map((f: any) => f.properties.state).filter(Boolean))).sort() as string[],
+    () => Array.from(new Set(features.map((f: any) => f.properties.state).filter(Boolean))).sort() as string[],
     [features]
   );
 
   const districtList = useMemo(() => {
     if (selectedState === "All India") return [];
-    return Array.from(
-      new Set(
-        features
-          .filter((f: any) => f.properties.state === selectedState)
-          .map((f: any) => f.properties.district_name)
-          .filter(Boolean)
-      )
-    ).sort() as string[];
+    return Array.from(new Set(
+      features.filter((f: any) => f.properties.state === selectedState)
+        .map((f: any) => f.properties.district_name).filter(Boolean)
+    )).sort() as string[];
   }, [features, selectedState]);
 
-  // Effective filter key for GeoJSON layer
-  const filterKey = selectedDistrict !== "All"
-    ? `district:${selectedDistrict}`
-    : selectedState;
-
-  // Dynamic domain: actual min/max for the active attribute across visible features
-  const dataDomain = useMemo((): [number, number] => {
+  const dataDomain = useMemo((): [number,number] => {
     if (!features.length || attr === "land_use") return [0, 1];
     let visible = features;
-    if (selectedState !== "All India")
-      visible = visible.filter((f: any) => f.properties.state === selectedState);
-    if (selectedDistrict !== "All")
-      visible = visible.filter((f: any) => f.properties.district_name === selectedDistrict);
-    const vals = visible
-      .map((f: any) => f.properties[attr])
-      .filter((v: any) => v != null && isFinite(v));
+    if (selectedState !== "All India") visible = visible.filter((f: any) => f.properties.state === selectedState);
+    if (selectedDistrict !== "All") visible = visible.filter((f: any) => f.properties.district_name === selectedDistrict);
+    const vals = visible.map((f: any) => f.properties[attr]).filter((v: any) => v != null && isFinite(v));
     if (!vals.length) return [0, 1];
     return [Math.min(...vals), Math.max(...vals)];
   }, [features, attr, selectedState, selectedDistrict]);
 
-  const fitToFeatures = useCallback(
-    (feats: any[]) => {
-      if (!mapRef.current || !feats.length) return;
-      let minLat = 90, maxLat = -90, minLng = 180, maxLng = -180;
-      for (const f of feats) {
-        for (const ring of (f.geometry.type === "Polygon"
-          ? f.geometry.coordinates
-          : f.geometry.coordinates.flat())) {
-          for (const [lng, lat] of ring) {
-            if (lat < minLat) minLat = lat;
-            if (lat > maxLat) maxLat = lat;
-            if (lng < minLng) minLng = lng;
-            if (lng > maxLng) maxLng = lng;
-          }
+  const fitToFeatures = useCallback((feats: any[]) => {
+    if (!mapRef.current || !feats.length) return;
+    let minLat = 90, maxLat = -90, minLng = 180, maxLng = -180;
+    for (const f of feats) {
+      for (const ring of (f.geometry.type === "Polygon" ? f.geometry.coordinates : f.geometry.coordinates.flat())) {
+        for (const [lng, lat] of ring) {
+          if (lat < minLat) minLat = lat; if (lat > maxLat) maxLat = lat;
+          if (lng < minLng) minLng = lng; if (lng > maxLng) maxLng = lng;
         }
       }
-      mapRef.current.fitBounds([[minLat, minLng], [maxLat, maxLng]], { padding: [20, 20] });
-    }, []
-  );
+    }
+    mapRef.current.fitBounds([[minLat, minLng], [maxLat, maxLng]], { padding: [20, 20] });
+  }, []);
 
-  const handleStateChange = useCallback(
-    (state: string) => {
-      setSelectedState(state);
-      setSelectedDistrict("All");
-      if (state === "All India" || !hexQ.data) return;
-      fitToFeatures(hexQ.data.features.filter((f: any) => f.properties.state === state));
-    },
-    [hexQ.data, fitToFeatures]
-  );
+  const handleStateChange = useCallback((state: string) => {
+    setSelectedState(state); setSelectedDistrict("All");
+    if (state === "All India" || !hexQ.data) return;
+    fitToFeatures(hexQ.data.features.filter((f: any) => f.properties.state === state));
+  }, [hexQ.data, fitToFeatures]);
 
-  const handleDistrictChange = useCallback(
-    (district: string) => {
-      setSelectedDistrict(district);
-      if (district === "All" || !hexQ.data) return;
-      fitToFeatures(hexQ.data.features.filter((f: any) => f.properties.district_name === district));
-    },
-    [hexQ.data, fitToFeatures]
-  );
+  const handleDistrictChange = useCallback((district: string) => {
+    setSelectedDistrict(district);
+    if (district === "All" || !hexQ.data) return;
+    fitToFeatures(hexQ.data.features.filter((f: any) => f.properties.district_name === district));
+  }, [hexQ.data, fitToFeatures]);
 
-  // Auto-fit when loaded from URL params (e.g. /grid?state=Bihar&district=Patna)
   useEffect(() => {
     if (!hexQ.data || initialState === "All India") return;
     const target = initialDistrict !== "All"
@@ -695,108 +475,66 @@ export default function HexMapPage() {
     if (target.length) fitToFeatures(target);
   }, [hexQ.data, initialState, initialDistrict, fitToFeatures]);
 
-  const activeMeta = ATTRIBUTES.find((a) => a.key === attr)!;
-
   return (
-    <div className="h-screen flex flex-col bg-background text-foreground overflow-hidden">
-      {/* ── Top bar ──────────────────────────────────────────────────── */}
-      <header className="border-b border-border/40 bg-background/95 backdrop-blur z-50 shrink-0">
-        <div className="h-14 px-4 flex items-center gap-3">
-          <Link href="/">
-            <Button variant="ghost" size="sm" className="gap-1.5 text-xs h-8 shrink-0">
-              <ArrowLeft className="h-3.5 w-3.5" /> Home
-            </Button>
-          </Link>
+    <div className="h-screen flex bg-background text-foreground overflow-hidden">
+      {/* Sidebar */}
+      <FilterSidebar
+        collapsed={!sidebarOpen} onToggle={() => setSidebarOpen((v) => !v)}
+        attr={attr} onAttrChange={setAttr}
+        selectedState={selectedState} states={stateList} onStateChange={handleStateChange}
+        selectedDistrict={selectedDistrict} districts={districtList} onDistrictChange={handleDistrictChange}
+      />
 
-          <div className="h-4 w-px bg-border/50 shrink-0" />
-
-          <div className="flex items-center gap-2 shrink-0">
-            <Grid3X3 className="h-4 w-4 text-emerald-500" />
-            <span className="text-sm font-semibold">Hex Grid Base Map</span>
-            <Badge variant="outline" className="text-[10px] h-5 border-emerald-500/30 text-emerald-500 bg-emerald-500/10">
-              {features.length ? `${features.length.toLocaleString()} hexes` : "H3 res 5"}
-            </Badge>
-          </div>
-
-          <div className="h-4 w-px bg-border/50 shrink-0" />
-
-          {/* Attribute selector */}
-          <AttributeSelector active={attr} onChange={setAttr} />
-
+      {/* Main area */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Minimal top bar */}
+        <header className="h-10 px-3 border-b border-border/40 flex items-center gap-3 bg-background/95 backdrop-blur z-50 shrink-0">
+          <Link href="/"><Button variant="ghost" size="sm" className="gap-1 text-xs h-7 px-2"><ArrowLeft className="h-3 w-3" />Home</Button></Link>
+          <div className="h-3 w-px bg-border/50" />
+          <span className="text-xs font-semibold">ClimResWASH Hex Grid</span>
+          <span className="text-[10px] text-muted-foreground">{features.length ? `${features.length.toLocaleString()} hexes` : ""}</span>
           <div className="flex-1" />
-
-          {/* State + District filters */}
-          {stateList.length > 0 && (
-            <DropdownFilter
-              items={stateList}
-              selected={selectedState}
-              onChange={handleStateChange}
-              allLabel="All India"
-              allValue="All India"
-            />
-          )}
-          {districtList.length > 0 && (
-            <DropdownFilter
-              items={districtList}
-              selected={selectedDistrict}
-              onChange={handleDistrictChange}
-              allLabel="All Districts"
-              allValue="All"
-            />
-          )}
-
+          <Link href="/forecast" className="text-[11px] text-red-400 hover:text-red-300 font-semibold">Live Forecast →</Link>
           <ThemeToggle />
+        </header>
+
+        {/* Map */}
+        <div className="flex-1 relative">
+          {hexQ.isLoading ? (
+            <div className="absolute inset-0 flex items-center justify-center text-muted-foreground gap-2 text-sm">
+              <Loader2 className="h-5 w-5 animate-spin" /> Loading hexes…
+            </div>
+          ) : hexQ.isError ? (
+            <div className="absolute inset-0 flex items-center justify-center gap-2 text-red-400 text-sm">
+              <AlertTriangle className="h-5 w-5" /> Failed to load data
+            </div>
+          ) : (
+            <HexMap geoData={hexQ.data} attr={attr} selectedState={selectedState}
+              selectedDistrict={selectedDistrict} domain={dataDomain} mapRef={mapRef}
+              onHexClick={setClickedHex} />
+          )}
+
+          {/* Clicked hex info */}
+          {clickedHex && (
+            <div className="absolute top-3 right-3 z-[800]">
+              <HexInfoPanel props={clickedHex} onClose={() => setClickedHex(null)} />
+            </div>
+          )}
+
+          {/* District summary */}
+          {selectedDistrict !== "All" && (
+            <div className="absolute bottom-8 right-3 z-[800]">
+              <DistrictSummary features={features} district={selectedDistrict} state={selectedState} />
+            </div>
+          )}
+
+          {/* Legend */}
+          {features.length > 0 && (
+            <div className="absolute bottom-8 left-3 z-[800]">
+              <Legend attr={attr} domain={dataDomain} />
+            </div>
+          )}
         </div>
-
-        {/* Description sub-bar */}
-        <div className="px-4 pb-2">
-          <p className="text-[10px] text-muted-foreground">
-            {activeMeta.desc}
-            {selectedState !== "All India" && (
-              <span className="ml-2 text-emerald-500/70">· Filtered: {selectedState}</span>
-            )}
-          </p>
-        </div>
-      </header>
-
-      {/* ── Map ───────────────────────────────────────────────────────── */}
-      <div className="flex-1 relative overflow-hidden">
-        {hexQ.isLoading ? (
-          <div className="absolute inset-0 flex items-center justify-center text-muted-foreground gap-2 text-sm">
-            <Loader2 className="h-5 w-5 animate-spin" /> Loading 12,705 hexes…
-          </div>
-        ) : hexQ.isError ? (
-          <div className="absolute inset-0 flex items-center justify-center gap-2 text-red-400 text-sm">
-            <AlertTriangle className="h-5 w-5" /> Failed to load hex grid
-          </div>
-        ) : (
-          <HexMap
-            geoData={hexQ.data}
-            attr={attr}
-            selectedState={selectedState}
-            selectedDistrict={selectedDistrict}
-            mapRef={mapRef}
-            onHexClick={setClickedHex}
-            domain={dataDomain}
-          />
-        )}
-
-        {/* Clicked hex info — top-right */}
-        {clickedHex && (
-          <div className="absolute top-3 right-3 z-[800]">
-            <HexInfoPanel props={clickedHex} onClose={() => setClickedHex(null)} />
-          </div>
-        )}
-
-        {/* District summary — bottom-right when district selected */}
-        {selectedDistrict !== "All" && <DistrictSummary features={features} district={selectedDistrict} state={selectedState} />}
-
-        {/* Legend — bottom-left */}
-        {features.length > 0 && (
-          <div className="absolute bottom-8 left-3 z-[800]">
-            <Legend attr={attr} domain={dataDomain} />
-          </div>
-        )}
       </div>
     </div>
   );
