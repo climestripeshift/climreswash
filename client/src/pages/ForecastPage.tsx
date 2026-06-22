@@ -193,7 +193,7 @@ function ForecastMap({
   selectedDay,
   selectedState,
   hazardFilter,
-  significantOnly,
+  minRisk,
   domain,
   mapRef,
 }: {
@@ -202,7 +202,7 @@ function ForecastMap({
   selectedDay: number;
   selectedState: string;
   hazardFilter: string;
-  significantOnly: boolean;
+  minRisk: number;
   domain: [number, number];
   mapRef: React.MutableRefObject<LeafletMap | null>;
 }) {
@@ -219,14 +219,14 @@ function ForecastMap({
         return dom && dom[selectedDay] === hazardFilter;
       });
     }
-    if (significantOnly) {
+    if (minRisk > 0) {
       feats = feats.filter((f: any) => {
         const risks = forecast.risk[f.properties.h3_id];
-        return risks && risks[selectedDay] > 1.0;
+        return risks && risks[selectedDay] >= minRisk;
       });
     }
     return { ...geoData, features: feats };
-  }, [geoData, selectedState, hazardFilter, significantOnly, forecast, selectedDay]);
+  }, [geoData, selectedState, hazardFilter, minRisk, forecast, selectedDay]);
 
   const styleFeature = useCallback(
     (feature: any) => {
@@ -288,7 +288,7 @@ function ForecastMap({
       />
       <GeoJSON
         ref={geoJsonRef}
-        key={`${selectedState}-${hazardFilter}-${significantOnly}-${selectedDay}`}
+        key={`${selectedState}-${hazardFilter}-${minRisk}-${selectedDay}`}
         data={filtered}
         style={styleFeature}
         onEachFeature={onEachFeature}
@@ -306,7 +306,7 @@ export default function ForecastPage() {
   const [selectedDay, setSelectedDay]       = useState(0);
   const [selectedState, setSelectedState]   = useState("All India");
   const [hazardFilter, setHazardFilter]     = useState<HazardFilter>("all");
-  const [significantOnly, setSignificantOnly] = useState(false);
+  const [minRisk, setMinRisk]               = useState(0);
   const mapRef = useRef<LeafletMap | null>(null);
 
   const hexQ = useQuery<any>({
@@ -416,16 +416,19 @@ export default function ForecastPage() {
             </div>
           )}
 
-          <button
-            onClick={() => setSignificantOnly((v) => !v)}
-            className={`px-2 py-1 rounded-md text-[11px] font-semibold transition-colors ${
-              significantOnly
-                ? "bg-amber-600 text-white"
-                : "bg-muted/60 text-muted-foreground hover:bg-muted"
-            }`}
-          >
-            {significantOnly ? "⚡ Significant Only" : "🗺️ All Hexes"}
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-[10px] text-muted-foreground">Min risk</span>
+            <input
+              type="range"
+              min={0}
+              max={2.5}
+              step={0.1}
+              value={minRisk}
+              onChange={(e) => setMinRisk(parseFloat(e.target.value))}
+              className="w-20 h-1 accent-red-500"
+            />
+            <span className="text-[10px] font-mono font-semibold text-red-400 w-6">{minRisk.toFixed(1)}</span>
+          </div>
 
           <ThemeToggle />
         </div>
@@ -434,7 +437,7 @@ export default function ForecastPage() {
           <p className="text-[10px] text-muted-foreground">
             7-day forecast risk from Open-Meteo (ECMWF/GFS) × ClimResWASH formulas
             {genTime && <span className="ml-2 opacity-60">· Generated {genTime}</span>}
-            {significantOnly && <span className="ml-2 text-amber-500">· Showing risk &gt; 0.5 only</span>}
+            {minRisk > 0 && <span className="ml-2 text-amber-500">· Showing risk &gt; {minRisk.toFixed(1)} only</span>}
           </p>
         </div>
       </header>
@@ -456,7 +459,7 @@ export default function ForecastPage() {
             selectedDay={selectedDay}
             selectedState={selectedState}
             hazardFilter={hazardFilter}
-            significantOnly={significantOnly}
+            minRisk={minRisk}
             domain={domain}
             mapRef={mapRef}
           />
