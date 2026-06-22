@@ -28,8 +28,8 @@ ROOT      = Path(__file__).resolve().parent.parent
 HEX_FILE  = ROOT / "client/public/data/india_hex_grid.geojson"
 OUT_FILE  = ROOT / "client/public/data/forecast_risk.json"
 API_URL   = "https://api.open-meteo.com/v1/forecast"
-BATCH     = 50
-SAMPLE_N  = 12   # use every Nth hex centroid as weather sample
+BATCH     = 20   # smaller batches to avoid 429 rate limits
+SAMPLE_N  = 25   # fewer samples (500 pts) — weather doesn't vary in 25km
 ALERT_THRESHOLD = 1.0
 
 LAND_USE_PARAMS = {
@@ -103,39 +103,49 @@ def main():
         lats = ",".join(f"{centroids[i][0]:.3f}" for i in batch_idx)
         lons = ",".join(f"{centroids[i][1]:.3f}" for i in batch_idx)
 
-        try:
-            r = requests.get(API_URL, params={
-                "latitude": lats,
-                "longitude": lons,
-                "daily": "temperature_2m_max,precipitation_sum,relative_humidity_2m_mean,wind_speed_10m_max",
-                "forecast_days": 7,
-                "timezone": "Asia/Kolkata",
-            }, timeout=30)
-            r.raise_for_status()
-            data = r.json()
-            locations = data if isinstance(data, list) else [data]
+        batch_num = b // BATCH + 1
+        total_batches = (len(sample_indices) + BATCH - 1) // BATCH
+        for attempt in range(3):
+            try:
+                r = requests.get(API_URL, params={
+                    "latitude": lats,
+                    "longitude": lons,
+                    "daily": "temperature_2m_max,precipitation_sum,relative_humidity_2m_mean,wind_speed_10m_max",
+                    "forecast_days": 7,
+                    "timezone": "Asia/Kolkata",
+                }, timeout=30)
+                if r.status_code == 429:
+                    wait = 10 * (attempt + 1)
+                    print(f"  [{batch_num}/{total_batches}] Rate limited, waiting {wait}s...")
+                    time.sleep(wait)
+                    continue
+                r.raise_for_status()
+                data = r.json()
+                locations = data if isinstance(data, list) else [data]
 
-            for j, loc in enumerate(locations):
-                idx = batch_idx[j]
-                daily = loc["daily"]
-                days_data = []
-                for d in range(len(daily["time"])):
-                    days_data.append({
-                        "temp": daily["temperature_2m_max"][d] or 35,
-                        "rain": daily["precipitation_sum"][d] or 0,
-                        "rh":   daily["relative_humidity_2m_mean"][d] or 50,
-                        "wind": daily["wind_speed_10m_max"][d] or 5,
-                        "date": daily["time"][d],
-                    })
-                weather[idx] = days_data
+                for j, loc in enumerate(locations):
+                    idx = batch_idx[j]
+                    daily = loc["daily"]
+                    days_data = []
+                    for dd in range(len(daily["time"])):
+                        days_data.append({
+                            "temp": daily["temperature_2m_max"][dd] or 35,
+                            "rain": daily["precipitation_sum"][dd] or 0,
+                            "rh":   daily["relative_humidity_2m_mean"][dd] or 50,
+                            "wind": daily["wind_speed_10m_max"][dd] or 5,
+                            "date": daily["time"][dd],
+                        })
+                    weather[idx] = days_data
 
-            batch_num = b // BATCH + 1
-            total_batches = (len(sample_indices) + BATCH - 1) // BATCH
-            print(f"  [{batch_num}/{total_batches}] {len(weather)} locations fetched")
-        except Exception as e:
-            print(f"  Batch {b//BATCH+1} failed: {e}")
+                print(f"  [{batch_num}/{total_batches}] {len(weather)} locations fetched")
+                break
+            except Exception as e:
+                if attempt < 2:
+                    time.sleep(5 * (attempt + 1))
+                else:
+                    print(f"  [{batch_num}/{total_batches}] FAILED after 3 attempts: {e}")
 
-        time.sleep(2)
+        time.sleep(3)
 
     print(f"  {len(weather)} weather points fetched")
 

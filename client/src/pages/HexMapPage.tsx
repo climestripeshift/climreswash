@@ -391,10 +391,10 @@ function DistrictSummary({ features, district, state }: { features: any[]; distr
       )}
 
       <div className="flex gap-1.5 mt-2 print:hidden">
-        <button onClick={() => window.print()}
-          className="flex-1 px-2 py-1 rounded-md bg-muted/60 text-[10px] text-muted-foreground hover:bg-muted transition-colors">
-          🖨️ Print
-        </button>
+        <Link href={`/report/${encodeURIComponent(district)}`}
+          className="flex-1 px-2 py-1 rounded-md bg-muted/60 text-[10px] text-muted-foreground hover:bg-muted text-center transition-colors">
+          📄 Report
+        </Link>
         <Link href={`/forecast?state=${encodeURIComponent(state)}`}
           className="flex-1 px-2 py-1 rounded-md bg-red-600/20 text-[10px] text-red-400 hover:bg-red-600/30 text-center transition-colors">
           📡 Forecast
