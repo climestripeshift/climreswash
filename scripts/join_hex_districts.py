@@ -15,6 +15,7 @@ import geopandas as gpd
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from risk.cascades import evaluate_cascades
 from risk.formulas import (
     adaptive_capacity,
     compute_risk,
@@ -192,9 +193,10 @@ def main():
     RISK_COLS = [
         "flood_risk", "heat_risk", "cyclone_risk", "drought_risk", "wetbulb_risk",
         "landslide_risk", "coldwave_risk", "flashflood_risk", "sealevel_risk", "fire_risk",
-        "hex_risk",
+        "hex_risk", "cascade_count", "cascade_actions",
     ]
     results: dict[str, list] = {c: [] for c in RISK_COLS}
+    cascade_stats: dict[str, int] = {}  # rule_id → count
 
     for i, (_, row) in enumerate(hexes.iterrows()):
         elev = float(row.get("elevation_mean", 200) or 200)
@@ -299,6 +301,21 @@ def main():
         all_risks = [flood_r, heat_r, cyc_r, drought_r, wb_r, ls_r, cw_r, ff_r, slr_r, fire_r]
         combined = max(all_risks)
 
+        # Evaluate WASH cascade rules
+        cascade_props = {
+            "flood_risk": flood_r, "heat_risk": heat_r, "cyclone_risk": cyc_r,
+            "drought_risk": drought_r, "wetbulb_risk": wb_r, "landslide_risk": ls_r,
+            "coldwave_risk": cw_r, "population": int(row.get("population", 0) or 0),
+            "elevation_mean": elev, "built_pct": built_pct,
+            **wash_by_state.get(state_name, {}),
+        }
+        cascades = evaluate_cascades(cascade_props)
+        cascade_amp = sum(c.amplifier for c in cascades)
+        combined = min(10.0, combined + cascade_amp)
+        cascade_action_str = " | ".join(f"[{c.severity.upper()}] {c.action}" for c in cascades) if cascades else ""
+        for c in cascades:
+            cascade_stats[c.rule_id] = cascade_stats.get(c.rule_id, 0) + 1
+
         results["flood_risk"].append(round(flood_r, 2))
         results["heat_risk"].append(round(heat_r, 2))
         results["cyclone_risk"].append(round(cyc_r, 2))
@@ -310,6 +327,8 @@ def main():
         results["sealevel_risk"].append(round(slr_r, 2))
         results["fire_risk"].append(round(fire_r, 2))
         results["hex_risk"].append(round(combined, 2))
+        results["cascade_count"].append(len(cascades))
+        results["cascade_actions"].append(cascade_action_str)
 
     for col, vals in results.items():
         hexes[col] = vals
@@ -317,12 +336,24 @@ def main():
     # 5. Stats
     print("\nResults:")
     for col in RISK_COLS:
+        if col == "cascade_actions":
+            continue
         vals = hexes[col].dropna()
-        print(f"  {col:22s}: {vals.min():.3f} – {vals.max():.3f}  (mean {vals.mean():.3f})")
+        try:
+            print(f"  {col:22s}: {vals.min():.3f} – {vals.max():.3f}  (mean {vals.mean():.3f})")
+        except (TypeError, ValueError):
+            pass
 
-    # District match stats
     n_districts = hexes["district_id"].nunique()
     print(f"  Unique districts matched: {n_districts}")
+
+    # Cascade stats
+    total_cascades = sum(cascade_stats.values())
+    hexes_with_cascades = sum(1 for v in results["cascade_count"] if v > 0)
+    print(f"\n  WASH Cascade Rules:")
+    print(f"    {hexes_with_cascades} hexes triggered at least one rule ({hexes_with_cascades*100//len(results['cascade_count'])}%)")
+    for rule_id, count in sorted(cascade_stats.items(), key=lambda x: -x[1]):
+        print(f"    {rule_id:30s}: {count:5d} hexes")
 
     # 5. Save
     print(f"\nSaving {HEX_FILE}...")

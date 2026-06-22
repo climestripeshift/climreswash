@@ -367,8 +367,13 @@ function DistrictSidebar({
           </div>
         </div>
 
-        {/* District code */}
-        <div className="text-[10px] text-muted-foreground/50 text-center">
+        {/* Drill into hex grid */}
+        <Link href={`/grid?state=${encodeURIComponent(p.STATE)}&district=${encodeURIComponent(p.NAME)}`}>
+          <button className="w-full mt-2 px-3 py-1.5 rounded-md bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-500 transition-colors">
+            View hex-level breakdown →
+          </button>
+        </Link>
+        <div className="text-[10px] text-muted-foreground/50 text-center mt-1">
           District ID: {p.ID}
         </div>
       </div>

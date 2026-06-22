@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
-import { Link } from "wouter";
+import { Link, useSearch } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { MapContainer, TileLayer, GeoJSON, useMap } from "react-leaflet";
 import type { Map as LeafletMap, GeoJSON as LeafletGeoJSONLayer } from "leaflet";
@@ -436,6 +436,21 @@ function HexInfoPanel({ props, onClose }: { props: any; onClose: () => void }) {
           <span className="text-muted-foreground">Vulnerability</span>
           <span className="font-medium">{props.district_vulnerability ?? "—"}</span>
         </div>
+        {props.cascade_count > 0 && (
+          <>
+            <div className="border-t border-red-500/30 my-1 pt-1" />
+            <div className="text-[9px] font-semibold text-red-400 uppercase tracking-wide">
+              ⚠️ {props.cascade_count} WASH Cascade{props.cascade_count > 1 ? "s" : ""} Active
+            </div>
+            <div className="text-[10px] text-red-300/80">
+              Compound risk amplifier applied
+            </div>
+          </>
+        )}
+        <div className="flex justify-between mt-1">
+          <span className="text-muted-foreground">👥 Population</span>
+          <span className="font-medium">{(props.population ?? 0).toLocaleString()}</span>
+        </div>
       </div>
       <div className="mt-2 text-[9px] text-muted-foreground/50 truncate">
         {props.district_name} · {props.h3_id}
@@ -532,12 +547,57 @@ function HexMap({
   );
 }
 
+// ── District summary panel ────────────────────────────────────────────────────
+
+function DistrictSummary({ features, district, state }: { features: any[]; district: string; state: string }) {
+  const distFeats = features.filter((f: any) => f.properties.district_name === district);
+  if (!distFeats.length) return null;
+
+  const totalPop = distFeats.reduce((s: number, f: any) => s + (f.properties.population || 0), 0);
+  const avgRisk = distFeats.reduce((s: number, f: any) => s + (f.properties.hex_risk || 0), 0) / distFeats.length;
+  const maxRisk = Math.max(...distFeats.map((f: any) => f.properties.hex_risk || 0));
+  const cascadeHexes = distFeats.filter((f: any) => (f.properties.cascade_count || 0) > 0).length;
+
+  const hazards = ["flood_risk", "heat_risk", "cyclone_risk", "drought_risk", "wetbulb_risk", "landslide_risk", "coldwave_risk"];
+  const sums = hazards.map((h) => ({
+    h, sum: distFeats.reduce((s: number, f: any) => s + (f.properties[h] || 0), 0),
+  }));
+  const topHazard = sums.sort((a, b) => b.sum - a.sum)[0]?.h?.replace("_risk", "") || "flood";
+
+  return (
+    <div className="absolute bottom-8 right-3 z-[800] bg-background/95 backdrop-blur border border-border/40 rounded-lg shadow-lg p-3 w-56">
+      <div className="text-xs font-bold mb-1">{district}</div>
+      <div className="text-[10px] text-muted-foreground mb-2">{state} · {distFeats.length} hexes</div>
+      <div className="space-y-1 text-[11px]">
+        <div className="flex justify-between"><span className="text-muted-foreground">Population</span><span className="font-medium">{totalPop.toLocaleString()}</span></div>
+        <div className="flex justify-between"><span className="text-muted-foreground">Avg Risk</span><span className="font-bold">{avgRisk.toFixed(2)}</span></div>
+        <div className="flex justify-between"><span className="text-muted-foreground">Max Risk</span><span className="font-bold text-red-400">{maxRisk.toFixed(2)}</span></div>
+        <div className="flex justify-between"><span className="text-muted-foreground">Top Hazard</span><span className="font-medium capitalize">{topHazard}</span></div>
+        {cascadeHexes > 0 && (
+          <div className="flex justify-between"><span className="text-red-400">⚠️ WASH Cascades</span><span className="font-bold text-red-400">{cascadeHexes} hexes</span></div>
+        )}
+      </div>
+      <button
+        onClick={() => window.print()}
+        className="w-full mt-2 px-2 py-1 rounded-md bg-muted/60 text-xs text-muted-foreground hover:bg-muted transition-colors"
+      >
+        Print Report
+      </button>
+    </div>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function HexMapPage() {
+  const searchString = useSearch();
+  const urlParams = new URLSearchParams(searchString);
+  const initialState = urlParams.get("state") || "All India";
+  const initialDistrict = urlParams.get("district") || "All";
+
   const [attr, setAttr]                       = useState<AttrKey>("hex_risk");
-  const [selectedState, setSelectedState]     = useState("All India");
-  const [selectedDistrict, setSelectedDistrict] = useState("All");
+  const [selectedState, setSelectedState]     = useState(initialState);
+  const [selectedDistrict, setSelectedDistrict] = useState(initialDistrict);
   const [clickedHex, setClickedHex]           = useState<any | null>(null);
   const mapRef = useRef<LeafletMap | null>(null);
 
@@ -625,6 +685,15 @@ export default function HexMapPage() {
     },
     [hexQ.data, fitToFeatures]
   );
+
+  // Auto-fit when loaded from URL params (e.g. /grid?state=Bihar&district=Patna)
+  useEffect(() => {
+    if (!hexQ.data || initialState === "All India") return;
+    const target = initialDistrict !== "All"
+      ? hexQ.data.features.filter((f: any) => f.properties.district_name === initialDistrict)
+      : hexQ.data.features.filter((f: any) => f.properties.state === initialState);
+    if (target.length) fitToFeatures(target);
+  }, [hexQ.data, initialState, initialDistrict, fitToFeatures]);
 
   const activeMeta = ATTRIBUTES.find((a) => a.key === attr)!;
 
@@ -718,6 +787,9 @@ export default function HexMapPage() {
             <HexInfoPanel props={clickedHex} onClose={() => setClickedHex(null)} />
           </div>
         )}
+
+        {/* District summary — bottom-right when district selected */}
+        {selectedDistrict !== "All" && <DistrictSummary features={features} district={selectedDistrict} state={selectedState} />}
 
         {/* Legend — bottom-left */}
         {features.length > 0 && (
