@@ -136,12 +136,144 @@ const FILTERABLE_KEYS = ATTRIBUTES.filter((a) => a.key !== "land_use").map((a) =
 
 // ── Sidebar ───────────────────────────────────────────────────────────────────
 
+// ── Multi-Hazard Impact panel ─────────────────────────────────────────────────
+
+const HAZARD_DEFS = [
+  { key: "flood_risk",      label: "Flood",       icon: "🌊" },
+  { key: "heat_risk",       label: "Heat",        icon: "🔥" },
+  { key: "cyclone_risk",    label: "Cyclone",     icon: "🌀" },
+  { key: "drought_risk",    label: "Drought",     icon: "☀️" },
+  { key: "wetbulb_risk",    label: "Wet Bulb",    icon: "💧" },
+  { key: "landslide_risk",  label: "Landslide",   icon: "🏔️" },
+  { key: "coldwave_risk",   label: "Cold Wave",   icon: "❄️" },
+  { key: "flashflood_risk", label: "Flash Flood",  icon: "⚡" },
+  { key: "sealevel_risk",   label: "Sea Level",   icon: "🌊" },
+  { key: "fire_risk",       label: "Fire",        icon: "🔥" },
+];
+
+function MultiHazardPanel({ features }: { features: any[] }) {
+  const [selectedHazards, setSelectedHazards] = useState<Set<string>>(new Set(["flood_risk", "heat_risk", "cyclone_risk"]));
+  const [threshold, setThreshold] = useState(5.0);
+
+  const toggle = (key: string) => {
+    setSelectedHazards((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  };
+
+  const stats = useMemo(() => {
+    if (!features.length) return null;
+    const breakdown: Record<number, { total: number; children: number; elderly: number; women: number }> = {};
+    let maxK = 0;
+
+    for (const f of features) {
+      const p = f.properties;
+      let count = 0;
+      const hazardNames: string[] = [];
+      for (const hk of Array.from(selectedHazards)) {
+        if ((p[hk] ?? 0) >= threshold) { count++; hazardNames.push(hk); }
+      }
+      if (count > maxK) maxK = count;
+      if (!breakdown[count]) breakdown[count] = { total: 0, children: 0, elderly: 0, women: 0 };
+      breakdown[count].total    += p.population ?? 0;
+      breakdown[count].children += p.pop_children_under_5 ?? 0;
+      breakdown[count].elderly  += p.pop_elderly_60plus ?? 0;
+      breakdown[count].women    += p.pop_women_15_49 ?? 0;
+    }
+
+    // Cumulative (k or more)
+    const cumulative: Record<number, { total: number; children: number; elderly: number; women: number }> = {};
+    for (let k = maxK; k >= 1; k--) {
+      cumulative[k] = { total: 0, children: 0, elderly: 0, women: 0 };
+      for (let j = k; j <= maxK; j++) {
+        if (breakdown[j]) {
+          cumulative[k].total    += breakdown[j].total;
+          cumulative[k].children += breakdown[j].children;
+          cumulative[k].elderly  += breakdown[j].elderly;
+          cumulative[k].women    += breakdown[j].women;
+        }
+      }
+    }
+
+    return { breakdown, cumulative, maxK };
+  }, [features, selectedHazards, threshold]);
+
+  const fmt = (n: number) => n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${(n / 1e3).toFixed(0)}K` : `${n}`;
+
+  return (
+    <div className="px-3 pb-3 space-y-2">
+      {/* Hazard checkboxes */}
+      <div className="grid grid-cols-2 gap-1">
+        {HAZARD_DEFS.map((h) => (
+          <label key={h.key} className={`flex items-center gap-1 px-1.5 py-1 rounded text-[10px] cursor-pointer transition-colors ${
+            selectedHazards.has(h.key) ? "bg-red-500/15 text-red-300" : "bg-muted/30 text-muted-foreground"
+          }`}>
+            <input type="checkbox" checked={selectedHazards.has(h.key)} onChange={() => toggle(h.key)}
+              className="w-3 h-3 accent-red-500" />
+            <span>{h.icon} {h.label}</span>
+          </label>
+        ))}
+      </div>
+
+      {/* Threshold */}
+      <div className="flex items-center gap-2">
+        <span className="text-[9px] text-muted-foreground">Threshold</span>
+        <input type="range" min={1} max={8} step={0.5} value={threshold}
+          onChange={(e) => setThreshold(parseFloat(e.target.value))}
+          className="flex-1 h-1 accent-red-500" />
+        <span className="text-[10px] font-mono text-red-400 w-6">≥{threshold}</span>
+      </div>
+
+      {/* Results headline */}
+      {stats && selectedHazards.size > 0 && (
+        <div className="space-y-1.5">
+          <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wide">
+            People facing N+ of {selectedHazards.size} selected hazards
+          </div>
+          {Array.from({ length: stats.maxK }, (_, i) => i + 1).map((k) => {
+            const c = stats.cumulative[k];
+            if (!c || c.total === 0) return null;
+            return (
+              <div key={k} className="bg-muted/20 rounded-md p-2">
+                <div className="text-[11px] font-bold text-foreground mb-1">
+                  {k}+ hazards
+                </div>
+                <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-[10px]">
+                  <div className="flex justify-between"><span className="text-muted-foreground">👥 Total</span><span className="font-semibold">{fmt(c.total)}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">👶 Children</span><span className="font-semibold text-red-400">{fmt(c.children)}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">🧓 Elderly</span><span className="font-semibold">{fmt(c.elderly)}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">👩 Women</span><span className="font-semibold">{fmt(c.women)}</span></div>
+                </div>
+              </div>
+            );
+          })}
+          {stats.maxK === 0 && (
+            <div className="text-[10px] text-muted-foreground text-center py-2">
+              No hexes meet threshold ≥{threshold} for selected hazards
+            </div>
+          )}
+        </div>
+      )}
+      {selectedHazards.size === 0 && (
+        <div className="text-[10px] text-muted-foreground text-center py-2">
+          Select hazards above to see impact
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Sidebar ───────────────────────────────────────────────────────────────────
+
 function FilterSidebar({
   collapsed, onToggle,
   attr, onAttrChange,
   selectedState, states, onStateChange,
   selectedDistrict, districts, onDistrictChange,
   crossFilters, onCrossFiltersChange, matchCount, totalCount,
+  features,
 }: {
   collapsed: boolean; onToggle: () => void;
   attr: string; onAttrChange: (k: string) => void;
@@ -149,6 +281,7 @@ function FilterSidebar({
   selectedDistrict: string; districts: string[]; onDistrictChange: (d: string) => void;
   crossFilters: CrossFilter[]; onCrossFiltersChange: (f: CrossFilter[]) => void;
   matchCount: number; totalCount: number;
+  features: any[];
 }) {
   const [openCats, setOpenCats] = useState<Record<string, boolean>>({ overview: true, climate: true });
 
@@ -306,6 +439,17 @@ function FilterSidebar({
             )}
           </div>
         )}
+      </div>
+
+      {/* Multi-Hazard Impact panel */}
+      <div className="border-t border-border/30">
+        <button onClick={() => toggleCat("_multihazard")}
+          className="w-full px-3 py-2 flex items-center gap-2 text-left hover:bg-muted/30">
+          {openCats["_multihazard"] ? <ChevronDown className="h-3 w-3 text-muted-foreground" /> : <ChevronRight className="h-3 w-3 text-muted-foreground" />}
+          <span className="text-xs">👶</span>
+          <span className="text-[11px] font-semibold flex-1">Multi-Hazard Impact</span>
+        </button>
+        {openCats["_multihazard"] && <MultiHazardPanel features={features} />}
       </div>
 
       {/* Active layer info */}
@@ -638,6 +782,7 @@ export default function HexMapPage() {
         selectedState={selectedState} states={stateList} onStateChange={handleStateChange}
         selectedDistrict={selectedDistrict} districts={districtList} onDistrictChange={handleDistrictChange}
         crossFilters={crossFilters} onCrossFiltersChange={setCrossFilters}
+        features={features}
         matchCount={(() => {
           if (!crossFilters.length || !features.length) return features.length;
           return features.filter((f: any) => crossFilters.every((cf) => {
