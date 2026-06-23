@@ -124,6 +124,16 @@ function hexColor(props: any, attr: string) {
   return gradientColor(ATTR_RAMP[attr] ?? GREENS, t);
 }
 
+// ── Cross-filter types ────────────────────────────────────────────────────────
+
+interface CrossFilter {
+  key: string;
+  op: ">=" | "<=" | ">";
+  value: number;
+}
+
+const FILTERABLE_KEYS = ATTRIBUTES.filter((a) => a.key !== "land_use").map((a) => ({ key: a.key, label: a.label, icon: a.icon }));
+
 // ── Sidebar ───────────────────────────────────────────────────────────────────
 
 function FilterSidebar({
@@ -131,11 +141,14 @@ function FilterSidebar({
   attr, onAttrChange,
   selectedState, states, onStateChange,
   selectedDistrict, districts, onDistrictChange,
+  crossFilters, onCrossFiltersChange, matchCount, totalCount,
 }: {
   collapsed: boolean; onToggle: () => void;
   attr: string; onAttrChange: (k: string) => void;
   selectedState: string; states: string[]; onStateChange: (s: string) => void;
   selectedDistrict: string; districts: string[]; onDistrictChange: (d: string) => void;
+  crossFilters: CrossFilter[]; onCrossFiltersChange: (f: CrossFilter[]) => void;
+  matchCount: number; totalCount: number;
 }) {
   const [openCats, setOpenCats] = useState<Record<string, boolean>>({ overview: true, climate: true });
 
@@ -230,6 +243,69 @@ function FilterSidebar({
             </div>
           );
         })}
+      </div>
+
+      {/* Cross-filter section */}
+      <div className="border-t border-border/30">
+        <button onClick={() => toggleCat("_crossfilter")}
+          className="w-full px-3 py-2 flex items-center gap-2 text-left hover:bg-muted/30">
+          {openCats["_crossfilter"] ? <ChevronDown className="h-3 w-3 text-muted-foreground" /> : <ChevronRight className="h-3 w-3 text-muted-foreground" />}
+          <span className="text-xs">🔍</span>
+          <span className="text-[11px] font-semibold flex-1">Cross-Filter</span>
+          {crossFilters.length > 0 && (
+            <span className="text-[9px] bg-amber-500/20 text-amber-400 px-1.5 rounded font-semibold">
+              {matchCount.toLocaleString()} / {totalCount.toLocaleString()}
+            </span>
+          )}
+        </button>
+        {openCats["_crossfilter"] && (
+          <div className="px-3 pb-2 space-y-2">
+            {crossFilters.map((cf, i) => (
+              <div key={i} className="flex items-center gap-1">
+                <select value={cf.key} onChange={(e) => {
+                  const updated = [...crossFilters];
+                  updated[i] = { ...cf, key: e.target.value };
+                  onCrossFiltersChange(updated);
+                }} className="flex-1 appearance-none rounded border border-border/50 bg-muted/40 px-1 py-0.5 text-[10px] outline-none text-foreground truncate">
+                  {FILTERABLE_KEYS.map((k) => <option key={k.key} value={k.key}>{k.icon} {k.label}</option>)}
+                </select>
+                <select value={cf.op} onChange={(e) => {
+                  const updated = [...crossFilters];
+                  updated[i] = { ...cf, op: e.target.value as CrossFilter["op"] };
+                  onCrossFiltersChange(updated);
+                }} className="w-10 appearance-none rounded border border-border/50 bg-muted/40 px-1 py-0.5 text-[10px] outline-none text-foreground text-center">
+                  <option value=">=">≥</option>
+                  <option value="<=">≤</option>
+                  <option value=">">&gt;</option>
+                </select>
+                <input type="number" value={cf.value} onChange={(e) => {
+                  const updated = [...crossFilters];
+                  updated[i] = { ...cf, value: parseFloat(e.target.value) || 0 };
+                  onCrossFiltersChange(updated);
+                }} className="w-16 rounded border border-border/50 bg-muted/40 px-1 py-0.5 text-[10px] outline-none text-foreground text-right" />
+                <button onClick={() => onCrossFiltersChange(crossFilters.filter((_, j) => j !== i))}
+                  className="text-muted-foreground hover:text-red-400 text-[10px]">✕</button>
+              </div>
+            ))}
+            <div className="flex gap-1">
+              <button onClick={() => onCrossFiltersChange([...crossFilters, { key: "flood_risk", op: ">=", value: 5 }])}
+                className="flex-1 px-2 py-1 rounded bg-muted/60 text-[10px] text-muted-foreground hover:bg-muted hover:text-foreground">
+                + Add filter
+              </button>
+              {crossFilters.length > 0 && (
+                <button onClick={() => onCrossFiltersChange([])}
+                  className="px-2 py-1 rounded bg-red-500/10 text-[10px] text-red-400 hover:bg-red-500/20">
+                  Clear
+                </button>
+              )}
+            </div>
+            {crossFilters.length === 0 && (
+              <div className="text-[9px] text-muted-foreground">
+                e.g. Children &lt;5 ≥ 10000 AND Flood risk ≥ 5
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Active layer info */}
@@ -418,9 +494,10 @@ function DistrictSummary({ features, district, state }: { features: any[]; distr
 // ── Leaflet map ───────────────────────────────────────────────────────────────
 
 function HexMap({
-  geoData, attr, selectedState, selectedDistrict, mapRef, onHexClick,
+  geoData, attr, selectedState, selectedDistrict, crossFilters, mapRef, onHexClick,
 }: {
   geoData: any; attr: string; selectedState: string; selectedDistrict: string;
+  crossFilters: CrossFilter[];
   mapRef: React.MutableRefObject<LeafletMap | null>;
   onHexClick: (p: any) => void;
 }) {
@@ -431,8 +508,16 @@ function HexMap({
     let feats = geoData.features;
     if (selectedState !== "All India") feats = feats.filter((f: any) => f.properties.state === selectedState);
     if (selectedDistrict !== "All") feats = feats.filter((f: any) => f.properties.district_name === selectedDistrict);
+    if (crossFilters.length > 0) {
+      feats = feats.filter((f: any) => crossFilters.every((cf) => {
+        const val = f.properties[cf.key] ?? 0;
+        if (cf.op === ">=") return val >= cf.value;
+        if (cf.op === "<=") return val <= cf.value;
+        return val > cf.value;
+      }));
+    }
     return { ...geoData, features: feats };
-  }, [geoData, selectedState, selectedDistrict]);
+  }, [geoData, selectedState, selectedDistrict, crossFilters]);
 
   const styleFeature = useCallback((feature: any) => ({
     fillColor: hexColor(feature.properties, attr),
@@ -457,7 +542,7 @@ function HexMap({
       <SetupCanvas />
       <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>' />
-      <GeoJSON ref={geoJsonRef} key={`${selectedState}-${selectedDistrict}`}
+      <GeoJSON ref={geoJsonRef} key={`${selectedState}-${selectedDistrict}-${crossFilters.length}-${crossFilters.map(f=>f.key+f.op+f.value).join(',')}`}
         data={filtered} style={styleFeature} onEachFeature={onEachFeature} />
     </MapContainer>
   );
@@ -476,6 +561,7 @@ export default function HexMapPage() {
   const [selectedDistrict, setSelectedDistrict] = useState(initialDistrict);
   const [clickedHex, setClickedHex]           = useState<any | null>(null);
   const [sidebarOpen, setSidebarOpen]         = useState(window.innerWidth > 768);
+  const [crossFilters, setCrossFilters]       = useState<CrossFilter[]>([]);
   const mapRef = useRef<LeafletMap | null>(null);
 
   const hexQ = useQuery<any>({
@@ -551,6 +637,17 @@ export default function HexMapPage() {
         attr={attr} onAttrChange={setAttr}
         selectedState={selectedState} states={stateList} onStateChange={handleStateChange}
         selectedDistrict={selectedDistrict} districts={districtList} onDistrictChange={handleDistrictChange}
+        crossFilters={crossFilters} onCrossFiltersChange={setCrossFilters}
+        matchCount={(() => {
+          if (!crossFilters.length || !features.length) return features.length;
+          return features.filter((f: any) => crossFilters.every((cf) => {
+            const val = f.properties[cf.key] ?? 0;
+            if (cf.op === ">=") return val >= cf.value;
+            if (cf.op === "<=") return val <= cf.value;
+            return val > cf.value;
+          })).length;
+        })()}
+        totalCount={features.length}
       />
 
       {/* Main area */}
@@ -578,8 +675,8 @@ export default function HexMapPage() {
             </div>
           ) : (
             <HexMap geoData={hexQ.data} attr={attr} selectedState={selectedState}
-              selectedDistrict={selectedDistrict} mapRef={mapRef}
-              onHexClick={setClickedHex} />
+              selectedDistrict={selectedDistrict} crossFilters={crossFilters}
+              mapRef={mapRef} onHexClick={setClickedHex} />
           )}
 
           {/* Clicked hex info */}
