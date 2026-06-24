@@ -740,16 +740,23 @@ export default function HexMapPage() {
   const hexQ = useQuery<any>({
     queryKey: ["india-hex-props"],
     queryFn: async () => {
-      const props: any[] = await fetch("/data/india_hex_props.json").then((r) => r.json());
-      const features = props.map((p) => {
-        const boundary = cellToBoundary(p.h3_id);
-        const coords = boundary.map(([lat, lng]) => [lng, lat]);
-        coords.push(coords[0]);
-        return { type: "Feature", properties: p, geometry: { type: "Polygon", coordinates: [coords] } };
-      });
-      return { type: "FeatureCollection", features };
+      try {
+        const props: any[] = await fetch("/data/india_hex_props.json").then((r) => r.json());
+        const features = props.map((p) => {
+          const boundary = cellToBoundary(p.h3_id);
+          const coords = boundary.map(([lat, lng]: [number, number]) => [lng, lat]);
+          coords.push(coords[0]);
+          return { type: "Feature", properties: p, geometry: { type: "Polygon", coordinates: [coords] } };
+        });
+        return { type: "FeatureCollection", features };
+      } catch {
+        // Fallback: load full GeoJSON (larger but has geometries)
+        console.warn("h3-js reconstruction failed, falling back to GeoJSON");
+        return fetch("/data/india_hex_grid.geojson").then((r) => r.json());
+      }
     },
     staleTime: Infinity,
+    retry: 1,
   });
 
   const features: any[] = hexQ.data?.features ?? [];
