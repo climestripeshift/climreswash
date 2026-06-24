@@ -36,6 +36,8 @@ const ATTRIBUTES: AttrDef[] = [
   // Overview
   { key: "hex_risk",      label: "Max Risk (all hazards)", icon: "⚠️",  category: "overview", desc: "Highest risk across all 10 hazard channels + cascade amplifiers" },
   { key: "population",    label: "Total Population",       icon: "👥",  category: "overview", desc: "WorldPop 2020 UN-adjusted 100m resolution" },
+  { key: "hazard_count_5", label: "Hazards ≥5 (CCRR)",     icon: "🎯",  category: "overview", desc: "Number of hazards scoring ≥5.0 — UNICEF CCRR threshold" },
+  { key: "hazard_count_3", label: "Hazards ≥3 (moderate)", icon: "🎯",  category: "overview", desc: "Number of hazards scoring ≥3.0 — moderate threshold" },
   { key: "cascade_count", label: "WASH Cascades",          icon: "🔗",  category: "overview", desc: "Number of WASH cascade rules triggered in this hex" },
 
   // Demographics
@@ -82,6 +84,7 @@ const RISK:    [number,number,number][] = [[34,197,94],[234,179,8],[249,115,22],
 
 const ATTR_RAMP: Record<string, [number,number,number][]> = {
   elevation_mean: VIRIDIS, ndvi_mean: GREENS, population: ORANGES,
+  hazard_count_5: RISK, hazard_count_3: RISK,
   pop_children_under_5: ORANGES, pop_elderly_60plus: ORANGES, pop_women_15_49: ORANGES,
   flood_risk: BLUES, heat_risk: ORANGES, cyclone_risk: RISK, drought_risk: ORANGES,
   wetbulb_risk: BLUES, landslide_risk: VIRIDIS, coldwave_risk: BLUES,
@@ -101,6 +104,7 @@ const LAND_USE_COLORS: Record<string, string> = {
 // Fixed absolute domains — green always means safe, red always means danger
 const FIXED_DOMAIN: Record<string, [number, number]> = {
   hex_risk: [0, 10], population: [0, 5000000], cascade_count: [0, 4],
+  hazard_count_5: [0, 5], hazard_count_3: [0, 6],
   pop_children_under_5: [0, 500000], pop_elderly_60plus: [0, 500000], pop_women_15_49: [0, 1500000],
   elevation_mean: [0, 5000], ndvi_mean: [0, 0.8], land_use: [0, 1],
   flood_risk: [0, 10], heat_risk: [0, 10], cyclone_risk: [0, 10],
@@ -460,6 +464,22 @@ function FilterSidebar({
         {openCats["_multihazard"] && <MultiHazardPanel features={features} />}
       </div>
 
+      {/* Export */}
+      <div className="px-3 py-2 border-t border-border/30">
+        <button onClick={() => {
+          const csvKeys = ["h3_id","state","district_name","population","pop_children_under_5","pop_elderly_60plus","pop_women_15_49","hex_risk","hazard_count_5","hazard_count_3","flood_risk","heat_risk","cyclone_risk","drought_risk","wetbulb_risk","landslide_risk","coldwave_risk","flashflood_risk","sealevel_risk","fire_risk","cascade_count","adaptive_capacity","wash_sanitation_pct","wash_water_pct","wash_health_pct","wash_stunting_pct","wash_diarrhoea_pct","wash_anaemia_pct","elevation_mean","ndvi_mean","land_use","slope_deg","dist_water_m"];
+          const header = csvKeys.join(",");
+          const rows = features.map((f: any) => csvKeys.map((k) => {
+            const v = f.properties[k]; return v == null ? "" : typeof v === "string" && v.includes(",") ? `"${v}"` : v;
+          }).join(","));
+          const blob = new Blob([header + "\n" + rows.join("\n")], { type: "text/csv" });
+          const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+          a.download = "climreswash_hex_data.csv"; a.click();
+        }} className="w-full px-2 py-1.5 rounded-md bg-muted/60 text-[10px] text-muted-foreground hover:bg-muted transition-colors flex items-center justify-center gap-1.5">
+          📥 Export CSV ({features.length} hexes)
+        </button>
+      </div>
+
       {/* Active layer info */}
       {(() => {
         const active = ATTRIBUTES.find((a) => a.key === attr);
@@ -707,12 +727,13 @@ export default function HexMapPage() {
   const urlParams = new URLSearchParams(searchString);
   const initialState = urlParams.get("state") || "All India";
   const initialDistrict = urlParams.get("district") || "All";
+  const presentMode = urlParams.get("present") === "1";
 
   const [attr, setAttr]                       = useState("hex_risk");
   const [selectedState, setSelectedState]     = useState(initialState);
   const [selectedDistrict, setSelectedDistrict] = useState(initialDistrict);
   const [clickedHex, setClickedHex]           = useState<any | null>(null);
-  const [sidebarOpen, setSidebarOpen]         = useState(window.innerWidth > 768);
+  const [sidebarOpen, setSidebarOpen]         = useState(!presentMode && window.innerWidth > 768);
   const [crossFilters, setCrossFilters]       = useState<CrossFilter[]>([]);
   const mapRef = useRef<LeafletMap | null>(null);
 
@@ -806,7 +827,7 @@ export default function HexMapPage() {
       {/* Main area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Minimal top bar */}
-        <header className="h-10 px-3 border-b border-border/40 flex items-center gap-3 bg-background/95 backdrop-blur z-50 shrink-0">
+        <header className={`h-10 px-3 border-b border-border/40 flex items-center gap-3 bg-background/95 backdrop-blur z-50 shrink-0 ${presentMode ? "hidden" : ""}`}>
           <Link href="/"><Button variant="ghost" size="sm" className="gap-1 text-xs h-7 px-2"><ArrowLeft className="h-3 w-3" />Home</Button></Link>
           <div className="h-3 w-px bg-border/50" />
           <span className="text-xs font-semibold">ClimResWASH Hex Grid</span>

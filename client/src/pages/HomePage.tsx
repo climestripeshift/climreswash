@@ -135,6 +135,9 @@ export default function HomePage() {
               <Link href="/forecast" className="text-sm font-semibold flex items-center gap-1.5 text-red-500 hover:text-red-400 transition-colors">
                 <Radio className="w-3.5 h-3.5 animate-pulse" /> Forecast
               </Link>
+              <Link href="/states" className="text-sm font-semibold flex items-center gap-1.5 text-violet-500 hover:text-violet-400 transition-colors">
+                States
+              </Link>
             </div>
 
             {/* Actions */}
