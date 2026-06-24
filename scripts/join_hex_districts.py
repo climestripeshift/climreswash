@@ -228,38 +228,51 @@ def main():
             ac = state_ac.get(state_name, 0.7)
         ac = max(0.1, ac)
 
-        # ── 1. Pluvial flood (50mm monsoon rain) ──
-        flood_haz = pluvial_flood_score(50, sand_pct, built_pct, slope)
+        # ── Read likelihood values (from compute_likelihood.py) ──
+        flood_lk   = float(row.get("flood_likelihood", 0.5) or 0.5)
+        heat_lk    = float(row.get("heat_likelihood", 0.5) or 0.5)
+        drought_lk = float(row.get("drought_likelihood", 0.5) or 0.5)
+        wb_lk      = float(row.get("wet_bulb_likelihood", 0.5) or 0.5)
+        cyc_lk     = float(row.get("cyclone_likelihood", 0) or 0)
+        wind_lk    = float(row.get("high_wind_likelihood", 0.1) or 0.1)
+
+        # ── 1. Pluvial flood: severity × likelihood ──
+        flood_sev = pluvial_flood_score(50, sand_pct, built_pct, slope)
+        flood_haz = flood_sev * flood_lk
         flood_r = compute_risk(flood_haz, exposure_10, fs, ac)
 
-        # ── 2. Heatwave (44°C day 3) ──
+        # ── 2. Heatwave: severity × likelihood ──
         threshold = 30.0 if elev > 800 else (37.0 if dist_coast < 50000 else 40.0)
-        heat_haz = heatwave_score(44, threshold, 3, built_pct, tree_pct, dist_w)
+        heat_sev = heatwave_score(44, threshold, 3, built_pct, tree_pct, dist_w)
+        heat_haz = heat_sev * heat_lk
         heat_r = compute_risk(heat_haz, exposure_10, hs, ac)
 
-        # ── 3. Cyclone (cat-3 storm, coastal) ──
+        # ── 3. Cyclone: severity × likelihood ──
         if dist_coast < 300000:
-            cyc_haz = cyclone_score(
+            cyc_sev = cyclone_score(
                 wind_max_kmh=150, dist_track_km=dist_coast / 1000,
                 rainfall_24h_mm=100, sand_pct=sand_pct, built_pct=built_pct,
                 slope_deg=slope, dist_coast_m=dist_coast, elev_m=elev,
                 bay_factor=1.3 if lon > 80 else 1.0,
             )
         else:
-            cyc_haz = 0.0
+            cyc_sev = 0.0
+        cyc_haz = cyc_sev * cyc_lk
         cyc_r = compute_risk(cyc_haz, exposure_10, fs, ac)
 
-        # ── 4. Drought (aridity proxy) ──
+        # ── 4. Drought: severity × likelihood ──
         spi_proxy = (ndvi - 0.4) * 3
         if sand_pct > 50:
             spi_proxy -= 0.5
-        drought_haz = drought_score(spi_proxy)
+        drought_sev = drought_score(spi_proxy)
+        drought_haz = drought_sev * drought_lk
         drought_sens = 0.5 + 0.3 * (1 - ndvi) + 0.2 * (sand_pct / 100)
         drought_r = compute_risk(drought_haz, exposure_10, drought_sens, ac)
 
-        # ── 5. Wet bulb (humid heat) ──
+        # ── 5. Wet bulb: severity × likelihood ──
         rh_proxy = min(95, 40 + ndvi * 40 + max(0, 20 - dist_coast / 10000))
-        wb_haz = wet_bulb_score(38, rh_proxy)
+        wb_sev = wet_bulb_score(38, rh_proxy)
+        wb_haz = wb_sev * wb_lk
         wb_r = compute_risk(wb_haz, exposure_10, hs, ac)
 
         # ── 6. Landslide (steep + deforested + wet) ──
