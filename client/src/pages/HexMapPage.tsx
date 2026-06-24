@@ -697,7 +697,7 @@ function BoundaryLayers({ showDistricts, showStates }: { showDistricts: boolean;
   });
 
   const districtStyle = useCallback(() => ({
-    fillOpacity: 0, color: "#6b7280", weight: 1, dashArray: "4 3",
+    fillOpacity: 0, color: "#ffffff", weight: 1.5, dashArray: "5 3", opacity: 0.8,
   }), []);
   const stateStyle = useCallback(() => ({
     fillOpacity: 0, color: "#f59e0b", weight: 2.5,
