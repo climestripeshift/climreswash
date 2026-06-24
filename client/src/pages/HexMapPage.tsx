@@ -286,6 +286,7 @@ function FilterSidebar({
   selectedDistrict, districts, onDistrictChange,
   crossFilters, onCrossFiltersChange, matchCount, totalCount,
   features,
+  showDistricts, onShowDistrictsChange, showStates, onShowStatesChange,
 }: {
   collapsed: boolean; onToggle: () => void;
   attr: string; onAttrChange: (k: string) => void;
@@ -294,6 +295,8 @@ function FilterSidebar({
   crossFilters: CrossFilter[]; onCrossFiltersChange: (f: CrossFilter[]) => void;
   matchCount: number; totalCount: number;
   features: any[];
+  showDistricts: boolean; onShowDistrictsChange: (v: boolean) => void;
+  showStates: boolean; onShowStatesChange: (v: boolean) => void;
 }) {
   const [openCats, setOpenCats] = useState<Record<string, boolean>>({ overview: true, climate: true });
 
@@ -348,6 +351,20 @@ function FilterSidebar({
             </select>
           </div>
         )}
+      </div>
+
+      {/* Boundary overlays */}
+      <div className="px-3 py-2 border-b border-border/30 flex items-center gap-3">
+        <label className="flex items-center gap-1.5 text-[10px] cursor-pointer">
+          <input type="checkbox" checked={showStates} onChange={(e) => onShowStatesChange(e.target.checked)}
+            className="w-3 h-3 accent-amber-500" />
+          <span className="text-amber-400">State lines</span>
+        </label>
+        <label className="flex items-center gap-1.5 text-[10px] cursor-pointer">
+          <input type="checkbox" checked={showDistricts} onChange={(e) => onShowDistrictsChange(e.target.checked)}
+            className="w-3 h-3 accent-gray-500" />
+          <span className="text-muted-foreground">District lines</span>
+        </label>
       </div>
 
       {/* Category sections */}
@@ -665,13 +682,57 @@ function DistrictSummary({ features, district, state }: { features: any[]; distr
 
 // ── Leaflet map ───────────────────────────────────────────────────────────────
 
+function BoundaryLayers({ showDistricts, showStates }: { showDistricts: boolean; showStates: boolean }) {
+  const districtQ = useQuery<any>({
+    queryKey: ["india-districts-boundary"],
+    queryFn: () => fetch("/data/india.json").then((r) => r.json()),
+    staleTime: Infinity,
+    enabled: showDistricts,
+  });
+  const stateQ = useQuery<any>({
+    queryKey: ["india-states-boundary"],
+    queryFn: () => fetch("/data/india_states.geojson").then((r) => r.json()),
+    staleTime: Infinity,
+    enabled: showStates,
+  });
+
+  const districtStyle = useCallback(() => ({
+    fillOpacity: 0, color: "#6b7280", weight: 1, dashArray: "4 3",
+  }), []);
+  const stateStyle = useCallback(() => ({
+    fillOpacity: 0, color: "#f59e0b", weight: 2.5,
+  }), []);
+
+  const onDistrictFeature = useCallback((feature: any, layer: any) => {
+    layer.bindTooltip(`<b>${feature.properties.NAME}</b><br/>${feature.properties.STATE}`, { sticky: true });
+  }, []);
+  const onStateFeature = useCallback((feature: any, layer: any) => {
+    layer.bindTooltip(`<b>${feature.properties.state || feature.properties.STATE}</b>`, { sticky: true });
+  }, []);
+
+  return (
+    <>
+      {showDistricts && districtQ.data && (
+        <GeoJSON key="district-boundaries" data={districtQ.data} style={districtStyle}
+          onEachFeature={onDistrictFeature} />
+      )}
+      {showStates && stateQ.data && (
+        <GeoJSON key="state-boundaries" data={stateQ.data} style={stateStyle}
+          onEachFeature={onStateFeature} />
+      )}
+    </>
+  );
+}
+
 function HexMap({
   geoData, attr, selectedState, selectedDistrict, crossFilters, mapRef, onHexClick,
+  showDistricts, showStates,
 }: {
   geoData: any; attr: string; selectedState: string; selectedDistrict: string;
   crossFilters: CrossFilter[];
   mapRef: React.MutableRefObject<LeafletMap | null>;
   onHexClick: (p: any) => void;
+  showDistricts: boolean; showStates: boolean;
 }) {
   const geoJsonRef = useRef<LeafletGeoJSONLayer | null>(null);
 
@@ -716,6 +777,7 @@ function HexMap({
         attribution='&copy; <a href="https://www.openstreetmap.org/">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>' />
       <GeoJSON ref={geoJsonRef} key={`${selectedState}-${selectedDistrict}-${crossFilters.length}-${crossFilters.map(f=>f.key+f.op+f.value).join(',')}`}
         data={filtered} style={styleFeature} onEachFeature={onEachFeature} />
+      <BoundaryLayers showDistricts={showDistricts} showStates={showStates} />
     </MapContainer>
   );
 }
@@ -735,6 +797,8 @@ export default function HexMapPage() {
   const [clickedHex, setClickedHex]           = useState<any | null>(null);
   const [sidebarOpen, setSidebarOpen]         = useState(!presentMode && window.innerWidth > 768);
   const [crossFilters, setCrossFilters]       = useState<CrossFilter[]>([]);
+  const [showDistricts, setShowDistricts]     = useState(false);
+  const [showStates, setShowStates]           = useState(true);
   const mapRef = useRef<LeafletMap | null>(null);
 
   const hexQ = useQuery<any>({
@@ -819,6 +883,8 @@ export default function HexMapPage() {
         selectedDistrict={selectedDistrict} districts={districtList} onDistrictChange={handleDistrictChange}
         crossFilters={crossFilters} onCrossFiltersChange={setCrossFilters}
         features={features}
+        showDistricts={showDistricts} onShowDistrictsChange={setShowDistricts}
+        showStates={showStates} onShowStatesChange={setShowStates}
         matchCount={(() => {
           if (!crossFilters.length || !features.length) return features.length;
           return features.filter((f: any) => crossFilters.every((cf) => {
@@ -857,7 +923,8 @@ export default function HexMapPage() {
           ) : (
             <HexMap geoData={hexQ.data} attr={attr} selectedState={selectedState}
               selectedDistrict={selectedDistrict} crossFilters={crossFilters}
-              mapRef={mapRef} onHexClick={setClickedHex} />
+              mapRef={mapRef} onHexClick={setClickedHex}
+              showDistricts={showDistricts} showStates={showStates} />
           )}
 
           {/* Clicked hex info */}
