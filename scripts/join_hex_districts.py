@@ -218,11 +218,15 @@ def main():
         fs = flood_sensitivity(slope, sand_pct, built_pct, dist_w)
         hs = heat_sensitivity(tree_pct, built_pct, dist_w)
 
-        # Real population-based exposure + real NFHS-5 adaptive capacity
+        # Real population-based exposure + district-level or state-level AC
         pop = int(row.get("population", 10000) or 10000)
-        exposure_10 = exposure_score(max(1, pop), 9, 8, 25)  # Census avg demographics
+        exposure_10 = exposure_score(max(1, pop), 9, 8, 25)
         state_name = str(row.get("state", "") or "")
-        ac = max(0.1, state_ac.get(state_name, 0.7))
+        # Prefer district-level AC from NFHS-5 integration, fall back to state
+        ac = float(row.get("adaptive_capacity", 0) or 0)
+        if ac < 0.05:
+            ac = state_ac.get(state_name, 0.7)
+        ac = max(0.1, ac)
 
         # ── 1. Pluvial flood (50mm monsoon rain) ──
         flood_haz = pluvial_flood_score(50, sand_pct, built_pct, slope)

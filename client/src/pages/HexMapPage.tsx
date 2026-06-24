@@ -62,10 +62,14 @@ const ATTRIBUTES: AttrDef[] = [
   { key: "sealevel_risk",   label: "Sea Level Rise", icon: "🌊", category: "geographic", desc: "Low-elevation coastal inundation exposure" },
   { key: "fire_risk",       label: "Forest Fire",    icon: "🔥", category: "geographic", desc: "Dry deciduous forest + scrubland fire risk" },
 
-  // WASH & district baseline
-  { key: "district_hazard",        label: "District Hazard",        icon: "📊", category: "wash", desc: "Composite hazard from original GeoJSON (IPCC AR6)" },
-  { key: "district_exposure",      label: "District Exposure",      icon: "📊", category: "wash", desc: "Population exposure from original GeoJSON" },
-  { key: "district_vulnerability", label: "District Vulnerability", icon: "📊", category: "wash", desc: "Social & infrastructural vulnerability" },
+  // WASH & district baseline (real NFHS-5 district-level data)
+  { key: "adaptive_capacity",      label: "Adaptive Capacity",      icon: "🛡️", category: "wash", desc: "WASH-based coping capacity (NFHS-5 district-level)" },
+  { key: "wash_sanitation_pct",    label: "Sanitation %",            icon: "🚽", category: "wash", desc: "Improved sanitation coverage (NFHS-5 district)" },
+  { key: "wash_water_pct",         label: "Water Access %",         icon: "💧", category: "wash", desc: "Improved water source coverage (NFHS-5 district)" },
+  { key: "wash_health_pct",        label: "Health Access %",        icon: "🏥", category: "wash", desc: "Institutional births as health access proxy (NFHS-5)" },
+  { key: "wash_stunting_pct",      label: "Child Stunting %",       icon: "📉", category: "wash", desc: "Children under 5 stunted (NFHS-5 district)" },
+  { key: "wash_diarrhoea_pct",     label: "Diarrhoea Prevalence",   icon: "🦠", category: "wash", desc: "Diarrhoea prevalence in children (NFHS-5 district)" },
+  { key: "wash_anaemia_pct",       label: "Child Anaemia %",        icon: "🩸", category: "wash", desc: "Children with anaemia (NFHS-5 district)" },
 ];
 
 // ── Color scales ──────────────────────────────────────────────────────────────
@@ -83,7 +87,9 @@ const ATTR_RAMP: Record<string, [number,number,number][]> = {
   wetbulb_risk: BLUES, landslide_risk: VIRIDIS, coldwave_risk: BLUES,
   flashflood_risk: BLUES, sealevel_risk: BLUES, fire_risk: ORANGES,
   hex_risk: RISK, cascade_count: RISK,
-  district_hazard: RISK, district_exposure: ORANGES, district_vulnerability: RISK,
+  adaptive_capacity: GREENS,
+  wash_sanitation_pct: GREENS, wash_water_pct: BLUES, wash_health_pct: GREENS,
+  wash_stunting_pct: RISK, wash_diarrhoea_pct: RISK, wash_anaemia_pct: RISK,
 };
 
 const LAND_USE_COLORS: Record<string, string> = {
@@ -101,7 +107,9 @@ const FIXED_DOMAIN: Record<string, [number, number]> = {
   drought_risk: [0, 10], wetbulb_risk: [0, 10], landslide_risk: [0, 10],
   coldwave_risk: [0, 10], flashflood_risk: [0, 10], sealevel_risk: [0, 10],
   fire_risk: [0, 10],
-  district_hazard: [0, 1], district_exposure: [0, 1], district_vulnerability: [0, 1],
+  adaptive_capacity: [0, 1],
+  wash_sanitation_pct: [0, 100], wash_water_pct: [0, 100], wash_health_pct: [0, 100],
+  wash_stunting_pct: [0, 60], wash_diarrhoea_pct: [0, 20], wash_anaemia_pct: [0, 80],
 };
 
 function lerp3(a: [number,number,number], b: [number,number,number], t: number) {
