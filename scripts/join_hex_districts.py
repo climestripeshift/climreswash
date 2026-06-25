@@ -14,6 +14,11 @@ from pathlib import Path
 import geopandas as gpd
 import numpy as np
 
+# ── Groundwater integration weights (tunable) ─────────────────────────────────
+GW_WEIGHT     = 0.5   # how much groundwater stress amplifies drought sensitivity
+AC_GW_PENALTY = 0.2   # how much groundwater stress reduces adaptive capacity
+GW_DEFAULT    = 0.1   # default stress for districts with no well data
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from risk.cascades import evaluate_cascades
 from risk.formulas import (
@@ -223,10 +228,12 @@ def main():
         exposure_10 = exposure_score(max(1, pop), 9, 8, 25)
         state_name = str(row.get("state", "") or "")
         # Prefer district-level AC from NFHS-5 integration, fall back to state
-        ac = float(row.get("adaptive_capacity", 0) or 0)
-        if ac < 0.05:
-            ac = state_ac.get(state_name, 0.7)
-        ac = max(0.1, ac)
+        ac_base = float(row.get("adaptive_capacity", 0) or 0)
+        if ac_base < 0.05:
+            ac_base = state_ac.get(state_name, 0.7)
+        # Groundwater penalty: depleted aquifer reduces effective AC
+        gw_stress = float(row.get("gw_stress_score", GW_DEFAULT) or GW_DEFAULT)
+        ac = max(0.1, ac_base * (1 - AC_GW_PENALTY * gw_stress))
 
         # ── Read likelihood values (from compute_likelihood.py) ──
         flood_lk   = float(row.get("flood_likelihood", 0.5) or 0.5)
@@ -266,7 +273,8 @@ def main():
             spi_proxy -= 0.5
         drought_sev = drought_score(spi_proxy)
         drought_haz = drought_sev * drought_lk
-        drought_sens = 0.5 + 0.3 * (1 - ndvi) + 0.2 * (sand_pct / 100)
+        drought_sens_base = 0.5 + 0.3 * (1 - ndvi) + 0.2 * (sand_pct / 100)
+        drought_sens = min(1.0, drought_sens_base * (1 + GW_WEIGHT * gw_stress))
         drought_r = compute_risk(drought_haz, exposure_10, drought_sens, ac)
 
         # ── 5. Wet bulb: severity × likelihood ──
