@@ -21,13 +21,14 @@ RASTER_DIR = ROOT / "data/raw/climatology"
 # ── Normalization references (tunable) ────────────────────────────────────────
 # Each maps: raster filename → (column_name, reference_value_for_1.0)
 LIKELIHOOD_CONFIG = [
-    ("flood_freq.tif",         "flood_likelihood",         15.0),   # 15 days/yr >50mm = 1.0
-    ("extreme_rain_freq.tif",  "extreme_rain_likelihood",  5.0),    # 5 days/yr >100mm = 1.0
-    ("heat_freq.tif",          "heat_likelihood",           60.0),   # 60 days/yr >40°C = 1.0
-    ("severe_heat_freq.tif",   "severe_heat_likelihood",   15.0),   # 15 days/yr >45°C = 1.0
-    ("drought_freq.tif",       "drought_likelihood",        1.0),    # already 0–1
-    ("high_wind_freq.tif",     "high_wind_likelihood",     10.0),   # 10 days/yr >60km/h = 1.0
-    ("wet_bulb_freq.tif",      "wet_bulb_likelihood",      30.0),   # 30 days/yr Tw>28°C = 1.0
+    # Tuned from actual GEE raster distributions (p50/p90/max):
+    ("flood_freq.tif",         "flood_likelihood",         8.0),    # p90=7.2, max=34. 8 days/yr >50mm = 1.0
+    ("extreme_rain_freq.tif",  "extreme_rain_likelihood",  3.0),    # p99=7.4, max=14.6. 3 days/yr >100mm = 1.0
+    ("heat_freq.tif",          "heat_likelihood",           45.0),   # p90=42.9, max=100.7. 45 days/yr >40°C = 1.0
+    ("severe_heat_freq.tif",   "severe_heat_likelihood",   5.0),    # p99=5.2, max=12.5. 5 days/yr >45°C = 1.0
+    ("drought_freq.tif",       "drought_likelihood",        0.5),    # p75=0.36, max=0.71. 50% months dry = 1.0
+    ("high_wind_freq.tif",     "high_wind_likelihood",     0.05),   # max=0.07. ERA5 doesn't capture gusts well
+    ("wet_bulb_freq.tif",      "wet_bulb_likelihood",      200.0),  # median=131, max=271. 200 days/yr Tw>28°C = 1.0
 ]
 
 # ── Geographic mock patterns (used when rasters are absent) ───────────────────
