@@ -904,7 +904,7 @@ export default function HexMapPage() {
           <Link href="/"><Button variant="ghost" size="sm" className="gap-1 text-xs h-7 px-2"><ArrowLeft className="h-3 w-3" />Home</Button></Link>
           <div className="h-3 w-px bg-border/50" />
           <span className="text-xs font-semibold">ClimResWASH Hex Grid</span>
-          <span className="text-[10px] text-muted-foreground">{features.length ? `${features.length.toLocaleString()} hexes` : ""}</span>
+          <span className="text-[10px] text-muted-foreground">{features.length ? `${features.length.toLocaleString()} hexes · H3 res-5 · ~252 km² each` : ""}</span>
           <div className="flex-1" />
           <Link href="/forecast" className="text-[11px] text-red-400 hover:text-red-300 font-semibold">Live Forecast →</Link>
           <ThemeToggle />
