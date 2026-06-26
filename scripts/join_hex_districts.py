@@ -237,6 +237,8 @@ def main():
         "flood_risk", "heat_risk", "cyclone_risk", "drought_risk", "wetbulb_risk",
         "landslide_risk", "coldwave_risk", "flashflood_risk", "sealevel_risk", "fire_risk",
         "hex_risk", "pollution_risk", "pm25_annual", "wash_disruption_days",
+        "total_burden_days", "single_hazard_days", "multi_hazard_days",
+        "weighted_burden", "weighted_burden_children", "weighted_burden_elderly",
         "heat_chronic_factor", "drought_chronic_factor", "wetbulb_chronic_factor",
         "cascade_count", "cascade_actions",
     ]
@@ -412,7 +414,47 @@ def main():
         else:
             fire_r = 0.0
 
-        # Combined: max of all 10 hazard channels
+        # ── Cumulative burden days (3 counts, no duplication) ──
+        # Collect active hazard day-counts (WASH/health-relevant)
+        burden_hz_days = {
+            "heat": heat_days,
+            "flood": flood_days,
+            "drought": max(0, drought_days * 30),  # month-fraction → days
+            "wet_bulb": wb_days,
+            "pollution": max(0, (pm25 - 25) / 75 * 120) if pm25 > 25 else 0,  # est. unhealthy days from annual mean
+        }
+        # Independence-based overlap estimation
+        p = {h: min(0.99, d / 365) for h, d in burden_hz_days.items() if d > 0}
+        if p:
+            p_clear = 1.0
+            for pv in p.values():
+                p_clear *= (1 - pv)
+            p_exactly_one = sum(
+                ph * math.prod(1 - pj for h2, pj in p.items() if h2 != h)
+                for h, ph in p.items()
+            )
+            total_burden = round(min(365, 365 * (1 - p_clear)), 1)
+            multi_burden = round(min(365, 365 * max(0, 1 - p_clear - p_exactly_one)), 1)
+            single_burden = round(total_burden - multi_burden, 1)
+        else:
+            total_burden = multi_burden = single_burden = 0.0
+
+        # Severity-weighted burden (allows overlap — captures compounding)
+        DEMO_SENS = {
+            "child":   {"heat": 1.2, "flood": 1.0, "drought": 1.3, "wet_bulb": 1.1, "pollution": 1.4},
+            "elderly": {"heat": 1.5, "flood": 0.8, "drought": 1.0, "wet_bulb": 1.4, "pollution": 1.3},
+            "women":   {"heat": 1.1, "flood": 1.0, "drought": 1.2, "wet_bulb": 1.0, "pollution": 1.1},
+        }
+        weighted_burden = sum(
+            d * (min(1, (locals().get(f"{h}_haz", 0) if h != "pollution" else pollution_haz) / 10))
+            * WASH_RELEVANCE.get(h, 0.5)
+            for h, d in burden_hz_days.items()
+        )
+        weighted_child = sum(d * DEMO_SENS["child"].get(h, 1) * 0.1 for h, d in burden_hz_days.items())
+        weighted_elderly = sum(d * DEMO_SENS["elderly"].get(h, 1) * 0.1 for h, d in burden_hz_days.items())
+        weighted_women = sum(d * DEMO_SENS["women"].get(h, 1) * 0.1 for h, d in burden_hz_days.items())
+
+        # Combined: max of all hazard channels
         all_risks = [flood_r, heat_r, cyc_r, drought_r, wb_r, ls_r, cw_r, ff_r, slr_r, fire_r, pollution_r]
         combined = max(all_risks)
 
@@ -445,6 +487,12 @@ def main():
         results["pollution_risk"].append(round(pollution_r, 2))
         results["pm25_annual"].append(round(pm25, 1))
         results["wash_disruption_days"].append(wash_disruption)
+        results["total_burden_days"].append(total_burden)
+        results["single_hazard_days"].append(single_burden)
+        results["multi_hazard_days"].append(multi_burden)
+        results["weighted_burden"].append(round(weighted_burden, 1))
+        results["weighted_burden_children"].append(round(weighted_child, 1))
+        results["weighted_burden_elderly"].append(round(weighted_elderly, 1))
         results["heat_chronic_factor"].append(round(heat_cf, 2))
         results["drought_chronic_factor"].append(round(drought_cf, 2))
         results["wetbulb_chronic_factor"].append(round(wb_cf, 2))

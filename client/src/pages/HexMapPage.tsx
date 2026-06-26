@@ -66,6 +66,8 @@ const ATTRIBUTES: AttrDef[] = [
 
   // WASH & district baseline (real NFHS-5 district-level data)
   { key: "pollution_risk",          label: "Air Pollution",           icon: "🏭", category: "climate", desc: "PM2.5 annual mean → WHO-anchored hazard score" },
+  { key: "total_burden_days",      label: "Burden Days (total)",     icon: "📅", category: "overview", desc: "Total calendar days/yr under ANY hazard stress (no duplication)" },
+  { key: "multi_hazard_days",      label: "Multi-Hazard Days",       icon: "⚡", category: "overview", desc: "Days/yr under 2+ hazards simultaneously (compounded stress)" },
   { key: "pm25_annual",             label: "PM2.5 (ug/m3)",           icon: "💨", category: "climate", desc: "Annual mean PM2.5 concentration — mock data" },
   { key: "adaptive_capacity",      label: "Adaptive Capacity",      icon: "🛡️", category: "wash", desc: "WASH-based coping capacity (NFHS-5 district-level)" },
   { key: "wash_sanitation_pct",    label: "Sanitation %",            icon: "🚽", category: "wash", desc: "Improved sanitation coverage (NFHS-5 district)" },
@@ -94,6 +96,7 @@ const ATTR_RAMP: Record<string, [number,number,number][]> = {
   hex_risk: RISK, cascade_count: RISK,
   adaptive_capacity: GREENS,
   pollution_risk: RISK, pm25_annual: ORANGES,
+  total_burden_days: ORANGES, multi_hazard_days: RISK,
   wash_sanitation_pct: GREENS, wash_water_pct: BLUES, wash_health_pct: GREENS,
   wash_stunting_pct: RISK, wash_diarrhoea_pct: RISK, wash_anaemia_pct: RISK,
 };
@@ -117,6 +120,7 @@ const FIXED_DOMAIN: Record<string, [number, number]> = {
   adaptive_capacity: [0, 1],
   wash_sanitation_pct: [0, 100], wash_water_pct: [0, 100], wash_health_pct: [0, 100],
   pollution_risk: [0, 10], pm25_annual: [0, 100],
+  total_burden_days: [0, 365], multi_hazard_days: [0, 100],
   wash_stunting_pct: [0, 60], wash_diarrhoea_pct: [0, 20], wash_anaemia_pct: [0, 80],
 };
 
