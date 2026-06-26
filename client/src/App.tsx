@@ -19,6 +19,7 @@ import ForecastPage from "@/pages/ForecastPage";
 import ReportPage from "@/pages/ReportPage";
 import StateSummaryPage from "@/pages/StateSummaryPage";
 import GapAnalysisPage from "@/pages/GapAnalysisPage";
+import MethodologyPage from "@/pages/MethodologyPage";
 
 function Router() {
   return (
@@ -34,6 +35,7 @@ function Router() {
       <Route path="/report/:district" component={ReportPage} />
       <Route path="/states" component={StateSummaryPage} />
       <Route path="/gap-analysis" component={GapAnalysisPage} />
+      <Route path="/methodology" component={MethodologyPage} />
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/technology" component={TechnologyPage} />

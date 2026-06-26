@@ -1038,6 +1038,7 @@ export default function HexMapPage() {
           <span className="text-[10px] text-muted-foreground">{features.length ? `${features.length.toLocaleString()} hexes · H3 res-5 · ~252 km² each` : ""}</span>
           <div className="flex-1" />
           <Link href="/forecast" className="text-[11px] text-red-400 hover:text-red-300 font-semibold">Live Forecast →</Link>
+          <Link href="/methodology" className="text-[11px] text-muted-foreground hover:text-foreground">Methodology</Link>
           <ThemeToggle />
         </header>
 
