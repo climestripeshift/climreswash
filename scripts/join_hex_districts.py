@@ -35,6 +35,22 @@ WASH_RELEVANCE = {
     "drought": 1.0, "high_wind": 0.5, "wet_bulb": 0.6,
 }
 
+# ── Hazard-specific AC effectiveness (tunable) ────────────────────────────────
+# High AC reduces flood risk (good sanitation/water) but NOT heat risk
+# (you can't toilet-coverage your way out of an urban heat island)
+AC_EFFECTIVENESS = {
+    "flood": 1.0,      # AC fully applies — infrastructure genuinely mitigates
+    "drought": 0.8,    # water infrastructure partly helps
+    "cyclone": 0.7,    # infrastructure partly helps
+    "heat": 0.4,       # AC weakly applies — can't infrastructure away a heat island
+    "wet_bulb": 0.4,   # same — humidity not mitigated by WASH
+    "landslide": 0.5,  # infrastructure partly helps
+    "coldwave": 0.6,   # shelter/electricity helps somewhat
+    "flashflood": 0.8, # drainage helps
+    "sealevel": 0.6,   # some infrastructure helps
+    "fire": 0.3,       # WASH infrastructure barely helps with fires
+}
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from risk.cascades import evaluate_cascades
 from risk.formulas import (
@@ -276,13 +292,13 @@ def main():
         # ── 1. Pluvial flood (acute — no chronic amplification) ──
         flood_sev = pluvial_flood_score(50, sand_pct, built_pct, slope)
         flood_occ, flood_cf, flood_haz = occ_and_chronic("flood", flood_days, flood_sev)
-        flood_r = compute_risk(flood_haz, exposure_10, fs, ac)
+        flood_r = compute_risk(flood_haz, exposure_10, fs, ac * AC_EFFECTIVENESS["flood"])
 
         # ── 2. Heatwave (chronic — duration amplified) ──
         threshold = 30.0 if elev > 800 else (37.0 if dist_coast < 50000 else 40.0)
         heat_sev = heatwave_score(44, threshold, 3, built_pct, tree_pct, dist_w)
         heat_occ, heat_cf, heat_haz = occ_and_chronic("heat", heat_days, heat_sev)
-        heat_r = compute_risk(heat_haz, exposure_10, hs, ac)
+        heat_r = compute_risk(heat_haz, exposure_10, hs, ac * AC_EFFECTIVENESS["heat"])
 
         # ── 3. Cyclone (acute, uses likelihood not days) ──
         if dist_coast < 300000:
@@ -295,7 +311,7 @@ def main():
         else:
             cyc_sev = 0.0
         cyc_haz = cyc_sev * cyc_lk
-        cyc_r = compute_risk(cyc_haz, exposure_10, fs, ac)
+        cyc_r = compute_risk(cyc_haz, exposure_10, fs, ac * AC_EFFECTIVENESS["cyclone"])
 
         # ── 4. Drought (chronic — duration amplified + groundwater) ──
         spi_proxy = (ndvi - 0.4) * 3
@@ -305,13 +321,13 @@ def main():
         drought_occ, drought_cf, drought_haz = occ_and_chronic("drought", drought_days, drought_sev)
         drought_sens_base = 0.5 + 0.3 * (1 - ndvi) + 0.2 * (sand_pct / 100)
         drought_sens = min(1.0, drought_sens_base * (1 + GW_WEIGHT * gw_stress))
-        drought_r = compute_risk(drought_haz, exposure_10, drought_sens, ac)
+        drought_r = compute_risk(drought_haz, exposure_10, drought_sens, ac * AC_EFFECTIVENESS["drought"])
 
         # ── 5. Wet bulb (chronic — duration amplified) ──
         rh_proxy = min(95, 40 + ndvi * 40 + max(0, 20 - dist_coast / 10000))
         wb_sev = wet_bulb_score(38, rh_proxy)
         wb_occ, wb_cf, wb_haz = occ_and_chronic("wet_bulb", wb_days, wb_sev)
-        wb_r = compute_risk(wb_haz, exposure_10, hs, ac)
+        wb_r = compute_risk(wb_haz, exposure_10, hs, ac * AC_EFFECTIVENESS["wet_bulb"])
 
         # ── WASH disruption-days (standalone, not in risk) ──
         wash_disruption = 0.0
