@@ -148,6 +148,89 @@ const FILTERABLE_KEYS = ATTRIBUTES.filter((a) => a.key !== "land_use").map((a) =
 
 // ── Sidebar ───────────────────────────────────────────────────────────────────
 
+// ── District Rankings panel ────────────────────────────────────────────────────
+
+interface RankingEntry {
+  rank: number; district: string; state: string; risk_score: number;
+  dominant_hazard: string; dominant_hazard_icon: string; dominant_hazard_score: number;
+  explanation: string; recommendation: string;
+  population_at_risk: number; children_under5_at_risk: number;
+  top_vulnerabilities: string[];
+}
+
+function RankingsPanel({ onDistrictSelect }: { onDistrictSelect: (state: string, district: string) => void }) {
+  const [sortBy, setSortBy] = useState("risk_score");
+  const [expanded, setExpanded] = useState<number | null>(null);
+  const [showAll, setShowAll] = useState(false);
+
+  const rankQ = useQuery<RankingEntry[]>({
+    queryKey: ["district-rankings"],
+    queryFn: () => fetch("/data/district_rankings.json").then((r) => r.json()),
+    staleTime: Infinity,
+  });
+
+  const sorted = useMemo(() => {
+    if (!rankQ.data) return [];
+    const data = [...rankQ.data];
+    if (sortBy !== "risk_score") {
+      data.sort((a, b) => {
+        const key = sortBy + "_score";
+        return ((b as any)[key] ?? b.risk_score) - ((a as any)[key] ?? a.risk_score);
+      });
+    }
+    return showAll ? data : data.slice(0, 20);
+  }, [rankQ.data, sortBy, showAll]);
+
+  if (!rankQ.data) return <div className="px-3 py-2 text-[10px] text-muted-foreground">Loading rankings...</div>;
+
+  return (
+    <div className="px-2 pb-2 space-y-1.5">
+      <div className="flex gap-1 flex-wrap">
+        {["risk_score", "flood", "heat", "drought", "cyclone"].map((s) => (
+          <button key={s} onClick={() => setSortBy(s)}
+            className={`px-1.5 py-0.5 rounded text-[9px] font-medium ${sortBy === s ? "bg-red-600 text-white" : "bg-muted/60 text-muted-foreground"}`}>
+            {s === "risk_score" ? "Overall" : s}
+          </button>
+        ))}
+      </div>
+      <div className="space-y-0.5 max-h-[40vh] overflow-y-auto">
+        {sorted.map((r, i) => (
+          <div key={r.district + r.state}>
+            <button onClick={() => { setExpanded(expanded === i ? null : i); onDistrictSelect(r.state, r.district); }}
+              className={`w-full text-left px-2 py-1.5 rounded-md text-[10px] hover:bg-muted/30 transition-colors ${expanded === i ? "bg-red-500/10" : ""}`}>
+              <div className="flex items-center gap-1.5">
+                <span className="text-muted-foreground w-5 text-right shrink-0">{r.rank}</span>
+                <span className="text-xs">{r.dominant_hazard_icon}</span>
+                <span className="font-semibold flex-1 truncate">{r.district}</span>
+                <span className="font-mono font-bold" style={{ color: r.risk_score >= 7 ? "#ef4444" : r.risk_score >= 4 ? "#f59e0b" : "#22c55e" }}>
+                  {r.risk_score.toFixed(1)}
+                </span>
+              </div>
+              <div className="text-[9px] text-muted-foreground ml-7 truncate">{r.state}</div>
+            </button>
+            {expanded === i && (
+              <div className="ml-2 px-2 py-2 bg-muted/20 rounded-md text-[10px] space-y-1.5 mb-1">
+                <div className="text-foreground">{r.explanation}</div>
+                <div className="border-l-2 border-emerald-500 pl-2 text-emerald-300">{r.recommendation}</div>
+                <div className="flex gap-3 text-muted-foreground">
+                  <span>👥 {(r.population_at_risk || 0).toLocaleString()}</span>
+                  <span>👶 {(r.children_under5_at_risk || 0).toLocaleString()}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+      {!showAll && rankQ.data.length > 20 && (
+        <button onClick={() => setShowAll(true)}
+          className="w-full text-[9px] text-muted-foreground hover:text-foreground py-1">
+          Show all {rankQ.data.length} districts
+        </button>
+      )}
+    </div>
+  );
+}
+
 // ── Multi-Hazard Impact panel ─────────────────────────────────────────────────
 
 const HAZARD_DEFS = [
@@ -479,6 +562,17 @@ function FilterSidebar({
           <span className="text-[11px] font-semibold flex-1">Multi-Hazard Impact</span>
         </button>
         {openCats["_multihazard"] && <MultiHazardPanel features={features} />}
+      </div>
+
+      {/* District Rankings */}
+      <div className="border-t border-border/30">
+        <button onClick={() => toggleCat("_rankings")}
+          className="w-full px-3 py-2 flex items-center gap-2 text-left hover:bg-muted/30">
+          {openCats["_rankings"] ? <ChevronDown className="h-3 w-3 text-muted-foreground" /> : <ChevronRight className="h-3 w-3 text-muted-foreground" />}
+          <span className="text-xs">🏆</span>
+          <span className="text-[11px] font-semibold flex-1">District Rankings</span>
+        </button>
+        {openCats["_rankings"] && <RankingsPanel onDistrictSelect={(state: string, district: string) => { onStateChange(state); setTimeout(() => onDistrictChange(district), 100); }} />}
       </div>
 
       {/* Export */}
