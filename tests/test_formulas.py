@@ -17,6 +17,7 @@ from risk.formulas import (
     pluvial_flood_score,
     wet_bulb_score,
     wet_bulb_temp,
+    air_pollution_score,
 )
 
 
@@ -130,3 +131,18 @@ def test_compute_risk_patna():
     # With AC dampening: effective_ac = 0.55 × 0.333 = 0.183
     # risk = (8×9×0.74) × (1-0.183) / 10 + 1.5 = 53.28 × 0.817 / 10 + 1.5 = 5.85
     assert risk == pytest.approx(5.85, rel=0.10)
+
+
+# ── Air pollution ─────────────────────────────────────────────────────────────
+
+def test_pollution_who_guideline():
+    assert air_pollution_score(5) == pytest.approx(1.0, rel=0.05)
+
+def test_pollution_naaqs():
+    assert air_pollution_score(40) == pytest.approx(7.67, rel=0.05)
+
+def test_pollution_delhi_winter():
+    assert air_pollution_score(110) == 10.0
+
+def test_pollution_zero():
+    assert air_pollution_score(0) == 0.0

@@ -95,6 +95,28 @@ def wet_bulb_score(t_c: float, rh_pct: float) -> float:
     return max(0.0, min(10.0, (twb - 28) * 10 / 7))
 
 
+# ── 5b. Air pollution score (PM2.5, WHO-anchored) ───────────────────────────
+
+_PM25_TABLE: list[tuple[float, float]] = [
+    (0, 0), (5, 1), (15, 3), (25, 5), (35, 7), (50, 9), (75, 10),
+]
+
+
+def air_pollution_score(pm25_annual: float) -> float:
+    """PM2.5 annual mean (ug/m3) → 0-10 hazard. WHO guideline 5, NAAQS 40."""
+    if pm25_annual <= 0:
+        return 0.0
+    if pm25_annual >= _PM25_TABLE[-1][0]:
+        return _PM25_TABLE[-1][1]
+    for i in range(len(_PM25_TABLE) - 1):
+        lo_p, lo_s = _PM25_TABLE[i]
+        hi_p, hi_s = _PM25_TABLE[i + 1]
+        if lo_p <= pm25_annual <= hi_p:
+            t = (pm25_annual - lo_p) / (hi_p - lo_p)
+            return lo_s + t * (hi_s - lo_s)
+    return 0.0
+
+
 # ── 6. Cyclone score (§5) ────────────────────────────────────────────────────
 
 def cyclone_score(

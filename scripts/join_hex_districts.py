@@ -8,6 +8,7 @@ Run: python scripts/join_hex_districts.py
 """
 import json
 import math
+import random
 import sys
 from pathlib import Path
 
@@ -49,12 +50,17 @@ AC_EFFECTIVENESS = {
     "flashflood": 0.8, # drainage helps
     "sealevel": 0.6,   # some infrastructure helps
     "fire": 0.3,       # WASH infrastructure barely helps with fires
+    "air_pollution": 0.2, # infrastructure barely mitigates PM2.5 exposure
 }
+
+# ── Heat-pollution compound interaction (tunable) ──────────────────────────────
+HP_WEIGHT = 0.2  # heat-pollution compound amplifier weight
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from risk.cascades import evaluate_cascades
 from risk.formulas import (
     adaptive_capacity,
+    air_pollution_score,
     compute_risk,
     cyclone_score,
     drought_score,
@@ -230,7 +236,7 @@ def main():
     RISK_COLS = [
         "flood_risk", "heat_risk", "cyclone_risk", "drought_risk", "wetbulb_risk",
         "landslide_risk", "coldwave_risk", "flashflood_risk", "sealevel_risk", "fire_risk",
-        "hex_risk", "wash_disruption_days",
+        "hex_risk", "pollution_risk", "pm25_annual", "wash_disruption_days",
         "heat_chronic_factor", "drought_chronic_factor", "wetbulb_chronic_factor",
         "cascade_count", "cascade_actions",
     ]
@@ -329,6 +335,33 @@ def main():
         wb_occ, wb_cf, wb_haz = occ_and_chronic("wet_bulb", wb_days, wb_sev)
         wb_r = compute_risk(wb_haz, exposure_10, hs, ac * AC_EFFECTIVENESS["wet_bulb"])
 
+        # ── 5b. Air pollution (chronic, annual mean) ──
+        pm25 = float(row.get("pm25_annual", 0) or 0)
+        if pm25 <= 0:
+            # Mock: geographic pattern based on known Indian PM2.5 distribution
+            if 76 < lon < 86 and 24 < lat < 30:    # Indo-Gangetic plain
+                pm25 = 60 + (30 - lat) * 5 + random.uniform(-10, 10)
+            elif 76 < lon < 78 and 28 < lat < 29:  # Delhi NCR
+                pm25 = 90 + random.uniform(-10, 15)
+            elif lon < 74 and lat > 22:             # Rajasthan (moderate dust)
+                pm25 = 35 + random.uniform(-5, 10)
+            elif lon > 88 and lat > 22:             # NE India (cleaner)
+                pm25 = 15 + random.uniform(-3, 5)
+            elif lat < 15:                          # South India (moderate)
+                pm25 = 20 + random.uniform(-5, 5)
+            else:
+                pm25 = 30 + random.uniform(-10, 10)
+            pm25 = max(5, pm25)
+
+        pollution_haz = air_pollution_score(pm25)
+
+        # Heat-pollution compound: bump heat where BOTH are high
+        heat_pollution_compound = HP_WEIGHT * min(heat_haz, pollution_haz) / 10
+        heat_haz_adjusted = min(10.0, heat_haz * (1 + heat_pollution_compound))
+        heat_r = compute_risk(heat_haz_adjusted, exposure_10, hs, ac * AC_EFFECTIVENESS["heat"])
+
+        pollution_r = compute_risk(pollution_haz, exposure_10, 0.5, ac * AC_EFFECTIVENESS["air_pollution"])
+
         # ── WASH disruption-days (standalone, not in risk) ──
         wash_disruption = 0.0
         for hz_name, hz_days, hz_haz in [
@@ -380,7 +413,7 @@ def main():
             fire_r = 0.0
 
         # Combined: max of all 10 hazard channels
-        all_risks = [flood_r, heat_r, cyc_r, drought_r, wb_r, ls_r, cw_r, ff_r, slr_r, fire_r]
+        all_risks = [flood_r, heat_r, cyc_r, drought_r, wb_r, ls_r, cw_r, ff_r, slr_r, fire_r, pollution_r]
         combined = max(all_risks)
 
         # Evaluate WASH cascade rules
@@ -409,6 +442,8 @@ def main():
         results["sealevel_risk"].append(round(slr_r, 2))
         results["fire_risk"].append(round(fire_r, 2))
         results["hex_risk"].append(round(combined, 2))
+        results["pollution_risk"].append(round(pollution_r, 2))
+        results["pm25_annual"].append(round(pm25, 1))
         results["wash_disruption_days"].append(wash_disruption)
         results["heat_chronic_factor"].append(round(heat_cf, 2))
         results["drought_chronic_factor"].append(round(drought_cf, 2))
