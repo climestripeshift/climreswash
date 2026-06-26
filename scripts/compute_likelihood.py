@@ -115,8 +115,12 @@ def main():
                         valid = data[(data != src.nodata) & (data > -9999)]
                         if len(valid) > 0:
                             freq = float(valid.mean())
+                            days_col = col_name.replace("_likelihood", "_days_per_year")
+                            p[days_col] = round(freq, 2)
                             p[col_name] = round(min(1.0, max(0.0, freq / ref_val)), 3)
                         else:
+                            days_col = col_name.replace("_likelihood", "_days_per_year")
+                            p[days_col] = 0.0
                             p[col_name] = 0.0
                     except Exception:
                         p[col_name] = 0.0

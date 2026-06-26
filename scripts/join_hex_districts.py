@@ -19,6 +19,22 @@ GW_WEIGHT     = 0.5   # how much groundwater stress amplifies drought sensitivit
 AC_GW_PENALTY = 0.2   # how much groundwater stress reduces adaptive capacity
 GW_DEFAULT    = 0.1   # default stress for districts with no well data
 
+# ── Duration-aware hazard config (tunable) ─────────────────────────────────────
+# Occurrence: how many days proves the hazard occurs here (small = caps fast)
+OCCURRENCE_REF = {
+    "flood": 3.0, "extreme_rain": 1.5, "heat": 10.0, "severe_heat": 2.0,
+    "drought": 0.15, "high_wind": 0.02, "wet_bulb": 5.0,
+}
+# Duration: how many days until cumulative burden saturates (large, chronic only)
+DURATION_REF = {"heat": 90.0, "drought": 0.5, "wet_bulb": 60.0}
+CHRONIC_HAZARDS = {"heat", "drought", "wet_bulb"}
+CHRONIC_WEIGHT = 0.5   # max +50% for fully sustained exposure
+# WASH-relevance of each hazard's days (for disruption-days metric)
+WASH_RELEVANCE = {
+    "flood": 1.0, "extreme_rain": 0.8, "heat": 0.7, "severe_heat": 0.8,
+    "drought": 1.0, "high_wind": 0.5, "wet_bulb": 0.6,
+}
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from risk.cascades import evaluate_cascades
 from risk.formulas import (
@@ -198,7 +214,9 @@ def main():
     RISK_COLS = [
         "flood_risk", "heat_risk", "cyclone_risk", "drought_risk", "wetbulb_risk",
         "landslide_risk", "coldwave_risk", "flashflood_risk", "sealevel_risk", "fire_risk",
-        "hex_risk", "cascade_count", "cascade_actions",
+        "hex_risk", "wash_disruption_days",
+        "heat_chronic_factor", "drought_chronic_factor", "wetbulb_chronic_factor",
+        "cascade_count", "cascade_actions",
     ]
     results: dict[str, list] = {c: [] for c in RISK_COLS}
     cascade_stats: dict[str, int] = {}  # rule_id → count
@@ -235,26 +253,38 @@ def main():
         gw_stress = float(row.get("gw_stress_score", GW_DEFAULT) or GW_DEFAULT)
         ac = max(0.1, ac_base * (1 - AC_GW_PENALTY * gw_stress))
 
-        # ── Read likelihood values (from compute_likelihood.py) ──
-        flood_lk   = float(row.get("flood_likelihood", 0.5) or 0.5)
-        heat_lk    = float(row.get("heat_likelihood", 0.5) or 0.5)
-        drought_lk = float(row.get("drought_likelihood", 0.5) or 0.5)
-        wb_lk      = float(row.get("wet_bulb_likelihood", 0.5) or 0.5)
-        cyc_lk     = float(row.get("cyclone_likelihood", 0) or 0)
-        wind_lk    = float(row.get("high_wind_likelihood", 0.1) or 0.1)
+        # ── Read raw day-counts (from compute_likelihood.py) ──
+        flood_days   = float(row.get("flood_days_per_year", 0) or 0)
+        heat_days    = float(row.get("heat_days_per_year", 0) or 0)
+        drought_days = float(row.get("drought_days_per_year", 0) or 0)
+        wb_days      = float(row.get("wet_bulb_days_per_year", 0) or 0)
+        cyc_lk       = float(row.get("cyclone_likelihood", 0) or 0)
 
-        # ── 1. Pluvial flood: severity × likelihood ──
+        def occ_and_chronic(hz_name: str, days: float, severity: float):
+            """Compute occurrence, chronic factor, and final hazard."""
+            occ_ref = OCCURRENCE_REF.get(hz_name, 5.0)
+            occurrence = min(1.0, days / occ_ref) if occ_ref > 0 else 0.0
+            hazard = severity * occurrence
+            if hz_name in CHRONIC_HAZARDS:
+                dur_ref = DURATION_REF.get(hz_name, 60.0)
+                duration = min(1.0, days / dur_ref) if dur_ref > 0 else 0.0
+                chronic_factor = 1.0 + CHRONIC_WEIGHT * duration
+            else:
+                chronic_factor = 1.0
+            return occurrence, chronic_factor, hazard * chronic_factor
+
+        # ── 1. Pluvial flood (acute — no chronic amplification) ──
         flood_sev = pluvial_flood_score(50, sand_pct, built_pct, slope)
-        flood_haz = flood_sev * flood_lk
+        flood_occ, flood_cf, flood_haz = occ_and_chronic("flood", flood_days, flood_sev)
         flood_r = compute_risk(flood_haz, exposure_10, fs, ac)
 
-        # ── 2. Heatwave: severity × likelihood ──
+        # ── 2. Heatwave (chronic — duration amplified) ──
         threshold = 30.0 if elev > 800 else (37.0 if dist_coast < 50000 else 40.0)
         heat_sev = heatwave_score(44, threshold, 3, built_pct, tree_pct, dist_w)
-        heat_haz = heat_sev * heat_lk
+        heat_occ, heat_cf, heat_haz = occ_and_chronic("heat", heat_days, heat_sev)
         heat_r = compute_risk(heat_haz, exposure_10, hs, ac)
 
-        # ── 3. Cyclone: severity × likelihood ──
+        # ── 3. Cyclone (acute, uses likelihood not days) ──
         if dist_coast < 300000:
             cyc_sev = cyclone_score(
                 wind_max_kmh=150, dist_track_km=dist_coast / 1000,
@@ -267,21 +297,31 @@ def main():
         cyc_haz = cyc_sev * cyc_lk
         cyc_r = compute_risk(cyc_haz, exposure_10, fs, ac)
 
-        # ── 4. Drought: severity × likelihood ──
+        # ── 4. Drought (chronic — duration amplified + groundwater) ──
         spi_proxy = (ndvi - 0.4) * 3
         if sand_pct > 50:
             spi_proxy -= 0.5
         drought_sev = drought_score(spi_proxy)
-        drought_haz = drought_sev * drought_lk
+        drought_occ, drought_cf, drought_haz = occ_and_chronic("drought", drought_days, drought_sev)
         drought_sens_base = 0.5 + 0.3 * (1 - ndvi) + 0.2 * (sand_pct / 100)
         drought_sens = min(1.0, drought_sens_base * (1 + GW_WEIGHT * gw_stress))
         drought_r = compute_risk(drought_haz, exposure_10, drought_sens, ac)
 
-        # ── 5. Wet bulb: severity × likelihood ──
+        # ── 5. Wet bulb (chronic — duration amplified) ──
         rh_proxy = min(95, 40 + ndvi * 40 + max(0, 20 - dist_coast / 10000))
         wb_sev = wet_bulb_score(38, rh_proxy)
-        wb_haz = wb_sev * wb_lk
+        wb_occ, wb_cf, wb_haz = occ_and_chronic("wet_bulb", wb_days, wb_sev)
         wb_r = compute_risk(wb_haz, exposure_10, hs, ac)
+
+        # ── WASH disruption-days (standalone, not in risk) ──
+        wash_disruption = 0.0
+        for hz_name, hz_days, hz_haz in [
+            ("flood", flood_days, flood_haz), ("heat", heat_days, heat_haz),
+            ("drought", drought_days, drought_haz), ("wet_bulb", wb_days, wb_haz),
+        ]:
+            sev_frac = min(1.0, hz_haz / 10) if hz_haz > 0 else 0.0
+            wash_disruption += hz_days * sev_frac * WASH_RELEVANCE.get(hz_name, 0.5)
+        wash_disruption = round(wash_disruption, 1)
 
         # ── 6. Landslide (steep + deforested + wet) ──
         if slope > 5:
@@ -353,6 +393,10 @@ def main():
         results["sealevel_risk"].append(round(slr_r, 2))
         results["fire_risk"].append(round(fire_r, 2))
         results["hex_risk"].append(round(combined, 2))
+        results["wash_disruption_days"].append(wash_disruption)
+        results["heat_chronic_factor"].append(round(heat_cf, 2))
+        results["drought_chronic_factor"].append(round(drought_cf, 2))
+        results["wetbulb_chronic_factor"].append(round(wb_cf, 2))
         results["cascade_count"].append(len(cascades))
         results["cascade_actions"].append(cascade_action_str)
 
