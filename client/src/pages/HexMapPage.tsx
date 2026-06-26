@@ -165,8 +165,12 @@ function RankingsPanel({ onDistrictSelect }: { onDistrictSelect: (state: string,
 
   const rankQ = useQuery<RankingEntry[]>({
     queryKey: ["district-rankings"],
-    queryFn: () => fetch("/data/district_rankings.json").then((r) => r.json()),
+    queryFn: () => fetch("/data/district_rankings.json").then((r) => {
+      if (!r.ok) throw new Error("Failed to load rankings");
+      return r.json();
+    }),
     staleTime: Infinity,
+    retry: 1,
   });
 
   const sorted = useMemo(() => {
@@ -381,7 +385,7 @@ function FilterSidebar({
   showDistricts: boolean; onShowDistrictsChange: (v: boolean) => void;
   showStates: boolean; onShowStatesChange: (v: boolean) => void;
 }) {
-  const [openCats, setOpenCats] = useState<Record<string, boolean>>({ overview: true, climate: true });
+  const [openCats, setOpenCats] = useState<Record<string, boolean>>({ overview: true });
 
   const toggleCat = (id: string) => setOpenCats((prev) => ({ ...prev, [id]: !prev[id] }));
 
