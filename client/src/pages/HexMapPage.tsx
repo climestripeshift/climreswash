@@ -215,11 +215,36 @@ function RankingsPanel({ onDistrictSelect }: { onDistrictSelect: (state: string,
             {expanded === i && (
               <div className="ml-2 px-2 py-2 bg-muted/20 rounded-md text-[10px] space-y-1.5 mb-1">
                 <div className="text-foreground">{r.explanation}</div>
-                <div className="border-l-2 border-emerald-500 pl-2 text-emerald-300">{r.recommendation}</div>
-                <div className="flex gap-3 text-muted-foreground">
+                <div className="flex gap-3 text-muted-foreground my-1">
                   <span>👥 {(r.population_at_risk || 0).toLocaleString()}</span>
                   <span>👶 {(r.children_under5_at_risk || 0).toLocaleString()}</span>
                 </div>
+                {(r as any).recommendations && (
+                  <div className="space-y-1.5 border-t border-border/30 pt-1.5">
+                    <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wide">Resilience Actions</div>
+                    {[
+                      { key: "school", emoji: "🏫", label: "School" },
+                      { key: "anganwadi", emoji: "👶", label: "Anganwadi" },
+                      { key: "household", emoji: "🏠", label: "Household" },
+                    ].map(({ key, emoji, label }) => {
+                      const rec = (r as any).recommendations[key];
+                      if (!rec) return null;
+                      return (
+                        <div key={key}>
+                          <div className="font-semibold text-foreground">{emoji} {label}</div>
+                          {rec.measures.slice(0, 2).map((m: string, mi: number) => (
+                            <div key={mi} className="text-muted-foreground ml-3">• {m}</div>
+                          ))}
+                          <div className="ml-3 flex flex-wrap gap-1 mt-0.5">
+                            {rec.schemes.map((s: string) => (
+                              <span key={s} className="px-1 py-0.5 rounded bg-emerald-500/15 text-emerald-400 text-[8px]">{s}</span>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
           </div>
