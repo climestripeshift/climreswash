@@ -14,6 +14,7 @@ import sys
 from pathlib import Path
 
 import h3
+import numpy as np
 
 ROOT       = Path(__file__).resolve().parent.parent
 HEX_PROPS  = ROOT / "client/public/data/india_hex_props.json"
@@ -77,17 +78,16 @@ def main():
         from rasterio.windows import from_bounds
 
         def read_hex_freq(src, h3_id):
+            """Sample raster at hex centroid — works for coarse CMIP6 (25km pixels)."""
             boundary = h3.cell_to_boundary(h3_id)
-            lats = [b[0] for b in boundary]
-            lngs = [b[1] for b in boundary]
+            clat = sum(b[0] for b in boundary) / len(boundary)
+            clng = sum(b[1] for b in boundary) / len(boundary)
             try:
-                window = from_bounds(min(lngs), min(lats), max(lngs), max(lats), src.transform)
-                window = window.intersection(rasterio.windows.Window(0, 0, src.width, src.height))
-                if window.width < 1 or window.height < 1:
+                vals = list(src.sample([(clng, clat)]))
+                v = float(vals[0][0])
+                if np.isnan(v) or v < -9999:
                     return 0.0
-                data = src.read(1, window=window)
-                valid = data[(data != src.nodata) & (data > -9999)]
-                return float(valid.mean()) if len(valid) > 0 else 0.0
+                return v
             except Exception:
                 return 0.0
 
