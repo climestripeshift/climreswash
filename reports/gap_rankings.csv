@@ -1,6 +1,6 @@
 rank,district,state,present_risk,future_risk_ssp585_2050,risk_escalation,capacity_gap,present_ac,priority_tier,present_dominant_hazard,people_at_risk_present,people_at_risk_2050,gap_explanation
 1,Hydrabad,Telangana,4.4,3.65,-0.75,1.82,0.5,critical,drought,1926153,1597832,Risk declining from 4.4 to 3.6 by 2050 (SSP5-8.5). Capacity gap 1.8 — high incoming stress meets low coping.
-2,Karbi Anglong West,Meghalaya,5.64,3.59,-2.05,1.79,0.5,critical,flood,285590,181785,Risk declining from 5.6 to 3.6 by 2050 (SSP5-8.5). Capacity gap 1.8 — high incoming stress meets low coping.
+2,Karbi Anglong West,Assam,5.64,3.59,-2.05,1.79,0.5,critical,flood,285590,181785,Risk declining from 5.6 to 3.6 by 2050 (SSP5-8.5). Capacity gap 1.8 — high incoming stress meets low coping.
 3,Darjiling,West Bengal,4.36,2.96,-1.4,1.48,0.5,critical,flood,1002272,680442,Risk declining from 4.4 to 3.0 by 2050 (SSP5-8.5). Capacity gap 1.5 — high incoming stress meets low coping.
 4,Kalimpong,West Bengal,4.25,2.94,-1.31,1.47,0.5,critical,flood,180817,125083,Risk declining from 4.2 to 2.9 by 2050 (SSP5-8.5). Capacity gap 1.5 — high incoming stress meets low coping.
 5,Alipurduar,West Bengal,6.01,2.78,-3.23,1.39,0.5,critical,flood,1221291,564923,Risk declining from 6.0 to 2.8 by 2050 (SSP5-8.5). Capacity gap 1.4 — high incoming stress meets low coping.
@@ -18,14 +18,14 @@ rank,district,state,present_risk,future_risk_ssp585_2050,risk_escalation,capacit
 17,Gariaband,Chhattisgarh,4.36,1.87,-2.49,0.93,0.5,critical,wet-bulb,476138,204215,Risk declining from 4.4 to 1.9 by 2050 (SSP5-8.5). Capacity gap 0.9 — high incoming stress meets low coping.
 18,West Khasi Hills,Meghalaya,3.47,3.79,0.32,0.91,0.76,critical,landslide,235860,257610,Risk stable from 3.5 to 3.8 by 2050 (SSP5-8.5). Capacity gap 0.9 — high incoming stress meets low coping.
 19,Jangaon,Telangana,3.87,1.8,-2.07,0.9,0.5,critical,wet-bulb,308470,143474,Risk declining from 3.9 to 1.8 by 2050 (SSP5-8.5). Capacity gap 0.9 — high incoming stress meets low coping.
-20,Bhadradri,Andhra Pradesh,3.81,1.79,-2.02,0.89,0.5,critical,wet-bulb,733982,344837,Risk declining from 3.8 to 1.8 by 2050 (SSP5-8.5). Capacity gap 0.9 — high incoming stress meets low coping.
-21,Dohad,Madhya Pradesh,5.57,1.78,-3.78,0.89,0.5,critical,flood,1699025,542956,Risk declining from 5.6 to 1.8 by 2050 (SSP5-8.5). Capacity gap 0.9 — high incoming stress meets low coping.
+20,Bhadradri,Telangana,3.81,1.79,-2.02,0.89,0.5,critical,wet-bulb,733982,344837,Risk declining from 3.8 to 1.8 by 2050 (SSP5-8.5). Capacity gap 0.9 — high incoming stress meets low coping.
+21,Dohad,Gujarat,5.57,1.78,-3.78,0.89,0.5,critical,flood,1699025,542956,Risk declining from 5.6 to 1.8 by 2050 (SSP5-8.5). Capacity gap 0.9 — high incoming stress meets low coping.
 22,Batod,Gujarat,6.07,1.75,-4.32,0.87,0.5,critical,flood,542075,156282,Risk declining from 6.1 to 1.8 by 2050 (SSP5-8.5). Capacity gap 0.9 — high incoming stress meets low coping.
 23,Saraikela-Kharsawan,Jharkhand,7.5,1.72,-5.78,0.86,0.5,critical,wet-bulb,2372191,544022,Risk declining from 7.5 to 1.7 by 2050 (SSP5-8.5). Capacity gap 0.9 — high incoming stress meets low coping.
-24,Mayiladuthurai,Puducherry,6.88,1.72,-5.16,0.86,0.5,critical,flood,854729,213682,Risk declining from 6.9 to 1.7 by 2050 (SSP5-8.5). Capacity gap 0.9 — high incoming stress meets low coping.
+24,Mayiladuthurai,Tamil Nadu,6.88,1.72,-5.16,0.86,0.5,critical,flood,854729,213682,Risk declining from 6.9 to 1.7 by 2050 (SSP5-8.5). Capacity gap 0.9 — high incoming stress meets low coping.
 25,South West Khasi Hills,Meghalaya,3.62,3.76,0.14,0.85,0.775,critical,flood,89524,92987,Risk stable from 3.6 to 3.8 by 2050 (SSP5-8.5). Capacity gap 0.8 — high incoming stress meets low coping.
 26,Saitual,Mizoram,4.45,1.71,-2.74,0.85,0.5,critical,flood,53991,20747,Risk declining from 4.5 to 1.7 by 2050 (SSP5-8.5). Capacity gap 0.8 — high incoming stress meets low coping.
-27,Komaram Bheem,Maharashtra,4.17,1.85,-2.31,0.84,0.554,critical,flood,282323,125251,Risk declining from 4.2 to 1.9 by 2050 (SSP5-8.5). Capacity gap 0.8 — high incoming stress meets low coping.
+27,Komaram Bheem,Telangana,4.17,1.85,-2.31,0.84,0.554,critical,flood,282323,125251,Risk declining from 4.2 to 1.9 by 2050 (SSP5-8.5). Capacity gap 0.8 — high incoming stress meets low coping.
 28,Jagtial,Telangana,4.03,1.68,-2.35,0.84,0.5,critical,wet-bulb,529136,220583,Risk declining from 4.0 to 1.7 by 2050 (SSP5-8.5). Capacity gap 0.8 — high incoming stress meets low coping.
 29,North Garo Hills,Meghalaya,6.04,3.17,-2.87,0.82,0.742,critical,flood,294864,154755,Risk declining from 6.0 to 3.2 by 2050 (SSP5-8.5). Capacity gap 0.8 — high incoming stress meets low coping.
 30,Kallakurichi,Tamil Nadu,3.81,1.62,-2.2,0.81,0.5,critical,wet-bulb,740011,314650,Risk declining from 3.8 to 1.6 by 2050 (SSP5-8.5). Capacity gap 0.8 — high incoming stress meets low coping.
@@ -33,10 +33,10 @@ rank,district,state,present_risk,future_risk_ssp585_2050,risk_escalation,capacit
 32,Kadapa(YSR),Andhra Pradesh,3.23,1.6,-1.63,0.8,0.5,critical,wet-bulb,1427418,707080,Risk declining from 3.2 to 1.6 by 2050 (SSP5-8.5). Capacity gap 0.8 — high incoming stress meets low coping.
 33,Ranipet,Tamil Nadu,4.01,1.58,-2.43,0.79,0.5,critical,flood,826452,325634,Risk declining from 4.0 to 1.6 by 2050 (SSP5-8.5). Capacity gap 0.8 — high incoming stress meets low coping.
 34,Mulugu,Andhra Pradesh,3.78,1.54,-2.23,0.77,0.5,critical,wet-bulb,133292,54304,Risk declining from 3.8 to 1.5 by 2050 (SSP5-8.5). Capacity gap 0.8 — high incoming stress meets low coping.
-35,Karbi Anglong East,Nagaland,5.17,1.54,-3.63,0.77,0.5,critical,flood,644844,192081,Risk declining from 5.2 to 1.5 by 2050 (SSP5-8.5). Capacity gap 0.8 — high incoming stress meets low coping.
+35,Karbi Anglong East,Assam,5.17,1.54,-3.63,0.77,0.5,critical,flood,644844,192081,Risk declining from 5.2 to 1.5 by 2050 (SSP5-8.5). Capacity gap 0.8 — high incoming stress meets low coping.
 36,Hardwar,Uttarakhand,7.35,1.55,-5.8,0.77,0.5,critical,flood,2348818,495329,Risk declining from 7.3 to 1.6 by 2050 (SSP5-8.5). Capacity gap 0.8 — high incoming stress meets low coping.
 37,Niwari,Madhya Pradesh,4.09,1.55,-2.54,0.77,0.5,critical,wet-bulb,214096,81137,Risk declining from 4.1 to 1.6 by 2050 (SSP5-8.5). Capacity gap 0.8 — high incoming stress meets low coping.
-38,Pherzawl,Mizoram,4.51,1.48,-3.03,0.74,0.5,critical,flood,55923,18352,Risk declining from 4.5 to 1.5 by 2050 (SSP5-8.5). Capacity gap 0.7 — high incoming stress meets low coping.
+38,Pherzawl,Manipur,4.51,1.48,-3.03,0.74,0.5,critical,flood,55923,18352,Risk declining from 4.5 to 1.5 by 2050 (SSP5-8.5). Capacity gap 0.7 — high incoming stress meets low coping.
 39,Lower Siang,Assam,4.9,1.49,-3.41,0.74,0.5,critical,flood,64518,19619,Risk declining from 4.9 to 1.5 by 2050 (SSP5-8.5). Capacity gap 0.7 — high incoming stress meets low coping.
 40,Barddhaman,West Bengal,4.95,1.44,-3.51,0.72,0.5,critical,flood,3686951,1072568,Risk declining from 5.0 to 1.4 by 2050 (SSP5-8.5). Capacity gap 0.7 — high incoming stress meets low coping.
 41,Chengalputtu,Tamil Nadu,8.41,1.44,-6.97,0.72,0.5,critical,flood,7408247,1268475,Risk declining from 8.4 to 1.4 by 2050 (SSP5-8.5). Capacity gap 0.7 — high incoming stress meets low coping.
@@ -203,7 +203,7 @@ rank,district,state,present_risk,future_risk_ssp585_2050,risk_escalation,capacit
 202,Jehanabad,Bihar,4.7,1.36,-3.34,0.39,0.713,high,wet-bulb,804031,232656,Risk declining from 4.7 to 1.4 by 2050 (SSP5-8.5). Capacity gap 0.4 — high incoming stress meets low coping.
 203,Banas Kantha,Gujarat,4.83,1.65,-3.18,0.38,0.77,high,flood,2397607,819058,Risk declining from 4.8 to 1.6 by 2050 (SSP5-8.5). Capacity gap 0.4 — high incoming stress meets low coping.
 204,Fatehpur,Uttar Pradesh,4.79,1.45,-3.34,0.38,0.741,high,wet-bulb,2289164,692962,Risk declining from 4.8 to 1.4 by 2050 (SSP5-8.5). Capacity gap 0.4 — high incoming stress meets low coping.
-205,Tirupathur,Karnataka,3.14,1.47,-1.67,0.38,0.77,high,wet-bulb,557036,260778,Risk declining from 3.1 to 1.5 by 2050 (SSP5-8.5). Capacity gap 0.4 — high incoming stress meets low coping.
+205,Tirupathur,Tamil Nadu,3.14,1.47,-1.67,0.38,0.77,high,wet-bulb,557036,260778,Risk declining from 3.1 to 1.5 by 2050 (SSP5-8.5). Capacity gap 0.4 — high incoming stress meets low coping.
 206,Nashik,Maharashtra,3.68,2.15,-1.53,0.38,0.822,high,wet-bulb,3646557,2130461,Risk declining from 3.7 to 2.1 by 2050 (SSP5-8.5). Capacity gap 0.4 — moderate stress with adequate coping.
 207,Mayurbhanj,Odisha,5.56,1.35,-4.21,0.38,0.718,high,flood,2179721,529249,Risk declining from 5.6 to 1.4 by 2050 (SSP5-8.5). Capacity gap 0.4 — high incoming stress meets low coping.
 208,Ranchi,Jharkhand,4.22,1.89,-2.32,0.38,0.797,high,wet-bulb,2354421,1054468,Risk declining from 4.2 to 1.9 by 2050 (SSP5-8.5). Capacity gap 0.4 — high incoming stress meets low coping.
@@ -707,7 +707,7 @@ rank,district,state,present_risk,future_risk_ssp585_2050,risk_escalation,capacit
 706,Jammu,Jammu & Kashmir,3.75,0.0,-3.75,0.0,0.917,low,cold wave,779848,0,Risk declining from 3.8 to 0.0 by 2050 (SSP5-8.5). Capacity gap 0.0 — moderate stress with adequate coping.
 707,Bandipore,Jammu & Kashmir,3.96,0.0,-3.96,0.0,0.816,low,cold wave,230635,0,Risk declining from 4.0 to 0.0 by 2050 (SSP5-8.5). Capacity gap 0.0 — moderate stress with adequate coping.
 708,Badgam,Jammu & Kashmir,4.44,0.0,-4.44,0.0,0.871,low,cold wave,423177,0,Risk declining from 4.4 to 0.0 by 2050 (SSP5-8.5). Capacity gap 0.0 — moderate stress with adequate coping.
-709,Kamle,Assam,5.29,0.01,-5.28,0.0,0.5,low,landslide,34607,65,Risk declining from 5.3 to 0.0 by 2050 (SSP5-8.5). Capacity gap 0.0 — high incoming stress meets low coping.
+709,Kamle,Arunachal Pradesh,5.29,0.01,-5.28,0.0,0.5,low,landslide,34607,65,Risk declining from 5.3 to 0.0 by 2050 (SSP5-8.5). Capacity gap 0.0 — high incoming stress meets low coping.
 710,Ganderbal,Jammu & Kashmir,4.78,0.0,-4.78,0.0,0.864,low,cold wave,235941,0,Risk declining from 4.8 to 0.0 by 2050 (SSP5-8.5). Capacity gap 0.0 — moderate stress with adequate coping.
 711,Kulgam,Jammu & Kashmir,4.27,0.0,-4.27,0.0,0.88,low,cold wave,552985,0,Risk declining from 4.3 to 0.0 by 2050 (SSP5-8.5). Capacity gap 0.0 — moderate stress with adequate coping.
 712,Pakke Kessang,Arunachal Pradesh,3.51,0.0,-3.51,0.0,0.5,low,cold wave,23324,0,Risk declining from 3.5 to 0.0 by 2050 (SSP5-8.5). Capacity gap 0.0 — high incoming stress meets low coping.
