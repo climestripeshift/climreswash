@@ -23,12 +23,13 @@ REPORT_CSV = ROOT / "reports/validation_data.csv"
 
 # ── Matched pairs: predicted risk → expected NFHS outcome correlation ─────────
 MATCHED_PAIRS = [
-    ("flood_risk",   "wash_diarrhoea_pct",  "positive", "Flood → diarrhoea (waterborne disease)"),
-    ("drought_risk", "wash_stunting_pct",    "positive", "Drought → stunting (food/water insecurity)"),
-    ("drought_risk", "wash_wasting_pct",     "positive", "Drought → wasting (food/water insecurity)"),
-    ("heat_risk",    "wash_anaemia_pct",     "positive", "Heat → anaemia (heat-nutrition link)"),
-    ("hex_risk",     "wash_vaccination_pct", "negative", "Overall risk → low vaccination (weak health systems)"),
-    ("hex_risk",     "wash_diarrhoea_pct",   "positive", "Overall risk → diarrhoea (general check)"),
+    ("flood_risk",     "wash_diarrhoea_pct",  "positive", "Flood → diarrhoea (waterborne disease)"),
+    ("drought_risk",   "wash_stunting_pct",    "positive", "Drought → stunting (food/water insecurity)"),
+    ("drought_risk",   "wash_wasting_pct",     "positive", "Drought → wasting (food/water insecurity)"),
+    ("heat_risk",      "wash_anaemia_pct",     "positive", "Heat → anaemia (heat-nutrition link)"),
+    ("hex_risk",       "wash_vaccination_pct", "negative", "Overall risk → low vaccination (weak health systems)"),
+    ("hex_risk",       "wash_diarrhoea_pct",   "positive", "Overall risk → diarrhoea (general check)"),
+    ("pollution_risk", "wash_anaemia_pct",     "positive", "Air pollution → anaemia (closest available health proxy; NFHS-5 has no direct respiratory measure)"),
 ]
 
 MISMATCHED_PAIRS = [
@@ -49,7 +50,7 @@ def main():
         props = json.load(f)
 
     risk_cols = ["hex_risk", "flood_risk", "heat_risk", "cyclone_risk", "drought_risk",
-                 "wetbulb_risk", "landslide_risk", "coldwave_risk"]
+                 "wetbulb_risk", "landslide_risk", "coldwave_risk", "pollution_risk"]
     outcome_cols = ["wash_stunting_pct", "wash_wasting_pct", "wash_diarrhoea_pct",
                     "wash_anaemia_pct", "wash_vaccination_pct"]
 
@@ -161,7 +162,7 @@ def main():
     print("\nStep 4: Generating report...")
 
     # Summary
-    direction_count = sum(1 for r in matched_results if r["direction_ok"] is True)
+    direction_count = sum(1 for r in matched_results if r["direction_ok"])
     total_matched = sum(1 for r in matched_results if r["direction_ok"] is not None)
 
     report = []
@@ -208,7 +209,7 @@ def main():
                   "Health outcomes have many non-climate drivers (income, governance, caste, remoteness).")
     report.append("- A near-zero or wrong-sign correlation on a matched pair flags a possible model problem in that hazard.")
     report.append("- This is Spearman rank correlation across ~700 districts; it tests geographic pattern, not causation.")
-    report.append(f"- **Likelihood is in MOCK MODE** — correlations will improve when real 30-year climatology is used.\n")
+    report.append(f"- Likelihood is real 30-year CHIRPS/ERA5 climatology; air pollution is real WashU/ACAG satellite PM2.5.\n")
 
     report.append("\n## Districts where model and reality disagree most\n")
     report.append("| District | State | hex_risk | Diarrhoea% | Stunting% | Issue |")
@@ -231,7 +232,7 @@ def main():
                       "The model may need recalibration or better likelihood data.")
 
     report.append(f"\n---\n*Generated from {len(districts)} districts, {len(props)} hexes. "
-                  f"Likelihood in MOCK MODE — re-run after GEE climatology export for definitive results.*\n")
+                  f"Real climatology, real pollution, corrected district-state labels.*\n")
 
     # Write report
     REPORT_MD.parent.mkdir(parents=True, exist_ok=True)

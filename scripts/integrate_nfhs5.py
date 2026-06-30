@@ -108,7 +108,7 @@ def main():
             print(f"    - {d}")
 
     # Stats
-    ac_vals = [p["adaptive_capacity"] for p in props if "adaptive_capacity" in p]
+    ac_vals = [p["adaptive_capacity"] for p in props if p.get("adaptive_capacity") is not None]
     print(f"\n  Adaptive Capacity (district-level):")
     print(f"    Range: {min(ac_vals):.3f} – {max(ac_vals):.3f}")
     print(f"    Mean:  {sum(ac_vals)/len(ac_vals):.3f}")
