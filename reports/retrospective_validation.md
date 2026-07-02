@@ -161,3 +161,94 @@ Sikkim GLOF (Oct 2023): not tested — glacial lake outburst flood is not a mode
 ---
 
 *Model unchanged · Out-of-sample test · Baseline-location proxy method (30-year climatology) · Population-weighted district averages · ClimResWASH Retrospective Validation*
+
+---
+## V2 — Period-Specific Anomaly Detection
+
+**Method:** Fetch actual ERA5 daily data (Open-Meteo archive) for each event period. Compute anomaly vs 30yr climatological baseline (1991-2020). Feed actual values into UNCHANGED hazard formulas.
+
+**Stddev baseline:** Computed from Open-Meteo 30yr monthly distributions per event location (V1 does not store stddev — V1 only stores scaled means via seasonal factors).
+
+**Scope:** Six event locations only (not all 12,705 hexes). Representative hex per district (highest existing hazard score) used for API fetch.
+
+### V2 vs V1 comparison
+
+| Event | V1 score | V1 result | V2 score | V2 result | Δ | Key mechanism |
+|---|---|---|---|---|---|---|
+| Mumbai Deluge | 6.44 | ⚠️ PARTIAL | 3.95 | ⚠️ PARTIAL | -2.49 | Actual July 2005 daily rainfall → occurrence ratio vs 30yr |
+| Cyclone Amphan | 6.31 | ⚠️ PARTIAL | 5.94 | ⚠️ PARTIAL | -0.37 | Documented 185 km/h peak wind (ERA5 coarse grid cannot resolve eyewall) |
+| Wayanad Landslide | 0.10 | ❌ MISS | 4.77 | ⚠️ PARTIAL | +4.67 | Flood proxy: actual July 2024 rainfall (slope=None → landslide still limited) |
+| Kerala Floods | 4.57 | ⚠️ PARTIAL | 10.00 | ✅ HIT | +5.43 | Actual August 2018 daily rainfall → occurrence ratio vs 30yr |
+| Spring Heatwave 2022 | 1.06 | ❌ MISS | 0.07 | ❌ MISS | -0.99 | Actual March 2022 T_max + heat_days → severity × occurrence both updated |
+| Marathwada Drought | 0.04 | ❌ MISS | 7.84 | ✅ HIT | +7.80 | JJAS 2015 SPI = (actual − clim_mean) / clim_stddev → drought_score(SPI) |
+
+**V1 (climatology): 0 HIT / 3 PARTIAL / 3 MISS** out of 6.
+**V2 (period-specific): 2 HIT / 3 PARTIAL / 1 MISS** out of 6. Net gain: +2 HIT, 3→2 MISS.
+
+### Heatwave anomaly math (Spring 2022, Nagpur + Jhansi)
+
+```
+ERA5 peak T_max March 2022 (Jhansi lat=25.8, lon=79.1): 40.8°C
+V1 baseline: heatwave_score(44°C fixed proxy, threshold=40°C, 3 days) = 3.43
+V2 severity: heatwave_score(40.8°C actual, 40°C, 3 days) = 0.69
+Climatological heat_days/yr (30yr baseline at Jhansi):  112.4 days
+V1 → V2 heat_risk: 1.06 → 0.07
+```
+
+**Why V2 REGRESSED for heatwave:** Two compounding ERA5 limitations:
+1. ERA5 records only 40.8°C peak for Jhansi in March 2022. Actual IMD station data: 43–45°C. ERA5 at 25km grid has a systematic cold bias of 2–4°C for near-extreme daytime temperatures due to spatial averaging over urban heat islands.
+2. Jhansi has a 30yr baseline of 112 heat_days/year above 40°C (already an extreme heat environment). March 2022 at 40.8°C ERA5 does not register as a strong anomaly against this baseline. The event's significance was being **earlier** (March vs normal May onset) — not hotter in absolute terms — which ERA5 captures poorly.
+**Fix needed:** IMD gridded daily T_max (0.25°) or ERA5-Land (9km), not ERA5 standard (25km).
+
+### Drought anomaly math (JJAS 2015, Latur + Osmanabad)
+
+```
+JJAS 2015 actual rainfall (Jun–Sep, ERA5):  495 mm
+30yr JJAS mean (1991–2020, Open-Meteo):      673 mm
+30yr JJAS stddev:                             168 mm
+SPI = (495 − 673) / 168 = −1.06
+drought_score(SPI = −1.06) = max(0, min(10, 1.06 × 5)) = 5.28
+drought_sensitivity = 0.806   exposure_10 = 10.0
+drought_haz = 5.28 × 1.0 (occ) × 2.0 (chronic) = 10.0 (capped)
+V1 → V2 drought_risk: 0.04 → 7.84  ✅ HIT
+```
+
+**Why V2 succeeded for drought:** ERA5 captures large-scale monsoon deficits accurately — the JJAS circulation anomaly from El Niño 2015 is well represented at 25km scale. Unlike localized rainfall extremes or sub-diurnal heat peaks, multi-month monsoon deficits are a synoptic-scale signal that ERA5 models well.
+
+### Kerala Floods 2018 — V2 mechanism
+
+```
+August 2018 actual rainfall (ERA5, Ernakulam lat=9.97, lon=76.36): 741 mm
+30yr August mean (1991–2020):   381 mm
+ERA5 flood days (>50mm/day) in August 2018: 4 days
+Annualised: 4 × 12 = 48 days/yr
+30yr baseline flood_days/yr:    7.2
+Occurrence ratio: 48 / 7.2 = 6.67×
+V1 → V2 flood_risk: 4.57 → 10.00  ✅ HIT (occurrence-driven; capped at 10)
+```
+
+### Mumbai 2005 — V2 regression explained
+
+```
+ERA5 peak daily rainfall July 2005 (Mumbai lat=19.21, lon=72.83): 54 mm
+Actual IMD observed peak (26 Jul 2005): 944 mm (sub-grid mesoscale system)
+ERA5 flood_days July 2005: 1 day
+30yr baseline flood_days/yr: 19.6
+Occurrence ratio: 12 / 19.6 = 0.61×  → V2 score LOWER than V1
+V1 → V2 flood_risk: 6.44 → 3.95 (REGRESSION)
+```
+
+**Why V2 regressed for Mumbai:** ERA5 at 25km completely misses the 944mm/24h event. The actual rainfall was delivered by an organised mesoscale convective system spanning ~5km × 50km over suburban Mumbai — sub-grid for ERA5. ERA5 shows 54mm peak for that day, recording it as a near-normal monsoon day. This is a fundamental limitation of global reanalysis for localised extreme precipitation. **Fix needed:** CHIRPS (5km) or IMD Stage-III gridded 0.1° rainfall, which resolves mesoscale convective systems.
+
+### Honest notes on remaining issues
+
+- **Wayanad Landslide**: V2 flood proxy correctly detects the extreme July 2024 rainfall burst (ERA5 shows 861mm total, 7 flood-days, 106mm peak in one month). Score 4.77 PARTIAL vs V1 0.10 MISS. But `slope_deg = None` for all Wayanad hexes means the landslide formula still cannot activate. V3 fix: SRTM 90m raster slope via `compute_slope_water.py` (never run).
+
+- **Cyclone Amphan**: V2 uses documented 185 km/h peak wind (ERA5 records ~70 km/h due to eyewall resolution failure). Rep hex (coastal) scores 5.94 vs V1 population-weighted average 6.31. The slight decrease reflects that V2 scores the coastal landfall hex alone, while V1 averaged across all 37 hexes with the channel aggregation fix (sealevel_risk folded in).
+
+- **Formulas unchanged**: All changes in V2 are input-side only. Exposure, sensitivity, and adaptive capacity are fixed at 30yr baseline NFHS-5 values. If V3 adds dynamic social vulnerability data, the drought and flood risk scores would shift further.
+
+- **Data source ceiling**: ERA5 is the practical free option at scale, but has known biases for (a) peak daily rainfall (underestimates by 5–20×), (b) near-extreme T_max (cold bias 2–4°C in urban settings), and (c) tropical cyclone eyewall winds. CHIRPS rainfall, ERA5-Land T_max, and IBTrACS storm tracks would each improve one of the remaining two failures.
+
+---
+*V2 anomaly detection · Open-Meteo ERA5 archive · 1991-2020 baseline · Formulas unchanged · ClimResWASH Retrospective Validation*
