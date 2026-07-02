@@ -695,7 +695,17 @@ function HexInfoPanel({ props, onClose }: { props: any; onClose: () => void }) {
           </div>
         )}
       </div>
-      <div className="mt-2 text-[9px] text-muted-foreground/50 truncate">{props.h3_id}</div>
+      {props.district_name && props.district_name !== "Unknown" && (
+        <a
+          href={`/report/${encodeURIComponent(props.district_name)}`}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-2 flex items-center justify-center gap-1 w-full text-[10px] font-medium text-primary border border-primary/30 rounded py-1 hover:bg-primary/10 transition-colors"
+        >
+          📋 District Action Plan →
+        </a>
+      )}
+      <div className="mt-1 text-[9px] text-muted-foreground/50 truncate">{props.h3_id}</div>
     </div>
   );
 }
