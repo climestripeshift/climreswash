@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Link } from "wouter";
+import { Link, useSearch } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Printer, ChevronDown, ChevronRight, AlertTriangle, TrendingUp, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -194,7 +194,9 @@ export default function ActionPlanPage() {
     staleTime: Infinity,
   });
 
-  const [selectedState, setSelectedState] = useState("Bihar");
+  const searchString = useSearch();
+  const urlState = new URLSearchParams(searchString).get("state") ?? "Bihar";
+  const [selectedState, setSelectedState] = useState(urlState);
   const [sortBy, setSortBy]               = useState<"present" | "future" | "escalation">("present");
   const [filterCls, setFilterCls]         = useState<"all" | "act-now" | "pre-empt" | "stable">("all");
   const [expandedDistrict, setExpandedDistrict] = useState<string | null>(null);

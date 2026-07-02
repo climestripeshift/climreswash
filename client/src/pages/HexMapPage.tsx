@@ -654,58 +654,140 @@ function SetupCanvas() {
 
 // ── Hex info panel ────────────────────────────────────────────────────────────
 
-function HexInfoPanel({ props, onClose }: { props: any; onClose: () => void }) {
+const INST_ICONS: Record<string, string> = { school: "🏫", anganwadi: "🌸", household: "🏠" };
+const RISK_LABEL: Record<string, string> = {
+  flood_risk: "Flood", heat_risk: "Heat", cyclone_risk: "Cyclone", drought_risk: "Drought",
+  wetbulb_risk: "Wet Bulb", landslide_risk: "Landslide", coldwave_risk: "Cold Wave",
+  flashflood_risk: "Flash Flood", sealevel_risk: "Sea Level", fire_risk: "Fire",
+};
+
+function HexInfoPanel({ props, ranking, onClose }: {
+  props: any;
+  ranking: any | null;
+  onClose: () => void;
+}) {
+  const [tab, setTab] = useState<"data" | "actions">("data");
+  const hasRanking = !!ranking;
+
   return (
-    <div className="bg-background/95 backdrop-blur border border-border/40 rounded-lg shadow-lg p-3 w-56 max-h-[70vh] overflow-y-auto">
-      <div className="flex items-start justify-between mb-2">
+    <div className="bg-background/95 backdrop-blur border border-border/40 rounded-lg shadow-lg w-64 max-h-[80vh] overflow-y-auto">
+      {/* Header */}
+      <div className="flex items-start justify-between p-3 pb-2 border-b border-border/30">
         <div>
           <div className="text-xs font-semibold">{props.district_name ?? props.state}</div>
           <div className="text-[10px] text-muted-foreground">{props.state}</div>
         </div>
-        <button onClick={onClose} className="text-muted-foreground hover:text-foreground ml-2">
+        <button onClick={onClose} className="text-muted-foreground hover:text-foreground ml-2 shrink-0">
           <span className="text-xs">✕</span>
         </button>
       </div>
-      <div className="space-y-1 text-[11px]">
-        <div className="flex justify-between"><span className="text-muted-foreground">⛰️ Elevation</span><span className="font-medium">{props.elevation_mean}m</span></div>
-        <div className="flex justify-between"><span className="text-muted-foreground">🌿 NDVI</span><span className="font-medium">{props.ndvi_mean}</span></div>
-        <div className="flex justify-between"><span className="text-muted-foreground">🗺️ Land Use</span><span className="font-medium capitalize">{props.land_use}</span></div>
-        <div className="flex justify-between"><span className="text-muted-foreground">👥 Population</span><span className="font-medium">{(props.population ?? 0).toLocaleString()}</span></div>
-        <div className="flex justify-between"><span className="text-muted-foreground">👶 Children &lt;5</span><span className="font-medium">{(props.pop_children_under_5 ?? 0).toLocaleString()}</span></div>
-        <div className="flex justify-between"><span className="text-muted-foreground">🧓 Elderly 60+</span><span className="font-medium">{(props.pop_elderly_60plus ?? 0).toLocaleString()}</span></div>
-        <div className="flex justify-between"><span className="text-muted-foreground">👩 Women 15-49</span><span className="font-medium">{(props.pop_women_15_49 ?? 0).toLocaleString()}</span></div>
-        <div className="border-t border-border/30 my-1 pt-1" />
-        {["flood_risk","heat_risk","cyclone_risk","drought_risk","wetbulb_risk","landslide_risk","coldwave_risk","flashflood_risk","sealevel_risk","fire_risk"].map((k) => {
-          const v = props[k];
-          if (!v || v < 0.01) return null;
-          const label = k.replace("_risk","").replace("flood","Flood").replace("heat","Heat").replace("cyclone","Cyclone").replace("drought","Drought").replace("wetbulb","Wet Bulb").replace("landslide","Landslide").replace("coldwave","Cold Wave").replace("flashflood","Flash Flood").replace("sealevel","Sea Level").replace("fire","Fire");
-          return (
-            <div key={k} className="flex justify-between">
-              <span className="text-muted-foreground">{label}</span>
-              <span className={`font-medium ${v > 2 ? "text-red-400" : v > 1 ? "text-amber-400" : ""}`}>{v}</span>
-            </div>
-          );
-        })}
-        <div className="flex justify-between font-bold border-t border-border/30 pt-1 mt-1">
-          <span>⚠️ Max Risk</span><span>{props.hex_risk ?? "—"}</span>
-        </div>
-        {props.cascade_count > 0 && (
-          <div className="text-[10px] text-red-400 font-semibold mt-1">
-            🔗 {props.cascade_count} WASH cascade{props.cascade_count > 1 ? "s" : ""} active
-          </div>
-        )}
-      </div>
-      {props.district_name && props.district_name !== "Unknown" && (
-        <a
-          href={`/report/${encodeURIComponent(props.district_name)}`}
-          target="_blank"
-          rel="noreferrer"
-          className="mt-2 flex items-center justify-center gap-1 w-full text-[10px] font-medium text-primary border border-primary/30 rounded py-1 hover:bg-primary/10 transition-colors"
+
+      {/* Tab switcher */}
+      <div className="flex border-b border-border/30">
+        <button
+          className={`flex-1 py-1.5 text-[10px] font-medium transition-colors ${tab === "data" ? "text-primary border-b-2 border-primary" : "text-muted-foreground hover:text-foreground"}`}
+          onClick={() => setTab("data")}
         >
-          📋 District Action Plan →
-        </a>
+          📊 Risk Data
+        </button>
+        <button
+          className={`flex-1 py-1.5 text-[10px] font-medium transition-colors ${tab === "actions" ? "text-primary border-b-2 border-primary" : "text-muted-foreground hover:text-foreground"} ${!hasRanking ? "opacity-40 cursor-not-allowed" : ""}`}
+          onClick={() => hasRanking && setTab("actions")}
+        >
+          📋 Actions
+        </button>
+      </div>
+
+      {tab === "data" && (
+        <div className="p-3 space-y-1 text-[11px]">
+          <div className="flex justify-between"><span className="text-muted-foreground">⛰️ Elevation</span><span className="font-medium">{props.elevation_mean}m</span></div>
+          <div className="flex justify-between"><span className="text-muted-foreground">🌿 NDVI</span><span className="font-medium">{props.ndvi_mean}</span></div>
+          <div className="flex justify-between"><span className="text-muted-foreground">🗺️ Land Use</span><span className="font-medium capitalize">{props.land_use}</span></div>
+          <div className="flex justify-between"><span className="text-muted-foreground">👥 Population</span><span className="font-medium">{(props.population ?? 0).toLocaleString()}</span></div>
+          <div className="flex justify-between"><span className="text-muted-foreground">👶 Children &lt;5</span><span className="font-medium">{(props.pop_children_under_5 ?? 0).toLocaleString()}</span></div>
+          <div className="flex justify-between"><span className="text-muted-foreground">🧓 Elderly 60+</span><span className="font-medium">{(props.pop_elderly_60plus ?? 0).toLocaleString()}</span></div>
+          <div className="flex justify-between"><span className="text-muted-foreground">👩 Women 15-49</span><span className="font-medium">{(props.pop_women_15_49 ?? 0).toLocaleString()}</span></div>
+          <div className="border-t border-border/30 my-1 pt-1" />
+          {Object.entries(RISK_LABEL).map(([k, label]) => {
+            const v = props[k];
+            if (!v || v < 0.01) return null;
+            return (
+              <div key={k} className="flex justify-between">
+                <span className="text-muted-foreground">{label}</span>
+                <span className={`font-medium ${v > 2 ? "text-red-400" : v > 1 ? "text-amber-400" : ""}`}>{v}</span>
+              </div>
+            );
+          })}
+          <div className="flex justify-between font-bold border-t border-border/30 pt-1 mt-1">
+            <span>⚠️ Max Risk</span><span>{props.hex_risk ?? "—"}</span>
+          </div>
+          {props.cascade_count > 0 && (
+            <div className="text-[10px] text-red-400 font-semibold mt-1">
+              🔗 {props.cascade_count} WASH cascade{props.cascade_count > 1 ? "s" : ""} active
+            </div>
+          )}
+          <div className="mt-1 text-[9px] text-muted-foreground/50 truncate">{props.h3_id}</div>
+        </div>
       )}
-      <div className="mt-1 text-[9px] text-muted-foreground/50 truncate">{props.h3_id}</div>
+
+      {tab === "actions" && ranking && (
+        <div className="p-3 space-y-3 text-[11px]">
+          {/* District snapshot */}
+          <div className="flex gap-2 flex-wrap">
+            <span className={`text-[10px] px-1.5 py-0.5 rounded-full border font-medium ${ranking.risk_score >= 5 ? "bg-red-500/15 text-red-400 border-red-500/30" : ranking.risk_score >= 3 ? "bg-amber-500/15 text-amber-400 border-amber-500/30" : "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"}`}>
+              ⚠️ Risk {ranking.risk_score.toFixed(1)}/10
+            </span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full border border-border/40 bg-muted/30">
+              {ranking.dominant_hazard_icon} {ranking.dominant_hazard}
+            </span>
+          </div>
+          {ranking.recommendation && (
+            <p className="text-[10px] text-muted-foreground italic leading-snug">{ranking.recommendation}</p>
+          )}
+
+          {/* Institution actions */}
+          {(["school", "anganwadi", "household"] as const).map((inst) => {
+            const rec = ranking.recommendations?.[inst];
+            if (!rec?.measures?.length) return null;
+            return (
+              <div key={inst} className="border border-border/30 rounded-md p-2 bg-muted/10">
+                <div className="text-[10px] font-semibold mb-1.5">{INST_ICONS[inst]} {inst.charAt(0).toUpperCase() + inst.slice(1)} Actions</div>
+                <ul className="space-y-1">
+                  {rec.measures.slice(0, 2).map((m: string, i: number) => (
+                    <li key={i} className="flex gap-1 text-[10px]">
+                      <span className="text-muted-foreground shrink-0 mt-0.5">•</span>
+                      <span>{m}</span>
+                    </li>
+                  ))}
+                </ul>
+                {rec.schemes?.[0] && (
+                  <div className="mt-1.5 text-[9px] text-muted-foreground">💰 {rec.schemes[0]}</div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Footer links */}
+      {props.district_name && props.district_name !== "Unknown" && (
+        <div className="p-3 pt-0 flex gap-1.5">
+          <a
+            href={`/report/${encodeURIComponent(props.district_name)}`}
+            target="_blank" rel="noreferrer"
+            className="flex-1 flex items-center justify-center gap-1 text-[10px] font-medium text-muted-foreground border border-border/40 rounded py-1 hover:bg-muted/30 transition-colors"
+          >
+            📄 Full Report
+          </a>
+          <a
+            href={`/action-plan?state=${encodeURIComponent(props.state)}`}
+            target="_blank" rel="noreferrer"
+            className="flex-1 flex items-center justify-center gap-1 text-[10px] font-medium text-primary border border-primary/30 rounded py-1 hover:bg-primary/10 transition-colors"
+          >
+            🎯 Action Plan
+          </a>
+        </div>
+      )}
     </div>
   );
 }
@@ -942,6 +1024,18 @@ export default function HexMapPage() {
   const [showStates, setShowStates]           = useState(true);
   const mapRef = useRef<LeafletMap | null>(null);
 
+  const rankQ = useQuery<any[]>({
+    queryKey: ["district-rankings"],
+    queryFn: () => fetch("/data/district_rankings.json").then((r) => r.json()),
+    staleTime: Infinity,
+  });
+
+  const rankByDistrict = useMemo(() => {
+    const m: Record<string, any> = {};
+    for (const r of rankQ.data ?? []) m[r.district] = r;
+    return m;
+  }, [rankQ.data]);
+
   const hexQ = useQuery<any>({
     queryKey: ["india-hex-props"],
     queryFn: async () => {
@@ -1072,7 +1166,7 @@ export default function HexMapPage() {
           {/* Clicked hex info */}
           {clickedHex && (
             <div className="absolute top-3 right-3 z-[800]">
-              <HexInfoPanel props={clickedHex} onClose={() => setClickedHex(null)} />
+              <HexInfoPanel props={clickedHex} ranking={rankByDistrict[clickedHex.district_name] ?? null} onClose={() => setClickedHex(null)} />
             </div>
           )}
 
