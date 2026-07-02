@@ -755,6 +755,14 @@ function HexInfoPanel({ props, ranking, confidence, onClose }: {
               </div>
             )}
           </div>
+          {props.peak_season_month && (
+            <div className="flex justify-between text-[10px] mt-1 border-t border-border/30 pt-1">
+              <span className="text-muted-foreground">📅 Peak risk season</span>
+              <span className="font-medium text-amber-300">
+                {["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][props.peak_season_month - 1]}
+              </span>
+            </div>
+          )}
           {props.cascade_count > 0 && (
             <div className="text-[10px] text-red-400 font-semibold mt-1">
               🔗 {props.cascade_count} WASH cascade{props.cascade_count > 1 ? "s" : ""} active
