@@ -3,6 +3,29 @@ import { Link, useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { technologyContent } from "@/lib/technologyContent";
+
+// Maps hex risk field → technologyContent hazardSuitability key
+const RISK_TO_TECH_HAZARD: Record<string, string> = {
+  flood_risk:     "Flood",
+  heat_risk:      "Heatwave",
+  cyclone_risk:   "Cyclone",
+  drought_risk:   "Drought",
+  wetbulb_risk:   "Heatwave",
+  coldwave_risk:  "Cold Wave",
+  flashflood_risk:"Flash Flood",
+  sealevel_risk:  "Coastal Flooding",
+  landslide_risk: "Rocky Terrain",
+};
+
+const CATEGORY_META: Record<string, { icon: string; label: string; color: string }> = {
+  sanitation: { icon: "🚽", label: "Sanitation",   color: "bg-blue-50 border-blue-200 text-blue-800" },
+  water:      { icon: "💧", label: "Water Supply", color: "bg-cyan-50 border-cyan-200 text-cyan-800" },
+  waste:      { icon: "♻️", label: "Liquid Waste", color: "bg-green-50 border-green-200 text-green-800" },
+  adaptation: { icon: "🌱", label: "Adaptation",   color: "bg-amber-50 border-amber-200 text-amber-800" },
+};
+
+const COST_COLOR: Record<string, string> = { Low: "text-green-700", Medium: "text-amber-700", High: "text-red-700" };
 
 const HAZARD_META: Record<string, { icon: string; label: string }> = {
   flood_risk: { icon: "🌊", label: "Pluvial Flood" },
@@ -96,7 +119,31 @@ export default function ReportPage() {
       if (topHazard.key.includes("landslide")) activeCascades.push("landslide_remote");
     }
 
-    return { state, n, pop, avgRisk, maxRisk, riskLevel, cascadeHexes, hazards, avgElev, avgNdvi, topLandUse, activeCascades };
+    // Technology action plan
+    const activeHazardKeys = hazards
+      .filter((h) => h.key in RISK_TO_TECH_HAZARD && h.avg >= 2.5)
+      .map((h) => RISK_TO_TECH_HAZARD[h.key]);
+    const uniqueActiveHazards = activeHazardKeys.filter((h, i) => activeHazardKeys.indexOf(h) === i);
+
+    // Score each technology by how many active hazards it is 'recommended' for
+    const techScores: { slug: string; score: number; coveredHazards: string[] }[] = [];
+    for (const [slug, tech] of Object.entries(technologyContent)) {
+      if (!tech.hazardSuitability) continue;
+      const covered = uniqueActiveHazards.filter(
+        (h) => tech.hazardSuitability![h] === "recommended"
+      );
+      if (covered.length > 0) {
+        techScores.push({ slug, score: covered.length, coveredHazards: covered });
+      }
+    }
+    // Top 6, ranked by score then cost (Low first)
+    const COST_RANK: Record<string, number> = { Low: 0, Medium: 1, High: 2 };
+    techScores.sort((a, b) =>
+      b.score - a.score || COST_RANK[technologyContent[a.slug].costLevel] - COST_RANK[technologyContent[b.slug].costLevel]
+    );
+    const recommendedTechs = techScores.slice(0, 6);
+
+    return { state, n, pop, avgRisk, maxRisk, riskLevel, cascadeHexes, hazards, avgElev, avgNdvi, topLandUse, activeCascades, uniqueActiveHazards, recommendedTechs };
   }, [hexQ.data, districtName]);
 
   if (hexQ.isLoading) return <div className="p-8 text-center text-muted-foreground">Loading report data...</div>;
@@ -184,6 +231,56 @@ export default function ReportPage() {
                   <div className="text-xs text-gray-700">{CASCADE_ACTIONS[ruleId]}</div>
                 </div>
               ))}
+            </div>
+          </>
+        )}
+
+        {/* Technology Action Plan */}
+        {report.recommendedTechs.length > 0 && (
+          <>
+            <h2 className="text-sm font-bold uppercase tracking-wide text-gray-500 mb-1 mt-6">
+              WASH Technology Action Plan
+            </h2>
+            <p className="text-[10px] text-gray-400 mb-3">
+              Technologies recommended for {districtName}'s active hazards:{" "}
+              {report.uniqueActiveHazards.join(", ")}
+            </p>
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              {report.recommendedTechs.map(({ slug, coveredHazards }) => {
+                const tech = technologyContent[slug];
+                const catMeta = CATEGORY_META[tech.category];
+                return (
+                  <div key={slug} className={`border rounded-lg p-3 ${catMeta.color}`}>
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                      <span className="text-xs font-semibold leading-tight">{tech.title}</span>
+                      <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-white/60 border font-medium">
+                        {catMeta.icon} {catMeta.label}
+                      </span>
+                    </div>
+                    <p className="text-[10px] leading-relaxed mb-2 opacity-80 line-clamp-2">
+                      {tech.climateResilience}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <div className="text-[10px] space-x-2">
+                        <span>Cost: <b className={COST_COLOR[tech.costLevel]}>{tech.costLevel}</b></span>
+                        <span>Maint: <b className={COST_COLOR[tech.maintenanceLevel]}>{tech.maintenanceLevel}</b></span>
+                      </div>
+                      <Link href={`/technology/${slug}`}>
+                        <span className="print:hidden text-[10px] underline text-blue-600 hover:text-blue-800 cursor-pointer">
+                          Details →
+                        </span>
+                      </Link>
+                    </div>
+                    <div className="mt-1.5 flex flex-wrap gap-1">
+                      {coveredHazards.map((h) => (
+                        <span key={h} className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/50 border font-medium">
+                          ✓ {h}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </>
         )}
