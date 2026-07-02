@@ -20,6 +20,7 @@ import ReportPage from "@/pages/ReportPage";
 import StateSummaryPage from "@/pages/StateSummaryPage";
 import GapAnalysisPage from "@/pages/GapAnalysisPage";
 import MethodologyPage from "@/pages/MethodologyPage";
+import ActionPlanPage from "@/pages/ActionPlanPage";
 
 function Router() {
   return (
@@ -36,6 +37,7 @@ function Router() {
       <Route path="/states" component={StateSummaryPage} />
       <Route path="/gap-analysis" component={GapAnalysisPage} />
       <Route path="/methodology" component={MethodologyPage} />
+      <Route path="/action-plan" component={ActionPlanPage} />
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/technology" component={TechnologyPage} />

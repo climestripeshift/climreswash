@@ -138,6 +138,9 @@ export default function HomePage() {
               <Link href="/states" className="text-sm font-semibold flex items-center gap-1.5 text-violet-500 hover:text-violet-400 transition-colors">
                 States
               </Link>
+              <Link href="/action-plan" className="text-sm font-semibold flex items-center gap-1.5 text-orange-500 hover:text-orange-400 transition-colors">
+                Action Plan
+              </Link>
             </div>
 
             {/* Actions */}
