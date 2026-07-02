@@ -67,7 +67,13 @@ Event hazard: **Landslide** — score **0.10/10** ❌ MISS
 | Flash Flood | 0.58 | |
 | **Landslide** | **0.10** | ← event hazard |
 
-**Reading:** The landslide channel uses slope degree and NDVI from SRTM/MODIS. Wayanad is steep (Western Ghats) and this should be captured — the low score suggests the landslide likelihood raster may not adequately represent the combination of steep-terrain + extreme rainfall that triggered the July 2024 event. The model does flag elevated flood risk (2.07), directionally correct (the landslide was triggered by >250mm/day rainfall). The Wayanad 2024 event was exceptional in scale and is not in the 30-year climatology baseline. A landslide channel recalibration with NDVI + slope + rainfall compound frequency would improve this.
+**Diagnosed root cause (two compounding issues):**
+
+1. **slope_deg = None for 100% of hexes** — `compute_slope_water.py` was never run. The fallback `estimate_slope(745m) = 3.0°` is below the 5° landslide gate → gated out to 0.
+
+2. **H3 resolution too coarse for escarpment terrain** — even with real H3-neighbor slope computation (max elevation diff ÷ 15.1km edge), Wayanad hexes at 745m give 1.9°–4.8° macro-scale gradient. The 15km hex edge averages out the steep local hillside. Switching to H3 slopes improves Wayanad marginally (0.12→0.18) but regresses Himalayan districts (Uttarkashi 2.57→1.09, Chamoli 2.67→1.55) because high-altitude plateau hexes have similarly low H3 gradients. Fix reverted to avoid regression.
+
+**Honest conclusion — defer to V2:** The only non-regressive fix is ingesting real SRTM 90m raster slopes (mean slope per hex from the raster, not H3-neighbor elevation difference). The current pipeline skipped this step. The model does flag elevated flood risk (2.07) and flash flood (0.58) at Wayanad — directionally correct, since the July 2024 event was triggered by >250mm/day rainfall, not just slope. **Landslide channel at H3 resolution 5 requires sub-km raster slope data — V2 pipeline upgrade needed.**
 
 ---
 
@@ -122,7 +128,7 @@ Event hazard: **Drought** — score **0.04/10** ❌ MISS
 
 1. **Cyclone (Amphan):** Zero cyclone_risk is a raster coverage issue — the area IS flagged at 6.31 sea-level + 5.88 flood, which is the actual damage mechanism. Channel labelling gap, not a location miss.
 
-2. **Landslide (Wayanad):** The landslide channel underperforms for the Western Ghats compound-rainfall-terrain trigger. The July 2024 event was exceptional. Recalibration with compound slope×rainfall frequency needed.
+2. **Landslide (Wayanad):** `slope_deg` is missing for 100% of hexes (compute_slope_water.py not run). Fallback `estimate_slope(745m)=3.0°` is below the 5° gate → gated to 0. Switching to H3-neighbor computed slopes improves Wayanad marginally but regresses Himalayan districts (the two proxy approaches — elevation proxy vs. H3 macro-gradient — give opposite biases for Western Ghats vs. Himalayan plateau terrain). Fix requires real SRTM 90m raster slope per hex (V2 pipeline upgrade). The event itself was also exceptional (>250mm/day, July 2024 extreme outside 30-year baseline).
 
 3. **Heat (2022 heatwave):** The ERA5 heat frequency baseline misses early-season (March) extremes. The model correctly flags background wet-bulb stress but cannot score a climatologically unprecedented timing.
 
@@ -141,7 +147,7 @@ All events used baseline-location proxy (30-year climatology). No period-specifi
 ⚠️ **Partial validation: 2/6 events show correct direction (flood at Mumbai, flood at Kerala); 4/6 miss on the exact hazard channel.** However, the misses are explainable and mechanistically distinct:
 
 - One miss is a **channel labelling gap** (Amphan: vulnerability is correctly identified via sea level + flood, not cyclone label)
-- One miss is a **raster underperformance** in steep-terrain rainfall trigger (Wayanad landslide)
+- One miss is a **missing slope raster** (Wayanad: compute_slope_water.py not run; H3-macro slopes are too coarse for escarpment terrain at H3 resolution 5 — V2 fix: SRTM raster slope per hex)
 - Two misses are **30-year climatology limitations**: the ERA5 heat frequency cannot detect early-season records; CHIRPS SPI cannot capture El Niño multi-year anomalies
 
 **The model's flood and coastal risk engines are structurally sound.** The heat-as-heatwave channel, drought SPI channel, and landslide channel require either period-specific inputs or recalibration to improve retrospective performance.
