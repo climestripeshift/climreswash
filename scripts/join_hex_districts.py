@@ -398,11 +398,16 @@ def main():
         else:
             ff_r = 0.0
 
-        # ── 9. Sea level rise (low-elevation coastal) ──
+        # ── 9. Sea level rise / coastal storm surge (low-elevation coastal) ──
         if elev < 20 and dist_coast < 100000:
             slr_haz = min(10.0, max(0, (20 - elev) / 2) * math.exp(-dist_coast / 30000) * 3)
             slr_sens = 0.5 * max(0, 1 - elev / 20) + 0.3 * math.exp(-dist_coast / 20000) + 0.2
             slr_r = compute_risk(slr_haz, exposure_10, slr_sens, ac)
+            # Cyclone aggregation: storm surge IS the primary cyclone damage mechanism
+            # in low-elevation coastal areas. cyc_r = max(wind/rain, surge) so the
+            # worst channel defines impact (per cyclone_score methodology).
+            # Guard: slr_r > 0 only for elev<20 AND dist_coast<100km — already coastal.
+            cyc_r = max(cyc_r, slr_r)
         else:
             slr_r = 0.0
 

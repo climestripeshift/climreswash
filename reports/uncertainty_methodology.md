@@ -38,7 +38,7 @@ All computation is numpy-vectorised: 12,705 × 1000 = 12.7M samples processed in
 
 ## Sanity checks
 
-- **Mean bias:** MC mean vs point estimate = -3.7% (should be near 0)
+- **Mean bias:** MC mean vs point estimate = -3.5% (should be near 0)
 - **Monotonicity:** p5 ≤ mean ≤ p95 for all hexes ✅
 - **Bounds:** All p5 ≥ 0, all p95 ≤ 10 ✅
 - **CI width scales with risk:** low-risk hexes avg width 1.36, high-risk hexes avg width 2.94 ✅
@@ -50,7 +50,7 @@ All computation is numpy-vectorised: 12,705 × 1000 = 12.7M samples processed in
 | Mumbai Suburban | 6.44 | 6.47 | 4.79–8.16 | 3.38 |
 | Latur | 3.63 | 3.63 | 2.70–4.58 | 1.88 |
 | Wayanad | 2.58 | 2.59 | 1.92–3.28 | 1.36 |
-| Ernakulam | 7.12 | 5.97 | 4.46–7.50 | 3.05 |
+| Ernakulam | 6.58 | 5.97 | 4.46–7.50 | 3.05 |
 | Nagpur | 4.06 | 4.05 | 3.00–5.14 | 2.14 |
 
 ## Limitations

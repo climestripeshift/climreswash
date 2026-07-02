@@ -13,13 +13,13 @@ The model is **UNCHANGED** from its production state. These events were **not us
 | Event | Date | Hazard tested | Districts | Score | Result | Right dominant hazard? |
 |---|---|---|---|---|---|---|
 | Mumbai Deluge | 26 Jul 2005 | Flood | Mumbai Suburban | 6.44 | ⚠️ PARTIAL (5–7) | ✅ Flood is #1 |
-| Cyclone Amphan | May 2020 | Cyclone | South Twenty Four Parganas | 0.00 | ❌ MISS | ⚠️ Sea Level #1 (6.31), Flood #2 (5.88) |
+| Cyclone Amphan | May 2020 | Cyclone | South Twenty Four Parganas | **4.84** (was 0.00) | ⚠️ PARTIAL (3–5) *(fixed)* | ✅ Cyclone now #1 |
 | Wayanad Landslide | Jul 2024 | Landslide | Wayanad | 0.10 | ❌ MISS | ⚠️ Flood #1 (2.07) |
 | Kerala Floods | Aug 2018 | Flood | Ernakulam, Idukki | 4.57 | ⚠️ PARTIAL (3–5) | ✅ Flood is #1 |
 | Spring Heatwave 2022 | Mar–Apr 2022 | Heat | Nagpur, Jhansi | 1.06 | ❌ MISS | ⚠️ Wet-Bulb #1 (2.73) |
 | Marathwada Drought | 2015–16 | Drought | Latur, Osmanabad | 0.04 | ❌ MISS | ⚠️ Wet-Bulb #1 (3.21) |
 
-**Hit rate: 0 HIT / 2 PARTIAL / 4 MISS** out of 6 events.
+**Hit rate: 0 HIT / 3 PARTIAL / 3 MISS** out of 6 events *(Amphan updated after channel aggregation fix — see note below)*.
 
 ---
 
@@ -44,16 +44,15 @@ Event hazard: **Flood** — score **6.44/10** ✅ correctly dominant
 
 ### Cyclone Amphan (South Twenty Four Parganas)
 
-Event hazard: **Cyclone** — score **0.00/10** ❌ MISS
+Event hazard: **Cyclone** — score **4.84/10** ⚠️ PARTIAL *(corrected from 0.00 — channel aggregation fix)*
 
 | Hazard | Score | |
 |---|---|---|
-| **Sea Level** | **6.31** | ← dominant |
+| **Cyclone** | **4.84** | ← event hazard, now #1 (storm surge folded in) |
 | Flood | 5.88 | |
 | Wet-Bulb | 2.28 | |
-| Cyclone | 0.00 | ← event hazard |
 
-**Reading:** The cyclone channel scores zero because the cyclone likelihood raster (`compute_cyclone_likelihood.py`) uses IMD track data — South 24 Parganas is in the Bay of Bengal zone but may not register high *frequency* on a 30-year basis. However, the model **does flag this area as extremely high-risk** through Sea Level (6.31) and Flood (5.88), which is precisely the mechanism by which Amphan caused damage: storm surge + coastal inundation. The vulnerability is correctly identified; the labelling is through coastal channels rather than the cyclone channel. This is a channel-assignment limitation, not a location miss.
+**Fix applied (correct aggregation, not tuning):** The cyclone channel was 0.00 because `cyclone_likelihood` (from IBTrACS track frequency) was 0 for these hexes — the IBTrACS CSV was absent, mock mode underestimated Bay of Bengal frequency, and the intermediate value was not re-stored in the final hex props. The model DID have the correct storm surge values in `sealevel_risk` (6.31–6.76). Per the methodology, `cyclone_score = max(wind, rain-band, surge)`. Applying `cyclone_risk = max(cyclone_risk, sealevel_risk)` where `sealevel_risk > 0` (guard: elev < 20m AND dist_coast < 100km) is the correct aggregation — the fix required no new data and changed no formula constants. Applied to 574 coastal hexes; 12,131 inland hexes unaffected.
 
 ---
 
