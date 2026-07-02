@@ -661,13 +661,17 @@ const RISK_LABEL: Record<string, string> = {
   flashflood_risk: "Flash Flood", sealevel_risk: "Sea Level", fire_risk: "Fire",
 };
 
-function HexInfoPanel({ props, ranking, onClose }: {
+function HexInfoPanel({ props, ranking, confidence, onClose }: {
   props: any;
   ranking: any | null;
+  confidence: { p5: number; p95: number; mean: number; sd: number } | null;
   onClose: () => void;
 }) {
   const [tab, setTab] = useState<"data" | "actions">("data");
   const hasRanking = !!ranking;
+  const ciWidth = confidence ? confidence.p95 - confidence.p5 : null;
+  const ciLabel = ciWidth != null ? (ciWidth < 1.5 ? "High" : ciWidth < 3 ? "Moderate" : "Low") : null;
+  const ciColor = ciLabel === "High" ? "text-emerald-400" : ciLabel === "Moderate" ? "text-amber-400" : "text-red-400";
 
   return (
     <div className="bg-background/95 backdrop-blur border border-border/40 rounded-lg shadow-lg w-64 max-h-[80vh] overflow-y-auto">
@@ -718,8 +722,38 @@ function HexInfoPanel({ props, ranking, onClose }: {
               </div>
             );
           })}
-          <div className="flex justify-between font-bold border-t border-border/30 pt-1 mt-1">
-            <span>⚠️ Max Risk</span><span>{props.hex_risk ?? "—"}</span>
+          <div className="border-t border-border/30 pt-1 mt-1">
+            <div className="flex justify-between font-bold">
+              <span>⚠️ Max Risk</span>
+              <span>{props.hex_risk ?? "—"}</span>
+            </div>
+            {confidence && (
+              <div className="mt-1 space-y-0.5">
+                <div className="flex justify-between text-[9px]">
+                  <span className="text-muted-foreground">90% CI</span>
+                  <span className="font-medium tabular-nums">{confidence.p5.toFixed(1)} – {confidence.p95.toFixed(1)}</span>
+                </div>
+                <div className="flex justify-between text-[9px]">
+                  <span className="text-muted-foreground">Confidence</span>
+                  <span className={`font-semibold ${ciColor}`}>{ciLabel}</span>
+                </div>
+                <div className="h-1 rounded-full bg-muted/40 overflow-hidden mt-1">
+                  <div
+                    className="h-full rounded-full bg-primary/40"
+                    style={{ width: `${Math.min(100, (confidence.p5 / 10) * 100)}%`, marginLeft: 0 }}
+                  />
+                </div>
+                <div className="relative h-1 -mt-1 rounded-full overflow-hidden">
+                  <div
+                    className="absolute h-full bg-primary/70 rounded-full"
+                    style={{
+                      left: `${(confidence.p5 / 10) * 100}%`,
+                      width: `${((confidence.p95 - confidence.p5) / 10) * 100}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
           {props.cascade_count > 0 && (
             <div className="text-[10px] text-red-400 font-semibold mt-1">
@@ -1030,6 +1064,12 @@ export default function HexMapPage() {
     staleTime: Infinity,
   });
 
+  const confidenceQ = useQuery<Record<string, { p5: number; p95: number; mean: number; sd: number }>>({
+    queryKey: ["hex-confidence"],
+    queryFn: () => fetch("/data/hex_confidence.json").then((r) => r.json()),
+    staleTime: Infinity,
+  });
+
   const rankByDistrict = useMemo(() => {
     const m: Record<string, any> = {};
     for (const r of rankQ.data ?? []) m[r.district] = r;
@@ -1166,7 +1206,7 @@ export default function HexMapPage() {
           {/* Clicked hex info */}
           {clickedHex && (
             <div className="absolute top-3 right-3 z-[800]">
-              <HexInfoPanel props={clickedHex} ranking={rankByDistrict[clickedHex.district_name] ?? null} onClose={() => setClickedHex(null)} />
+              <HexInfoPanel props={clickedHex} ranking={rankByDistrict[clickedHex.district_name] ?? null} confidence={confidenceQ.data?.[clickedHex.h3_id] ?? null} onClose={() => setClickedHex(null)} />
             </div>
           )}
 
