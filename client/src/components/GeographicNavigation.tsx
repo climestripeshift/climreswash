@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { GeographicLevel, CountryData, StateData, DistrictData, BlockData } from "@/lib/types";
 import { Link } from "wouter";
+import { SHOW_FUTURE_2050 } from "@/lib/featureFlags";
 
 interface GeographicBreadcrumb {
   level: GeographicLevel;
@@ -95,12 +96,14 @@ export function GeographicNavigation({
             <span>Technologies</span>
           </Button>
         </Link>
-        <Link href="/stress-test">
-          <Button variant="outline" size="sm" className="h-7 px-2 gap-1.5 text-xs" data-testid="link-stress-test-nav">
-            <TrendingUp className="h-3.5 w-3.5 text-orange-400" />
-            <span>2050 Projections</span>
-          </Button>
-        </Link>
+        {SHOW_FUTURE_2050 && (
+          <Link href="/stress-test">
+            <Button variant="outline" size="sm" className="h-7 px-2 gap-1.5 text-xs" data-testid="link-stress-test-nav">
+              <TrendingUp className="h-3.5 w-3.5 text-orange-400" />
+              <span>2050 Projections</span>
+            </Button>
+          </Link>
+        )}
         <Link href="/live-data">
           <Button size="sm" className="h-7 px-2 gap-1.5 text-xs text-white" style={{ background: "#00AEEF" }} data-testid="link-live-data-nav">
             <span>⚡ Live Data</span>

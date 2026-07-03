@@ -21,6 +21,7 @@ import {
   Leaf,
   Grid3X3,
   Radio,
+  FlaskConical,
 } from "lucide-react";
 
 // --- Utility Components ---
@@ -78,6 +79,7 @@ const FEATURES = [
   { icon: <Leaf className="w-5 h-5 text-primary" />, title: "Adaptation Planner", desc: "Python-powered compound-risk engine. District-level WASH, DRR, Policy, and Health recommendations.", tag: "Beta", link: "/adapt", highlight: true },
   { icon: <Grid3X3 className="w-5 h-5 text-primary" />, title: "Hex Grid Base Map", desc: "12,705 H3 res-5 hexagons (~252 km² each) coloured by elevation, NDVI, or land use class.", tag: "New", link: "/grid", highlight: true },
   { icon: <Radio className="w-5 h-5 text-primary" />, title: "Forecast Early Warning", desc: "7-day weather forecast × risk formulas = live flood, heat, and wet-bulb alerts at hex resolution.", tag: "Live", link: "/forecast", highlight: true },
+  { icon: <FlaskConical className="w-5 h-5 text-primary" />, title: "What-If Simulator", desc: "Adjust rainfall, temperature, or drought index and watch the risk map respond live. Presets: 2022 Heatwave, El Niño, +2°C.", tag: "New", link: "/simulator", highlight: true },
 ];
 
 const METHODOLOGY = [
@@ -140,6 +142,9 @@ export default function HomePage() {
               </Link>
               <Link href="/action-plan" className="text-sm font-semibold flex items-center gap-1.5 text-orange-500 hover:text-orange-400 transition-colors">
                 Action Plan
+              </Link>
+              <Link href="/simulator" className="text-sm font-semibold flex items-center gap-1.5 text-violet-400 hover:text-violet-300 transition-colors">
+                <FlaskConical className="w-3.5 h-3.5" /> Simulator
               </Link>
             </div>
 

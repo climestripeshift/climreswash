@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Printer, ChevronDown, ChevronRight, AlertTriangle, TrendingUp, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { SHOW_FUTURE_2050 } from "@/lib/featureFlags";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -27,6 +28,11 @@ interface GapEntry {
   gap_explanation: string; priority_tier: string;
 }
 
+const HAZARD_ICON: Record<string, string> = {
+  flood: "🌊", heat: "🔥", drought: "🏜️", wetbulb: "💧", cyclone: "🌀",
+  landslide: "⛰️", "cold wave": "❄️", "wet-bulb heat": "🌡️",
+};
+
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 const fmt = (n: number) => n >= 1e7 ? `${(n/1e7).toFixed(1)}Cr` : n >= 1e5 ? `${(n/1e5).toFixed(1)}L` : n >= 1e3 ? `${(n/1e3).toFixed(0)}K` : `${n}`;
@@ -45,6 +51,7 @@ const INST_META: Record<string, { icon: string; label: string; color: string }> 
 
 function classifyDistrict(rank: RankEntry, gap: GapEntry | undefined): "act-now" | "pre-empt" | "stable" {
   const present = rank.risk_score;
+  if (!SHOW_FUTURE_2050) return present >= 5 ? "act-now" : "stable";
   const future = gap?.future_risk_ssp585_2050 ?? 0;
   const escalation = gap?.risk_escalation ?? 0;
   if (present >= 5) return "act-now";
@@ -69,8 +76,10 @@ function DistrictRow({ rank, gap, idx }: { rank: RankEntry; gap: GapEntry | unde
   const cm = CLASS_META[cls];
   const topMeasure = rank.recommendations?.school?.measures?.[0] ?? rank.recommendation ?? "—";
   const topScheme  = rank.recommendations?.school?.schemes?.[0] ?? "—";
-  const future585  = gap?.future_risk_ssp585_2050 ?? null;
-  const esc        = gap?.risk_escalation ?? null;
+  const future585  = SHOW_FUTURE_2050 ? (gap?.future_risk_ssp585_2050 ?? null) : null;
+  const esc        = SHOW_FUTURE_2050 ? (gap?.risk_escalation ?? null) : null;
+  const hazardShifted = SHOW_FUTURE_2050 && gap?.hazard_shifted === true;
+  const futureHazardIcon = hazardShifted ? (HAZARD_ICON[gap!.future_dominant_hazard] ?? "⚠️") : null;
 
   return (
     <>
@@ -80,7 +89,14 @@ function DistrictRow({ rank, gap, idx }: { rank: RankEntry; gap: GapEntry | unde
       >
         <td className="py-2 px-2 text-muted-foreground w-8">{idx + 1}</td>
         <td className="py-2 px-2">
-          <div className="font-medium">{rank.district}</div>
+          <div className="font-medium flex items-center gap-1">
+            {rank.district}
+            {hazardShifted && (
+              <span title={`Hazard shifts to ${gap!.future_dominant_hazard} by 2050`} className="text-[8px] px-1 py-0.5 rounded bg-violet-500/15 text-violet-400 border border-violet-500/30 leading-none">
+                {futureHazardIcon} shift
+              </span>
+            )}
+          </div>
           <div className="text-[10px] text-muted-foreground">{rank.dominant_hazard_icon} {HAZARD_LABEL[rank.dominant_hazard] ?? rank.dominant_hazard}</div>
         </td>
         <td className="py-2 px-2 text-right tabular-nums">
@@ -88,16 +104,20 @@ function DistrictRow({ rank, gap, idx }: { rank: RankEntry; gap: GapEntry | unde
             {rank.risk_score.toFixed(1)}
           </span>
         </td>
-        <td className="py-2 px-2 text-right tabular-nums">
-          {future585 != null
-            ? <span className={future585 >= 5 ? "text-red-400 font-medium" : "text-muted-foreground"}>{future585.toFixed(1)}</span>
-            : <span className="text-muted-foreground">—</span>}
-        </td>
-        <td className="py-2 px-2 text-right tabular-nums">
-          {esc != null
-            ? <span className={TREND_COLOR(esc)}>{esc >= 0 ? "+" : ""}{esc.toFixed(1)}</span>
-            : <span className="text-muted-foreground">—</span>}
-        </td>
+        {SHOW_FUTURE_2050 && (
+          <td className="py-2 px-2 text-right tabular-nums">
+            {future585 != null
+              ? <span className={future585 >= 5 ? "text-red-400 font-medium" : "text-muted-foreground"}>{future585.toFixed(1)}</span>
+              : <span className="text-muted-foreground">—</span>}
+          </td>
+        )}
+        {SHOW_FUTURE_2050 && (
+          <td className="py-2 px-2 text-right tabular-nums">
+            {esc != null
+              ? <span className={TREND_COLOR(esc)}>{esc >= 0 ? "+" : ""}{esc.toFixed(1)}</span>
+              : <span className="text-muted-foreground">—</span>}
+          </td>
+        )}
         <td className="py-2 px-2 text-right">{fmt(rank.population_at_risk)}</td>
         <td className="py-2 px-2 text-right">{fmt(rank.children_under5_at_risk)}</td>
         <td className="py-2 px-2">
@@ -113,7 +133,7 @@ function DistrictRow({ rank, gap, idx }: { rank: RankEntry; gap: GapEntry | unde
       </tr>
       {open && (
         <tr className="border-b border-border/20 bg-muted/10">
-          <td colSpan={10} className="px-4 py-3">
+          <td colSpan={SHOW_FUTURE_2050 ? 10 : 8} className="px-4 py-3">
             <DistrictDetail rank={rank} gap={gap} cls={cls} />
           </td>
         </tr>
@@ -131,14 +151,19 @@ function DistrictDetail({ rank, gap, cls }: { rank: RankEntry; gap: GapEntry | u
       {/* Summary */}
       <div className="flex flex-wrap gap-4 text-xs">
         <div><span className="text-muted-foreground">Present risk:</span> <b>{rank.risk_score.toFixed(1)}/10</b></div>
-        <div><span className="text-muted-foreground">2050 (SSP5-8.5):</span> <b>{gap?.future_risk_ssp585_2050?.toFixed(1) ?? "—"}</b></div>
-        <div><span className="text-muted-foreground">Escalation:</span> <b className={TREND_COLOR(gap?.risk_escalation ?? 0)}>{gap?.risk_escalation != null ? `${gap.risk_escalation >= 0 ? "+" : ""}${gap.risk_escalation.toFixed(1)}` : "—"}</b></div>
+        {SHOW_FUTURE_2050 && <div><span className="text-muted-foreground">2050 (SSP5-8.5):</span> <b>{gap?.future_risk_ssp585_2050?.toFixed(1) ?? "—"}</b></div>}
+        {SHOW_FUTURE_2050 && <div><span className="text-muted-foreground">Escalation:</span> <b className={TREND_COLOR(gap?.risk_escalation ?? 0)}>{gap?.risk_escalation != null ? `${gap.risk_escalation >= 0 ? "+" : ""}${gap.risk_escalation.toFixed(1)}` : "—"}</b></div>}
         <div><span className="text-muted-foreground">People at risk:</span> <b>{fmt(rank.population_at_risk)}</b></div>
         <div><span className="text-muted-foreground">Children &lt;5:</span> <b>{fmt(rank.children_under5_at_risk)}</b></div>
         <div><span className="text-muted-foreground">Adaptive capacity:</span> <b>{(rank.adaptive_capacity * 100).toFixed(0)}%</b></div>
         <span className={`text-[10px] px-2 py-0.5 rounded-full border ${cm.color}`}>{cm.icon} {cm.label}</span>
       </div>
       {gap?.gap_explanation && <p className="text-[10px] text-muted-foreground italic">{gap.gap_explanation}</p>}
+      {SHOW_FUTURE_2050 && gap?.hazard_shifted && (
+        <p className="text-[10px] text-violet-400 font-medium">
+          ⚠️ Dominant hazard shifts from <b>{gap.present_dominant_hazard}</b> → <b>{gap.future_dominant_hazard}</b> by 2050 — investment strategy should account for this transition.
+        </p>
+      )}
 
       {/* Institution actions */}
       <div className="grid grid-cols-3 gap-3">
@@ -197,7 +222,7 @@ export default function ActionPlanPage() {
   const searchString = useSearch();
   const urlState = new URLSearchParams(searchString).get("state") ?? "Bihar";
   const [selectedState, setSelectedState] = useState(urlState);
-  const [sortBy, setSortBy]               = useState<"present" | "future" | "escalation">("present");
+  const [sortBy, setSortBy]               = useState<"present" | "future" | "escalation" | "children">("present");
   const [filterCls, setFilterCls]         = useState<"all" | "act-now" | "pre-empt" | "stable">("all");
   const [expandedDistrict, setExpandedDistrict] = useState<string | null>(null);
 
@@ -232,6 +257,7 @@ export default function ActionPlanPage() {
       if (sortBy === "present")    return b.rank.risk_score - a.rank.risk_score;
       if (sortBy === "future")     return (b.gap?.future_risk_ssp585_2050 ?? 0) - (a.gap?.future_risk_ssp585_2050 ?? 0);
       if (sortBy === "escalation") return (b.gap?.risk_escalation ?? 0) - (a.gap?.risk_escalation ?? 0);
+      if (sortBy === "children")   return (b.rank.risk_score * b.rank.children_under5_at_risk) - (a.rank.risk_score * a.rank.children_under5_at_risk);
       return 0;
     });
   }, [classified, sortBy, filterCls]);
@@ -285,12 +311,16 @@ export default function ActionPlanPage() {
               className="text-xs border border-border/40 rounded px-2 py-1 bg-background"
             >
               <option value="present">Present risk ↓</option>
-              <option value="future">2050 risk ↓ (pre-empt view)</option>
-              <option value="escalation">Escalation ↓</option>
+              {SHOW_FUTURE_2050 && <option value="future">2050 risk ↓ (pre-empt view)</option>}
+              {SHOW_FUTURE_2050 && <option value="escalation">Escalation ↓</option>}
+              <option value="children">Child impact ↓ (UNICEF lens)</option>
             </select>
           </div>
           <div className="flex gap-1">
-            {(["all", "act-now", "pre-empt", "stable"] as const).map((f) => (
+            {(SHOW_FUTURE_2050
+              ? (["all", "act-now", "pre-empt", "stable"] as const)
+              : (["all", "act-now"] as const)
+            ).map((f) => (
               <button
                 key={f}
                 onClick={() => setFilterCls(f)}
@@ -306,22 +336,24 @@ export default function ActionPlanPage() {
         <div className="rounded-lg border border-border/40 bg-muted/20 p-4 mb-5">
           <h1 className="text-base font-bold mb-1">{selectedState} — Administrative Action Summary</h1>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mt-3">
-            <div className="border rounded p-2 text-center">
-              <div className="text-lg font-black text-red-400">{summary.actNow}</div>
-              <div className="text-[10px] text-muted-foreground flex items-center justify-center gap-1"><AlertTriangle className="h-3 w-3" />Act-Now districts</div>
-            </div>
-            <div className="border rounded p-2 text-center">
-              <div className="text-lg font-black text-amber-400">{summary.preEmpt}</div>
-              <div className="text-[10px] text-muted-foreground flex items-center justify-center gap-1"><TrendingUp className="h-3 w-3" />Pre-empt by 2050</div>
+            <div className="border-2 border-red-500/40 rounded p-2 text-center bg-red-500/5">
+              <div className="text-2xl font-black text-red-400">{fmt(summary.totalChildren)}</div>
+              <div className="text-[10px] text-muted-foreground font-semibold">Children under 5 at risk</div>
             </div>
             <div className="border rounded p-2 text-center">
               <div className="text-lg font-black">{fmt(summary.totalPop)}</div>
               <div className="text-[10px] text-muted-foreground">People at risk</div>
             </div>
             <div className="border rounded p-2 text-center">
-              <div className="text-lg font-black">{fmt(summary.totalChildren)}</div>
-              <div className="text-[10px] text-muted-foreground">Children under 5 at risk</div>
+              <div className="text-lg font-black text-red-400">{summary.actNow}</div>
+              <div className="text-[10px] text-muted-foreground flex items-center justify-center gap-1"><AlertTriangle className="h-3 w-3" />High-risk districts</div>
             </div>
+            {SHOW_FUTURE_2050 && (
+              <div className="border rounded p-2 text-center">
+                <div className="text-lg font-black text-amber-400">{summary.preEmpt}</div>
+                <div className="text-[10px] text-muted-foreground flex items-center justify-center gap-1"><TrendingUp className="h-3 w-3" />Pre-empt by 2050</div>
+              </div>
+            )}
           </div>
           {summary.top && (
             <p className="text-xs text-muted-foreground mt-3">
@@ -341,12 +373,16 @@ export default function ActionPlanPage() {
                   <th className="py-2 px-2 text-right cursor-pointer hover:text-foreground" onClick={() => setSortBy("present")}>
                     Present {sortBy === "present" && "↓"}
                   </th>
-                  <th className="py-2 px-2 text-right cursor-pointer hover:text-foreground" onClick={() => setSortBy("future")}>
-                    2050 SSP5 {sortBy === "future" && "↓"}
-                  </th>
-                  <th className="py-2 px-2 text-right cursor-pointer hover:text-foreground" onClick={() => setSortBy("escalation")}>
-                    Δ {sortBy === "escalation" && "↓"}
-                  </th>
+                  {SHOW_FUTURE_2050 && (
+                    <th className="py-2 px-2 text-right cursor-pointer hover:text-foreground" onClick={() => setSortBy("future")}>
+                      2050 SSP5 {sortBy === "future" && "↓"}
+                    </th>
+                  )}
+                  {SHOW_FUTURE_2050 && (
+                    <th className="py-2 px-2 text-right cursor-pointer hover:text-foreground" onClick={() => setSortBy("escalation")}>
+                      Δ {sortBy === "escalation" && "↓"}
+                    </th>
+                  )}
                   <th className="py-2 px-2 text-right">People at risk</th>
                   <th className="py-2 px-2 text-right">Children &lt;5</th>
                   <th className="py-2 px-2">Status</th>
@@ -368,11 +404,17 @@ export default function ActionPlanPage() {
 
         {/* Print legend */}
         <div className="mt-4 text-[10px] text-muted-foreground print:block hidden">
-          🔴 Act Now: present risk ≥ 5 · 🟡 Pre-empt: projected to reach risk ≥ 5 by 2050 (SSP5-8.5) · 🟢 Stable: low present and projected risk.<br/>
-          Data: ClimResWASH platform · Risk per IPCC AR6 framework · Future projections from CMIP6/NEX-GDDP (SSP5-8.5, 2050 horizon).
+          {SHOW_FUTURE_2050
+            ? <>🔴 Act Now: present risk ≥ 5 · 🟡 Pre-empt: projected to reach risk ≥ 5 by 2050 (SSP5-8.5) · 🟢 Stable: low present and projected risk.<br/>
+               ⚠️ shift = dominant hazard changes by 2050 — investment strategy must account for the transition.<br/></>
+            : <>🔴 High-risk districts: present risk ≥ 5 · 🟢 Monitor: present risk &lt; 5.<br/></>
+          }
+          Risk per ClimResWASH methodology, validated against observed health outcomes (heat–anaemia r=0.41, NFHS-5) and 5 historical disaster events. See methodology report at /methodology.<br/>
+          Data: NFHS-5 (WASH), ERA5/CHIRPS (climate), WorldPop (population) · Generated {new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
         </div>
         <div className="mt-4 text-[10px] text-muted-foreground print:hidden">
-          Click any row to expand district action details. Sort columns by clicking headers.
+          Click any row to expand district action details. Sort by "Child impact" for the UNICEF lens (risk × children-under-5 weighting).
+          {SHOW_FUTURE_2050 && " Violet \"shift\" badge = dominant hazard changes by 2050."}
         </div>
       </div>
     </div>

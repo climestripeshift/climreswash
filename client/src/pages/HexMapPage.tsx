@@ -90,7 +90,7 @@ const ATTR_RAMP: Record<string, [number,number,number][]> = {
   elevation_mean: VIRIDIS, ndvi_mean: GREENS, population: ORANGES,
   hazard_count_5: RISK, hazard_count_3: RISK,
   pop_children_under_5: ORANGES, pop_elderly_60plus: ORANGES, pop_women_15_49: ORANGES,
-  flood_risk: BLUES, heat_risk: ORANGES, cyclone_risk: RISK, drought_risk: ORANGES,
+  flood_risk: BLUES, heat_risk: ORANGES, heat_peak_score: ORANGES, cyclone_risk: RISK, drought_risk: ORANGES,
   wetbulb_risk: BLUES, landslide_risk: VIRIDIS, coldwave_risk: BLUES,
   flashflood_risk: BLUES, sealevel_risk: BLUES, fire_risk: ORANGES,
   hex_risk: RISK, cascade_count: RISK,
@@ -113,7 +113,7 @@ const FIXED_DOMAIN: Record<string, [number, number]> = {
   hazard_count_5: [0, 5], hazard_count_3: [0, 6],
   pop_children_under_5: [0, 500000], pop_elderly_60plus: [0, 500000], pop_women_15_49: [0, 1500000],
   elevation_mean: [0, 5000], ndvi_mean: [0, 0.8], land_use: [0, 1],
-  flood_risk: [0, 10], heat_risk: [0, 10], cyclone_risk: [0, 10],
+  flood_risk: [0, 10], heat_risk: [0, 3], heat_peak_score: [0, 10], cyclone_risk: [0, 10],
   drought_risk: [0, 10], wetbulb_risk: [0, 10], landslide_risk: [0, 10],
   coldwave_risk: [0, 10], flashflood_risk: [0, 10], sealevel_risk: [0, 10],
   fire_risk: [0, 10],
@@ -407,6 +407,7 @@ function FilterSidebar({
   crossFilters, onCrossFiltersChange, matchCount, totalCount,
   features,
   showDistricts, onShowDistrictsChange, showStates, onShowStatesChange,
+  heatViewMode, onHeatViewModeChange,
 }: {
   collapsed: boolean; onToggle: () => void;
   attr: string; onAttrChange: (k: string) => void;
@@ -417,6 +418,7 @@ function FilterSidebar({
   features: any[];
   showDistricts: boolean; onShowDistrictsChange: (v: boolean) => void;
   showStates: boolean; onShowStatesChange: (v: boolean) => void;
+  heatViewMode: "annual" | "peak"; onHeatViewModeChange: (m: "annual" | "peak") => void;
 }) {
   const [openCats, setOpenCats] = useState<Record<string, boolean>>({ overview: true });
 
@@ -628,6 +630,30 @@ function FilterSidebar({
         </button>
       </div>
 
+      {/* Heat view toggle — only shown when Heatwave layer is active */}
+      {attr === "heat_risk" && (
+        <div className="px-3 py-2 border-t border-border/30 bg-amber-500/5">
+          <div className="text-[10px] text-muted-foreground mb-1.5">🔥 Heat view</div>
+          <div className="flex gap-1">
+            <button
+              onClick={() => onHeatViewModeChange("annual")}
+              className={`flex-1 py-1 text-[10px] rounded transition-colors ${heatViewMode === "annual" ? "bg-amber-500/25 text-amber-300 font-semibold" : "bg-muted/30 text-muted-foreground hover:bg-muted/50"}`}
+            >
+              Annual
+            </button>
+            <button
+              onClick={() => onHeatViewModeChange("peak")}
+              className={`flex-1 py-1 text-[10px] rounded transition-colors ${heatViewMode === "peak" ? "bg-amber-500/25 text-amber-300 font-semibold" : "bg-muted/30 text-muted-foreground hover:bg-muted/50"}`}
+            >
+              Peak season
+            </button>
+          </div>
+          <div className="text-[9px] text-muted-foreground mt-1">
+            {heatViewMode === "annual" ? "Avg risk across the year (domain 0–3)" : "Risk in the hottest month (domain 0–10)"}
+          </div>
+        </div>
+      )}
+
       {/* Active layer info */}
       {(() => {
         const active = ATTRIBUTES.find((a) => a.key === attr);
@@ -836,8 +862,12 @@ function HexInfoPanel({ props, ranking, confidence, onClose }: {
 
 // ── Legend ─────────────────────────────────────────────────────────────────────
 
+const LEGEND_OVERRIDES: Record<string, { icon: string; label: string }> = {
+  heat_peak_score: { icon: "🔥", label: "Heatwave — Peak season" },
+};
+
 function Legend({ attr }: { attr: string }) {
-  const meta = ATTRIBUTES.find((a) => a.key === attr);
+  const meta = ATTRIBUTES.find((a) => a.key === attr) ?? LEGEND_OVERRIDES[attr];
   if (!meta) return null;
 
   if (attr === "land_use") {
@@ -1057,6 +1087,8 @@ export default function HexMapPage() {
   const presentMode = urlParams.get("present") === "1";
 
   const [attr, setAttr]                       = useState("hex_risk");
+  const [heatViewMode, setHeatViewMode]       = useState<"annual" | "peak">("annual");
+  const effectiveAttr = attr === "heat_risk" && heatViewMode === "peak" ? "heat_peak_score" : attr;
   const [selectedState, setSelectedState]     = useState(initialState);
   const [selectedDistrict, setSelectedDistrict] = useState(initialDistrict);
   const [clickedHex, setClickedHex]           = useState<any | null>(null);
@@ -1168,6 +1200,7 @@ export default function HexMapPage() {
         features={features}
         showDistricts={showDistricts} onShowDistrictsChange={setShowDistricts}
         showStates={showStates} onShowStatesChange={setShowStates}
+        heatViewMode={heatViewMode} onHeatViewModeChange={setHeatViewMode}
         matchCount={(() => {
           if (!crossFilters.length || !features.length) return features.length;
           return features.filter((f: any) => crossFilters.every((cf) => {
@@ -1205,7 +1238,7 @@ export default function HexMapPage() {
               <AlertTriangle className="h-5 w-5" /> Failed to load data
             </div>
           ) : (
-            <HexMap geoData={hexQ.data} attr={attr} selectedState={selectedState}
+            <HexMap geoData={hexQ.data} attr={effectiveAttr} selectedState={selectedState}
               selectedDistrict={selectedDistrict} crossFilters={crossFilters}
               mapRef={mapRef} onHexClick={setClickedHex}
               showDistricts={showDistricts} showStates={showStates} />
@@ -1228,7 +1261,7 @@ export default function HexMapPage() {
           {/* Legend */}
           {features.length > 0 && (
             <div className="absolute bottom-8 left-3 z-[800]">
-              <Legend attr={attr} />
+              <Legend attr={effectiveAttr} />
             </div>
           )}
         </div>

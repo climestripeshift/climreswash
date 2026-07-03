@@ -5,6 +5,7 @@ import { ArrowLeft, AlertTriangle, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { SHOW_FUTURE_2050 } from "@/lib/featureFlags";
 
 interface GapEntry {
   rank: number; district: string; state: string;
@@ -55,6 +56,13 @@ export default function GapAnalysisPage() {
 
   return (
     <div className="h-screen flex flex-col bg-background text-foreground overflow-hidden">
+      {/* Preliminary banner */}
+      {!SHOW_FUTURE_2050 && (
+        <div className="bg-amber-500/10 border-b border-amber-500/30 px-4 py-2 flex items-center gap-2 text-xs text-amber-400 shrink-0">
+          <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+          <span><b>Preliminary projections — not for planning use.</b> The 2050 future layer is under revision (CMIP6 pipeline recalibration in progress). Present-day risk data is validated. See <Link href="/methodology" className="underline">methodology report</Link>.</span>
+        </div>
+      )}
       {/* Header */}
       <header className="border-b border-border/40 bg-background/95 backdrop-blur z-50 shrink-0">
         <div className="h-12 px-4 flex items-center gap-3">

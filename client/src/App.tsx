@@ -21,11 +21,13 @@ import StateSummaryPage from "@/pages/StateSummaryPage";
 import GapAnalysisPage from "@/pages/GapAnalysisPage";
 import MethodologyPage from "@/pages/MethodologyPage";
 import ActionPlanPage from "@/pages/ActionPlanPage";
+import SimulatorPage from "@/pages/SimulatorPage";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={HomePage} />
+      <Route path="/simulator" component={SimulatorPage} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/live-data" component={LiveDataPage} />
       <Route path="/stress-test" component={StressTestPage} />

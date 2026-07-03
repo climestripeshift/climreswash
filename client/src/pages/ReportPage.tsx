@@ -3,6 +3,7 @@ import { useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Printer } from "lucide-react";
 import { technologyContent } from "@/lib/technologyContent";
+import { SHOW_FUTURE_2050 } from "@/lib/featureFlags";
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -269,7 +270,7 @@ export default function ReportPage() {
           <MetricCard label="Children <5" value={fmt(report.children)} />
           <MetricCard label="Elderly 60+" value={fmt(report.elderly)} />
           <MetricCard label="Avg Risk" value={`${report.avgRisk.toFixed(1)}/10`} color={riskColor(report.avgRisk)} />
-          {gap
+          {SHOW_FUTURE_2050 && gap
             ? <MetricCard label="2050 Risk (SSP5)" value={`${gap.future_risk_ssp585_2050?.toFixed(1) ?? "—"}/10`}
                 sub={gap.risk_escalation != null ? `${gap.risk_escalation >= 0 ? "+" : ""}${gap.risk_escalation.toFixed(1)} escalation` : undefined}
                 color={gap.future_risk_ssp585_2050 >= 5 ? "#dc2626" : "#16a34a"} />
