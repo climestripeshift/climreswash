@@ -34,7 +34,8 @@ const CATEGORIES = [
 
 const ATTRIBUTES: AttrDef[] = [
   // Overview
-  { key: "hex_risk",      label: "Max Risk (all hazards)", icon: "⚠️",  category: "overview", desc: "Highest risk across all 10 hazard channels + cascade amplifiers" },
+  { key: "hex_risk",       label: "Max Risk (all hazards)", icon: "⚠️",  category: "overview", desc: "Highest risk across all 10 hazard channels + cascade amplifiers" },
+  { key: "data_confidence", label: "Data Confidence",       icon: "🎯",  category: "overview", desc: "Data-provenance confidence: HIGH = real validated data · MEDIUM = real but coarse · LOW = heuristic/absent" },
   { key: "population",    label: "Total Population",       icon: "👥",  category: "overview", desc: "WorldPop 2020 UN-adjusted 100m resolution" },
   { key: "hazard_count_5", label: "Hazards ≥5 (CCRR)",     icon: "🎯",  category: "overview", desc: "Number of hazards scoring ≥5.0 — UNICEF CCRR threshold" },
   { key: "hazard_count_3", label: "Hazards ≥3 (moderate)", icon: "🎯",  category: "overview", desc: "Number of hazards scoring ≥3.0 — moderate threshold" },
@@ -93,7 +94,7 @@ const ATTR_RAMP: Record<string, [number,number,number][]> = {
   flood_risk: BLUES, heat_risk: ORANGES, heat_peak_score: ORANGES, cyclone_risk: RISK, drought_risk: ORANGES,
   wetbulb_risk: BLUES, landslide_risk: VIRIDIS, coldwave_risk: BLUES,
   flashflood_risk: BLUES, sealevel_risk: BLUES, fire_risk: ORANGES,
-  hex_risk: RISK, cascade_count: RISK,
+  hex_risk: RISK, cascade_count: RISK, data_confidence: [[239,68,68],[234,179,8],[22,163,74]],
   adaptive_capacity: GREENS,
   pollution_risk: RISK, pm25_annual: ORANGES,
   total_burden_days: ORANGES, multi_hazard_days: RISK,
@@ -109,7 +110,7 @@ const LAND_USE_COLORS: Record<string, string> = {
 
 // Fixed absolute domains — green always means safe, red always means danger
 const FIXED_DOMAIN: Record<string, [number, number]> = {
-  hex_risk: [0, 10], population: [0, 5000000], cascade_count: [0, 4],
+  hex_risk: [0, 10], population: [0, 5000000], cascade_count: [0, 4], data_confidence: [0, 1],
   hazard_count_5: [0, 5], hazard_count_3: [0, 6],
   pop_children_under_5: [0, 500000], pop_elderly_60plus: [0, 500000], pop_women_15_49: [0, 1500000],
   elevation_mean: [0, 5000], ndvi_mean: [0, 0.8], land_use: [0, 1],
@@ -136,8 +137,53 @@ function gradientColor(ramp: [number,number,number][], t: number) {
   return lerp3(ramp[lo], ramp[hi], s - lo);
 }
 
+// ── Data-provenance confidence ────────────────────────────────────────────────
+
+type ConfLevel = 'high' | 'medium' | 'low';
+
+const HAZARD_CONFIDENCE: Record<string, { level: ConfLevel; reason: string }> = {
+  flood_risk:      { level: 'high',   reason: 'CHIRPS/ERA5 rainfall · IMD intensity table · SRTM terrain · backtest-validated' },
+  drought_risk:    { level: 'high',   reason: 'MODIS NDVI 2023 · ESA land cover · backtest-validated (Marathwada 2015, 7.54/10)' },
+  heat_risk:       { level: 'high',   reason: 'ERA5 temperature · NFHS-5 adaptive capacity · backtest-validated (Delhi 2023, 6.88/10)' },
+  wetbulb_risk:    { level: 'high',   reason: 'ERA5 temp + humidity · Stull 2011 wet-bulb formula · physiological threshold validated' },
+  pollution_risk:  { level: 'high',   reason: 'WashU satellite PM2.5 2021–2023 · real annual mean concentrations' },
+  coldwave_risk:   { level: 'medium', reason: 'Elevation + latitude climatology proxy · no historical event backtest' },
+  flashflood_risk: { level: 'medium', reason: 'SRTM slope (H3 neighbor differencing) + monsoon trigger · slope approximate' },
+  sealevel_risk:   { level: 'medium', reason: 'SRTM elevation + coastal distance · simplified bathtub inundation model' },
+  fire_risk:       { level: 'medium', reason: 'ESA land cover + aridity index · no FIRMS fire-history validation' },
+  cyclone_risk:    { level: 'low',    reason: 'Coastal distance heuristic · no IBTrACS historical track data used' },
+  landslide_risk:  { level: 'low',    reason: 'Deforestation proxy · slope_deg absent (national default 3° assumed)' },
+};
+
+const HAZARD_KEYS = Object.keys(HAZARD_CONFIDENCE);
+
+function getHexDataConfidence(props: any): { level: ConfLevel; reason: string; dominant: string } {
+  const TIER: Record<ConfLevel, number> = { high: 2, medium: 1, low: 0 };
+  const THRESHOLD = 1.5; // only consider hazards that meaningfully score for this hex
+
+  let level: ConfLevel = 'high';
+  let domKey = 'flood_risk', domVal = 0;
+  let worstKey = 'flood_risk';
+
+  for (const k of HAZARD_KEYS) {
+    const v = props[k] ?? 0;
+    if (v > domVal) { domVal = v; domKey = k; }
+    if (v >= THRESHOLD) {
+      const tier = TIER[HAZARD_CONFIDENCE[k].level];
+      if (tier < TIER[level]) { level = HAZARD_CONFIDENCE[k].level; worstKey = k; }
+    }
+  }
+
+  const reason = HAZARD_CONFIDENCE[worstKey]?.reason ?? 'Data quality unspecified';
+  return { level, reason, dominant: domKey };
+}
+
 function hexColor(props: any, attr: string) {
   if (attr === "land_use") return LAND_USE_COLORS[props.land_use] ?? "#94a3b8";
+  if (attr === "data_confidence") {
+    const { level } = getHexDataConfidence(props);
+    return level === 'high' ? '#22c55e' : level === 'medium' ? '#f59e0b' : '#ef4444';
+  }
   const val = props[attr] ?? 0;
   const [lo, hi] = FIXED_DOMAIN[attr] ?? [0, 10];
   const t = hi > lo ? (val - lo) / (hi - lo) : 0;
@@ -794,6 +840,24 @@ function HexInfoPanel({ props, ranking, confidence, onClose }: {
               🔗 {props.cascade_count} WASH cascade{props.cascade_count > 1 ? "s" : ""} active
             </div>
           )}
+          {/* Data-provenance confidence badge */}
+          {(() => {
+            const { level, reason, dominant } = getHexDataConfidence(props);
+            const col = level === 'high' ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10'
+              : level === 'medium' ? 'text-amber-400 border-amber-500/30 bg-amber-500/10'
+              : 'text-red-400 border-red-500/30 bg-red-500/10';
+            const label = level === 'high' ? 'High' : level === 'medium' ? 'Medium' : 'Low';
+            return (
+              <div className="mt-2 pt-2 border-t border-border/30 space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[9px] text-muted-foreground">Data confidence</span>
+                  <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full border ${col}`}>{label}</span>
+                </div>
+                <p className="text-[9px] text-muted-foreground/70 leading-snug">{reason}</p>
+                <p className="text-[9px] text-muted-foreground/50">Dominant: {RISK_LABEL[dominant] ?? dominant}</p>
+              </div>
+            );
+          })()}
           <div className="mt-1 text-[9px] text-muted-foreground/50 truncate">{props.h3_id}</div>
         </div>
       )}
@@ -882,6 +946,21 @@ function Legend({ attr }: { attr: string }) {
             </div>
           ))}
         </div>
+      </div>
+    );
+  }
+
+  if (attr === "data_confidence") {
+    return (
+      <div className="bg-background/90 backdrop-blur border border-border/40 rounded-lg p-2.5 shadow-lg w-44">
+        <p className="text-[10px] font-semibold mb-1.5">🎯 Data Confidence</p>
+        {([['high','#22c55e','Real validated data'],['medium','#f59e0b','Real but coarse/approx.'],['low','#ef4444','Heuristic / absent']] as const).map(([lvl,col,desc]) => (
+          <div key={lvl} className="flex items-center gap-1.5 mb-0.5">
+            <div className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ background: col }} />
+            <span className="text-[9px] capitalize font-medium" style={{ color: col }}>{lvl}</span>
+            <span className="text-[9px] text-muted-foreground">— {desc}</span>
+          </div>
+        ))}
       </div>
     );
   }
