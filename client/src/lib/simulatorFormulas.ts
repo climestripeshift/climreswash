@@ -129,8 +129,8 @@ export interface SimInputs {
   rainfall_mm: number;
   tmax_c: number;
   hot_days: number;
-  spi: number;
   rh_pct: number;
+  // spi removed — drought is now derived per-hex from rainfall deficit vs local NDVI-based normal
 }
 
 export interface HexProp {
@@ -186,10 +186,15 @@ export function reScoreHex(hex: HexProp, inputs: SimInputs): number {
   const heatHazard = heatwaveScore(inputs.tmax_c, 40, inputs.hot_days, lu.built_pct, treePct, DEFAULT_DIST_WATER);
   const heatRisk   = computeRisk(heatHazard, exp, heatSens, ac);
 
-  // Drought — terrain-adaptive sensitivity (aligns to backtest_events.py:184 validated formula)
-  // Live engine (join_hex_districts.py:330) also uses this formula + GW stress; we omit GW here.
+  // Drought — per-hex deficit → SPI, then terrain-adaptive sensitivity
+  // rain_normal proxied from NDVI (5–55 mm/day): same slider value means deficit in dry regions,
+  // surplus in wet ones. Drought only fires on actual deficit (negative SPI).
+  const rainNormal = 5 + hex.ndvi_mean * 50;
+  const spiFromRain = Math.max(-3, Math.min(3, (inputs.rainfall_mm / rainNormal - 1) / 0.4));
   const droughtSens = Math.min(1.0, 0.5 + 0.3 * (1 - hex.ndvi_mean) + 0.2 * (lu.sand_pct / 100));
-  const droughtRisk = computeRisk(droughtScore(inputs.spi), exp, droughtSens, ac);
+  const droughtRisk = spiFromRain < 0
+    ? computeRisk(droughtScore(spiFromRain), exp, droughtSens, ac)
+    : 0;
 
   // Wet-bulb (uses tmax_c and rh_pct)
   const wbRisk = computeRisk(wetBulbScore(inputs.tmax_c, inputs.rh_pct), exp, heatSens, ac);
@@ -201,5 +206,7 @@ export function reScoreHex(hex: HexProp, inputs: SimInputs): number {
     hex.coldwave_risk  ?? 0,
   );
 
-  return Math.min(10, Math.max(floodRisk, heatRisk, droughtRisk, wbRisk, passThrough));
+  // Water risk: dominant of flood (high rain) vs drought (low rain) — U-shaped curve
+  const waterRisk = Math.max(floodRisk, droughtRisk);
+  return Math.min(10, Math.max(waterRisk, heatRisk, wbRisk, passThrough));
 }

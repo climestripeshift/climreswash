@@ -42,28 +42,28 @@ function SetupCanvas() {
 
 // ── Presets ───────────────────────────────────────────────────────────────────
 
-const DEFAULT_INPUTS: SimInputs = { rainfall_mm: 20, tmax_c: 36, hot_days: 3, spi: 0, rh_pct: 65 };
+const DEFAULT_INPUTS: SimInputs = { rainfall_mm: 20, tmax_c: 36, hot_days: 3, rh_pct: 65 };
 
 const PRESETS = [
   {
     id: "extremeMonsoon", label: "Extreme Monsoon", icon: "🌧️",
     note: "Kerala 2018 — 130 mm/day flood peak, 92% RH",
-    inputs: { rainfall_mm: 130, tmax_c: 29, hot_days: 1, spi: 0.5, rh_pct: 92 },
+    inputs: { rainfall_mm: 130, tmax_c: 29, hot_days: 1, rh_pct: 92 },
   },
   {
     id: "plus2c", label: "+2°C Warming", icon: "📈",
-    note: "IPCC proxy — summer peak 41°C, moderate drought (SPI −0.5)",
-    inputs: { rainfall_mm: 25, tmax_c: 41, hot_days: 7, spi: -0.5, rh_pct: 70 },
+    note: "IPCC proxy — summer peak 41°C, above-normal rainfall",
+    inputs: { rainfall_mm: 25, tmax_c: 41, hot_days: 7, rh_pct: 70 },
   },
   {
     id: "heatwave2022", label: "2022 Heatwave", icon: "🌡️",
     note: "Delhi 2023 — T_max 47°C, 7 hot days · heat concentrates in dense urban areas",
-    inputs: { rainfall_mm: 20, tmax_c: 47, hot_days: 7, spi: -0.2, rh_pct: 35 },
+    inputs: { rainfall_mm: 20, tmax_c: 47, hot_days: 7, rh_pct: 35 },
   },
   {
     id: "elnino", label: "El Niño Drought", icon: "☀️",
-    note: "Marathwada 2015 — SPI −1.7 (severe drought) · highlights Deccan/AP/Telangana districts",
-    inputs: { rainfall_mm: 10, tmax_c: 39, hot_days: 5, spi: -1.7, rh_pct: 42 },
+    note: "Marathwada 2015 — 11 mm/day (severe deficit) · drought drives Deccan/AP/Telangana",
+    inputs: { rainfall_mm: 11, tmax_c: 39, hot_days: 5, rh_pct: 42 },
   },
 ] as const;
 
@@ -355,13 +355,6 @@ export default function SimulatorPage() {
                 format={v => `${v}d`}
               />
               <Slider
-                label="Drought index (SPI)"
-                min={-3} max={3} step={0.1}
-                value={inputs.spi} baseline={DEFAULT_INPUTS.spi}
-                onChange={setInput("spi")}
-                format={v => v === 0 ? "0" : `${v > 0 ? "+" : ""}${v.toFixed(1)}`}
-              />
-              <Slider
                 label="Humidity (%)"
                 min={20} max={100} step={1}
                 value={inputs.rh_pct} baseline={DEFAULT_INPUTS.rh_pct}
@@ -370,7 +363,7 @@ export default function SimulatorPage() {
               />
 
               <div className="text-[9px] text-muted-foreground/60 space-y-0.5 pt-1">
-                <div>SPI: −3 = severe drought · 0 = normal · +3 = very wet</div>
+                <div>Rainfall drives a U-curve: too low = drought ↑, too high = flood ↑</div>
                 <div>Scores vary per hex by land use, terrain &amp; adaptive capacity</div>
               </div>
             </section>
