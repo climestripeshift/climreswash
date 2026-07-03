@@ -1,8 +1,11 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
+import { MapContainer, TileLayer, GeoJSON, useMap } from "react-leaflet";
+import type { GeoJSON as LeafletGeoJSONLayer } from "leaflet";
+import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { cellToBoundary } from "h3-js";
 import { ArrowLeft, FlaskConical, AlertTriangle, RotateCcw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,7 +30,17 @@ function fmt(n: number) {
   return n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${(n / 1e3).toFixed(0)}K` : `${n}`;
 }
 
-// ── Presets (grounded in V2 event cache) ─────────────────────────────────────
+// ── Canvas renderer (singleton) ───────────────────────────────────────────────
+
+const canvasRenderer = L.canvas({ padding: 0.5 });
+
+function SetupCanvas() {
+  const map = useMap();
+  useEffect(() => { (map as any).options.renderer = canvasRenderer; }, [map]);
+  return null;
+}
+
+// ── Presets ───────────────────────────────────────────────────────────────────
 
 const DEFAULT_INPUTS: SimInputs = { rainfall_mm: 20, tmax_c: 36, hot_days: 3, spi: 0, rh_pct: 65 };
 
@@ -79,7 +92,7 @@ function Slider({
         <span className="text-muted-foreground">{label}</span>
         <span className="font-mono font-bold text-foreground">
           {format(value)}
-          {delta !== 0 && (
+          {Math.abs(delta) > 0.001 && (
             <span className={`ml-1 text-[10px] ${delta > 0 ? "text-orange-400" : "text-blue-400"}`}>
               ({delta > 0 ? "+" : ""}{format(delta)})
             </span>
@@ -88,63 +101,78 @@ function Slider({
       </div>
       <input
         type="range" min={min} max={max} step={step} value={value}
-        onChange={e => onChange(Number(e.target.value))}
-        className="w-full h-1.5 rounded appearance-none cursor-pointer accent-primary bg-muted"
+        onChange={e => onChange(parseFloat(e.target.value))}
+        className="w-full h-1.5 appearance-none rounded-full cursor-pointer
+          bg-muted accent-violet-500"
       />
     </div>
   );
 }
 
-// ── Main page ─────────────────────────────────────────────────────────────────
+// ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function SimulatorPage() {
   const [inputs, setInputs] = useState<SimInputs>(DEFAULT_INPUTS);
   const [activePreset, setActivePreset] = useState<string | null>(null);
-  const [selected, setSelected] = useState<string | null>(null); // district name key
+  const [selected, setSelected] = useState<string | null>(null);
 
-  // Debounced inputs for map/computation
+  // Debounced inputs — 120ms after last slider move
   const [debounced, setDebounced] = useState<SimInputs>(DEFAULT_INPUTS);
   useEffect(() => {
     const t = setTimeout(() => setDebounced(inputs), 120);
     return () => clearTimeout(t);
   }, [inputs]);
 
-  // Load data
-  const hexQ = useQuery<HexProp[]>({
-    queryKey: ["hex-props"],
-    queryFn: () => fetch("/data/india_hex_props.json").then(r => r.json()),
-    staleTime: Infinity,
-  });
-  const geoQ = useQuery<any>({
-    queryKey: ["india-geo"],
-    queryFn: () => fetch("/data/india.json").then(r => r.json()),
+  // Load hex props + reconstruct H3 geometry once (canvas-ready GeoJSON)
+  const hexQ = useQuery<{ props: HexProp[]; geoJson: any }>({
+    queryKey: ["hex-props-sim"],
+    queryFn: async () => {
+      const props: HexProp[] = await fetch("/data/india_hex_props.json").then(r => r.json());
+      const features = props.map(p => {
+        const boundary = cellToBoundary(p.h3_id);
+        const coords = boundary.map(([lat, lng]: [number, number]) => [lng, lat]);
+        coords.push(coords[0]);
+        return { type: "Feature", properties: p, geometry: { type: "Polygon", coordinates: [coords] } };
+      });
+      return { props, geoJson: { type: "FeatureCollection", features } };
+    },
     staleTime: Infinity,
   });
 
-  // Aggregate hexes → district-level simulated risks
+  // Per-hex simulated risk (recomputed on slider change)
+  const simScores = useMemo(() => {
+    const hexes = hexQ.data?.props;
+    if (!hexes) return new Map<string, number>();
+    const m = new Map<string, number>();
+    for (const hex of hexes) m.set(hex.h3_id, reScoreHex(hex, debounced));
+    return m;
+  }, [hexQ.data?.props, debounced]);
+
+  // Stable ref so styleFeature never needs to be recreated
+  const simScoresRef = useRef(simScores);
+  simScoresRef.current = simScores;
+
+  // District aggregation (for stats bar + selected district panel)
   const districtMap = useMemo<Map<string, DistrictSim>>(() => {
-    const hexes = hexQ.data;
+    const hexes = hexQ.data?.props;
     if (!hexes) return new Map();
-
     const acc = new Map<string, {
       name: string; state: string;
       simW: number; baseW: number; totalPop: number; totalCh5: number;
     }>();
-
     for (const hex of hexes) {
       const key = hex.district_name.toLowerCase().trim();
       if (!acc.has(key)) {
         acc.set(key, { name: hex.district_name, state: hex.state, simW: 0, baseW: 0, totalPop: 0, totalCh5: 0 });
       }
       const pop = Math.max(hex.population || 0, 1);
-      const sim = reScoreHex(hex, debounced);
+      const sim = simScores.get(hex.h3_id) ?? 0;
       const e = acc.get(key)!;
       e.simW    += sim * pop;
       e.baseW   += hex.hex_risk * pop;
       e.totalPop += hex.population || 0;
       e.totalCh5 += hex.pop_children_under_5 || 0;
     }
-
     const result = new Map<string, DistrictSim>();
     for (const [key, e] of Array.from(acc.entries())) {
       result.set(key, {
@@ -156,77 +184,78 @@ export default function SimulatorPage() {
       });
     }
     return result;
-  }, [hexQ.data, debounced]);
+  }, [hexQ.data?.props, simScores]);
 
-  // Stats: districts crossing the 5.0 threshold vs stored baseline + elevated (+0.5)
+  // Stats: districts crossing 5.0 threshold vs stored baseline
   const stats = useMemo(() => {
     if (!districtMap.size) return null;
     const all = Array.from(districtMap.values());
     const flipped  = all.filter(d => d.baseRisk < 5 && d.simRisk >= 5);
-    const dropped  = all.filter(d => d.baseRisk >= 5 && d.simRisk < 5);
     const elevated = all.filter(d => d.simRisk > d.baseRisk + 0.5);
     return {
-      flippedCount:  flipped.length,
-      droppedCount:  dropped.length,
-      elevatedCount: elevated.length,
-      addlPeople: flipped.reduce((s, d) => s + d.totalPop, 0),
-      addlCh5:    flipped.reduce((s, d) => s + d.totalCh5, 0),
+      flippedCount:   flipped.length,
+      elevatedCount:  elevated.length,
+      addlPeople:     flipped.reduce((s, d) => s + d.totalPop, 0),
+      addlCh5:        flipped.reduce((s, d) => s + d.totalCh5, 0),
       elevatedPeople: elevated.reduce((s, d) => s + d.totalPop, 0),
     };
   }, [districtMap]);
 
-  // Map style + interaction (recreated when districtMap changes)
-  const styleFeature = useCallback((feature: any) => {
-    const key = (feature?.properties?.NAME ?? "").toLowerCase().trim();
-    const d = districtMap.get(key);
-    return {
-      fillColor:   d ? riskColor(d.simRisk) : "#374151",
-      fillOpacity: d ? 0.80 : 0.25,
-      weight:      0.5,
-      color:       "#0f172a",
-      opacity:     0.6,
-    };
-  }, [districtMap]);
+  // Canvas style — truly stable, reads scores from ref
+  const geoJsonRef = useRef<LeafletGeoJSONLayer | null>(null);
 
+  const styleFeature = useCallback((_feature: any) => ({
+    fillColor:   riskColor(simScoresRef.current.get(_feature.properties.h3_id) ?? 0),
+    fillOpacity: 0.78,
+    color:       "#1e293b",
+    weight:      0.3,
+    renderer:    canvasRenderer,
+  }), []); // stable — reads through ref
+
+  // Re-paint hexes in-place on every score update (no GeoJSON remount)
+  useEffect(() => {
+    geoJsonRef.current?.setStyle(styleFeature);
+  }, [simScores, styleFeature]);
+
+  // Hex interaction — stable, tooltip updated live on hover
   const onEachFeature = useCallback((feature: any, layer: any) => {
-    const key = (feature?.properties?.NAME ?? "").toLowerCase().trim();
+    const p = feature.properties;
+    const distKey = (p.district_name ?? "").toLowerCase().trim();
+    layer.bindTooltip("", { sticky: true });
     layer.on({
-      click: () => setSelected(prev => prev === key ? null : key),
+      click: () => setSelected(prev => prev === distKey ? null : distKey),
       mouseover: (e: any) => {
+        const risk = simScoresRef.current.get(p.h3_id) ?? 0;
+        layer.setTooltipContent(
+          `<b>${p.district_name ?? "—"}, ${p.state}</b><br/>Sim risk: ${risk.toFixed(1)} &nbsp; Base: ${p.hex_risk ?? "—"}`
+        );
         e.target.setStyle({ weight: 1.5, fillOpacity: 0.95 });
+        e.target.bringToFront();
       },
       mouseout: (e: any) => {
-        e.target.setStyle({ weight: 0.5, fillOpacity: districtMap.get(key) ? 0.80 : 0.25 });
+        e.target.setStyle({ weight: 0.3, fillOpacity: 0.78 });
       },
     });
-  }, [districtMap]);
+  }, []);
 
-  // Preset handler
+  // Preset / input helpers
   function applyPreset(id: string) {
     const p = PRESETS.find(p => p.id === id);
     if (!p) return;
     setInputs({ ...p.inputs });
     setActivePreset(id);
   }
-
-  function resetInputs() {
-    setInputs(DEFAULT_INPUTS);
-    setActivePreset(null);
-  }
-
+  function resetInputs() { setInputs(DEFAULT_INPUTS); setActivePreset(null); }
   const setInput = (key: keyof SimInputs) => (v: number) => {
     setInputs(prev => ({ ...prev, [key]: v }));
     setActivePreset(null);
   };
 
   const selectedDistrict = selected ? districtMap.get(selected) : null;
-  const isLoading = hexQ.isLoading || geoQ.isLoading;
+  const isLoading = hexQ.isLoading;
   const scenarioLabel = activePreset
     ? PRESETS.find(p => p.id === activePreset)?.label ?? "Custom Scenario"
     : "Custom Scenario";
-
-  // Stable key that changes when debounced inputs change (forces GeoJSON re-mount)
-  const geoKey = JSON.stringify(debounced);
 
   return (
     <div className="h-screen flex flex-col bg-background text-foreground overflow-hidden">
@@ -340,14 +369,13 @@ export default function SimulatorPage() {
                 format={v => `${v}%`}
               />
 
-              {/* Slider legend */}
               <div className="text-[9px] text-muted-foreground/60 space-y-0.5 pt-1">
                 <div>SPI: −3 = severe drought · 0 = normal · +3 = very wet</div>
                 <div>Scores vary per hex by land use, terrain &amp; adaptive capacity</div>
               </div>
             </section>
 
-            {/* Selected district */}
+            {/* Selected district drill-down */}
             {selectedDistrict && (
               <section className="border border-violet-500/30 rounded-lg p-3 bg-violet-500/5 space-y-2">
                 <div className="flex items-start justify-between gap-1">
@@ -425,7 +453,6 @@ export default function SimulatorPage() {
                   </Badge>
                 </div>
 
-                {/* Flipped count */}
                 {stats.flippedCount > 0 ? (
                   <div className="flex items-baseline gap-1.5 shrink-0">
                     <span className="text-xl font-black text-red-400">▲ {stats.flippedCount}</span>
@@ -451,7 +478,6 @@ export default function SimulatorPage() {
                   </>
                 )}
 
-                {/* Elevated count (secondary) */}
                 {stats.elevatedCount > 0 && (
                   <>
                     <div className="h-4 w-px bg-border/50 shrink-0" />
@@ -466,32 +492,37 @@ export default function SimulatorPage() {
             ) : null}
           </div>
 
-          {/* Map */}
+          {/* Map — hex grid, canvas rendered, repainted in-place on slider change */}
           <div className="flex-1 relative">
-            {geoQ.data && (
-              <MapContainer
-                center={[22, 80]}
-                zoom={5}
-                style={{ height: "100%", width: "100%", background: "#0f172a" }}
-                zoomControl={true}
-              >
-                <TileLayer
-                  url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-                  attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-                />
+            <MapContainer
+              center={[22, 80]}
+              zoom={5}
+              style={{ height: "100%", width: "100%", background: "#0f172a" }}
+              scrollWheelZoom
+              maxBounds={[[6, 68], [37, 98]]}
+              minZoom={4}
+              maxZoom={10}
+            >
+              <SetupCanvas />
+              <TileLayer
+                url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+              />
+              {hexQ.data?.geoJson && (
                 <GeoJSON
-                  key={geoKey}
-                  data={geoQ.data}
+                  ref={geoJsonRef}
+                  data={hexQ.data.geoJson}
                   style={styleFeature}
                   onEachFeature={onEachFeature}
                 />
-              </MapContainer>
-            )}
+              )}
+            </MapContainer>
+
             {isLoading && (
               <div className="absolute inset-0 flex items-center justify-center bg-background/60 z-10">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Loader2 className="h-5 w-5 animate-spin text-violet-400" />
-                  Computing risk scores…
+                  Building hex grid…
                 </div>
               </div>
             )}
