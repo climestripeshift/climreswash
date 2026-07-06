@@ -1056,7 +1056,191 @@ function DistrictSummary({ features, district, state }: { features: any[]; distr
 
 // ── Leaflet map ───────────────────────────────────────────────────────────────
 
-function BoundaryLayers({ showDistricts, showStates }: { showDistricts: boolean; showStates: boolean }) {
+// ── Boundary analysis panel ───────────────────────────────────────────────────
+
+const HAZARD_KEYS_LIST = ["flood_risk","heat_risk","cyclone_risk","drought_risk","wetbulb_risk",
+  "landslide_risk","coldwave_risk","flashflood_risk","sealevel_risk","fire_risk","pollution_risk"];
+const HAZARD_ICONS: Record<string, string> = {
+  flood_risk:"🌊", heat_risk:"🔥", cyclone_risk:"🌀", drought_risk:"☀️", wetbulb_risk:"💧",
+  landslide_risk:"🏔️", coldwave_risk:"❄️", flashflood_risk:"⚡", sealevel_risk:"🌊",
+  fire_risk:"🔥", pollution_risk:"🏭",
+};
+
+function BoundaryAnalysisPanel({
+  features, type, name, stateName, onClose,
+}: {
+  features: any[];
+  type: "state" | "district";
+  name: string;
+  stateName: string;
+  onClose: () => void;
+}) {
+  const hexes = useMemo(() => {
+    const props = features.map((f: any) => f.properties);
+    // Normalize for state-name mismatches between GeoJSON (e.g. "Delhi") and hex props (e.g. "NCT of Delhi")
+    const norm = (s: string) => (s || "").toLowerCase().replace(/\s+and\s+/gi, " & ").replace(/[^a-z&\s]/g, "").trim();
+    if (type === "state") {
+      const target = norm(name);
+      return props.filter((p: any) => {
+        const pn = norm(p.state || "");
+        return pn === target || pn.includes(target) || target.includes(pn);
+      });
+    }
+    // District: match by district name; use stateName loosely in case of minor mismatch
+    return props.filter((p: any) => p.district_name === name);
+  }, [features, type, name, stateName]);
+
+  if (!hexes.length) return null;
+
+  const n = hexes.length;
+  const totalPop    = hexes.reduce((s: number, p: any) => s + (p.population || 0), 0);
+  const totalChild  = hexes.reduce((s: number, p: any) => s + (p.pop_children_under_5 || 0), 0);
+  const totalElderly = hexes.reduce((s: number, p: any) => s + (p.pop_elderly_60plus || 0), 0);
+  const avgRisk     = hexes.reduce((s: number, p: any) => s + (p.hex_risk || 0), 0) / n;
+  const maxRisk     = Math.max(...hexes.map((p: any) => p.hex_risk || 0));
+  const cascadeHexes = hexes.filter((p: any) => (p.cascade_count || 0) > 0).length;
+  const avgAC       = hexes.filter((p: any) => p.adaptive_capacity != null)
+    .reduce((s: number, p: any) => s + p.adaptive_capacity, 0) / n;
+
+  const tierCounts = {
+    extreme: hexes.filter((p: any) => (p.hex_risk || 0) >= 7).length,
+    high:    hexes.filter((p: any) => (p.hex_risk || 0) >= 5 && (p.hex_risk || 0) < 7).length,
+    moderate:hexes.filter((p: any) => (p.hex_risk || 0) >= 3 && (p.hex_risk || 0) < 5).length,
+    low:     hexes.filter((p: any) => (p.hex_risk || 0) < 3).length,
+  };
+
+  const hazardAvgs = HAZARD_KEYS_LIST.map((k) => ({
+    key: k,
+    label: RISK_LABEL[k] ?? k.replace("_risk",""),
+    icon: HAZARD_ICONS[k] ?? "⚠️",
+    avg: hexes.reduce((s: number, p: any) => s + (p[k] || 0), 0) / n,
+  })).sort((a, b) => b.avg - a.avg);
+
+  const dominant = hazardAvgs[0];
+  const riskClr = avgRisk >= 7 ? "text-red-500" : avgRisk >= 5 ? "text-orange-400" : avgRisk >= 3 ? "text-amber-400" : "text-emerald-400";
+  const riskLabel = avgRisk >= 7 ? "EXTREME" : avgRisk >= 5 ? "HIGH" : avgRisk >= 3 ? "MODERATE" : "LOW";
+
+  const fmtPop = (v: number) => v >= 1e6 ? `${(v/1e6).toFixed(1)}M` : v >= 1e3 ? `${(v/1e3).toFixed(0)}K` : `${v}`;
+
+  return (
+    <div className="bg-background/95 backdrop-blur border border-border/40 rounded-lg shadow-xl w-72 max-h-[82vh] overflow-y-auto">
+      {/* Header */}
+      <div className="flex items-start justify-between p-3 pb-2 border-b border-border/30">
+        <div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[9px] px-1.5 py-0.5 rounded bg-muted/60 text-muted-foreground uppercase tracking-wide font-semibold">
+              {type === "state" ? "State" : "District"}
+            </span>
+            <span className={`text-[10px] font-bold ${riskClr}`}>{riskLabel}</span>
+          </div>
+          <div className="text-sm font-bold mt-0.5">{name}</div>
+          {type === "district" && <div className="text-[10px] text-muted-foreground">{stateName}</div>}
+          <div className="text-[9px] text-muted-foreground">{n} hexes · {fmtPop(totalPop)} people</div>
+        </div>
+        <button onClick={onClose} className="text-muted-foreground hover:text-foreground ml-2 shrink-0 mt-0.5">
+          <span className="text-xs">✕</span>
+        </button>
+      </div>
+
+      <div className="p-3 space-y-3">
+        {/* Risk summary */}
+        <div>
+          <div className="text-[9px] text-muted-foreground uppercase tracking-wide font-semibold mb-1.5">Risk Profile</div>
+          <div className="grid grid-cols-2 gap-1.5 text-[11px]">
+            <div className="bg-muted/30 rounded p-1.5">
+              <div className="text-muted-foreground text-[9px]">Avg Risk</div>
+              <div className={`font-bold text-base ${riskClr}`}>{avgRisk.toFixed(1)}<span className="text-[9px] text-muted-foreground">/10</span></div>
+            </div>
+            <div className="bg-muted/30 rounded p-1.5">
+              <div className="text-muted-foreground text-[9px]">Peak Risk</div>
+              <div className="font-bold text-base text-red-400">{maxRisk.toFixed(1)}<span className="text-[9px] text-muted-foreground">/10</span></div>
+            </div>
+          </div>
+          {/* Risk tier bar */}
+          <div className="mt-1.5">
+            <div className="flex h-2 rounded-full overflow-hidden">
+              {tierCounts.extreme > 0 && <div className="bg-red-600" style={{ width: `${(tierCounts.extreme/n)*100}%` }} title={`${tierCounts.extreme} extreme`} />}
+              {tierCounts.high > 0 && <div className="bg-orange-400" style={{ width: `${(tierCounts.high/n)*100}%` }} title={`${tierCounts.high} high`} />}
+              {tierCounts.moderate > 0 && <div className="bg-amber-400" style={{ width: `${(tierCounts.moderate/n)*100}%` }} title={`${tierCounts.moderate} moderate`} />}
+              {tierCounts.low > 0 && <div className="bg-emerald-500" style={{ width: `${(tierCounts.low/n)*100}%` }} title={`${tierCounts.low} low`} />}
+            </div>
+            <div className="flex gap-2 mt-1 text-[9px] text-muted-foreground flex-wrap">
+              {tierCounts.extreme > 0 && <span><span className="text-red-500 font-bold">{tierCounts.extreme}</span> extreme</span>}
+              {tierCounts.high > 0 && <span><span className="text-orange-400 font-bold">{tierCounts.high}</span> high</span>}
+              {tierCounts.moderate > 0 && <span><span className="text-amber-400 font-bold">{tierCounts.moderate}</span> moderate</span>}
+              {tierCounts.low > 0 && <span><span className="text-emerald-500 font-bold">{tierCounts.low}</span> low</span>}
+            </div>
+          </div>
+        </div>
+
+        {/* Demographics */}
+        <div>
+          <div className="text-[9px] text-muted-foreground uppercase tracking-wide font-semibold mb-1.5">Population at Risk</div>
+          <div className="space-y-0.5 text-[11px]">
+            <div className="flex justify-between"><span className="text-muted-foreground">👥 Total</span><span className="font-medium">{fmtPop(totalPop)}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">👶 Children &lt;5</span><span className="font-medium">{fmtPop(totalChild)}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">🧓 Elderly 60+</span><span className="font-medium">{fmtPop(totalElderly)}</span></div>
+          </div>
+        </div>
+
+        {/* Dominant hazard */}
+        <div>
+          <div className="text-[9px] text-muted-foreground uppercase tracking-wide font-semibold mb-1.5">Hazard Breakdown (avg)</div>
+          <div className="space-y-1">
+            {hazardAvgs.filter((h) => h.avg > 0.05).map((h) => (
+              <div key={h.key} className="flex items-center gap-1.5 text-[10px]">
+                <span className="w-20 text-muted-foreground truncate">{h.icon} {h.label}</span>
+                <div className="flex-1 h-1.5 bg-muted/40 rounded-full overflow-hidden">
+                  <div className="h-full rounded-full" style={{ width: `${Math.min(100, h.avg * 10)}%`, background: gradientColor(RISK, h.avg / 10) }} />
+                </div>
+                <span className="w-7 text-right font-mono text-[9px]" style={{ color: gradientColor(RISK, h.avg / 10) }}>{h.avg.toFixed(1)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* WASH & capacity */}
+        <div>
+          <div className="text-[9px] text-muted-foreground uppercase tracking-wide font-semibold mb-1.5">Adaptive Capacity</div>
+          <div className="space-y-0.5 text-[11px]">
+            <div className="flex justify-between"><span className="text-muted-foreground">🛡️ Avg AC</span><span className="font-medium">{avgAC.toFixed(2)}</span></div>
+            {cascadeHexes > 0 && (
+              <div className="flex justify-between"><span className="text-red-400">🔗 WASH Cascades</span><span className="text-red-400 font-bold">{cascadeHexes}/{n} hexes</span></div>
+            )}
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-1.5 pt-1 border-t border-border/30">
+          {type === "district" && (
+            <Link href={`/report/${encodeURIComponent(name)}`}
+              className="flex-1 px-2 py-1.5 rounded-md bg-muted/60 text-[10px] text-muted-foreground hover:bg-muted text-center transition-colors">
+              📄 Report
+            </Link>
+          )}
+          <Link href={`/forecast?state=${encodeURIComponent(type === "state" ? name : stateName)}`}
+            className="flex-1 px-2 py-1.5 rounded-md bg-red-600/20 text-[10px] text-red-400 hover:bg-red-600/30 text-center transition-colors">
+            📡 Forecast
+          </Link>
+          <Link href={`/action-plan?state=${encodeURIComponent(type === "state" ? name : stateName)}`}
+            className="flex-1 px-2 py-1.5 rounded-md bg-blue-600/20 text-[10px] text-blue-400 hover:bg-blue-600/30 text-center transition-colors">
+            📋 Actions
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Boundary GeoJSON layers ───────────────────────────────────────────────────
+
+function BoundaryLayers({
+  showDistricts, showStates, onBoundaryClick,
+}: {
+  showDistricts: boolean;
+  showStates: boolean;
+  onBoundaryClick: (type: "state" | "district", name: string, stateName: string) => void;
+}) {
   const districtQ = useQuery<any>({
     queryKey: ["india-districts-boundary"],
     queryFn: () => fetch("/data/india.json").then((r) => r.json()),
@@ -1071,18 +1255,36 @@ function BoundaryLayers({ showDistricts, showStates }: { showDistricts: boolean;
   });
 
   const districtStyle = useCallback(() => ({
-    fillOpacity: 0, color: "#ffffff", weight: 1.5, dashArray: "5 3", opacity: 0.8,
+    fillOpacity: 0.01, color: "#ffffff", weight: 1.5, dashArray: "5 3", opacity: 0.8,
   }), []);
   const stateStyle = useCallback(() => ({
-    fillOpacity: 0, color: "#f59e0b", weight: 2.5,
+    fillOpacity: 0.01, color: "#f59e0b", weight: 2.5,
   }), []);
 
   const onDistrictFeature = useCallback((feature: any, layer: any) => {
-    layer.bindTooltip(`<b>${feature.properties.NAME}</b><br/>${feature.properties.STATE}`, { sticky: true });
-  }, []);
+    const distName = feature.properties.NAME;
+    const stateName = feature.properties.STATE;
+    layer.bindTooltip(
+      `<b>${distName}</b><br/>${stateName}<br/><span style="font-size:9px;color:#9ca3af">Click for district analysis</span>`,
+      { sticky: true }
+    );
+    layer.on("click", (e: any) => {
+      L.DomEvent.stopPropagation(e);
+      onBoundaryClick("district", distName, stateName);
+    });
+  }, [onBoundaryClick]);
+
   const onStateFeature = useCallback((feature: any, layer: any) => {
-    layer.bindTooltip(`<b>${feature.properties.state || feature.properties.STATE}</b>`, { sticky: true });
-  }, []);
+    const stateName = feature.properties.state || feature.properties.STATE || feature.properties.name;
+    layer.bindTooltip(
+      `<b>${stateName}</b><br/><span style="font-size:9px;color:#9ca3af">Click for state analysis</span>`,
+      { sticky: true }
+    );
+    layer.on("click", (e: any) => {
+      L.DomEvent.stopPropagation(e);
+      onBoundaryClick("state", stateName, stateName);
+    });
+  }, [onBoundaryClick]);
 
   return (
     <>
@@ -1100,13 +1302,14 @@ function BoundaryLayers({ showDistricts, showStates }: { showDistricts: boolean;
 
 function HexMap({
   geoData, attr, selectedState, selectedDistrict, crossFilters, mapRef, onHexClick,
-  showDistricts, showStates,
+  showDistricts, showStates, onBoundaryClick,
 }: {
   geoData: any; attr: string; selectedState: string; selectedDistrict: string;
   crossFilters: CrossFilter[];
   mapRef: React.MutableRefObject<LeafletMap | null>;
   onHexClick: (p: any) => void;
   showDistricts: boolean; showStates: boolean;
+  onBoundaryClick: (type: "state" | "district", name: string, stateName: string) => void;
 }) {
   const geoJsonRef = useRef<LeafletGeoJSONLayer | null>(null);
 
@@ -1151,7 +1354,7 @@ function HexMap({
         attribution='&copy; <a href="https://www.openstreetmap.org/">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>' />
       <GeoJSON ref={geoJsonRef} key={`${selectedState}-${selectedDistrict}-${crossFilters.length}-${crossFilters.map(f=>f.key+f.op+f.value).join(',')}`}
         data={filtered} style={styleFeature} onEachFeature={onEachFeature} />
-      <BoundaryLayers showDistricts={showDistricts} showStates={showStates} />
+      <BoundaryLayers showDistricts={showDistricts} showStates={showStates} onBoundaryClick={onBoundaryClick} />
     </MapContainer>
   );
 }
@@ -1171,6 +1374,12 @@ export default function HexMapPage() {
   const [selectedState, setSelectedState]     = useState(initialState);
   const [selectedDistrict, setSelectedDistrict] = useState(initialDistrict);
   const [clickedHex, setClickedHex]           = useState<any | null>(null);
+  const [clickedBoundary, setClickedBoundary] = useState<{ type: "state" | "district"; name: string; stateName: string } | null>(null);
+
+  const handleBoundaryClick = useCallback((type: "state" | "district", name: string, stateName: string) => {
+    setClickedBoundary({ type, name, stateName });
+    setClickedHex(null);
+  }, []);
   const [sidebarOpen, setSidebarOpen]         = useState(!presentMode && window.innerWidth > 768);
   const [crossFilters, setCrossFilters]       = useState<CrossFilter[]>([]);
   const [showDistricts, setShowDistricts]     = useState(false);
@@ -1319,14 +1528,28 @@ export default function HexMapPage() {
           ) : (
             <HexMap geoData={hexQ.data} attr={effectiveAttr} selectedState={selectedState}
               selectedDistrict={selectedDistrict} crossFilters={crossFilters}
-              mapRef={mapRef} onHexClick={setClickedHex}
-              showDistricts={showDistricts} showStates={showStates} />
+              mapRef={mapRef} onHexClick={(p) => { setClickedHex(p); setClickedBoundary(null); }}
+              showDistricts={showDistricts} showStates={showStates}
+              onBoundaryClick={handleBoundaryClick} />
           )}
 
           {/* Clicked hex info */}
           {clickedHex && (
             <div className="absolute top-3 right-3 z-[800]">
               <HexInfoPanel props={clickedHex} ranking={rankByDistrict[clickedHex.district_name] ?? null} confidence={confidenceQ.data?.[clickedHex.h3_id] ?? null} onClose={() => setClickedHex(null)} />
+            </div>
+          )}
+
+          {/* Boundary analysis panel */}
+          {clickedBoundary && (
+            <div className="absolute top-3 right-3 z-[800]">
+              <BoundaryAnalysisPanel
+                features={features}
+                type={clickedBoundary.type}
+                name={clickedBoundary.name}
+                stateName={clickedBoundary.stateName}
+                onClose={() => setClickedBoundary(null)}
+              />
             </div>
           )}
 
