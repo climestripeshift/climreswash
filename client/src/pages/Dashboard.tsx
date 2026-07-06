@@ -1,581 +1,379 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { MapComponent } from "@/components/MapComponent";
-import { Sidebar } from "@/components/Sidebar";
-import { GeographicNavigation } from "@/components/GeographicNavigation";
-import { DistrictData, MapViewMode, Alert, AqiObservation, Intervention, CommunityReport, GeographicLevel, CountryData, StateData, BlockData, WeatherData, MlHazardPrediction, MlTechRecommendation, MlRiskData } from "@/lib/types";
-import { fetchDistrict, transformDistrict } from "@/lib/api";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Settings, AlertTriangle, Bell, X, Wind, ChevronRight, Menu, MapPin, Globe, CloudSun, Loader2 } from "lucide-react";
+import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import { Link } from "wouter";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Badge } from "@/components/ui/badge";
-import { motion, AnimatePresence } from "framer-motion";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import {
+  Grid3X3, AlertTriangle, ArrowLeft, Radio, Activity,
+  Thermometer, Droplets, Wind, MapPin, ChevronRight,
+} from "lucide-react";
 
-const severityColors = {
-  advisory: { bg: 'bg-blue-500/20', border: 'border-blue-500', text: 'text-blue-400', badge: 'bg-blue-500' },
-  watch: { bg: 'bg-yellow-500/20', border: 'border-yellow-500', text: 'text-yellow-400', badge: 'bg-yellow-500' },
-  warning: { bg: 'bg-orange-500/20', border: 'border-orange-500', text: 'text-orange-400', badge: 'bg-orange-500' },
-  emergency: { bg: 'bg-red-500/20', border: 'border-red-500', text: 'text-red-400', badge: 'bg-red-500' }
+import icon from "leaflet/dist/images/marker-icon.png";
+import iconShadow from "leaflet/dist/images/marker-shadow.png";
+L.Marker.prototype.options.icon = L.icon({ iconUrl: icon, shadowUrl: iconShadow, iconSize: [25, 41], iconAnchor: [12, 41] });
+
+type Mode = "HAZARD" | "EXPOSURE" | "VULNERABILITY";
+
+const HAZARD_ICONS: Record<string, React.ReactElement> = {
+  flood: <Droplets className="w-3 h-3" />,
+  heatwave: <Thermometer className="w-3 h-3" />,
+  drought: <Activity className="w-3 h-3" />,
+  coldwave: <Wind className="w-3 h-3" />,
+  cyclone: <Wind className="w-3 h-3" />,
 };
 
-interface GeographicBreadcrumb {
-  level: GeographicLevel;
-  id: string;
-  name: string;
+function scoreToColor(val: number, min: number, max: number): string {
+  const t = Math.max(0, Math.min(1, (val - min) / (max - min)));
+  if (t < 0.25) return "#22c55e";
+  if (t < 0.5) return "#eab308";
+  if (t < 0.75) return "#f97316";
+  return "#ef4444";
 }
 
-function HexGridBanner() {
-  const hexQ = useQuery<any[]>({
-    queryKey: ["hex-props-dashboard"],
-    queryFn: () => fetch("/data/india_hex_props.json").then((r) => r.json()),
-    staleTime: Infinity,
-  });
-  if (!hexQ.data) return null;
-  const props = hexQ.data;
-  const total = props.length;
-  const totalPop = props.reduce((s: number, p: any) => s + (p.population || 0), 0);
-  const avgRisk = props.reduce((s: number, p: any) => s + (p.hex_risk || 0), 0) / total;
-  const highRisk = props.filter((p: any) => (p.hex_risk || 0) >= 5).length;
-  const cascades = props.filter((p: any) => (p.cascade_count || 0) > 0).length;
+const MODE_RANGE: Record<Mode, [number, number]> = {
+  HAZARD: [0.02, 0.52],
+  EXPOSURE: [0.21, 0.58],
+  VULNERABILITY: [0, 1],
+};
+
+const MODE_LABELS: Record<Mode, string> = {
+  HAZARD: "Hazard Index",
+  EXPOSURE: "Exposure Index",
+  VULNERABILITY: "Vulnerability Index",
+};
+
+function KpiBanner({ hexProps }: { hexProps: any[] }) {
+  const total = hexProps.length;
+  const totalPop = hexProps.reduce((s, p) => s + (p.population || 0), 0);
+  const avgRisk = hexProps.reduce((s, p) => s + (p.hex_risk || 0), 0) / total;
+  const critical = hexProps.filter(p => (p.hex_risk || 0) >= 7).length;
+  const high = hexProps.filter(p => (p.hex_risk || 0) >= 5 && (p.hex_risk || 0) < 7).length;
+  const cascades = hexProps.filter(p => (p.cascade_count || 0) > 0).length;
+
+  const kpis = [
+    { label: "Hex cells", value: total.toLocaleString(), color: "text-foreground" },
+    { label: "Population", value: (totalPop / 1e9).toFixed(2) + "B", color: "text-foreground" },
+    { label: "Avg risk", value: avgRisk.toFixed(1) + "/10", color: "text-amber-500" },
+    { label: "Critical (≥7)", value: critical.toLocaleString(), color: "text-red-500" },
+    { label: "High (5–7)", value: high.toLocaleString(), color: "text-orange-400" },
+    { label: "WASH cascades", value: cascades.toLocaleString(), color: "text-violet-400" },
+  ];
+
   return (
-    <div className="w-full bg-emerald-500/10 border-b border-emerald-500/30 px-4 py-1.5">
-      <div className="flex items-center gap-4 text-[11px]">
-        <span className="font-semibold text-emerald-400">📊 Hex Grid Intelligence</span>
-        <span className="text-muted-foreground">{total.toLocaleString()} hexes · {totalPop.toLocaleString()} pop</span>
-        <span className="text-muted-foreground">Avg risk: <b className="text-foreground">{avgRisk.toFixed(1)}/10</b></span>
-        <span className="text-red-400">🔴 {highRisk.toLocaleString()} high-risk hexes</span>
-        <span className="text-amber-400">🔗 {cascades.toLocaleString()} WASH cascades</span>
+    <div className="w-full bg-emerald-500/10 border-b border-emerald-500/30 px-4 py-2">
+      <div className="flex items-center gap-6 flex-wrap">
+        <span className="text-[11px] font-semibold text-emerald-400 shrink-0">National Overview</span>
+        {kpis.map(k => (
+          <div key={k.label} className="flex items-center gap-1.5 text-[11px]">
+            <span className="text-muted-foreground">{k.label}:</span>
+            <span className={`font-semibold ${k.color}`}>{k.value}</span>
+          </div>
+        ))}
         <div className="flex-1" />
-        <Link href="/grid" className="text-emerald-400 hover:text-emerald-300 font-semibold">Open Hex Grid →</Link>
-        <Link href="/forecast" className="text-red-400 hover:text-red-300 font-semibold">Live Forecast →</Link>
+        <Link href="/grid" className="text-emerald-400 hover:text-emerald-300 text-[11px] font-semibold">Hex Grid →</Link>
+        <Link href="/forecast" className="text-red-400 hover:text-red-300 text-[11px] font-semibold">Forecast →</Link>
       </div>
     </div>
   );
 }
 
-export default function Dashboard() {
-  const [mode, setMode] = useState<MapViewMode>('vulnerability');
-  const [selectedDistrict, setSelectedDistrict] = useState<DistrictData | null>(null);
-  const [selectedBlock, setSelectedBlock] = useState<BlockData | null>(null);
-  const [alerts, setAlerts] = useState<Alert[]>([]);
-  const [aqiData, setAqiData] = useState<Record<string, { latest: AqiObservation | null; history: AqiObservation[] }>>({});
-  const [interventions, setInterventions] = useState<Record<string, Intervention[]>>({});
-  const [communityReports, setCommunityReports] = useState<Record<string, CommunityReport[]>>({});
-  const [showAlertBanner, setShowAlertBanner] = useState(true);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  
-  const [currentLevel, setCurrentLevel] = useState<GeographicLevel>('state');
-  const [countryData, setCountryData] = useState<CountryData | null>(null);
-  const [stateData, setStateData] = useState<StateData | null>(null);
-  const [blocks, setBlocks] = useState<BlockData[]>([]);
-  const [allDistricts, setAllDistricts] = useState<DistrictData[]>([]);
-  const [selectedCountryId, setSelectedCountryId] = useState<string>('ALL');
-  const [allCountries, setAllCountries] = useState<CountryData[]>([]);
-  const [weatherLayerActive, setWeatherLayerActive] = useState(false);
-  const [weatherLoading, setWeatherLoading] = useState(false);
-  const [weatherData, setWeatherData] = useState<Map<string, WeatherData>>(new Map());
-  const [prevMode, setPrevMode] = useState<MapViewMode>('vulnerability');
-  const [mlPrediction, setMlPrediction] = useState<MlHazardPrediction | null>(null);
-  const [mlTechRec, setMlTechRec] = useState<MlTechRecommendation | null>(null);
-  const [mlLoading, setMlLoading] = useState(false);
-  const [mlRiskLayerActive, setMlRiskLayerActive] = useState(false);
-  const [mlRiskData, setMlRiskData] = useState<Map<string, MlRiskData>>(new Map());
-  const [mlRiskLoading, setMlRiskLoading] = useState(false);
-
-  useEffect(() => {
-    fetch('/api/countries')
-      .then(res => res.json())
-      .then((data: CountryData[]) => {
-        setAllCountries(data);
-        if (data.length > 0) setCountryData(data[0]);
-      })
-      .catch(err => console.error('Failed to fetch countries:', err));
-
-    fetch('/api/states')
-      .then(res => res.json())
-      .then(data => {
-        if (data.length > 0) setStateData(data[0]);
-      })
-      .catch(err => console.error('Failed to fetch states:', err));
-  }, []);
-
-  // Reload districts when country changes
-  useEffect(() => {
-    const url = selectedCountryId === 'ALL'
-      ? '/api/districts'
-      : `/api/districts?country=${selectedCountryId}`;
-    fetch(url)
-      .then(res => res.json())
-      .then(data => setAllDistricts(data.map(transformDistrict)))
-      .catch(err => console.error('Failed to fetch districts:', err));
-
-    // Update countryData for the selected country
-    if (selectedCountryId !== 'ALL') {
-      const found = allCountries.find(c => c.id === selectedCountryId);
-      if (found) setCountryData(found);
-    } else {
-      setCountryData(null);
-    }
-  }, [selectedCountryId, allCountries]);
-
-  useEffect(() => {
-    fetch('/api/alerts')
-      .then(res => res.json())
-      .then(data => setAlerts(data))
-      .catch(err => console.error('Failed to fetch alerts:', err));
-  }, []);
-
-  // Fetch ML predictions when a district is selected
-  useEffect(() => {
-    if (!selectedDistrict) { setMlPrediction(null); setMlTechRec(null); return; }
-    setMlLoading(true);
-    const id = selectedDistrict.id;
-    Promise.all([
-      fetch(`/api/ml/short-term/${id}`).then(r => r.ok ? r.json() : null).catch(() => null),
-      fetch(`/api/ml/long-term/${id}`).then(r => r.ok ? r.json() : null).catch(() => null),
-    ]).then(([pred, tech]) => {
-      setMlPrediction(pred);
-      setMlTechRec(tech);
-      setMlLoading(false);
-    });
-  }, [selectedDistrict?.id]);
-
-  // Fetch weather layer data when activated or country changes
-  useEffect(() => {
-    if (!weatherLayerActive) return;
-    const country = selectedCountryId === 'ALL' ? 'IND' : selectedCountryId;
-    setWeatherLoading(true);
-    fetch(`/api/weather-layer?country=${country}`)
-      .then(res => res.json())
-      .then((data: WeatherData[]) => {
-        const map = new Map<string, WeatherData>();
-        data.forEach(d => map.set(d.id, d));
-        setWeatherData(map);
-        setWeatherLoading(false);
-      })
-      .catch(err => {
-        console.error('Failed to fetch weather layer:', err);
-        setWeatherLoading(false);
-      });
-  }, [weatherLayerActive, selectedCountryId]);
-
-  const toggleWeatherLayer = useCallback(() => {
-    if (weatherLayerActive) {
-      setWeatherLayerActive(false);
-      setMlRiskLayerActive(false);
-      setMode(prevMode);
-    } else {
-      setPrevMode(mode);
-      setWeatherLayerActive(true);
-      setMlRiskLayerActive(false);
-      setMode('weather');
-    }
-  }, [weatherLayerActive, mode, prevMode]);
-
-  // Fetch ML risk layer for all districts when toggled on or country changes
-  useEffect(() => {
-    if (!mlRiskLayerActive) return;
-    const country = selectedCountryId === 'ALL' ? 'IND' : selectedCountryId;
-    setMlRiskLoading(true);
-    fetch(`/api/ml/country-risk?country=${country}`)
-      .then(res => res.json())
-      .then((items: MlRiskData[]) => {
-        const map = new Map<string, MlRiskData>();
-        items.forEach(d => map.set(d.id, d));
-        setMlRiskData(map);
-        setMlRiskLoading(false);
-      })
-      .catch(err => {
-        console.error('Failed to fetch ML risk layer:', err);
-        setMlRiskLoading(false);
-      });
-  }, [mlRiskLayerActive, selectedCountryId]);
-
-  const toggleMlRiskLayer = useCallback(() => {
-    if (mlRiskLayerActive) {
-      setMlRiskLayerActive(false);
-      setMode(prevMode);
-    } else {
-      setPrevMode(mode);
-      setMlRiskLayerActive(true);
-      setWeatherLayerActive(false);
-      setMode('ml-risk');
-    }
-  }, [mlRiskLayerActive, mode, prevMode]);
-
-  useEffect(() => {
-    if (selectedDistrict) {
-      fetch(`/api/districts/${selectedDistrict.id}/aqi?days=7`)
-        .then(res => res.json())
-        .then(data => {
-          setAqiData(prev => ({
-            ...prev,
-            [selectedDistrict.id]: data
-          }));
-        })
-        .catch(err => console.error('Failed to fetch AQI:', err));
-      
-      fetch(`/api/districts/${selectedDistrict.id}/interventions`)
-        .then(res => res.json())
-        .then(data => {
-          setInterventions(prev => ({
-            ...prev,
-            [selectedDistrict.id]: data
-          }));
-        })
-        .catch(err => console.error('Failed to fetch interventions:', err));
-      
-      fetch(`/api/districts/${selectedDistrict.id}/community-reports`)
-        .then(res => res.json())
-        .then(data => {
-          setCommunityReports(prev => ({
-            ...prev,
-            [selectedDistrict.id]: data
-          }));
-        })
-        .catch(err => console.error('Failed to fetch community reports:', err));
-      
-      fetch(`/api/districts/${selectedDistrict.id}/blocks`)
-        .then(res => res.json())
-        .then(data => setBlocks(data))
-        .catch(err => console.error('Failed to fetch blocks:', err));
-    }
-  }, [selectedDistrict?.id]);
-
-  const breadcrumbs = useMemo<GeographicBreadcrumb[]>(() => {
-    const crumbs: GeographicBreadcrumb[] = [];
-    
-    if (countryData) {
-      crumbs.push({ level: 'country', id: countryData.id, name: countryData.name });
-    }
-    
-    if (stateData && currentLevel !== 'country') {
-      crumbs.push({ level: 'state', id: stateData.id, name: stateData.name });
-    }
-    
-    if (selectedDistrict && (currentLevel === 'district' || currentLevel === 'block')) {
-      crumbs.push({ level: 'district', id: selectedDistrict.id, name: selectedDistrict.name });
-    }
-    
-    if (selectedBlock && currentLevel === 'block') {
-      crumbs.push({ level: 'block', id: selectedBlock.id, name: selectedBlock.name });
-    }
-    
-    return crumbs;
-  }, [countryData, stateData, selectedDistrict, selectedBlock, currentLevel]);
-
-  const handleNavigate = useCallback((level: GeographicLevel, id?: string) => {
-    setCurrentLevel(level);
-    
-    if (level === 'country') {
-      setSelectedDistrict(null);
-      setSelectedBlock(null);
-      setBlocks([]);
-    } else if (level === 'state') {
-      setSelectedDistrict(null);
-      setSelectedBlock(null);
-      setBlocks([]);
-    } else if (level === 'district') {
-      setSelectedBlock(null);
-      if (id && allDistricts.length > 0) {
-        const district = allDistricts.find(d => d.id === id);
-        if (district) {
-          setSelectedDistrict(district);
-          fetchDistrict(id).then(full => {
-            setSelectedDistrict(full);
-          }).catch(() => {});
-        }
-      }
-    } else if (level === 'block' && id) {
-      const block = blocks.find(b => b.id === id);
-      if (block) {
-        setSelectedBlock(block);
-      }
-    }
-  }, [allDistricts, blocks]);
-
-  const handleDistrictSelect = (district: DistrictData | null) => {
-    setSelectedDistrict(district);
-    if (district) {
-      setCurrentLevel('district');
-      fetchDistrict(district.id).then(full => {
-        setSelectedDistrict(full);
-      }).catch(() => {});
-    }
-  };
-
-  const handleBlockSelect = (block: BlockData) => {
-    setSelectedBlock(block);
-    setCurrentLevel('block');
-  };
-
-  const highPriorityAlerts = alerts.filter(a => a.severity === 'emergency' || a.severity === 'warning');
-  const districtAlerts = selectedDistrict 
-    ? alerts.filter(a => a.districtId === selectedDistrict.id)
-    : [];
-  const currentAqi = selectedDistrict ? aqiData[selectedDistrict.id] : null;
-  const districtInterventions = selectedDistrict ? interventions[selectedDistrict.id] || [] : [];
-  const districtCommunityReports = selectedDistrict ? communityReports[selectedDistrict.id] || [] : [];
-
-  const navStats = useMemo(() => {
-    if (currentLevel === 'country' && countryData) {
-      return {
-        activeAlerts: countryData.activeAlerts,
-        criticalAreas: countryData.criticalDistricts,
-        totalPopulation: countryData.population
-      };
-    } else if (currentLevel === 'state' && stateData) {
-      return {
-        activeAlerts: stateData.activeAlerts,
-        criticalAreas: stateData.criticalDistricts,
-        totalPopulation: stateData.population
-      };
-    } else if (currentLevel === 'district' && selectedDistrict) {
-      return {
-        activeAlerts: districtAlerts.length,
-        criticalAreas: selectedDistrict.vulnerabilityScore >= 70 ? 1 : 0,
-        totalPopulation: selectedDistrict.population
-      };
-    } else if (currentLevel === 'block' && selectedBlock) {
-      return {
-        activeAlerts: selectedBlock.activeAlerts,
-        criticalAreas: selectedBlock.vulnerabilityScore >= 70 ? 1 : 0,
-        totalPopulation: selectedBlock.population
-      };
-    }
-    return {};
-  }, [currentLevel, countryData, stateData, selectedDistrict, selectedBlock, districtAlerts]);
-
+function DistrictDetail({ feature, onClose }: { feature: any; onClose: () => void }) {
+  const p = feature.properties;
   return (
-    <div className="h-screen w-full bg-background flex flex-col overflow-hidden relative">
-      
-      <GeographicNavigation
-        currentLevel={currentLevel}
-        breadcrumbs={breadcrumbs}
-        onNavigate={handleNavigate}
-        stats={navStats}
-      />
-
-      <HexGridBanner />
-      
-      <AnimatePresence>
-        {showAlertBanner && highPriorityAlerts.length > 0 && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className={`w-full ${severityColors[highPriorityAlerts[0].severity].bg} border-b ${severityColors[highPriorityAlerts[0].severity].border} relative overflow-hidden`}
-          >
-            <div className="container mx-auto px-4 py-2 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className={`p-1.5 rounded-full ${severityColors[highPriorityAlerts[0].severity].badge} animate-pulse`}>
-                  <AlertTriangle className="h-4 w-4 text-white" />
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className={`${severityColors[highPriorityAlerts[0].severity].text} border-current uppercase text-xs font-bold`}>
-                    {highPriorityAlerts[0].severity}
-                  </Badge>
-                  <span className={`font-medium ${severityColors[highPriorityAlerts[0].severity].text}`}>
-                    {highPriorityAlerts[0].title}
-                  </span>
-                  {highPriorityAlerts.length > 1 && (
-                    <Badge variant="secondary" className="ml-2">
-                      +{highPriorityAlerts.length - 1} more
-                    </Badge>
-                  )}
-                </div>
+    <div className="rounded-lg border border-border bg-card p-3 text-sm">
+      <div className="flex items-start justify-between mb-2">
+        <div>
+          <div className="font-semibold text-foreground">{p.NAME}</div>
+          <div className="text-xs text-muted-foreground">{p.STATE}</div>
+        </div>
+        <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-xs">✕</button>
+      </div>
+      <div className="grid grid-cols-2 gap-2 mt-2">
+        {[
+          { label: "Hazard", val: p.HAZARD, range: MODE_RANGE.HAZARD },
+          { label: "Exposure", val: p.EXPOSURE, range: MODE_RANGE.EXPOSURE },
+          { label: "Vulnerability", val: p.VULNERABILITY, range: MODE_RANGE.VULNERABILITY },
+          { label: "Risk", val: p.RISK, range: [0, 0.09] as [number, number] },
+        ].map(({ label, val, range }) => {
+          const pct = Math.round(((val - range[0]) / (range[1] - range[0])) * 100);
+          return (
+            <div key={label}>
+              <div className="flex justify-between text-[10px] mb-0.5">
+                <span className="text-muted-foreground">{label}</span>
+                <span className="font-mono">{val.toFixed(3)}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className={`${severityColors[highPriorityAlerts[0].severity].text} hover:bg-white/10`}
-                  data-testid="button-view-alerts"
-                >
-                  View All <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-6 w-6"
-                  onClick={() => setShowAlertBanner(false)}
-                  data-testid="button-dismiss-alert"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <div className="flex-1 p-2 sm:p-4 flex flex-col lg:flex-row gap-2 sm:gap-4 overflow-hidden relative">
-        <div className="absolute top-2 right-2 z-[50] flex items-center gap-1 sm:gap-2">
-          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-            <SheetTrigger asChild>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="lg:hidden gap-2"
-                data-testid="button-mobile-menu"
-              >
-                <Menu className="h-4 w-4" />
-                <span className="hidden sm:inline">Menu</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-full sm:w-[400px] p-0 overflow-y-auto">
-              <div className="p-4">
-                <Sidebar 
-                  mode={mode} 
-                  setMode={setMode} 
-                  selectedDistrict={selectedDistrict}
-                  selectedBlock={selectedBlock}
-                  blocks={blocks}
-                  onBlockSelect={handleBlockSelect}
-                  onDistrictSelect={(d) => { handleDistrictSelect(d); setMobileMenuOpen(false); }}
-                  districtAlerts={districtAlerts}
-                  districtAqi={currentAqi}
-                  districtInterventions={districtInterventions}
-                  districtCommunityReports={districtCommunityReports}
-                  currentLevel={currentLevel}
-                  countryData={countryData}
-                  stateData={stateData}
-                  allDistricts={allDistricts}
-                  allAlerts={alerts}
-                  districtWeather={selectedDistrict ? weatherData.get(selectedDistrict.id) ?? null : null}
-                  mlPrediction={mlPrediction}
-                  mlTechRec={mlTechRec}
-                  mlLoading={mlLoading}
+              <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                <div
+                  className="h-full rounded-full"
+                  style={{ width: `${Math.max(2, pct)}%`, background: scoreToColor(val, range[0], range[1]) }}
                 />
               </div>
-            </SheetContent>
-          </Sheet>
-          {alerts.length > 0 && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="gap-1 sm:gap-2 relative px-2 sm:px-3"
-              data-testid="button-alerts-indicator"
-            >
-              <Bell className="h-4 w-4" />
-              <span className="sr-only">Alerts</span>
-              <span className="absolute -top-1 -right-1 h-4 w-4 bg-destructive text-destructive-foreground text-xs rounded-full flex items-center justify-center">
-                {alerts.length}
-              </span>
-            </Button>
-          )}
-          {/* Country Selector */}
-          <div className="flex items-center gap-1">
-            <Globe className="h-4 w-4 text-muted-foreground hidden sm:block" />
-            <Select value={selectedCountryId} onValueChange={setSelectedCountryId}>
-              <SelectTrigger
-                className="h-8 w-[130px] sm:w-[160px] text-xs border-border"
-                data-testid="select-country"
-              >
-                <SelectValue placeholder="Select country" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL" data-testid="option-country-ALL">
-                  🌍 All Countries
-                </SelectItem>
-                {allCountries.map(c => (
-                  <SelectItem key={c.id} value={c.id} data-testid={`option-country-${c.id}`}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            </div>
+          );
+        })}
+      </div>
+      <Link href={`/report/${encodeURIComponent(p.NAME)}`}>
+        <Button size="sm" variant="outline" className="w-full mt-3 text-xs gap-1">
+          <ChevronRight className="w-3 h-3" /> Full Report
+        </Button>
+      </Link>
+    </div>
+  );
+}
+
+function TopStates({ hexProps }: { hexProps: any[] }) {
+  const byState = useMemo(() => {
+    const map: Record<string, number[]> = {};
+    for (const p of hexProps) {
+      const s = p.state || "Unknown";
+      if (!map[s]) map[s] = [];
+      map[s].push(p.hex_risk || 0);
+    }
+    return Object.entries(map)
+      .map(([state, risks]) => ({ state, avg: risks.reduce((a, b) => a + b, 0) / risks.length, count: risks.length }))
+      .sort((a, b) => b.avg - a.avg)
+      .slice(0, 8);
+  }, [hexProps]);
+
+  return (
+    <div>
+      <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Top States by Risk</div>
+      <div className="space-y-1.5">
+        {byState.map(({ state, avg }, i) => (
+          <div key={state} className="flex items-center gap-2 text-xs">
+            <span className="text-muted-foreground w-4 shrink-0">{i + 1}.</span>
+            <span className="flex-1 truncate text-foreground">{state}</span>
+            <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
+              <div className="h-full rounded-full" style={{ width: `${(avg / 10) * 100}%`, background: scoreToColor(avg, 0, 10) }} />
+            </div>
+            <span className="font-mono text-[10px] w-6 text-right" style={{ color: scoreToColor(avg, 0, 10) }}>{avg.toFixed(1)}</span>
           </div>
-          <Button
-            variant={weatherLayerActive ? "default" : "outline"}
-            size="sm"
-            onClick={toggleWeatherLayer}
-            className={`gap-1 sm:gap-2 px-2 sm:px-3 ${weatherLayerActive ? 'bg-sky-500 hover:bg-sky-600 border-sky-500' : ''}`}
-            data-testid="button-weather-layer"
-            title="Toggle Live Weather Layer (Open-Meteo)"
-          >
-            {weatherLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CloudSun className="h-4 w-4" />}
-            <span className="hidden sm:inline">{weatherLayerActive ? 'Weather ON' : 'Live Weather'}</span>
-          </Button>
-          <Button
-            variant={mlRiskLayerActive ? "default" : "outline"}
-            size="sm"
-            onClick={toggleMlRiskLayer}
-            className={`gap-1 sm:gap-2 px-2 sm:px-3 ${mlRiskLayerActive ? 'bg-violet-600 hover:bg-violet-700 border-violet-600' : ''}`}
-            data-testid="button-ml-risk-layer"
-            title="Toggle ML Hazard Risk Layer (all districts)"
-          >
-            {mlRiskLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <span className="text-sm leading-none">🧠</span>}
-            <span className="hidden sm:inline">{mlRiskLayerActive ? 'ML Risk ON' : 'ML Risk'}</span>
-          </Button>
-          <ThemeToggle />
-          <Link href="/admin">
-            <Button variant="outline" size="sm" className="gap-1 sm:gap-2 px-2 sm:px-3" data-testid="link-admin">
-              <Settings className="h-4 w-4" />
-              <span className="hidden sm:inline">Admin</span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AlertsList({ alerts }: { alerts: any[] }) {
+  const top = useMemo(() =>
+    [...alerts].sort((a, b) => b.risk - a.risk).slice(0, 8),
+    [alerts]
+  );
+
+  if (!top.length) return null;
+
+  return (
+    <div>
+      <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-1.5">
+        <Radio className="w-3 h-3 animate-pulse text-red-400" /> Forecast Alerts (7-day)
+      </div>
+      <div className="space-y-1.5">
+        {top.map((a, i) => (
+          <div key={i} className="flex items-center gap-2 text-xs p-1.5 rounded bg-muted/40">
+            <span className="text-muted-foreground">{HAZARD_ICONS[a.hazard] || <AlertTriangle className="w-3 h-3" />}</span>
+            <div className="flex-1 min-w-0">
+              <div className="truncate text-foreground font-medium">{a.district}</div>
+              <div className="text-muted-foreground text-[10px] capitalize">{a.hazard} · Day {a.day}</div>
+            </div>
+            <Badge variant="outline" className="text-[10px] px-1 py-0 shrink-0" style={{ color: scoreToColor(a.risk, 0, 10), borderColor: scoreToColor(a.risk, 0, 10) }}>
+              {a.risk.toFixed(1)}
+            </Badge>
+          </div>
+        ))}
+      </div>
+      <Link href="/forecast" className="flex items-center gap-1 mt-2 text-[11px] text-red-400 hover:text-red-300">
+        All forecasts <ChevronRight className="w-3 h-3" />
+      </Link>
+    </div>
+  );
+}
+
+function IndiaMap({ geoData, mode, onSelect }: { geoData: any; mode: Mode; onSelect: (f: any) => void }) {
+  const geoRef = useRef<L.GeoJSON | null>(null);
+
+  const style = useMemo(() => (feature: any) => ({
+    fillColor: scoreToColor(feature.properties[mode], MODE_RANGE[mode][0], MODE_RANGE[mode][1]),
+    fillOpacity: 0.7,
+    color: "#334155",
+    weight: 0.5,
+  }), [mode]);
+
+  const onEachFeature = useMemo(() => (feature: any, layer: L.Layer) => {
+    (layer as L.Path).on({
+      click: () => onSelect(feature),
+      mouseover: (e) => {
+        const l = e.target as L.Path;
+        l.setStyle({ fillOpacity: 0.9, weight: 1.5, color: "#e2e8f0" });
+      },
+      mouseout: (e) => {
+        geoRef.current?.resetStyle(e.target);
+      },
+    });
+  }, [onSelect]);
+
+  return (
+    <MapContainer
+      center={[22, 80]}
+      zoom={4}
+      className="w-full h-full"
+      scrollWheelZoom={true}
+      zoomControl={true}
+    >
+      <TileLayer
+        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+        attribution='&copy; CartoDB'
+      />
+      {geoData && (
+        <GeoJSON
+          key={mode}
+          data={geoData}
+          style={style}
+          onEachFeature={onEachFeature}
+          ref={geoRef}
+        />
+      )}
+    </MapContainer>
+  );
+}
+
+export default function Dashboard() {
+  const [mode, setMode] = useState<Mode>("HAZARD");
+  const [selected, setSelected] = useState<any | null>(null);
+
+  const hexQ = useQuery<any[]>({
+    queryKey: ["hex-props-dashboard"],
+    queryFn: () => fetch("/data/india_hex_props.json").then(r => r.json()),
+    staleTime: Infinity,
+  });
+
+  const geoQ = useQuery<any>({
+    queryKey: ["india-geojson"],
+    queryFn: () => fetch("/data/india.json").then(r => r.json()),
+    staleTime: Infinity,
+  });
+
+  const forecastQ = useQuery<any>({
+    queryKey: ["forecast-risk"],
+    queryFn: () => fetch("/data/forecast_risk.json").then(r => r.json()),
+    staleTime: Infinity,
+  });
+
+  const alerts = forecastQ.data?.alerts ?? [];
+  const hexProps = hexQ.data ?? [];
+
+  return (
+    <div className="h-screen w-full bg-background flex flex-col overflow-hidden">
+      {/* Top bar */}
+      <div className="flex items-center justify-between px-4 py-2 border-b border-border/50 bg-card/50 backdrop-blur-sm shrink-0">
+        <div className="flex items-center gap-3">
+          <Link href="/">
+            <Button variant="ghost" size="sm" className="h-7 gap-1.5 text-xs">
+              <ArrowLeft className="w-3.5 h-3.5" /> Home
             </Button>
           </Link>
+          <span className="text-sm font-semibold text-foreground">Climate Risk Dashboard</span>
+          <Badge variant="secondary" className="text-[10px]">India · 735 Districts</Badge>
         </div>
+        <div className="flex items-center gap-2">
+          <Link href="/grid">
+            <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs">
+              <Grid3X3 className="w-3.5 h-3.5 text-teal-500" /> Hex Grid
+            </Button>
+          </Link>
+          <Link href="/forecast">
+            <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs">
+              <Radio className="w-3.5 h-3.5 text-red-400 animate-pulse" /> Forecast
+            </Button>
+          </Link>
+          <ThemeToggle />
+        </div>
+      </div>
 
-        {selectedDistrict && (
-          <div className="lg:hidden absolute bottom-4 left-2 right-2 z-[40] bg-background/95 backdrop-blur border rounded-lg p-3 shadow-lg">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-primary" />
-                <span className="font-medium text-sm">{selectedDistrict.name}</span>
-                <Badge variant="secondary" className="text-xs">
-                  Risk: {(selectedDistrict.riskScore ?? 0).toFixed(3)}
-                </Badge>
+      {/* KPI banner */}
+      {hexProps.length > 0 && <KpiBanner hexProps={hexProps} />}
+
+      {/* Main */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Left panel */}
+        <div className="w-72 shrink-0 border-r border-border/50 flex flex-col overflow-y-auto p-3 gap-4 bg-card/30">
+          {/* Mode toggle */}
+          <div>
+            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Map Layer</div>
+            <div className="flex flex-col gap-1">
+              {(["HAZARD", "EXPOSURE", "VULNERABILITY"] as Mode[]).map(m => (
+                <button
+                  key={m}
+                  onClick={() => { setMode(m); setSelected(null); }}
+                  className={`text-left px-3 py-2 rounded-md text-xs font-medium transition-colors ${
+                    mode === m
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted/50 hover:bg-muted text-foreground"
+                  }`}
+                >
+                  {MODE_LABELS[m]}
+                </button>
+              ))}
+            </div>
+            <div className="mt-2 flex items-center gap-1 text-[10px] text-muted-foreground">
+              <div className="flex gap-0.5 items-center">
+                {["#22c55e", "#eab308", "#f97316", "#ef4444"].map(c => (
+                  <div key={c} className="w-5 h-2 rounded-sm" style={{ background: c }} />
+                ))}
               </div>
-              <Button 
-                size="sm" 
-                onClick={() => setMobileMenuOpen(true)}
-                data-testid="button-view-details"
-              >
-                Details
-              </Button>
+              <span>Low → High</span>
             </div>
           </div>
-        )}
 
-        <div className="hidden lg:block">
-          <Sidebar 
-            mode={mode} 
-            setMode={setMode} 
-            selectedDistrict={selectedDistrict}
-            selectedBlock={selectedBlock}
-            blocks={blocks}
-            onBlockSelect={handleBlockSelect}
-            onDistrictSelect={handleDistrictSelect}
-            districtAlerts={districtAlerts}
-            districtAqi={currentAqi}
-            districtInterventions={districtInterventions}
-            districtCommunityReports={districtCommunityReports}
-            currentLevel={currentLevel}
-            countryData={countryData}
-            stateData={stateData}
-            allDistricts={allDistricts}
-            allAlerts={alerts}
-            districtWeather={selectedDistrict ? weatherData.get(selectedDistrict.id) ?? null : null}
-            mlPrediction={mlPrediction}
-            mlTechRec={mlTechRec}
-            mlLoading={mlLoading}
-          />
+          {/* Selected district */}
+          {selected && (
+            <DistrictDetail feature={selected} onClose={() => setSelected(null)} />
+          )}
+
+          {/* Top states (when no district selected) */}
+          {!selected && hexProps.length > 0 && <TopStates hexProps={hexProps} />}
+
+          {/* Alerts */}
+          <AlertsList alerts={alerts} />
+
+          <div className="mt-auto pt-2 border-t border-border/50">
+            <Link href="/simulator">
+              <Button variant="outline" size="sm" className="w-full text-xs gap-1.5">
+                <MapPin className="w-3.5 h-3.5" /> What-If Simulator
+              </Button>
+            </Link>
+          </div>
         </div>
-        <div className="flex-1 h-full min-h-[300px] sm:min-h-[400px]">
-          <MapComponent 
-            mode={mode} 
-            onDistrictSelect={handleDistrictSelect} 
-            selectedDistrictId={selectedDistrict?.id || null}
-            currentLevel={currentLevel}
-            countryId={selectedCountryId}
-            weatherData={weatherLayerActive ? weatherData : undefined}
-            mlRiskData={mlRiskLayerActive ? mlRiskData : undefined}
-            mlRiskLoading={mlRiskLoading}
+
+        {/* Map */}
+        <div className="flex-1 relative">
+          {geoQ.isLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-background/60 z-10 text-sm text-muted-foreground">
+              Loading map…
+            </div>
+          )}
+          <IndiaMap
+            geoData={geoQ.data ?? null}
+            mode={mode}
+            onSelect={setSelected}
           />
+          {/* Mode legend overlay */}
+          <div className="absolute bottom-4 right-4 z-[400] bg-background/90 border border-border rounded-md px-3 py-2 text-xs shadow-lg">
+            <div className="font-semibold text-foreground mb-1">{MODE_LABELS[mode]}</div>
+            <div className="flex items-center gap-1">
+              <div className="flex gap-0.5">
+                {["#22c55e", "#eab308", "#f97316", "#ef4444"].map(c => (
+                  <div key={c} className="w-6 h-2 rounded-sm" style={{ background: c }} />
+                ))}
+              </div>
+            </div>
+            <div className="flex justify-between mt-0.5 text-[10px] text-muted-foreground">
+              <span>Low</span><span>High</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
