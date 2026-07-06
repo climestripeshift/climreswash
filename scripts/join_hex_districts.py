@@ -325,7 +325,13 @@ def main():
         spi_proxy = (ndvi - 0.4) * 3
         if sand_pct > 50:
             spi_proxy -= 0.5
-        drought_sev = drought_score(spi_proxy)
+        drought_sev_ndvi = drought_score(spi_proxy)
+        # Aridity floor: NDVI proxy fails for irrigated arid zones (Thar, Deccan) where
+        # irrigation keeps NDVI high despite chronic water scarcity. Use drought_freq
+        # from climatology raster (fraction of months classified as drought) as a floor.
+        drought_freq_val = min(1.0, max(0.0, drought_days / 365.0)) if drought_days > 0 else 0.0
+        drought_sev_freq = min(10.0, drought_freq_val * 15.0)
+        drought_sev = max(drought_sev_ndvi, drought_sev_freq)
         drought_occ, drought_cf, drought_haz = occ_and_chronic("drought", drought_days, drought_sev)
         drought_sens_base = 0.5 + 0.3 * (1 - ndvi) + 0.2 * (sand_pct / 100)
         drought_sens = min(1.0, drought_sens_base * (1 + GW_WEIGHT * gw_stress))
