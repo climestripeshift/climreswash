@@ -17,7 +17,6 @@ import {
   Globe,
   LineChart,
   BookOpen,
-  Leaf,
   Grid3X3,
   Radio,
   FlaskConical,
@@ -73,8 +72,6 @@ const FEATURES = [
   { icon: <Droplets className="w-5 h-5 text-primary" />, title: "WASH Risk Screening", desc: "Coverage gaps mapped against climate hazards with resilient technology recommendations.", tag: "WASH" },
   { icon: <Banknote className="w-5 h-5 text-primary" />, title: "Investment Modelling", desc: "Per-capita funding needs estimated by hazard score, deficit, and health burden.", tag: "Finance" },
   { icon: <ShieldCheck className="w-5 h-5 text-primary" />, title: "Child Vulnerability", desc: "Children at risk quantified per district, including stunting and malnutrition metrics.", tag: "Children" },
-  { icon: <AlertTriangle className="w-5 h-5 text-primary" />, title: "Climate Risk Map", desc: "Interactive choropleth of 735 districts by Hazard, Exposure, Vulnerability and composite IPCC AR6 risk.", tag: "New", link: "/risk-map", highlight: true },
-  { icon: <Leaf className="w-5 h-5 text-primary" />, title: "Adaptation Planner", desc: "Python-powered compound-risk engine. District-level WASH, DRR, Policy, and Health recommendations.", tag: "Beta", link: "/adapt", highlight: true },
   { icon: <Grid3X3 className="w-5 h-5 text-primary" />, title: "Hex Grid Base Map", desc: "12,705 H3 res-5 hexagons (~252 km² each) coloured by elevation, NDVI, or land use class.", tag: "New", link: "/grid", highlight: true },
   { icon: <Radio className="w-5 h-5 text-primary" />, title: "Forecast Early Warning", desc: "7-day weather forecast × risk formulas = live flood, heat, and wet-bulb alerts at hex resolution.", tag: "Live", link: "/forecast", highlight: true },
   { icon: <FlaskConical className="w-5 h-5 text-primary" />, title: "What-If Simulator", desc: "Adjust rainfall, temperature, or drought index and watch the risk map respond live. Presets: 2022 Heatwave, El Niño, +2°C.", tag: "New", link: "/simulator", highlight: true },
@@ -120,13 +117,7 @@ export default function HomePage() {
               <a href="#impact" className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-primary transition-colors">Impact</a>
               <a href="#platform" className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-primary transition-colors">Platform</a>
               <a href="#methodology" className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-primary transition-colors">Methodology</a>
-              <Link href="/risk-map" className="text-sm font-semibold flex items-center gap-1.5 text-red-400 hover:text-red-300 transition-colors">
-                <AlertTriangle className="w-3.5 h-3.5" /> Risk Map
-              </Link>
-              <Link href="/adapt" className="text-sm font-semibold flex items-center gap-1.5 text-emerald-600 hover:text-emerald-500 transition-colors">
-                <Leaf className="w-3.5 h-3.5" /> Adapt
-              </Link>
-              <Link href="/grid" className="text-sm font-semibold flex items-center gap-1.5 text-teal-500 hover:text-teal-400 transition-colors">
+<Link href="/grid" className="text-sm font-semibold flex items-center gap-1.5 text-teal-500 hover:text-teal-400 transition-colors">
                 <Grid3X3 className="w-3.5 h-3.5" /> Hex Grid
               </Link>
               <Link href="/forecast" className="text-sm font-semibold flex items-center gap-1.5 text-red-500 hover:text-red-400 transition-colors">
