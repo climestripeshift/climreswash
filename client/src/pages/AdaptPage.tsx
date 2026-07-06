@@ -283,9 +283,9 @@ export default function AdaptPage() {
       <header className="border-b border-border/40 bg-background/95 backdrop-blur sticky top-0 z-50">
         <div className="max-w-screen-xl mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/stress-test">
+            <Link href="/simulator">
               <Button variant="ghost" size="sm" className="gap-1.5 text-xs h-8">
-                <ArrowLeft className="h-3.5 w-3.5" /> Stress Test
+                <ArrowLeft className="h-3.5 w-3.5" /> Simulator
               </Button>
             </Link>
             <div className="h-4 w-px bg-border/50" />

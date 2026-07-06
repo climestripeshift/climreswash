@@ -14,7 +14,6 @@ import {
   Users,
   Zap,
   ShieldCheck,
-  Sparkles,
   Globe,
   LineChart,
   BookOpen,
@@ -74,7 +73,6 @@ const FEATURES = [
   { icon: <Droplets className="w-5 h-5 text-primary" />, title: "WASH Risk Screening", desc: "Coverage gaps mapped against climate hazards with resilient technology recommendations.", tag: "WASH" },
   { icon: <Banknote className="w-5 h-5 text-primary" />, title: "Investment Modelling", desc: "Per-capita funding needs estimated by hazard score, deficit, and health burden.", tag: "Finance" },
   { icon: <ShieldCheck className="w-5 h-5 text-primary" />, title: "Child Vulnerability", desc: "Children at risk quantified per district, including stunting and malnutrition metrics.", tag: "Children" },
-  { icon: <Activity className="w-5 h-5 text-primary" />, title: "2050 Stress Test", desc: "AR6-based projections under 3 IPCC scenarios. Ranks districts by deterioration to 2050.", tag: "New", link: "/stress-test", highlight: true },
   { icon: <AlertTriangle className="w-5 h-5 text-primary" />, title: "Climate Risk Map", desc: "Interactive choropleth of 735 districts by Hazard, Exposure, Vulnerability and composite IPCC AR6 risk.", tag: "New", link: "/risk-map", highlight: true },
   { icon: <Leaf className="w-5 h-5 text-primary" />, title: "Adaptation Planner", desc: "Python-powered compound-risk engine. District-level WASH, DRR, Policy, and Health recommendations.", tag: "Beta", link: "/adapt", highlight: true },
   { icon: <Grid3X3 className="w-5 h-5 text-primary" />, title: "Hex Grid Base Map", desc: "12,705 H3 res-5 hexagons (~252 km² each) coloured by elevation, NDVI, or land use class.", tag: "New", link: "/grid", highlight: true },
@@ -122,9 +120,6 @@ export default function HomePage() {
               <a href="#impact" className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-primary transition-colors">Impact</a>
               <a href="#platform" className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-primary transition-colors">Platform</a>
               <a href="#methodology" className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-primary transition-colors">Methodology</a>
-              <Link href="/stress-test" className="text-sm font-semibold flex items-center gap-1.5 text-primary hover:text-primary/80 transition-colors">
-                <Sparkles className="w-3.5 h-3.5" /> 2050 Test
-              </Link>
               <Link href="/risk-map" className="text-sm font-semibold flex items-center gap-1.5 text-red-400 hover:text-red-300 transition-colors">
                 <AlertTriangle className="w-3.5 h-3.5" /> Risk Map
               </Link>

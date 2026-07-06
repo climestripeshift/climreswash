@@ -11,7 +11,6 @@ import AdminDashboard from "@/pages/AdminDashboard";
 import AdminLogin from "@/pages/AdminLogin";
 import TechnologyPage from "@/pages/TechnologyPage";
 import LiveDataPage from "@/pages/LiveDataPage";
-import StressTestPage from "@/pages/StressTestPage";
 import AdaptPage from "@/pages/AdaptPage";
 import RiskMapPage from "@/pages/RiskMapPage";
 import HexMapPage from "@/pages/HexMapPage";
@@ -30,7 +29,6 @@ function Router() {
       <Route path="/simulator" component={SimulatorPage} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/live-data" component={LiveDataPage} />
-      <Route path="/stress-test" component={StressTestPage} />
       <Route path="/adapt" component={AdaptPage} />
       <Route path="/risk-map" component={RiskMapPage} />
       <Route path="/grid" component={HexMapPage} />
