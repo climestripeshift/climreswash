@@ -218,6 +218,12 @@ export default function WashAssessPage() {
     staleTime: Infinity,
   });
 
+  const { data: jjmFhtc } = useQuery<Record<string, any>>({
+    queryKey: ["jjm-district-fhtc"],
+    queryFn: () => fetch("/data/jjm_district_fhtc.json").then(r => r.json()),
+    staleTime: Infinity,
+  });
+
   const { data: hexProps } = useQuery<any[]>({
     queryKey: ["hex-props-wash"],
     queryFn: () => fetch("/data/india_hex_props.json").then(r => r.json()),
@@ -258,6 +264,12 @@ export default function WashAssessPage() {
     if (!sbmToilets || !selectedDistrict) return null;
     return sbmToilets[selectedDistrict.toUpperCase()] ?? null;
   }, [sbmToilets, selectedDistrict]);
+
+  // JJM IMIS district FHTC data (Rajasthan districts for now)
+  const jjmData = useMemo(() => {
+    if (!jjmFhtc || !selectedDistrict) return null;
+    return jjmFhtc[selectedDistrict.toUpperCase()] ?? null;
+  }, [jjmFhtc, selectedDistrict]);
 
   // ─── District selection ───────────────────────────────────────────────────
 
@@ -328,7 +340,8 @@ export default function WashAssessPage() {
 
   // ─── Render ───────────────────────────────────────────────────────────────
 
-  const waterPct = pct("jjm_tap_pct", hexAgg?.water_pct != null ? hexAgg.water_pct : null);
+  // JJM IMIS FHTC% takes priority over NFHS-5 hex data; manual overrides all
+  const waterPct = pct("jjm_tap_pct", jjmData?.fhtc_pct ?? (hexAgg?.water_pct != null ? hexAgg.water_pct : null));
   const sanitPct = pct("toilet_od_pct", null) != null
     ? 100 - parseFloat(manual.toilet_od_pct!)
     : pct("toilet_twin_pit_pct", hexAgg?.sanitation_pct != null ? hexAgg.sanitation_pct : null);
@@ -527,10 +540,22 @@ export default function WashAssessPage() {
                 </div>
               }
             >
-              <StatRow label="Piped water access" value={waterPct?.toFixed(1)} unit="%" source={manual.jjm_tap_pct ? "manual" : "auto"} />
-              <StatRow label="Functional taps" value={manual.jjm_functional_pct} unit="%" source={manual.jjm_functional_pct ? "manual" : undefined} />
-              <StatRow label="Source type" value={manual.jjm_source} source={manual.jjm_source ? "manual" : undefined} />
-              <StatRow label="Last audit" value={manual.jjm_audit_date} source={manual.jjm_audit_date ? "manual" : undefined} />
+              <StatRow label="FHTC coverage" value={waterPct?.toFixed(1)} unit="%" source={manual.jjm_tap_pct ? "manual" : jjmData ? "auto" : "derived"} />
+              {jjmData && !manual.jjm_tap_pct ? (
+                <>
+                  <StatRow label="HH with tap" value={jjmData.hh_with_tap?.toLocaleString("en-IN")} source="auto" />
+                  <StatRow label="Total HH" value={jjmData.total_hh?.toLocaleString("en-IN")} source="auto" />
+                  <StatRow label="Functional taps" value={manual.jjm_functional_pct} unit="%" source={manual.jjm_functional_pct ? "manual" : undefined} />
+                  <StatRow label="Source type" value={manual.jjm_source} source={manual.jjm_source ? "manual" : undefined} />
+                  <p className="text-[10px] text-blue-500/80 mt-1">Source: JJM IMIS (ejalshakti.gov.in) · {jjmData.date}</p>
+                </>
+              ) : (
+                <>
+                  <StatRow label="Functional taps" value={manual.jjm_functional_pct} unit="%" source={manual.jjm_functional_pct ? "manual" : undefined} />
+                  <StatRow label="Source type" value={manual.jjm_source} source={manual.jjm_source ? "manual" : undefined} />
+                  <StatRow label="Last audit" value={manual.jjm_audit_date} source={manual.jjm_audit_date ? "manual" : undefined} />
+                </>
+              )}
             </AssessCard>
 
             {/* 5. Sanitation / Toilets */}

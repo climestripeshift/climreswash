@@ -1,0 +1,6761 @@
+{
+  "AJMER": {
+    "state": "Rajasthan",
+    "district": "Ajmer",
+    "total_hh": 245261,
+    "hh_with_tap": 143760,
+    "fhtc_pct": 58.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "ALWAR": {
+    "state": "Rajasthan",
+    "district": "Alwar",
+    "total_hh": 249883,
+    "hh_with_tap": 160907,
+    "fhtc_pct": 64.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BALOTRA": {
+    "state": "Rajasthan",
+    "district": "Balotra",
+    "total_hh": 212081,
+    "hh_with_tap": 137459,
+    "fhtc_pct": 64.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BANSWARA": {
+    "state": "Rajasthan",
+    "district": "Banswara",
+    "total_hh": 381319,
+    "hh_with_tap": 148644,
+    "fhtc_pct": 39.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BARAN": {
+    "state": "Rajasthan",
+    "district": "Baran",
+    "total_hh": 237311,
+    "hh_with_tap": 90139,
+    "fhtc_pct": 38.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BARMER": {
+    "state": "Rajasthan",
+    "district": "Barmer",
+    "total_hh": 266270,
+    "hh_with_tap": 58375,
+    "fhtc_pct": 21.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BEAWAR": {
+    "state": "Rajasthan",
+    "district": "Beawar",
+    "total_hh": 197016,
+    "hh_with_tap": 131053,
+    "fhtc_pct": 66.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BHARATPUR": {
+    "state": "Rajasthan",
+    "district": "Bharatpur",
+    "total_hh": 213627,
+    "hh_with_tap": 133904,
+    "fhtc_pct": 62.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BHILWARA": {
+    "state": "Rajasthan",
+    "district": "Bhilwara",
+    "total_hh": 422782,
+    "hh_with_tap": 381388,
+    "fhtc_pct": 90.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BIKANER": {
+    "state": "Rajasthan",
+    "district": "Bikaner",
+    "total_hh": 308501,
+    "hh_with_tap": 179711,
+    "fhtc_pct": 58.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BUNDI": {
+    "state": "Rajasthan",
+    "district": "Bundi",
+    "total_hh": 148343,
+    "hh_with_tap": 69918,
+    "fhtc_pct": 47.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "CHITTORGARH": {
+    "state": "Rajasthan",
+    "district": "Chittorgarh",
+    "total_hh": 293660,
+    "hh_with_tap": 85147,
+    "fhtc_pct": 29.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "CHURU": {
+    "state": "Rajasthan",
+    "district": "Churu",
+    "total_hh": 300702,
+    "hh_with_tap": 203055,
+    "fhtc_pct": 67.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DAUSA": {
+    "state": "Rajasthan",
+    "district": "Dausa",
+    "total_hh": 256676,
+    "hh_with_tap": 107451,
+    "fhtc_pct": 41.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DEEG": {
+    "state": "Rajasthan",
+    "district": "Deeg",
+    "total_hh": 175292,
+    "hh_with_tap": 50588,
+    "fhtc_pct": 28.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DHOLPUR": {
+    "state": "Rajasthan",
+    "district": "Dholpur",
+    "total_hh": 181980,
+    "hh_with_tap": 94638,
+    "fhtc_pct": 52.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DIDWANA-KUCHAMAN": {
+    "state": "Rajasthan",
+    "district": "Didwana-Kuchaman",
+    "total_hh": 287306,
+    "hh_with_tap": 243884,
+    "fhtc_pct": 84.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DUNGARPUR": {
+    "state": "Rajasthan",
+    "district": "Dungarpur",
+    "total_hh": 305757,
+    "hh_with_tap": 100458,
+    "fhtc_pct": 32.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "GANGANAGAR": {
+    "state": "Rajasthan",
+    "district": "Ganganagar",
+    "total_hh": 309262,
+    "hh_with_tap": 275712,
+    "fhtc_pct": 89.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "HANUMANGARH": {
+    "state": "Rajasthan",
+    "district": "Hanumangarh",
+    "total_hh": 291894,
+    "hh_with_tap": 265669,
+    "fhtc_pct": 91.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "JAIPUR": {
+    "state": "Rajasthan",
+    "district": "Jaipur",
+    "total_hh": 495301,
+    "hh_with_tap": 336639,
+    "fhtc_pct": 68.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "JAISALMER": {
+    "state": "Rajasthan",
+    "district": "Jaisalmer",
+    "total_hh": 122688,
+    "hh_with_tap": 66271,
+    "fhtc_pct": 54.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "JALORE": {
+    "state": "Rajasthan",
+    "district": "Jalore",
+    "total_hh": 385422,
+    "hh_with_tap": 244103,
+    "fhtc_pct": 63.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "JHALAWAR": {
+    "state": "Rajasthan",
+    "district": "Jhalawar",
+    "total_hh": 256340,
+    "hh_with_tap": 199919,
+    "fhtc_pct": 78.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "JHUNJHUNU": {
+    "state": "Rajasthan",
+    "district": "Jhunjhunu",
+    "total_hh": 347526,
+    "hh_with_tap": 188846,
+    "fhtc_pct": 54.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "JODHPUR": {
+    "state": "Rajasthan",
+    "district": "Jodhpur",
+    "total_hh": 333576,
+    "hh_with_tap": 197436,
+    "fhtc_pct": 59.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KARAULI": {
+    "state": "Rajasthan",
+    "district": "Karauli",
+    "total_hh": 231596,
+    "hh_with_tap": 157584,
+    "fhtc_pct": 68.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KHAIRTHAL-TIJARA": {
+    "state": "Rajasthan",
+    "district": "Khairthal-Tijara",
+    "total_hh": 142246,
+    "hh_with_tap": 95849,
+    "fhtc_pct": 67.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KOTA": {
+    "state": "Rajasthan",
+    "district": "Kota",
+    "total_hh": 111474,
+    "hh_with_tap": 77937,
+    "fhtc_pct": 69.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KOTPUTLI-BEHROR": {
+    "state": "Rajasthan",
+    "district": "Kotputli-Behror",
+    "total_hh": 204961,
+    "hh_with_tap": 124966,
+    "fhtc_pct": 61.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "NAGAUR": {
+    "state": "Rajasthan",
+    "district": "Nagaur",
+    "total_hh": 305524,
+    "hh_with_tap": 198401,
+    "fhtc_pct": 64.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PALI": {
+    "state": "Rajasthan",
+    "district": "Pali",
+    "total_hh": 305724,
+    "hh_with_tap": 266694,
+    "fhtc_pct": 87.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PHALODI": {
+    "state": "Rajasthan",
+    "district": "Phalodi",
+    "total_hh": 111419,
+    "hh_with_tap": 41614,
+    "fhtc_pct": 37.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PRATAPGARH": {
+    "state": "Uttar Pradesh",
+    "district": "Pratapgarh",
+    "total_hh": 491492,
+    "hh_with_tap": 465883,
+    "fhtc_pct": 94.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "RAJSAMAND": {
+    "state": "Rajasthan",
+    "district": "Rajsamand",
+    "total_hh": 203195,
+    "hh_with_tap": 137623,
+    "fhtc_pct": 67.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SALUMBAR": {
+    "state": "Rajasthan",
+    "district": "Salumbar",
+    "total_hh": 132945,
+    "hh_with_tap": 58931,
+    "fhtc_pct": 44.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SAWAI MADHOPUR": {
+    "state": "Rajasthan",
+    "district": "Sawai Madhopur",
+    "total_hh": 231324,
+    "hh_with_tap": 157448,
+    "fhtc_pct": 68.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SIKAR": {
+    "state": "Rajasthan",
+    "district": "Sikar",
+    "total_hh": 382629,
+    "hh_with_tap": 252724,
+    "fhtc_pct": 66.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SIROHI": {
+    "state": "Rajasthan",
+    "district": "Sirohi",
+    "total_hh": 186644,
+    "hh_with_tap": 109407,
+    "fhtc_pct": 58.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "TONK": {
+    "state": "Rajasthan",
+    "district": "Tonk",
+    "total_hh": 235163,
+    "hh_with_tap": 161128,
+    "fhtc_pct": 68.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "UDAIPUR": {
+    "state": "Rajasthan",
+    "district": "Udaipur",
+    "total_hh": 434418,
+    "hh_with_tap": 162857,
+    "fhtc_pct": 37.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "NICOBARS": {
+    "state": "Andaman & Nicobar Islands",
+    "district": "Nicobars",
+    "total_hh": 8827,
+    "hh_with_tap": 8827,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "NORTH AND MIDDLE ANDAMAN": {
+    "state": "Andaman & Nicobar Islands",
+    "district": "North And Middle Andaman",
+    "total_hh": 24400,
+    "hh_with_tap": 24400,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SOUTH ANDAMANS": {
+    "state": "Andaman & Nicobar Islands",
+    "district": "South Andamans",
+    "total_hh": 28810,
+    "hh_with_tap": 28810,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "ALLURI SITHARAMA RAJU": {
+    "state": "Andhra Pradesh",
+    "district": "ALLURI SITHARAMA RAJU",
+    "total_hh": 290682,
+    "hh_with_tap": 180917,
+    "fhtc_pct": 62.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "ANAKAPALLI": {
+    "state": "Andhra Pradesh",
+    "district": "ANAKAPALLI",
+    "total_hh": 417489,
+    "hh_with_tap": 302975,
+    "fhtc_pct": 72.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "ANANTHAPURAMU": {
+    "state": "Andhra Pradesh",
+    "district": "ANANTHAPURAMU",
+    "total_hh": 434468,
+    "hh_with_tap": 362416,
+    "fhtc_pct": 83.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "ANNAMAYYA": {
+    "state": "Andhra Pradesh",
+    "district": "ANNAMAYYA",
+    "total_hh": 363710,
+    "hh_with_tap": 363710,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BAPATLA": {
+    "state": "Andhra Pradesh",
+    "district": "BAPATLA",
+    "total_hh": 364788,
+    "hh_with_tap": 156326,
+    "fhtc_pct": 42.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "CHITTOOR": {
+    "state": "Andhra Pradesh",
+    "district": "Chittoor",
+    "total_hh": 370234,
+    "hh_with_tap": 370206,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DR. B.R. AMBEDKAR KONASEEMA": {
+    "state": "Andhra Pradesh",
+    "district": "Dr. B.R. Ambedkar Konaseema",
+    "total_hh": 402434,
+    "hh_with_tap": 306188,
+    "fhtc_pct": 76.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "EAST GODAVARI": {
+    "state": "Andhra Pradesh",
+    "district": "East Godavari",
+    "total_hh": 356543,
+    "hh_with_tap": 335830,
+    "fhtc_pct": 94.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "ELURU": {
+    "state": "Andhra Pradesh",
+    "district": "ELURU",
+    "total_hh": 479752,
+    "hh_with_tap": 418785,
+    "fhtc_pct": 87.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "GUNTUR": {
+    "state": "Andhra Pradesh",
+    "district": "Guntur",
+    "total_hh": 233883,
+    "hh_with_tap": 158982,
+    "fhtc_pct": 68.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KAKINADA": {
+    "state": "Andhra Pradesh",
+    "district": "KAKINADA",
+    "total_hh": 389205,
+    "hh_with_tap": 336129,
+    "fhtc_pct": 86.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KRISHNA": {
+    "state": "Andhra Pradesh",
+    "district": "Krishna",
+    "total_hh": 375691,
+    "hh_with_tap": 223278,
+    "fhtc_pct": 59.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KURNOOL": {
+    "state": "Andhra Pradesh",
+    "district": "Kurnool",
+    "total_hh": 345790,
+    "hh_with_tap": 242507,
+    "fhtc_pct": 70.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "NANDYAL": {
+    "state": "Andhra Pradesh",
+    "district": "NANDYAL",
+    "total_hh": 346130,
+    "hh_with_tap": 265060,
+    "fhtc_pct": 76.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "NTR": {
+    "state": "Andhra Pradesh",
+    "district": "NTR",
+    "total_hh": 267874,
+    "hh_with_tap": 163925,
+    "fhtc_pct": 61.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PALNADU": {
+    "state": "Andhra Pradesh",
+    "district": "PALNADU",
+    "total_hh": 434399,
+    "hh_with_tap": 163169,
+    "fhtc_pct": 37.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PARVATHIPURAM MANYAM": {
+    "state": "Andhra Pradesh",
+    "district": "PARVATHIPURAM MANYAM",
+    "total_hh": 222444,
+    "hh_with_tap": 165114,
+    "fhtc_pct": 74.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PRAKASAM": {
+    "state": "Andhra Pradesh",
+    "district": "Prakasam",
+    "total_hh": 476454,
+    "hh_with_tap": 332359,
+    "fhtc_pct": 69.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SRI POTTI SRIRAMULU NELLORE": {
+    "state": "Andhra Pradesh",
+    "district": "SRI POTTI SRIRAMULU NELLORE",
+    "total_hh": 460415,
+    "hh_with_tap": 402419,
+    "fhtc_pct": 87.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SRI SATHYA SAI": {
+    "state": "Andhra Pradesh",
+    "district": "SRI SATHYA SAI",
+    "total_hh": 365072,
+    "hh_with_tap": 309588,
+    "fhtc_pct": 84.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SRIKAKULAM": {
+    "state": "Andhra Pradesh",
+    "district": "Srikakulam",
+    "total_hh": 535764,
+    "hh_with_tap": 238438,
+    "fhtc_pct": 44.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "TIRUPATI": {
+    "state": "Andhra Pradesh",
+    "district": "TIRUPATI",
+    "total_hh": 417349,
+    "hh_with_tap": 417349,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "VISAKHAPATNAM": {
+    "state": "Andhra Pradesh",
+    "district": "Visakhapatnam",
+    "total_hh": 59338,
+    "hh_with_tap": 41180,
+    "fhtc_pct": 69.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "VIZIANAGARAM": {
+    "state": "Andhra Pradesh",
+    "district": "Vizianagaram",
+    "total_hh": 444171,
+    "hh_with_tap": 312735,
+    "fhtc_pct": 70.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "WEST GODAVARI": {
+    "state": "Andhra Pradesh",
+    "district": "West Godavari",
+    "total_hh": 369137,
+    "hh_with_tap": 311454,
+    "fhtc_pct": 84.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "Y.S.R.": {
+    "state": "Andhra Pradesh",
+    "district": "Y.S.R.",
+    "total_hh": 329890,
+    "hh_with_tap": 329890,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "ANJAW": {
+    "state": "Arunachal Pradesh",
+    "district": "Anjaw",
+    "total_hh": 5179,
+    "hh_with_tap": 5179,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "CHANGLANG": {
+    "state": "Arunachal Pradesh",
+    "district": "Changlang",
+    "total_hh": 25243,
+    "hh_with_tap": 25243,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DIBANG VALLEY": {
+    "state": "Arunachal Pradesh",
+    "district": "Dibang Valley",
+    "total_hh": 2173,
+    "hh_with_tap": 2173,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "EAST KAMENG": {
+    "state": "Arunachal Pradesh",
+    "district": "East Kameng",
+    "total_hh": 6197,
+    "hh_with_tap": 6197,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "EAST SIANG": {
+    "state": "Arunachal Pradesh",
+    "district": "East Siang",
+    "total_hh": 8847,
+    "hh_with_tap": 8847,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KAMLE": {
+    "state": "Arunachal Pradesh",
+    "district": "Kamle",
+    "total_hh": 4728,
+    "hh_with_tap": 4728,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KRA DAADI": {
+    "state": "Arunachal Pradesh",
+    "district": "Kra Daadi",
+    "total_hh": 8704,
+    "hh_with_tap": 8704,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KURUNG KUMEY": {
+    "state": "Arunachal Pradesh",
+    "district": "Kurung Kumey",
+    "total_hh": 8814,
+    "hh_with_tap": 8814,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "LEPARADA": {
+    "state": "Arunachal Pradesh",
+    "district": "Leparada",
+    "total_hh": 3211,
+    "hh_with_tap": 3211,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "LOHIT": {
+    "state": "Arunachal Pradesh",
+    "district": "Lohit",
+    "total_hh": 6642,
+    "hh_with_tap": 6642,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "LONGDING": {
+    "state": "Arunachal Pradesh",
+    "district": "Longding",
+    "total_hh": 10473,
+    "hh_with_tap": 10473,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "LOWER DIBANG VALLEY": {
+    "state": "Arunachal Pradesh",
+    "district": "Lower Dibang Valley",
+    "total_hh": 10781,
+    "hh_with_tap": 10781,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "LOWER SIANG": {
+    "state": "Arunachal Pradesh",
+    "district": "Lower Siang",
+    "total_hh": 5077,
+    "hh_with_tap": 5077,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "LOWER SUBANSIRI": {
+    "state": "Arunachal Pradesh",
+    "district": "Lower Subansiri",
+    "total_hh": 9856,
+    "hh_with_tap": 9856,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "NAMSAI": {
+    "state": "Arunachal Pradesh",
+    "district": "Namsai",
+    "total_hh": 16549,
+    "hh_with_tap": 16549,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PAKKE KESSANG": {
+    "state": "Arunachal Pradesh",
+    "district": "Pakke Kessang",
+    "total_hh": 3591,
+    "hh_with_tap": 3591,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PAPUM PARE": {
+    "state": "Arunachal Pradesh",
+    "district": "Papum Pare",
+    "total_hh": 24475,
+    "hh_with_tap": 24475,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SHI YOMI": {
+    "state": "Arunachal Pradesh",
+    "district": "Shi Yomi",
+    "total_hh": 2238,
+    "hh_with_tap": 2238,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SIANG": {
+    "state": "Arunachal Pradesh",
+    "district": "Siang",
+    "total_hh": 4942,
+    "hh_with_tap": 4942,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "TAWANG": {
+    "state": "Arunachal Pradesh",
+    "district": "Tawang",
+    "total_hh": 11972,
+    "hh_with_tap": 11972,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "TIRAP": {
+    "state": "Arunachal Pradesh",
+    "district": "Tirap",
+    "total_hh": 10329,
+    "hh_with_tap": 10329,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "UPPER SIANG": {
+    "state": "Arunachal Pradesh",
+    "district": "Upper Siang",
+    "total_hh": 5606,
+    "hh_with_tap": 5606,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "UPPER SUBANSIRI": {
+    "state": "Arunachal Pradesh",
+    "district": "Upper Subansiri",
+    "total_hh": 9082,
+    "hh_with_tap": 9082,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "WEST KAMENG": {
+    "state": "Arunachal Pradesh",
+    "district": "West Kameng",
+    "total_hh": 18554,
+    "hh_with_tap": 18554,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "WEST SIANG": {
+    "state": "Arunachal Pradesh",
+    "district": "West Siang",
+    "total_hh": 5303,
+    "hh_with_tap": 5303,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BAJALI": {
+    "state": "Assam",
+    "district": "Bajali",
+    "total_hh": 73508,
+    "hh_with_tap": 66759,
+    "fhtc_pct": 90.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BAKSA": {
+    "state": "Assam",
+    "district": "BAKSA",
+    "total_hh": 145583,
+    "hh_with_tap": 121475,
+    "fhtc_pct": 83.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BARPETA": {
+    "state": "Assam",
+    "district": "Barpeta",
+    "total_hh": 294939,
+    "hh_with_tap": 258684,
+    "fhtc_pct": 87.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BISWANATH": {
+    "state": "Assam",
+    "district": "Biswanath",
+    "total_hh": 195190,
+    "hh_with_tap": 159378,
+    "fhtc_pct": 81.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BONGAIGAON": {
+    "state": "Assam",
+    "district": "Bongaigaon",
+    "total_hh": 162874,
+    "hh_with_tap": 141971,
+    "fhtc_pct": 87.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "CACHAR": {
+    "state": "Assam",
+    "district": "Cachar",
+    "total_hh": 406653,
+    "hh_with_tap": 354690,
+    "fhtc_pct": 87.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "CHARAIDEO": {
+    "state": "Assam",
+    "district": "Charaideo",
+    "total_hh": 119817,
+    "hh_with_tap": 96805,
+    "fhtc_pct": 80.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "CHIRANG": {
+    "state": "Assam",
+    "district": "Chirang",
+    "total_hh": 134176,
+    "hh_with_tap": 93633,
+    "fhtc_pct": 69.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DARRANG": {
+    "state": "Assam",
+    "district": "Darrang",
+    "total_hh": 222910,
+    "hh_with_tap": 192619,
+    "fhtc_pct": 86.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DHEMAJI": {
+    "state": "Assam",
+    "district": "Dhemaji",
+    "total_hh": 193394,
+    "hh_with_tap": 157841,
+    "fhtc_pct": 81.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DHUBRI": {
+    "state": "Assam",
+    "district": "Dhubri",
+    "total_hh": 312276,
+    "hh_with_tap": 238068,
+    "fhtc_pct": 76.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DIBRUGARH": {
+    "state": "Assam",
+    "district": "Dibrugarh",
+    "total_hh": 269300,
+    "hh_with_tap": 219993,
+    "fhtc_pct": 81.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DIMA HASAO": {
+    "state": "Assam",
+    "district": "Dima Hasao",
+    "total_hh": 40187,
+    "hh_with_tap": 35011,
+    "fhtc_pct": 87.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "GOALPARA": {
+    "state": "Assam",
+    "district": "Goalpara",
+    "total_hh": 251214,
+    "hh_with_tap": 213795,
+    "fhtc_pct": 85.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "GOLAGHAT": {
+    "state": "Assam",
+    "district": "Golaghat",
+    "total_hh": 271051,
+    "hh_with_tap": 222861,
+    "fhtc_pct": 82.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "HAILAKANDI": {
+    "state": "Assam",
+    "district": "Hailakandi",
+    "total_hh": 183910,
+    "hh_with_tap": 148447,
+    "fhtc_pct": 80.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "HOJAI": {
+    "state": "Assam",
+    "district": "Hojai",
+    "total_hh": 198003,
+    "hh_with_tap": 166026,
+    "fhtc_pct": 83.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "JORHAT": {
+    "state": "Assam",
+    "district": "Jorhat",
+    "total_hh": 204177,
+    "hh_with_tap": 144767,
+    "fhtc_pct": 70.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KAMRUP": {
+    "state": "Assam",
+    "district": "Kamrup",
+    "total_hh": 402101,
+    "hh_with_tap": 318892,
+    "fhtc_pct": 79.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KAMRUP METRO": {
+    "state": "Assam",
+    "district": "Kamrup Metro",
+    "total_hh": 62712,
+    "hh_with_tap": 55181,
+    "fhtc_pct": 88.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KARBI ANGLONG": {
+    "state": "Assam",
+    "district": "Karbi Anglong",
+    "total_hh": 162208,
+    "hh_with_tap": 91836,
+    "fhtc_pct": 56.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KARIMGANJ": {
+    "state": "Assam",
+    "district": "Karimganj",
+    "total_hh": 297341,
+    "hh_with_tap": 264867,
+    "fhtc_pct": 89.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KOKRAJHAR": {
+    "state": "Assam",
+    "district": "Kokrajhar",
+    "total_hh": 228619,
+    "hh_with_tap": 202856,
+    "fhtc_pct": 88.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "LAKHIMPUR": {
+    "state": "Assam",
+    "district": "Lakhimpur",
+    "total_hh": 267716,
+    "hh_with_tap": 232224,
+    "fhtc_pct": 86.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MAJULI": {
+    "state": "Assam",
+    "district": "Majuli",
+    "total_hh": 50822,
+    "hh_with_tap": 47426,
+    "fhtc_pct": 93.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MARIGAON": {
+    "state": "Assam",
+    "district": "Marigaon",
+    "total_hh": 237300,
+    "hh_with_tap": 171980,
+    "fhtc_pct": 72.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "NAGAON": {
+    "state": "Assam",
+    "district": "Nagaon",
+    "total_hh": 425904,
+    "hh_with_tap": 342283,
+    "fhtc_pct": 80.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "NALBARI": {
+    "state": "Assam",
+    "district": "Nalbari",
+    "total_hh": 187949,
+    "hh_with_tap": 166179,
+    "fhtc_pct": 88.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SIVASAGAR": {
+    "state": "Assam",
+    "district": "Sivasagar",
+    "total_hh": 178613,
+    "hh_with_tap": 163193,
+    "fhtc_pct": 91.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SONITPUR": {
+    "state": "Assam",
+    "district": "Sonitpur",
+    "total_hh": 295378,
+    "hh_with_tap": 237269,
+    "fhtc_pct": 80.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SOUTH SALMARA MANCACHAR": {
+    "state": "Assam",
+    "district": "South Salmara Mancachar",
+    "total_hh": 93445,
+    "hh_with_tap": 79631,
+    "fhtc_pct": 85.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "TAMULPUR": {
+    "state": "Assam",
+    "district": "Tamulpur",
+    "total_hh": 102029,
+    "hh_with_tap": 88373,
+    "fhtc_pct": 86.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "TINSUKIA": {
+    "state": "Assam",
+    "district": "Tinsukia",
+    "total_hh": 243008,
+    "hh_with_tap": 202004,
+    "fhtc_pct": 83.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "UDALGURI": {
+    "state": "Assam",
+    "district": "Udalguri",
+    "total_hh": 210555,
+    "hh_with_tap": 176651,
+    "fhtc_pct": 83.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "WEST KARBI ANGLONG": {
+    "state": "Assam",
+    "district": "West Karbi Anglong",
+    "total_hh": 63351,
+    "hh_with_tap": 36881,
+    "fhtc_pct": 58.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "ARARIA": {
+    "state": "Bihar",
+    "district": "Araria",
+    "total_hh": 565121,
+    "hh_with_tap": 559731,
+    "fhtc_pct": 99.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "ARWAL": {
+    "state": "Bihar",
+    "district": "Arwal",
+    "total_hh": 122154,
+    "hh_with_tap": 122064,
+    "fhtc_pct": 99.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "AURANGABAD": {
+    "state": "Bihar",
+    "district": "Aurangabad",
+    "total_hh": 389474,
+    "hh_with_tap": 381571,
+    "fhtc_pct": 98.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BANKA": {
+    "state": "Bihar",
+    "district": "Banka",
+    "total_hh": 325595,
+    "hh_with_tap": 325310,
+    "fhtc_pct": 99.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BEGUSARAI": {
+    "state": "Bihar",
+    "district": "Begusarai",
+    "total_hh": 495603,
+    "hh_with_tap": 479821,
+    "fhtc_pct": 96.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BHAGALPUR": {
+    "state": "Bihar",
+    "district": "Bhagalpur",
+    "total_hh": 435487,
+    "hh_with_tap": 420891,
+    "fhtc_pct": 96.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BHOJPUR": {
+    "state": "Bihar",
+    "district": "Bhojpur",
+    "total_hh": 391365,
+    "hh_with_tap": 384358,
+    "fhtc_pct": 98.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BUXAR": {
+    "state": "Bihar",
+    "district": "Buxar",
+    "total_hh": 255332,
+    "hh_with_tap": 252354,
+    "fhtc_pct": 98.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DARBHANGA": {
+    "state": "Bihar",
+    "district": "Darbhanga",
+    "total_hh": 727636,
+    "hh_with_tap": 629789,
+    "fhtc_pct": 86.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "GAYA": {
+    "state": "Bihar",
+    "district": "Gaya",
+    "total_hh": 582191,
+    "hh_with_tap": 576659,
+    "fhtc_pct": 99.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "GOPALGANJ": {
+    "state": "Bihar",
+    "district": "Gopalganj",
+    "total_hh": 381440,
+    "hh_with_tap": 380294,
+    "fhtc_pct": 99.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "JAMUI": {
+    "state": "Bihar",
+    "district": "Jamui",
+    "total_hh": 234991,
+    "hh_with_tap": 234818,
+    "fhtc_pct": 99.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "JEHANABAD": {
+    "state": "Bihar",
+    "district": "Jehanabad",
+    "total_hh": 173347,
+    "hh_with_tap": 173347,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KAIMUR (BHABUA)": {
+    "state": "Bihar",
+    "district": "Kaimur (bhabua)",
+    "total_hh": 281469,
+    "hh_with_tap": 280996,
+    "fhtc_pct": 99.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KATIHAR": {
+    "state": "Bihar",
+    "district": "Katihar",
+    "total_hh": 522302,
+    "hh_with_tap": 522302,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KHAGARIA": {
+    "state": "Bihar",
+    "district": "Khagaria",
+    "total_hh": 262675,
+    "hh_with_tap": 262675,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KISHANGANJ": {
+    "state": "Bihar",
+    "district": "Kishanganj",
+    "total_hh": 271652,
+    "hh_with_tap": 270981,
+    "fhtc_pct": 99.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "LAKHISARAI": {
+    "state": "Bihar",
+    "district": "Lakhisarai",
+    "total_hh": 166485,
+    "hh_with_tap": 165157,
+    "fhtc_pct": 99.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MADHEPURA": {
+    "state": "Bihar",
+    "district": "Madhepura",
+    "total_hh": 381245,
+    "hh_with_tap": 381245,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MADHUBANI": {
+    "state": "Bihar",
+    "district": "Madhubani",
+    "total_hh": 867386,
+    "hh_with_tap": 699473,
+    "fhtc_pct": 80.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MUNGER": {
+    "state": "Bihar",
+    "district": "Munger",
+    "total_hh": 172893,
+    "hh_with_tap": 172603,
+    "fhtc_pct": 99.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MUZAFFARPUR": {
+    "state": "Bihar",
+    "district": "Muzaffarpur",
+    "total_hh": 764481,
+    "hh_with_tap": 736719,
+    "fhtc_pct": 96.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "NALANDA": {
+    "state": "Bihar",
+    "district": "Nalanda",
+    "total_hh": 511706,
+    "hh_with_tap": 508427,
+    "fhtc_pct": 99.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "NAWADA": {
+    "state": "Bihar",
+    "district": "Nawada",
+    "total_hh": 307253,
+    "hh_with_tap": 304535,
+    "fhtc_pct": 99.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PASHCHIM CHAMPARAN": {
+    "state": "Bihar",
+    "district": "Pashchim Champaran",
+    "total_hh": 543182,
+    "hh_with_tap": 535619,
+    "fhtc_pct": 98.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PATNA": {
+    "state": "Bihar",
+    "district": "Patna",
+    "total_hh": 661744,
+    "hh_with_tap": 639764,
+    "fhtc_pct": 96.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PURBI CHAMPARAN": {
+    "state": "Bihar",
+    "district": "Purbi Champaran",
+    "total_hh": 903563,
+    "hh_with_tap": 834706,
+    "fhtc_pct": 92.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PURNIA": {
+    "state": "Bihar",
+    "district": "Purnia",
+    "total_hh": 525716,
+    "hh_with_tap": 511431,
+    "fhtc_pct": 97.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "ROHTAS": {
+    "state": "Bihar",
+    "district": "Rohtas",
+    "total_hh": 425923,
+    "hh_with_tap": 422582,
+    "fhtc_pct": 99.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SAHARSA": {
+    "state": "Bihar",
+    "district": "Saharsa",
+    "total_hh": 331874,
+    "hh_with_tap": 255123,
+    "fhtc_pct": 76.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SAMASTIPUR": {
+    "state": "Bihar",
+    "district": "Samastipur",
+    "total_hh": 816992,
+    "hh_with_tap": 804420,
+    "fhtc_pct": 98.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SARAN": {
+    "state": "Bihar",
+    "district": "Saran",
+    "total_hh": 568238,
+    "hh_with_tap": 558368,
+    "fhtc_pct": 98.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SHEIKHPURA": {
+    "state": "Bihar",
+    "district": "Sheikhpura",
+    "total_hh": 106129,
+    "hh_with_tap": 106129,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SHEOHAR": {
+    "state": "Bihar",
+    "district": "Sheohar",
+    "total_hh": 144103,
+    "hh_with_tap": 137161,
+    "fhtc_pct": 95.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SITAMARHI": {
+    "state": "Bihar",
+    "district": "Sitamarhi",
+    "total_hh": 515754,
+    "hh_with_tap": 503216,
+    "fhtc_pct": 97.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SIWAN": {
+    "state": "Bihar",
+    "district": "Siwan",
+    "total_hh": 474071,
+    "hh_with_tap": 463184,
+    "fhtc_pct": 97.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SUPAUL": {
+    "state": "Bihar",
+    "district": "Supaul",
+    "total_hh": 410868,
+    "hh_with_tap": 410529,
+    "fhtc_pct": 99.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "VAISHALI": {
+    "state": "Bihar",
+    "district": "Vaishali",
+    "total_hh": 628243,
+    "hh_with_tap": 628111,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BALOD": {
+    "state": "Chhattisgarh",
+    "district": "Balod",
+    "total_hh": 176198,
+    "hh_with_tap": 158193,
+    "fhtc_pct": 89.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BALODABAZAR-BHATAPARA": {
+    "state": "Chhattisgarh",
+    "district": "Balodabazar-Bhatapara",
+    "total_hh": 227992,
+    "hh_with_tap": 197121,
+    "fhtc_pct": 86.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BALRAMPUR-RAMANUJGANJ": {
+    "state": "Chhattisgarh",
+    "district": "Balrampur-Ramanujganj",
+    "total_hh": 197065,
+    "hh_with_tap": 146745,
+    "fhtc_pct": 74.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BASTAR": {
+    "state": "Chhattisgarh",
+    "district": "Bastar",
+    "total_hh": 171793,
+    "hh_with_tap": 144491,
+    "fhtc_pct": 84.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BEMETARA": {
+    "state": "Chhattisgarh",
+    "district": "Bemetara",
+    "total_hh": 177538,
+    "hh_with_tap": 157504,
+    "fhtc_pct": 88.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BIJAPUR": {
+    "state": "Chhattisgarh",
+    "district": "Bijapur",
+    "total_hh": 56181,
+    "hh_with_tap": 33980,
+    "fhtc_pct": 60.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BILASPUR": {
+    "state": "Himachal Pradesh",
+    "district": "Bilaspur",
+    "total_hh": 100451,
+    "hh_with_tap": 100451,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DAKSHIN BASTAR DANTEWADA": {
+    "state": "Chhattisgarh",
+    "district": "Dakshin Bastar Dantewada",
+    "total_hh": 50731,
+    "hh_with_tap": 41052,
+    "fhtc_pct": 80.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DHAMTARI": {
+    "state": "Chhattisgarh",
+    "district": "Dhamtari",
+    "total_hh": 154655,
+    "hh_with_tap": 154026,
+    "fhtc_pct": 99.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DURG": {
+    "state": "Chhattisgarh",
+    "district": "Durg",
+    "total_hh": 154934,
+    "hh_with_tap": 139215,
+    "fhtc_pct": 89.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "GARIYABAND": {
+    "state": "Chhattisgarh",
+    "district": "Gariyaband",
+    "total_hh": 154693,
+    "hh_with_tap": 138285,
+    "fhtc_pct": 89.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "GAURELA-PENDRA-MARWAHI": {
+    "state": "Chhattisgarh",
+    "district": "Gaurela-Pendra-Marwahi",
+    "total_hh": 84648,
+    "hh_with_tap": 69704,
+    "fhtc_pct": 82.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "JANJGIR-CHAMPA": {
+    "state": "Chhattisgarh",
+    "district": "Janjgir-champa",
+    "total_hh": 207283,
+    "hh_with_tap": 193019,
+    "fhtc_pct": 93.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "JASHPUR": {
+    "state": "Chhattisgarh",
+    "district": "Jashpur",
+    "total_hh": 214361,
+    "hh_with_tap": 147158,
+    "fhtc_pct": 68.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KABEERDHAM": {
+    "state": "Chhattisgarh",
+    "district": "Kabeerdham",
+    "total_hh": 198539,
+    "hh_with_tap": 170677,
+    "fhtc_pct": 86.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KHAIRAGARH-CHHUIKHADAN-GANDAI": {
+    "state": "Chhattisgarh",
+    "district": "Khairagarh-Chhuikhadan-Gandai",
+    "total_hh": 74259,
+    "hh_with_tap": 65418,
+    "fhtc_pct": 88.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KONDAGAON": {
+    "state": "Chhattisgarh",
+    "district": "Kondagaon",
+    "total_hh": 125874,
+    "hh_with_tap": 104672,
+    "fhtc_pct": 83.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KORBA": {
+    "state": "Chhattisgarh",
+    "district": "Korba",
+    "total_hh": 207076,
+    "hh_with_tap": 149514,
+    "fhtc_pct": 72.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KOREA": {
+    "state": "Chhattisgarh",
+    "district": "Korea",
+    "total_hh": 51759,
+    "hh_with_tap": 38069,
+    "fhtc_pct": 73.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MAHASAMUND": {
+    "state": "Chhattisgarh",
+    "district": "Mahasamund",
+    "total_hh": 240638,
+    "hh_with_tap": 206367,
+    "fhtc_pct": 85.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MANENDRAGARH-CHIRMIRI-BHARATPUR(M C B)": {
+    "state": "Chhattisgarh",
+    "district": "Manendragarh-Chirmiri-Bharatpur(M C B)",
+    "total_hh": 83345,
+    "hh_with_tap": 60833,
+    "fhtc_pct": 73.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MOHLA-MANPUR-AMBAGARH CHOUKI": {
+    "state": "Chhattisgarh",
+    "district": "Mohla-Manpur-Ambagarh Chouki",
+    "total_hh": 64568,
+    "hh_with_tap": 50631,
+    "fhtc_pct": 78.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MUNGELI": {
+    "state": "Chhattisgarh",
+    "district": "Mungeli",
+    "total_hh": 167829,
+    "hh_with_tap": 151208,
+    "fhtc_pct": 90.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "NARAYANPUR": {
+    "state": "Chhattisgarh",
+    "district": "Narayanpur",
+    "total_hh": 33009,
+    "hh_with_tap": 22923,
+    "fhtc_pct": 69.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "RAIGARH": {
+    "state": "Chhattisgarh",
+    "district": "Raigarh",
+    "total_hh": 242253,
+    "hh_with_tap": 210359,
+    "fhtc_pct": 86.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "RAIPUR": {
+    "state": "Chhattisgarh",
+    "district": "Raipur",
+    "total_hh": 189492,
+    "hh_with_tap": 185839,
+    "fhtc_pct": 98.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "RAJNANDGAON": {
+    "state": "Chhattisgarh",
+    "district": "Rajnandgaon",
+    "total_hh": 156789,
+    "hh_with_tap": 145285,
+    "fhtc_pct": 92.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SAKTI": {
+    "state": "Chhattisgarh",
+    "district": "SAKTI",
+    "total_hh": 156245,
+    "hh_with_tap": 140467,
+    "fhtc_pct": 89.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SARANGARH-BILAIGARH": {
+    "state": "Chhattisgarh",
+    "district": "SARANGARH-BILAIGARH",
+    "total_hh": 161727,
+    "hh_with_tap": 141594,
+    "fhtc_pct": 87.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SUKMA": {
+    "state": "Chhattisgarh",
+    "district": "Sukma",
+    "total_hh": 65842,
+    "hh_with_tap": 49501,
+    "fhtc_pct": 75.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SURAJPUR": {
+    "state": "Chhattisgarh",
+    "district": "Surajpur",
+    "total_hh": 164515,
+    "hh_with_tap": 116195,
+    "fhtc_pct": 70.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SURGUJA": {
+    "state": "Chhattisgarh",
+    "district": "Surguja",
+    "total_hh": 185328,
+    "hh_with_tap": 132299,
+    "fhtc_pct": 71.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "UTTAR BASTAR KANKER": {
+    "state": "Chhattisgarh",
+    "district": "Uttar Bastar Kanker",
+    "total_hh": 151157,
+    "hh_with_tap": 118109,
+    "fhtc_pct": 78.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DADRA AND NAGAR HAVELI": {
+    "state": "Dadra & Nagar Haveli And Daman & Diu",
+    "district": "Dadra And Nagar Haveli",
+    "total_hh": 52353,
+    "hh_with_tap": 52353,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DAMAN": {
+    "state": "Dadra & Nagar Haveli And Daman & Diu",
+    "district": "Daman",
+    "total_hh": 27451,
+    "hh_with_tap": 27451,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DIU": {
+    "state": "Dadra & Nagar Haveli And Daman & Diu",
+    "district": "Diu",
+    "total_hh": 5352,
+    "hh_with_tap": 5352,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "NORTH GOA": {
+    "state": "Goa",
+    "district": "North Goa",
+    "total_hh": 134035,
+    "hh_with_tap": 134035,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SOUTH GOA": {
+    "state": "Goa",
+    "district": "South Goa",
+    "total_hh": 129887,
+    "hh_with_tap": 129887,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "AHMEDABAD": {
+    "state": "Gujarat",
+    "district": "AHMEDABAD",
+    "total_hh": 364552,
+    "hh_with_tap": 364552,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "AMRELI": {
+    "state": "Gujarat",
+    "district": "Amreli",
+    "total_hh": 253485,
+    "hh_with_tap": 253485,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "ANAND": {
+    "state": "Gujarat",
+    "district": "Anand",
+    "total_hh": 401409,
+    "hh_with_tap": 401409,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "ARVALLI": {
+    "state": "Gujarat",
+    "district": "Arvalli",
+    "total_hh": 280643,
+    "hh_with_tap": 280643,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BANAS KANTHA": {
+    "state": "Gujarat",
+    "district": "Banas Kantha",
+    "total_hh": 629379,
+    "hh_with_tap": 629379,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BHARUCH": {
+    "state": "Gujarat",
+    "district": "Bharuch",
+    "total_hh": 336863,
+    "hh_with_tap": 336863,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BHAVNAGAR": {
+    "state": "Gujarat",
+    "district": "Bhavnagar",
+    "total_hh": 254497,
+    "hh_with_tap": 254497,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BOTAD": {
+    "state": "Gujarat",
+    "district": "Botad",
+    "total_hh": 99640,
+    "hh_with_tap": 99640,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "CHHOTAUDEPUR": {
+    "state": "Gujarat",
+    "district": "Chhotaudepur",
+    "total_hh": 232985,
+    "hh_with_tap": 232985,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DAHOD": {
+    "state": "Gujarat",
+    "district": "Dahod",
+    "total_hh": 320768,
+    "hh_with_tap": 320768,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DANGS": {
+    "state": "Gujarat",
+    "district": "Dangs",
+    "total_hh": 47511,
+    "hh_with_tap": 47511,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DEVBHUMI DWARKA": {
+    "state": "Gujarat",
+    "district": "Devbhumi Dwarka",
+    "total_hh": 115529,
+    "hh_with_tap": 115529,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "GANDHINAGAR": {
+    "state": "Gujarat",
+    "district": "Gandhinagar",
+    "total_hh": 284911,
+    "hh_with_tap": 284911,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "GIR SOMNATH": {
+    "state": "Gujarat",
+    "district": "Gir Somnath",
+    "total_hh": 172472,
+    "hh_with_tap": 172472,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "JAMNAGAR": {
+    "state": "Gujarat",
+    "district": "Jamnagar",
+    "total_hh": 142084,
+    "hh_with_tap": 142084,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "JUNAGADH": {
+    "state": "Gujarat",
+    "district": "Junagadh",
+    "total_hh": 200119,
+    "hh_with_tap": 200119,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KACHCHH": {
+    "state": "Gujarat",
+    "district": "Kachchh",
+    "total_hh": 392043,
+    "hh_with_tap": 392043,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KHEDA": {
+    "state": "Gujarat",
+    "district": "Kheda",
+    "total_hh": 369324,
+    "hh_with_tap": 369324,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MAHESANA": {
+    "state": "Gujarat",
+    "district": "Mahesana",
+    "total_hh": 510503,
+    "hh_with_tap": 510503,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MAHISAGAR": {
+    "state": "Gujarat",
+    "district": "Mahisagar",
+    "total_hh": 221848,
+    "hh_with_tap": 221848,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MORBI": {
+    "state": "Gujarat",
+    "district": "Morbi",
+    "total_hh": 181725,
+    "hh_with_tap": 181725,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "NARMADA": {
+    "state": "Gujarat",
+    "district": "Narmada",
+    "total_hh": 150861,
+    "hh_with_tap": 150861,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "NAVSARI": {
+    "state": "Gujarat",
+    "district": "Navsari",
+    "total_hh": 279766,
+    "hh_with_tap": 279766,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PANCH MAHALS": {
+    "state": "Gujarat",
+    "district": "Panch Mahals",
+    "total_hh": 356227,
+    "hh_with_tap": 356227,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PATAN": {
+    "state": "Gujarat",
+    "district": "Patan",
+    "total_hh": 284832,
+    "hh_with_tap": 284832,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PORBANDAR": {
+    "state": "Gujarat",
+    "district": "Porbandar",
+    "total_hh": 63572,
+    "hh_with_tap": 63572,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "RAJKOT": {
+    "state": "Gujarat",
+    "district": "Rajkot",
+    "total_hh": 323224,
+    "hh_with_tap": 323224,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SABAR KANTHA": {
+    "state": "Gujarat",
+    "district": "Sabar Kantha",
+    "total_hh": 345649,
+    "hh_with_tap": 345649,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SURAT": {
+    "state": "Gujarat",
+    "district": "Surat",
+    "total_hh": 383576,
+    "hh_with_tap": 383576,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SURENDRANAGAR": {
+    "state": "Gujarat",
+    "district": "Surendranagar",
+    "total_hh": 276504,
+    "hh_with_tap": 276504,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "TAPI": {
+    "state": "Gujarat",
+    "district": "Tapi",
+    "total_hh": 239124,
+    "hh_with_tap": 239124,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "VADODARA": {
+    "state": "Gujarat",
+    "district": "Vadodara",
+    "total_hh": 295351,
+    "hh_with_tap": 295351,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "VALSAD": {
+    "state": "Gujarat",
+    "district": "Valsad",
+    "total_hh": 307439,
+    "hh_with_tap": 307439,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "AMBALA": {
+    "state": "Haryana",
+    "district": "Ambala",
+    "total_hh": 119431,
+    "hh_with_tap": 119431,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BHIWANI": {
+    "state": "Haryana",
+    "district": "Bhiwani",
+    "total_hh": 167544,
+    "hh_with_tap": 167544,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "CHARKI DADRI": {
+    "state": "Haryana",
+    "district": "Charki Dadri",
+    "total_hh": 81922,
+    "hh_with_tap": 81922,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "FARIDABAD": {
+    "state": "Haryana",
+    "district": "Faridabad",
+    "total_hh": 47460,
+    "hh_with_tap": 47460,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "FATEHABAD": {
+    "state": "Haryana",
+    "district": "Fatehabad",
+    "total_hh": 141804,
+    "hh_with_tap": 141804,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "GURUGRAM": {
+    "state": "Haryana",
+    "district": "GURUGRAM",
+    "total_hh": 58817,
+    "hh_with_tap": 58817,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "HISAR": {
+    "state": "Haryana",
+    "district": "Hisar",
+    "total_hh": 215435,
+    "hh_with_tap": 215435,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "JHAJJAR": {
+    "state": "Haryana",
+    "district": "Jhajjar",
+    "total_hh": 162374,
+    "hh_with_tap": 162374,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "JIND": {
+    "state": "Haryana",
+    "district": "Jind",
+    "total_hh": 190363,
+    "hh_with_tap": 190363,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KAITHAL": {
+    "state": "Haryana",
+    "district": "Kaithal",
+    "total_hh": 157897,
+    "hh_with_tap": 157897,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KARNAL": {
+    "state": "Haryana",
+    "district": "Karnal",
+    "total_hh": 189152,
+    "hh_with_tap": 189152,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KURUKSHETRA": {
+    "state": "Haryana",
+    "district": "Kurukshetra",
+    "total_hh": 139720,
+    "hh_with_tap": 139720,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MAHENDRAGARH": {
+    "state": "Haryana",
+    "district": "Mahendragarh",
+    "total_hh": 147923,
+    "hh_with_tap": 147923,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "NUH": {
+    "state": "Haryana",
+    "district": "Nuh",
+    "total_hh": 157547,
+    "hh_with_tap": 157547,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PALWAL": {
+    "state": "Haryana",
+    "district": "Palwal",
+    "total_hh": 129356,
+    "hh_with_tap": 129356,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PANCHKULA": {
+    "state": "Haryana",
+    "district": "Panchkula",
+    "total_hh": 34433,
+    "hh_with_tap": 34433,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PANIPAT": {
+    "state": "Haryana",
+    "district": "Panipat",
+    "total_hh": 122912,
+    "hh_with_tap": 122912,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "REWARI": {
+    "state": "Haryana",
+    "district": "Rewari",
+    "total_hh": 138564,
+    "hh_with_tap": 138564,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "ROHTAK": {
+    "state": "Haryana",
+    "district": "Rohtak",
+    "total_hh": 132816,
+    "hh_with_tap": 132816,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SIRSA": {
+    "state": "Haryana",
+    "district": "Sirsa",
+    "total_hh": 188263,
+    "hh_with_tap": 188263,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SONIPAT": {
+    "state": "Haryana",
+    "district": "Sonipat",
+    "total_hh": 204620,
+    "hh_with_tap": 204620,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "YAMUNANAGAR": {
+    "state": "Haryana",
+    "district": "Yamunanagar",
+    "total_hh": 112961,
+    "hh_with_tap": 112961,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "CHAMBA": {
+    "state": "Himachal Pradesh",
+    "district": "Chamba",
+    "total_hh": 121658,
+    "hh_with_tap": 121658,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "HAMIRPUR": {
+    "state": "Uttar Pradesh",
+    "district": "Hamirpur",
+    "total_hh": 185757,
+    "hh_with_tap": 185693,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KANGRA": {
+    "state": "Himachal Pradesh",
+    "district": "Kangra",
+    "total_hh": 400102,
+    "hh_with_tap": 400102,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KINNAUR": {
+    "state": "Himachal Pradesh",
+    "district": "Kinnaur",
+    "total_hh": 22763,
+    "hh_with_tap": 22763,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KULLU": {
+    "state": "Himachal Pradesh",
+    "district": "Kullu",
+    "total_hh": 113905,
+    "hh_with_tap": 113905,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "LAHAUL AND SPITI": {
+    "state": "Himachal Pradesh",
+    "district": "Lahaul And Spiti",
+    "total_hh": 7284,
+    "hh_with_tap": 7284,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MANDI": {
+    "state": "Himachal Pradesh",
+    "district": "Mandi",
+    "total_hh": 308119,
+    "hh_with_tap": 308119,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SHIMLA": {
+    "state": "Himachal Pradesh",
+    "district": "Shimla",
+    "total_hh": 172266,
+    "hh_with_tap": 172266,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SIRMAUR": {
+    "state": "Himachal Pradesh",
+    "district": "Sirmaur",
+    "total_hh": 121917,
+    "hh_with_tap": 121917,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SOLAN": {
+    "state": "Himachal Pradesh",
+    "district": "Solan",
+    "total_hh": 113519,
+    "hh_with_tap": 113519,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "UNA": {
+    "state": "Himachal Pradesh",
+    "district": "Una",
+    "total_hh": 114209,
+    "hh_with_tap": 114209,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "ANANTNAG": {
+    "state": "Jammu & Kashmir",
+    "district": "Anantnag",
+    "total_hh": 132886,
+    "hh_with_tap": 123516,
+    "fhtc_pct": 92.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BANDIPORA": {
+    "state": "Jammu & Kashmir",
+    "district": "Bandipora",
+    "total_hh": 46337,
+    "hh_with_tap": 41586,
+    "fhtc_pct": 89.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BARAMULLA": {
+    "state": "Jammu & Kashmir",
+    "district": "Baramulla",
+    "total_hh": 146176,
+    "hh_with_tap": 129481,
+    "fhtc_pct": 88.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BUDGAM": {
+    "state": "Jammu & Kashmir",
+    "district": "Budgam",
+    "total_hh": 127847,
+    "hh_with_tap": 114141,
+    "fhtc_pct": 89.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DODA": {
+    "state": "Jammu & Kashmir",
+    "district": "Doda",
+    "total_hh": 127410,
+    "hh_with_tap": 100673,
+    "fhtc_pct": 79.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "GANDERBAL": {
+    "state": "Jammu & Kashmir",
+    "district": "Ganderbal",
+    "total_hh": 41551,
+    "hh_with_tap": 41551,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "JAMMU": {
+    "state": "Jammu & Kashmir",
+    "district": "Jammu",
+    "total_hh": 188868,
+    "hh_with_tap": 126170,
+    "fhtc_pct": 66.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KATHUA": {
+    "state": "Jammu & Kashmir",
+    "district": "Kathua",
+    "total_hh": 137886,
+    "hh_with_tap": 104372,
+    "fhtc_pct": 75.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KISHTWAR": {
+    "state": "Jammu & Kashmir",
+    "district": "Kishtwar",
+    "total_hh": 57036,
+    "hh_with_tap": 43223,
+    "fhtc_pct": 75.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KULGAM": {
+    "state": "Jammu & Kashmir",
+    "district": "Kulgam",
+    "total_hh": 61138,
+    "hh_with_tap": 55625,
+    "fhtc_pct": 91.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KUPWARA": {
+    "state": "Jammu & Kashmir",
+    "district": "Kupwara",
+    "total_hh": 156823,
+    "hh_with_tap": 129664,
+    "fhtc_pct": 82.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "POONCH": {
+    "state": "Jammu & Kashmir",
+    "district": "Poonch",
+    "total_hh": 107048,
+    "hh_with_tap": 84971,
+    "fhtc_pct": 79.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PULWAMA": {
+    "state": "Jammu & Kashmir",
+    "district": "Pulwama",
+    "total_hh": 82235,
+    "hh_with_tap": 70727,
+    "fhtc_pct": 86.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "RAJOURI": {
+    "state": "Jammu & Kashmir",
+    "district": "Rajouri",
+    "total_hh": 135612,
+    "hh_with_tap": 90853,
+    "fhtc_pct": 67.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "RAMBAN": {
+    "state": "Jammu & Kashmir",
+    "district": "Ramban",
+    "total_hh": 60784,
+    "hh_with_tap": 48696,
+    "fhtc_pct": 80.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "REASI": {
+    "state": "Jammu & Kashmir",
+    "district": "Reasi",
+    "total_hh": 79754,
+    "hh_with_tap": 72544,
+    "fhtc_pct": 91.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SAMBA": {
+    "state": "Jammu & Kashmir",
+    "district": "Samba",
+    "total_hh": 76541,
+    "hh_with_tap": 54649,
+    "fhtc_pct": 71.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SHOPIAN": {
+    "state": "Jammu & Kashmir",
+    "district": "Shopian",
+    "total_hh": 45093,
+    "hh_with_tap": 42234,
+    "fhtc_pct": 93.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SRINAGAR": {
+    "state": "Jammu & Kashmir",
+    "district": "Srinagar",
+    "total_hh": 10407,
+    "hh_with_tap": 10407,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "UDHAMPUR": {
+    "state": "Jammu & Kashmir",
+    "district": "Udhampur",
+    "total_hh": 99724,
+    "hh_with_tap": 79220,
+    "fhtc_pct": 79.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BOKARO": {
+    "state": "Jharkhand",
+    "district": "Bokaro",
+    "total_hh": 316199,
+    "hh_with_tap": 158957,
+    "fhtc_pct": 50.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "CHATRA": {
+    "state": "Jharkhand",
+    "district": "Chatra",
+    "total_hh": 221791,
+    "hh_with_tap": 143932,
+    "fhtc_pct": 64.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DEOGHAR": {
+    "state": "Jharkhand",
+    "district": "Deoghar",
+    "total_hh": 290663,
+    "hh_with_tap": 166857,
+    "fhtc_pct": 57.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DHANBAD": {
+    "state": "Jharkhand",
+    "district": "Dhanbad",
+    "total_hh": 278654,
+    "hh_with_tap": 133462,
+    "fhtc_pct": 47.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DUMKA": {
+    "state": "Jharkhand",
+    "district": "Dumka",
+    "total_hh": 296116,
+    "hh_with_tap": 149051,
+    "fhtc_pct": 50.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "EAST SINGHBUM": {
+    "state": "Jharkhand",
+    "district": "East Singhbum",
+    "total_hh": 355580,
+    "hh_with_tap": 146712,
+    "fhtc_pct": 41.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "GARHWA": {
+    "state": "Jharkhand",
+    "district": "Garhwa",
+    "total_hh": 311950,
+    "hh_with_tap": 202329,
+    "fhtc_pct": 64.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "GIRIDIH": {
+    "state": "Jharkhand",
+    "district": "Giridih",
+    "total_hh": 498960,
+    "hh_with_tap": 364342,
+    "fhtc_pct": 73.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "GODDA": {
+    "state": "Jharkhand",
+    "district": "Godda",
+    "total_hh": 303458,
+    "hh_with_tap": 58666,
+    "fhtc_pct": 19.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "GUMLA": {
+    "state": "Jharkhand",
+    "district": "Gumla",
+    "total_hh": 214703,
+    "hh_with_tap": 146493,
+    "fhtc_pct": 68.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "HAZARIBAGH": {
+    "state": "Jharkhand",
+    "district": "Hazaribagh",
+    "total_hh": 344548,
+    "hh_with_tap": 208286,
+    "fhtc_pct": 60.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "JAMTARA": {
+    "state": "Jharkhand",
+    "district": "Jamtara",
+    "total_hh": 148810,
+    "hh_with_tap": 55640,
+    "fhtc_pct": 37.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KHUNTI": {
+    "state": "Jharkhand",
+    "district": "Khunti",
+    "total_hh": 120124,
+    "hh_with_tap": 75483,
+    "fhtc_pct": 62.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KODERMA": {
+    "state": "Jharkhand",
+    "district": "Koderma",
+    "total_hh": 145331,
+    "hh_with_tap": 66690,
+    "fhtc_pct": 45.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "LATEHAR": {
+    "state": "Jharkhand",
+    "district": "Latehar",
+    "total_hh": 186116,
+    "hh_with_tap": 137401,
+    "fhtc_pct": 73.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "LOHARDAGA": {
+    "state": "Jharkhand",
+    "district": "Lohardaga",
+    "total_hh": 92807,
+    "hh_with_tap": 72749,
+    "fhtc_pct": 78.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PAKUR": {
+    "state": "Jharkhand",
+    "district": "Pakur",
+    "total_hh": 228456,
+    "hh_with_tap": 29612,
+    "fhtc_pct": 13.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PALAMU": {
+    "state": "Jharkhand",
+    "district": "Palamu",
+    "total_hh": 366979,
+    "hh_with_tap": 193601,
+    "fhtc_pct": 52.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "RAMGARH": {
+    "state": "Jharkhand",
+    "district": "Ramgarh",
+    "total_hh": 143842,
+    "hh_with_tap": 101957,
+    "fhtc_pct": 70.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "RANCHI": {
+    "state": "Jharkhand",
+    "district": "Ranchi",
+    "total_hh": 450251,
+    "hh_with_tap": 292592,
+    "fhtc_pct": 65.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SAHEBGANJ": {
+    "state": "Jharkhand",
+    "district": "Sahebganj",
+    "total_hh": 281088,
+    "hh_with_tap": 130284,
+    "fhtc_pct": 46.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SARAIKELA KHARSAWAN": {
+    "state": "Jharkhand",
+    "district": "Saraikela Kharsawan",
+    "total_hh": 184753,
+    "hh_with_tap": 90704,
+    "fhtc_pct": 49.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SIMDEGA": {
+    "state": "Jharkhand",
+    "district": "Simdega",
+    "total_hh": 130131,
+    "hh_with_tap": 120932,
+    "fhtc_pct": 92.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "WEST SINGHBHUM": {
+    "state": "Jharkhand",
+    "district": "West Singhbhum",
+    "total_hh": 325832,
+    "hh_with_tap": 217113,
+    "fhtc_pct": 66.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BAGALKOTE": {
+    "state": "Karnataka",
+    "district": "Bagalkote",
+    "total_hh": 333733,
+    "hh_with_tap": 297755,
+    "fhtc_pct": 89.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BALLARI": {
+    "state": "Karnataka",
+    "district": "Ballari",
+    "total_hh": 203253,
+    "hh_with_tap": 199556,
+    "fhtc_pct": 98.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BELAGAVI": {
+    "state": "Karnataka",
+    "district": "Belagavi",
+    "total_hh": 846101,
+    "hh_with_tap": 770270,
+    "fhtc_pct": 91.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BENGALURU RURAL": {
+    "state": "Karnataka",
+    "district": "BENGALURU RURAL",
+    "total_hh": 208818,
+    "hh_with_tap": 184028,
+    "fhtc_pct": 88.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BENGALURU URBAN": {
+    "state": "Karnataka",
+    "district": "Bengaluru Urban",
+    "total_hh": 317445,
+    "hh_with_tap": 228350,
+    "fhtc_pct": 71.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BIDAR": {
+    "state": "Karnataka",
+    "district": "Bidar",
+    "total_hh": 314887,
+    "hh_with_tap": 292534,
+    "fhtc_pct": 92.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "CHAMARAJANAGARA": {
+    "state": "Karnataka",
+    "district": "CHAMARAJANAGARA",
+    "total_hh": 251525,
+    "hh_with_tap": 246624,
+    "fhtc_pct": 98.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "CHIKKABALLAPURA": {
+    "state": "Karnataka",
+    "district": "Chikkaballapura",
+    "total_hh": 247536,
+    "hh_with_tap": 219321,
+    "fhtc_pct": 88.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "CHIKKAMAGALURU": {
+    "state": "Karnataka",
+    "district": "CHIKKAMAGALURU",
+    "total_hh": 240184,
+    "hh_with_tap": 200804,
+    "fhtc_pct": 83.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "CHITRADURGA": {
+    "state": "Karnataka",
+    "district": "Chitradurga",
+    "total_hh": 381012,
+    "hh_with_tap": 336839,
+    "fhtc_pct": 88.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DAKSHINA KANNADA": {
+    "state": "Karnataka",
+    "district": "Dakshina Kannada",
+    "total_hh": 334185,
+    "hh_with_tap": 295807,
+    "fhtc_pct": 88.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DAVANGERE": {
+    "state": "Karnataka",
+    "district": "Davangere",
+    "total_hh": 259439,
+    "hh_with_tap": 234237,
+    "fhtc_pct": 90.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DHARWAD": {
+    "state": "Karnataka",
+    "district": "Dharwad",
+    "total_hh": 201331,
+    "hh_with_tap": 201146,
+    "fhtc_pct": 99.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "GADAG": {
+    "state": "Karnataka",
+    "district": "Gadag",
+    "total_hh": 200113,
+    "hh_with_tap": 200113,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "HASSAN": {
+    "state": "Karnataka",
+    "district": "Hassan",
+    "total_hh": 431593,
+    "hh_with_tap": 374464,
+    "fhtc_pct": 86.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "HAVERI": {
+    "state": "Karnataka",
+    "district": "Haveri",
+    "total_hh": 294573,
+    "hh_with_tap": 281203,
+    "fhtc_pct": 95.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KALABURAGI": {
+    "state": "Karnataka",
+    "district": "Kalaburagi",
+    "total_hh": 456036,
+    "hh_with_tap": 358083,
+    "fhtc_pct": 78.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KODAGU": {
+    "state": "Karnataka",
+    "district": "Kodagu",
+    "total_hh": 137970,
+    "hh_with_tap": 123015,
+    "fhtc_pct": 89.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KOLAR": {
+    "state": "Karnataka",
+    "district": "Kolar",
+    "total_hh": 271907,
+    "hh_with_tap": 204242,
+    "fhtc_pct": 75.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KOPPAL": {
+    "state": "Karnataka",
+    "district": "Koppal",
+    "total_hh": 305862,
+    "hh_with_tap": 275026,
+    "fhtc_pct": 89.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MANDYA": {
+    "state": "Karnataka",
+    "district": "Mandya",
+    "total_hh": 397959,
+    "hh_with_tap": 373963,
+    "fhtc_pct": 94.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MYSURU": {
+    "state": "Karnataka",
+    "district": "Mysuru",
+    "total_hh": 501970,
+    "hh_with_tap": 450495,
+    "fhtc_pct": 89.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "RAICHUR": {
+    "state": "Karnataka",
+    "district": "Raichur",
+    "total_hh": 362117,
+    "hh_with_tap": 345746,
+    "fhtc_pct": 95.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "RAMANAGARA": {
+    "state": "Karnataka",
+    "district": "RAMANAGARA",
+    "total_hh": 231006,
+    "hh_with_tap": 213945,
+    "fhtc_pct": 92.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SHIVAMOGGA": {
+    "state": "Karnataka",
+    "district": "Shivamogga",
+    "total_hh": 309198,
+    "hh_with_tap": 274618,
+    "fhtc_pct": 88.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "TUMAKURU": {
+    "state": "Karnataka",
+    "district": "TUMAKURU",
+    "total_hh": 564687,
+    "hh_with_tap": 432637,
+    "fhtc_pct": 76.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "UDUPI": {
+    "state": "Karnataka",
+    "district": "Udupi",
+    "total_hh": 247190,
+    "hh_with_tap": 216937,
+    "fhtc_pct": 87.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "UTTARA KANNADA": {
+    "state": "Karnataka",
+    "district": "Uttara Kannada",
+    "total_hh": 286070,
+    "hh_with_tap": 203508,
+    "fhtc_pct": 71.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "VIJAYANAGAR": {
+    "state": "Karnataka",
+    "district": "Vijayanagar",
+    "total_hh": 277717,
+    "hh_with_tap": 265986,
+    "fhtc_pct": 95.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "VIJAYAPURA": {
+    "state": "Karnataka",
+    "district": "VIJAYAPURA",
+    "total_hh": 464242,
+    "hh_with_tap": 410868,
+    "fhtc_pct": 88.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "YADGIR": {
+    "state": "Karnataka",
+    "district": "Yadgir",
+    "total_hh": 232518,
+    "hh_with_tap": 212775,
+    "fhtc_pct": 91.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "ALAPPUZHA": {
+    "state": "Kerala",
+    "district": "Alappuzha",
+    "total_hh": 551152,
+    "hh_with_tap": 365707,
+    "fhtc_pct": 66.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "ERNAKULAM": {
+    "state": "Kerala",
+    "district": "Ernakulam",
+    "total_hh": 616973,
+    "hh_with_tap": 409675,
+    "fhtc_pct": 66.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "IDUKKI": {
+    "state": "Kerala",
+    "district": "Idukki",
+    "total_hh": 279519,
+    "hh_with_tap": 103450,
+    "fhtc_pct": 37.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KANNUR": {
+    "state": "Kerala",
+    "district": "Kannur",
+    "total_hh": 448003,
+    "hh_with_tap": 255026,
+    "fhtc_pct": 56.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KASARAGOD": {
+    "state": "Kerala",
+    "district": "Kasaragod",
+    "total_hh": 254051,
+    "hh_with_tap": 87303,
+    "fhtc_pct": 34.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KOLLAM": {
+    "state": "Kerala",
+    "district": "Kollam",
+    "total_hh": 609093,
+    "hh_with_tap": 449791,
+    "fhtc_pct": 73.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KOTTAYAM": {
+    "state": "Kerala",
+    "district": "Kottayam",
+    "total_hh": 482790,
+    "hh_with_tap": 229668,
+    "fhtc_pct": 47.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KOZHIKODE": {
+    "state": "Kerala",
+    "district": "Kozhikode",
+    "total_hh": 517076,
+    "hh_with_tap": 211711,
+    "fhtc_pct": 40.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MALAPPURAM": {
+    "state": "Kerala",
+    "district": "Malappuram",
+    "total_hh": 802710,
+    "hh_with_tap": 383365,
+    "fhtc_pct": 47.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PALAKKAD": {
+    "state": "Kerala",
+    "district": "Palakkad",
+    "total_hh": 665293,
+    "hh_with_tap": 394142,
+    "fhtc_pct": 59.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PATHANAMTHITTA": {
+    "state": "Kerala",
+    "district": "Pathanamthitta",
+    "total_hh": 358607,
+    "hh_with_tap": 177325,
+    "fhtc_pct": 49.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "THIRUVANANTHAPURAM": {
+    "state": "Kerala",
+    "district": "Thiruvananthapuram",
+    "total_hh": 684304,
+    "hh_with_tap": 451630,
+    "fhtc_pct": 66.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "THRISSUR": {
+    "state": "Kerala",
+    "district": "Thrissur",
+    "total_hh": 614994,
+    "hh_with_tap": 308413,
+    "fhtc_pct": 50.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "WAYANAD": {
+    "state": "Kerala",
+    "district": "Wayanad",
+    "total_hh": 191308,
+    "hh_with_tap": 73301,
+    "fhtc_pct": 38.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KARGIL": {
+    "state": "Ladakh",
+    "district": "Kargil",
+    "total_hh": 18914,
+    "hh_with_tap": 18294,
+    "fhtc_pct": 96.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "LEH LADAKH": {
+    "state": "Ladakh",
+    "district": "Leh Ladakh",
+    "total_hh": 21620,
+    "hh_with_tap": 21508,
+    "fhtc_pct": 99.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "LAKSHADWEEP DISTRICT": {
+    "state": "Lakshadweep",
+    "district": "Lakshadweep District",
+    "total_hh": 13370,
+    "hh_with_tap": 12227,
+    "fhtc_pct": 91.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "AGAR-MALWA": {
+    "state": "Madhya Pradesh",
+    "district": "Agar-Malwa",
+    "total_hh": 91364,
+    "hh_with_tap": 58521,
+    "fhtc_pct": 64.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "ALIRAJPUR": {
+    "state": "Madhya Pradesh",
+    "district": "Alirajpur",
+    "total_hh": 138101,
+    "hh_with_tap": 59080,
+    "fhtc_pct": 42.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "ANUPPUR": {
+    "state": "Madhya Pradesh",
+    "district": "Anuppur",
+    "total_hh": 124867,
+    "hh_with_tap": 115899,
+    "fhtc_pct": 92.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "ASHOKNAGAR": {
+    "state": "Madhya Pradesh",
+    "district": "Ashoknagar",
+    "total_hh": 135072,
+    "hh_with_tap": 62961,
+    "fhtc_pct": 46.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BALAGHAT": {
+    "state": "Madhya Pradesh",
+    "district": "Balaghat",
+    "total_hh": 367336,
+    "hh_with_tap": 366166,
+    "fhtc_pct": 99.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BARWANI": {
+    "state": "Madhya Pradesh",
+    "district": "Barwani",
+    "total_hh": 213622,
+    "hh_with_tap": 149015,
+    "fhtc_pct": 69.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BETUL": {
+    "state": "Madhya Pradesh",
+    "district": "Betul",
+    "total_hh": 263602,
+    "hh_with_tap": 249291,
+    "fhtc_pct": 94.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BHIND": {
+    "state": "Madhya Pradesh",
+    "district": "Bhind",
+    "total_hh": 252503,
+    "hh_with_tap": 221465,
+    "fhtc_pct": 87.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BHOPAL": {
+    "state": "Madhya Pradesh",
+    "district": "Bhopal",
+    "total_hh": 97462,
+    "hh_with_tap": 80816,
+    "fhtc_pct": 82.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BURHANPUR": {
+    "state": "Madhya Pradesh",
+    "district": "Burhanpur",
+    "total_hh": 101905,
+    "hh_with_tap": 101905,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "CHHATARPUR": {
+    "state": "Madhya Pradesh",
+    "district": "Chhatarpur",
+    "total_hh": 247184,
+    "hh_with_tap": 105824,
+    "fhtc_pct": 42.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "CHHINDWARA": {
+    "state": "Madhya Pradesh",
+    "district": "Chhindwara",
+    "total_hh": 348219,
+    "hh_with_tap": 310563,
+    "fhtc_pct": 89.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DAMOH": {
+    "state": "Madhya Pradesh",
+    "district": "Damoh",
+    "total_hh": 218842,
+    "hh_with_tap": 165572,
+    "fhtc_pct": 75.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DATIA": {
+    "state": "Madhya Pradesh",
+    "district": "Datia",
+    "total_hh": 105509,
+    "hh_with_tap": 100251,
+    "fhtc_pct": 95.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DEWAS": {
+    "state": "Madhya Pradesh",
+    "district": "Dewas",
+    "total_hh": 230519,
+    "hh_with_tap": 189279,
+    "fhtc_pct": 82.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DHAR": {
+    "state": "Madhya Pradesh",
+    "district": "Dhar",
+    "total_hh": 382744,
+    "hh_with_tap": 308456,
+    "fhtc_pct": 80.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DINDORI": {
+    "state": "Madhya Pradesh",
+    "district": "Dindori",
+    "total_hh": 167163,
+    "hh_with_tap": 116330,
+    "fhtc_pct": 69.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "GUNA": {
+    "state": "Madhya Pradesh",
+    "district": "Guna",
+    "total_hh": 173878,
+    "hh_with_tap": 101958,
+    "fhtc_pct": 58.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "GWALIOR": {
+    "state": "Madhya Pradesh",
+    "district": "Gwalior",
+    "total_hh": 108724,
+    "hh_with_tap": 103844,
+    "fhtc_pct": 95.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "HARDA": {
+    "state": "Madhya Pradesh",
+    "district": "Harda",
+    "total_hh": 96896,
+    "hh_with_tap": 96284,
+    "fhtc_pct": 99.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "INDORE": {
+    "state": "Madhya Pradesh",
+    "district": "Indore",
+    "total_hh": 195605,
+    "hh_with_tap": 195553,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "JABALPUR": {
+    "state": "Madhya Pradesh",
+    "district": "Jabalpur",
+    "total_hh": 221025,
+    "hh_with_tap": 154172,
+    "fhtc_pct": 69.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "JHABUA": {
+    "state": "Madhya Pradesh",
+    "district": "Jhabua",
+    "total_hh": 196670,
+    "hh_with_tap": 183836,
+    "fhtc_pct": 93.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KATNI": {
+    "state": "Madhya Pradesh",
+    "district": "Katni",
+    "total_hh": 212107,
+    "hh_with_tap": 194416,
+    "fhtc_pct": 91.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KHANDWA (EAST NIMAR)": {
+    "state": "Madhya Pradesh",
+    "district": "Khandwa (East Nimar)",
+    "total_hh": 233116,
+    "hh_with_tap": 203260,
+    "fhtc_pct": 87.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KHARGONE (WEST NIMAR)": {
+    "state": "Madhya Pradesh",
+    "district": "Khargone (West Nimar)",
+    "total_hh": 336202,
+    "hh_with_tap": 304943,
+    "fhtc_pct": 90.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MANDLA": {
+    "state": "Madhya Pradesh",
+    "district": "Mandla",
+    "total_hh": 237073,
+    "hh_with_tap": 194883,
+    "fhtc_pct": 82.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MANDSAUR": {
+    "state": "Madhya Pradesh",
+    "district": "Mandsaur",
+    "total_hh": 239978,
+    "hh_with_tap": 151735,
+    "fhtc_pct": 63.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MORENA": {
+    "state": "Madhya Pradesh",
+    "district": "Morena",
+    "total_hh": 326326,
+    "hh_with_tap": 293878,
+    "fhtc_pct": 90.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "NARMADAPURAM": {
+    "state": "Madhya Pradesh",
+    "district": "Narmadapuram",
+    "total_hh": 175060,
+    "hh_with_tap": 170765,
+    "fhtc_pct": 97.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "NARSIMHAPUR": {
+    "state": "Madhya Pradesh",
+    "district": "Narsimhapur",
+    "total_hh": 207980,
+    "hh_with_tap": 199626,
+    "fhtc_pct": 96.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "NEEMUCH": {
+    "state": "Madhya Pradesh",
+    "district": "Neemuch",
+    "total_hh": 132663,
+    "hh_with_tap": 76858,
+    "fhtc_pct": 57.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "NIWARI": {
+    "state": "Madhya Pradesh",
+    "district": "Niwari",
+    "total_hh": 55645,
+    "hh_with_tap": 55645,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PANNA": {
+    "state": "Madhya Pradesh",
+    "district": "Panna",
+    "total_hh": 157429,
+    "hh_with_tap": 71358,
+    "fhtc_pct": 45.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "RAISEN": {
+    "state": "Madhya Pradesh",
+    "district": "Raisen",
+    "total_hh": 217156,
+    "hh_with_tap": 178699,
+    "fhtc_pct": 82.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "RAJGARH": {
+    "state": "Madhya Pradesh",
+    "district": "Rajgarh",
+    "total_hh": 238807,
+    "hh_with_tap": 215320,
+    "fhtc_pct": 90.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "RATLAM": {
+    "state": "Madhya Pradesh",
+    "district": "Ratlam",
+    "total_hh": 256243,
+    "hh_with_tap": 172889,
+    "fhtc_pct": 67.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "REWA": {
+    "state": "Madhya Pradesh",
+    "district": "Rewa",
+    "total_hh": 390241,
+    "hh_with_tap": 205015,
+    "fhtc_pct": 52.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SAGAR": {
+    "state": "Madhya Pradesh",
+    "district": "Sagar",
+    "total_hh": 332940,
+    "hh_with_tap": 237634,
+    "fhtc_pct": 71.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SATNA": {
+    "state": "Madhya Pradesh",
+    "district": "Satna",
+    "total_hh": 372996,
+    "hh_with_tap": 157778,
+    "fhtc_pct": 42.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SEHORE": {
+    "state": "Madhya Pradesh",
+    "district": "Sehore",
+    "total_hh": 224328,
+    "hh_with_tap": 127948,
+    "fhtc_pct": 57.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SEONI": {
+    "state": "Madhya Pradesh",
+    "district": "Seoni",
+    "total_hh": 265607,
+    "hh_with_tap": 212250,
+    "fhtc_pct": 79.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SHAHDOL": {
+    "state": "Madhya Pradesh",
+    "district": "Shahdol",
+    "total_hh": 198215,
+    "hh_with_tap": 162650,
+    "fhtc_pct": 82.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SHAJAPUR": {
+    "state": "Madhya Pradesh",
+    "district": "Shajapur",
+    "total_hh": 172071,
+    "hh_with_tap": 101979,
+    "fhtc_pct": 59.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SHEOPUR": {
+    "state": "Madhya Pradesh",
+    "district": "Sheopur",
+    "total_hh": 160793,
+    "hh_with_tap": 120028,
+    "fhtc_pct": 74.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SHIVPURI": {
+    "state": "Madhya Pradesh",
+    "district": "Shivpuri",
+    "total_hh": 316952,
+    "hh_with_tap": 168448,
+    "fhtc_pct": 53.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SIDHI": {
+    "state": "Madhya Pradesh",
+    "district": "Sidhi",
+    "total_hh": 192280,
+    "hh_with_tap": 100673,
+    "fhtc_pct": 52.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SINGRAULI": {
+    "state": "Madhya Pradesh",
+    "district": "Singrauli",
+    "total_hh": 160399,
+    "hh_with_tap": 65414,
+    "fhtc_pct": 40.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "TIKAMGARH": {
+    "state": "Madhya Pradesh",
+    "district": "Tikamgarh",
+    "total_hh": 195790,
+    "hh_with_tap": 135864,
+    "fhtc_pct": 69.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "UJJAIN": {
+    "state": "Madhya Pradesh",
+    "district": "Ujjain",
+    "total_hh": 264140,
+    "hh_with_tap": 204840,
+    "fhtc_pct": 77.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "UMARIA": {
+    "state": "Madhya Pradesh",
+    "district": "Umaria",
+    "total_hh": 102893,
+    "hh_with_tap": 88798,
+    "fhtc_pct": 86.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "VIDISHA": {
+    "state": "Madhya Pradesh",
+    "district": "Vidisha",
+    "total_hh": 229580,
+    "hh_with_tap": 153070,
+    "fhtc_pct": 66.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "AHMEDNAGAR": {
+    "state": "Maharashtra",
+    "district": "Ahmednagar",
+    "total_hh": 798783,
+    "hh_with_tap": 725482,
+    "fhtc_pct": 90.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "AKOLA": {
+    "state": "Maharashtra",
+    "district": "Akola",
+    "total_hh": 248458,
+    "hh_with_tap": 222802,
+    "fhtc_pct": 89.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "AMRAVATI": {
+    "state": "Maharashtra",
+    "district": "Amravati",
+    "total_hh": 432311,
+    "hh_with_tap": 428195,
+    "fhtc_pct": 99.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BEED": {
+    "state": "Maharashtra",
+    "district": "Beed",
+    "total_hh": 470394,
+    "hh_with_tap": 374726,
+    "fhtc_pct": 79.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BHANDARA": {
+    "state": "Maharashtra",
+    "district": "Bhandara",
+    "total_hh": 256299,
+    "hh_with_tap": 226064,
+    "fhtc_pct": 88.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BULDHANA": {
+    "state": "Maharashtra",
+    "district": "Buldhana",
+    "total_hh": 447613,
+    "hh_with_tap": 427582,
+    "fhtc_pct": 95.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "CHANDRAPUR": {
+    "state": "Maharashtra",
+    "district": "Chandrapur",
+    "total_hh": 393971,
+    "hh_with_tap": 359072,
+    "fhtc_pct": 91.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "CHHATRAPATI SAMBHAJINAGAR": {
+    "state": "Maharashtra",
+    "district": "Chhatrapati Sambhajinagar",
+    "total_hh": 487872,
+    "hh_with_tap": 426505,
+    "fhtc_pct": 87.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DHARASHIV": {
+    "state": "Maharashtra",
+    "district": "Dharashiv",
+    "total_hh": 288410,
+    "hh_with_tap": 264480,
+    "fhtc_pct": 91.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DHULE": {
+    "state": "Maharashtra",
+    "district": "Dhule",
+    "total_hh": 304035,
+    "hh_with_tap": 302881,
+    "fhtc_pct": 99.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "GADCHIROLI": {
+    "state": "Maharashtra",
+    "district": "Gadchiroli",
+    "total_hh": 241273,
+    "hh_with_tap": 224503,
+    "fhtc_pct": 93.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "GONDIA": {
+    "state": "Maharashtra",
+    "district": "Gondia",
+    "total_hh": 306566,
+    "hh_with_tap": 253588,
+    "fhtc_pct": 82.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "HINGOLI": {
+    "state": "Maharashtra",
+    "district": "Hingoli",
+    "total_hh": 214355,
+    "hh_with_tap": 182769,
+    "fhtc_pct": 85.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "JALGAON": {
+    "state": "Maharashtra",
+    "district": "Jalgaon",
+    "total_hh": 690798,
+    "hh_with_tap": 690791,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "JALNA": {
+    "state": "Maharashtra",
+    "district": "Jalna",
+    "total_hh": 300063,
+    "hh_with_tap": 299947,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KOLHAPUR": {
+    "state": "Maharashtra",
+    "district": "Kolhapur",
+    "total_hh": 683789,
+    "hh_with_tap": 683047,
+    "fhtc_pct": 99.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "LATUR": {
+    "state": "Maharashtra",
+    "district": "Latur",
+    "total_hh": 373833,
+    "hh_with_tap": 368267,
+    "fhtc_pct": 98.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "NAGPUR": {
+    "state": "Maharashtra",
+    "district": "Nagpur",
+    "total_hh": 376262,
+    "hh_with_tap": 367783,
+    "fhtc_pct": 97.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "NANDED": {
+    "state": "Maharashtra",
+    "district": "Nanded",
+    "total_hh": 535874,
+    "hh_with_tap": 484289,
+    "fhtc_pct": 90.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "NANDURBAR": {
+    "state": "Maharashtra",
+    "district": "Nandurbar",
+    "total_hh": 361645,
+    "hh_with_tap": 248138,
+    "fhtc_pct": 68.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "NASHIK": {
+    "state": "Maharashtra",
+    "district": "Nashik",
+    "total_hh": 718174,
+    "hh_with_tap": 681876,
+    "fhtc_pct": 94.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PALGHAR": {
+    "state": "Maharashtra",
+    "district": "Palghar",
+    "total_hh": 443714,
+    "hh_with_tap": 320505,
+    "fhtc_pct": 72.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PARBHANI": {
+    "state": "Maharashtra",
+    "district": "Parbhani",
+    "total_hh": 299744,
+    "hh_with_tap": 274589,
+    "fhtc_pct": 91.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PUNE": {
+    "state": "Maharashtra",
+    "district": "Pune",
+    "total_hh": 893325,
+    "hh_with_tap": 779673,
+    "fhtc_pct": 87.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "RAIGAD": {
+    "state": "Maharashtra",
+    "district": "Raigad",
+    "total_hh": 548482,
+    "hh_with_tap": 501477,
+    "fhtc_pct": 91.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "RATNAGIRI": {
+    "state": "Maharashtra",
+    "district": "Ratnagiri",
+    "total_hh": 447956,
+    "hh_with_tap": 388429,
+    "fhtc_pct": 86.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SANGLI": {
+    "state": "Maharashtra",
+    "district": "Sangli",
+    "total_hh": 459048,
+    "hh_with_tap": 406936,
+    "fhtc_pct": 88.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SATARA": {
+    "state": "Maharashtra",
+    "district": "Satara",
+    "total_hh": 618277,
+    "hh_with_tap": 573273,
+    "fhtc_pct": 92.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SINDHUDURG": {
+    "state": "Maharashtra",
+    "district": "Sindhudurg",
+    "total_hh": 193079,
+    "hh_with_tap": 161345,
+    "fhtc_pct": 83.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SOLAPUR": {
+    "state": "Maharashtra",
+    "district": "Solapur",
+    "total_hh": 576668,
+    "hh_with_tap": 576668,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "THANE": {
+    "state": "Maharashtra",
+    "district": "Thane",
+    "total_hh": 261275,
+    "hh_with_tap": 198389,
+    "fhtc_pct": 75.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "WARDHA": {
+    "state": "Maharashtra",
+    "district": "Wardha",
+    "total_hh": 238877,
+    "hh_with_tap": 235615,
+    "fhtc_pct": 98.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "WASHIM": {
+    "state": "Maharashtra",
+    "district": "Washim",
+    "total_hh": 219993,
+    "hh_with_tap": 201813,
+    "fhtc_pct": 91.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "YAVATMAL": {
+    "state": "Maharashtra",
+    "district": "Yavatmal",
+    "total_hh": 521945,
+    "hh_with_tap": 429752,
+    "fhtc_pct": 82.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BISHNUPUR": {
+    "state": "Manipur",
+    "district": "Bishnupur",
+    "total_hh": 33004,
+    "hh_with_tap": 23998,
+    "fhtc_pct": 72.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "CHANDEL": {
+    "state": "Manipur",
+    "district": "Chandel",
+    "total_hh": 19475,
+    "hh_with_tap": 15311,
+    "fhtc_pct": 78.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "CHURACHANDPUR": {
+    "state": "Manipur",
+    "district": "Churachandpur",
+    "total_hh": 42161,
+    "hh_with_tap": 36112,
+    "fhtc_pct": 85.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "IMPHAL EAST": {
+    "state": "Manipur",
+    "district": "Imphal East",
+    "total_hh": 72889,
+    "hh_with_tap": 58689,
+    "fhtc_pct": 80.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "IMPHAL WEST": {
+    "state": "Manipur",
+    "district": "Imphal West",
+    "total_hh": 45725,
+    "hh_with_tap": 35421,
+    "fhtc_pct": 77.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "JIRIBAM": {
+    "state": "Manipur",
+    "district": "Jiribam",
+    "total_hh": 7272,
+    "hh_with_tap": 2740,
+    "fhtc_pct": 37.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KAKCHING": {
+    "state": "Manipur",
+    "district": "Kakching",
+    "total_hh": 20272,
+    "hh_with_tap": 17678,
+    "fhtc_pct": 87.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KAMJONG": {
+    "state": "Manipur",
+    "district": "Kamjong",
+    "total_hh": 11334,
+    "hh_with_tap": 8323,
+    "fhtc_pct": 73.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KANGPOKPI": {
+    "state": "Manipur",
+    "district": "Kangpokpi",
+    "total_hh": 32327,
+    "hh_with_tap": 27674,
+    "fhtc_pct": 85.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "NONEY": {
+    "state": "Manipur",
+    "district": "Noney",
+    "total_hh": 11492,
+    "hh_with_tap": 8799,
+    "fhtc_pct": 76.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PHERZAWL": {
+    "state": "Manipur",
+    "district": "Pherzawl",
+    "total_hh": 8005,
+    "hh_with_tap": 4128,
+    "fhtc_pct": 51.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SENAPATI": {
+    "state": "Manipur",
+    "district": "Senapati",
+    "total_hh": 42625,
+    "hh_with_tap": 32689,
+    "fhtc_pct": 76.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "TAMENGLONG": {
+    "state": "Manipur",
+    "district": "Tamenglong",
+    "total_hh": 16511,
+    "hh_with_tap": 13094,
+    "fhtc_pct": 79.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "TENGNOUPAL": {
+    "state": "Manipur",
+    "district": "Tengnoupal",
+    "total_hh": 14973,
+    "hh_with_tap": 13045,
+    "fhtc_pct": 87.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "THOUBAL": {
+    "state": "Manipur",
+    "district": "Thoubal",
+    "total_hh": 42302,
+    "hh_with_tap": 37530,
+    "fhtc_pct": 88.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "UKHRUL": {
+    "state": "Manipur",
+    "district": "Ukhrul",
+    "total_hh": 31199,
+    "hh_with_tap": 24375,
+    "fhtc_pct": 78.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "EAST GARO HILLS": {
+    "state": "Meghalaya",
+    "district": "East Garo Hills",
+    "total_hh": 39952,
+    "hh_with_tap": 36257,
+    "fhtc_pct": 90.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "EAST JAINTIA HILLS": {
+    "state": "Meghalaya",
+    "district": "East Jaintia Hills",
+    "total_hh": 25857,
+    "hh_with_tap": 19212,
+    "fhtc_pct": 74.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "EAST KHASI HILLS": {
+    "state": "Meghalaya",
+    "district": "East Khasi Hills",
+    "total_hh": 139829,
+    "hh_with_tap": 118527,
+    "fhtc_pct": 84.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "EASTERN WEST KHASI HILLS": {
+    "state": "Meghalaya",
+    "district": "EASTERN WEST KHASI HILLS",
+    "total_hh": 30092,
+    "hh_with_tap": 27031,
+    "fhtc_pct": 89.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "NORTH GARO HILLS": {
+    "state": "Meghalaya",
+    "district": "North Garo Hills",
+    "total_hh": 41088,
+    "hh_with_tap": 35793,
+    "fhtc_pct": 87.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "RI BHOI": {
+    "state": "Meghalaya",
+    "district": "Ri Bhoi",
+    "total_hh": 62918,
+    "hh_with_tap": 53741,
+    "fhtc_pct": 85.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SOUTH GARO HILLS": {
+    "state": "Meghalaya",
+    "district": "South Garo Hills",
+    "total_hh": 37736,
+    "hh_with_tap": 34595,
+    "fhtc_pct": 91.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SOUTH WEST GARO HILLS": {
+    "state": "Meghalaya",
+    "district": "South West Garo Hills",
+    "total_hh": 47841,
+    "hh_with_tap": 43293,
+    "fhtc_pct": 90.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SOUTH WEST KHASI HILLS": {
+    "state": "Meghalaya",
+    "district": "South West Khasi Hills",
+    "total_hh": 21816,
+    "hh_with_tap": 18771,
+    "fhtc_pct": 86.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "WEST GARO HILLS": {
+    "state": "Meghalaya",
+    "district": "West Garo Hills",
+    "total_hh": 110944,
+    "hh_with_tap": 81652,
+    "fhtc_pct": 73.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "WEST JAINTIA HILLS": {
+    "state": "Meghalaya",
+    "district": "West Jaintia Hills",
+    "total_hh": 57913,
+    "hh_with_tap": 46905,
+    "fhtc_pct": 81.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "WEST KHASI HILLS": {
+    "state": "Meghalaya",
+    "district": "West Khasi Hills",
+    "total_hh": 34868,
+    "hh_with_tap": 31201,
+    "fhtc_pct": 89.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "AIZAWL": {
+    "state": "Mizoram",
+    "district": "Aizawl",
+    "total_hh": 17254,
+    "hh_with_tap": 17254,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "CHAMPHAI": {
+    "state": "Mizoram",
+    "district": "Champhai",
+    "total_hh": 9317,
+    "hh_with_tap": 9317,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "HNAHTHIAL": {
+    "state": "Mizoram",
+    "district": "Hnahthial",
+    "total_hh": 5341,
+    "hh_with_tap": 5341,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KHAWZAWL": {
+    "state": "Mizoram",
+    "district": "Khawzawl",
+    "total_hh": 4910,
+    "hh_with_tap": 4910,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KOLASIB": {
+    "state": "Mizoram",
+    "district": "Kolasib",
+    "total_hh": 9038,
+    "hh_with_tap": 9038,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "LAWNGTLAI": {
+    "state": "Mizoram",
+    "district": "Lawngtlai",
+    "total_hh": 27158,
+    "hh_with_tap": 27158,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "LUNGLEI": {
+    "state": "Mizoram",
+    "district": "Lunglei",
+    "total_hh": 17312,
+    "hh_with_tap": 17312,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MAMIT": {
+    "state": "Mizoram",
+    "district": "Mamit",
+    "total_hh": 18184,
+    "hh_with_tap": 18184,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SAITUAL": {
+    "state": "Mizoram",
+    "district": "Saitual",
+    "total_hh": 9433,
+    "hh_with_tap": 9433,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SERCHHIP": {
+    "state": "Mizoram",
+    "district": "Serchhip",
+    "total_hh": 7147,
+    "hh_with_tap": 7147,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SIAHA": {
+    "state": "Mizoram",
+    "district": "Siaha",
+    "total_hh": 7966,
+    "hh_with_tap": 7966,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "CHUMOUKEDIMA": {
+    "state": "Nagaland",
+    "district": "CHUMOUKEDIMA",
+    "total_hh": 10030,
+    "hh_with_tap": 9907,
+    "fhtc_pct": 98.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DIMAPUR": {
+    "state": "Nagaland",
+    "district": "Dimapur",
+    "total_hh": 36105,
+    "hh_with_tap": 33934,
+    "fhtc_pct": 94.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KIPHIRE": {
+    "state": "Nagaland",
+    "district": "Kiphire",
+    "total_hh": 14991,
+    "hh_with_tap": 14991,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KOHIMA": {
+    "state": "Nagaland",
+    "district": "Kohima",
+    "total_hh": 29482,
+    "hh_with_tap": 27491,
+    "fhtc_pct": 93.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "LONGLENG": {
+    "state": "Nagaland",
+    "district": "Longleng",
+    "total_hh": 11966,
+    "hh_with_tap": 11367,
+    "fhtc_pct": 95.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MOKOKCHUNG": {
+    "state": "Nagaland",
+    "district": "Mokokchung",
+    "total_hh": 38044,
+    "hh_with_tap": 34301,
+    "fhtc_pct": 90.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MON": {
+    "state": "Nagaland",
+    "district": "Mon",
+    "total_hh": 56027,
+    "hh_with_tap": 55667,
+    "fhtc_pct": 99.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "NIULAND": {
+    "state": "Nagaland",
+    "district": "NIULAND",
+    "total_hh": 9562,
+    "hh_with_tap": 9393,
+    "fhtc_pct": 98.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "NOKLAK": {
+    "state": "Nagaland",
+    "district": "NOKLAK",
+    "total_hh": 12514,
+    "hh_with_tap": 12144,
+    "fhtc_pct": 97.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PEREN": {
+    "state": "Nagaland",
+    "district": "Peren",
+    "total_hh": 19520,
+    "hh_with_tap": 17524,
+    "fhtc_pct": 89.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PHEK": {
+    "state": "Nagaland",
+    "district": "Phek",
+    "total_hh": 32558,
+    "hh_with_tap": 31160,
+    "fhtc_pct": 95.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SHAMATOR": {
+    "state": "Nagaland",
+    "district": "SHAMATOR",
+    "total_hh": 7582,
+    "hh_with_tap": 7431,
+    "fhtc_pct": 98.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "TSEMINYU": {
+    "state": "Nagaland",
+    "district": "TSEMINYU",
+    "total_hh": 12168,
+    "hh_with_tap": 12164,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "TUENSANG": {
+    "state": "Nagaland",
+    "district": "Tuensang",
+    "total_hh": 15266,
+    "hh_with_tap": 13947,
+    "fhtc_pct": 91.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "WOKHA": {
+    "state": "Nagaland",
+    "district": "Wokha",
+    "total_hh": 24925,
+    "hh_with_tap": 24552,
+    "fhtc_pct": 98.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "ZUNHEBOTO": {
+    "state": "Nagaland",
+    "district": "Zunheboto",
+    "total_hh": 33089,
+    "hh_with_tap": 31588,
+    "fhtc_pct": 95.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "ANUGUL": {
+    "state": "Odisha",
+    "district": "Anugul",
+    "total_hh": 308875,
+    "hh_with_tap": 241520,
+    "fhtc_pct": 78.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BALANGIR": {
+    "state": "Odisha",
+    "district": "Balangir",
+    "total_hh": 386438,
+    "hh_with_tap": 222849,
+    "fhtc_pct": 57.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BALESHWAR": {
+    "state": "Odisha",
+    "district": "Baleshwar",
+    "total_hh": 576897,
+    "hh_with_tap": 500924,
+    "fhtc_pct": 86.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BARGARH": {
+    "state": "Odisha",
+    "district": "Bargarh",
+    "total_hh": 340194,
+    "hh_with_tap": 259587,
+    "fhtc_pct": 76.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BHADRAK": {
+    "state": "Odisha",
+    "district": "Bhadrak",
+    "total_hh": 293551,
+    "hh_with_tap": 282639,
+    "fhtc_pct": 96.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BOUDH": {
+    "state": "Odisha",
+    "district": "Boudh",
+    "total_hh": 106371,
+    "hh_with_tap": 97733,
+    "fhtc_pct": 91.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "CUTTACK": {
+    "state": "Odisha",
+    "district": "Cuttack",
+    "total_hh": 450080,
+    "hh_with_tap": 352790,
+    "fhtc_pct": 78.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DEOGARH": {
+    "state": "Odisha",
+    "district": "DEOGARH",
+    "total_hh": 73338,
+    "hh_with_tap": 67077,
+    "fhtc_pct": 91.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DHENKANAL": {
+    "state": "Odisha",
+    "district": "Dhenkanal",
+    "total_hh": 271526,
+    "hh_with_tap": 227970,
+    "fhtc_pct": 84.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "GAJAPATI": {
+    "state": "Odisha",
+    "district": "Gajapati",
+    "total_hh": 132245,
+    "hh_with_tap": 81270,
+    "fhtc_pct": 61.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "GANJAM": {
+    "state": "Odisha",
+    "district": "Ganjam",
+    "total_hh": 719680,
+    "hh_with_tap": 527142,
+    "fhtc_pct": 73.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "JAGATSINGHAPUR": {
+    "state": "Odisha",
+    "district": "Jagatsinghapur",
+    "total_hh": 267865,
+    "hh_with_tap": 170697,
+    "fhtc_pct": 63.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "JAJAPUR": {
+    "state": "Odisha",
+    "district": "Jajapur",
+    "total_hh": 447756,
+    "hh_with_tap": 322457,
+    "fhtc_pct": 72.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "JHARSUGUDA": {
+    "state": "Odisha",
+    "district": "Jharsuguda",
+    "total_hh": 94032,
+    "hh_with_tap": 82748,
+    "fhtc_pct": 88.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KALAHANDI": {
+    "state": "Odisha",
+    "district": "Kalahandi",
+    "total_hh": 395891,
+    "hh_with_tap": 329430,
+    "fhtc_pct": 83.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KANDHAMAL": {
+    "state": "Odisha",
+    "district": "Kandhamal",
+    "total_hh": 161976,
+    "hh_with_tap": 126435,
+    "fhtc_pct": 78.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KENDRAPARA": {
+    "state": "Odisha",
+    "district": "Kendrapara",
+    "total_hh": 322077,
+    "hh_with_tap": 273302,
+    "fhtc_pct": 84.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KENDUJHAR": {
+    "state": "Odisha",
+    "district": "Kendujhar",
+    "total_hh": 347018,
+    "hh_with_tap": 345786,
+    "fhtc_pct": 99.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KHORDHA": {
+    "state": "Odisha",
+    "district": "KHORDHA",
+    "total_hh": 276907,
+    "hh_with_tap": 211531,
+    "fhtc_pct": 76.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KORAPUT": {
+    "state": "Odisha",
+    "district": "Koraput",
+    "total_hh": 325828,
+    "hh_with_tap": 225330,
+    "fhtc_pct": 69.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MALKANGIRI": {
+    "state": "Odisha",
+    "district": "Malkangiri",
+    "total_hh": 124316,
+    "hh_with_tap": 68333,
+    "fhtc_pct": 55.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MAYURBHANJ": {
+    "state": "Odisha",
+    "district": "Mayurbhanj",
+    "total_hh": 557492,
+    "hh_with_tap": 397316,
+    "fhtc_pct": 71.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "NABARANGPUR": {
+    "state": "Odisha",
+    "district": "Nabarangpur",
+    "total_hh": 309326,
+    "hh_with_tap": 237638,
+    "fhtc_pct": 76.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "NAYAGARH": {
+    "state": "Odisha",
+    "district": "Nayagarh",
+    "total_hh": 243286,
+    "hh_with_tap": 152582,
+    "fhtc_pct": 62.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "NUAPADA": {
+    "state": "Odisha",
+    "district": "Nuapada",
+    "total_hh": 134596,
+    "hh_with_tap": 134565,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PURI": {
+    "state": "Odisha",
+    "district": "Puri",
+    "total_hh": 321895,
+    "hh_with_tap": 245586,
+    "fhtc_pct": 76.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "RAYAGADA": {
+    "state": "Odisha",
+    "district": "Rayagada",
+    "total_hh": 235167,
+    "hh_with_tap": 211539,
+    "fhtc_pct": 90.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SAMBALPUR": {
+    "state": "Odisha",
+    "district": "Sambalpur",
+    "total_hh": 163942,
+    "hh_with_tap": 106802,
+    "fhtc_pct": 65.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SONEPUR": {
+    "state": "Odisha",
+    "district": "Sonepur",
+    "total_hh": 148860,
+    "hh_with_tap": 104136,
+    "fhtc_pct": 70.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SUNDARGARH": {
+    "state": "Odisha",
+    "district": "Sundargarh",
+    "total_hh": 313643,
+    "hh_with_tap": 256259,
+    "fhtc_pct": 81.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KARAIKAL": {
+    "state": "Puducherry",
+    "district": "Karaikal",
+    "total_hh": 28899,
+    "hh_with_tap": 28899,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PONDICHERRY": {
+    "state": "Puducherry",
+    "district": "Pondicherry",
+    "total_hh": 86070,
+    "hh_with_tap": 86070,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "AMRITSAR": {
+    "state": "Punjab",
+    "district": "Amritsar",
+    "total_hh": 213512,
+    "hh_with_tap": 213512,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BARNALA": {
+    "state": "Punjab",
+    "district": "Barnala",
+    "total_hh": 74569,
+    "hh_with_tap": 74569,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BATHINDA": {
+    "state": "Punjab",
+    "district": "Bathinda",
+    "total_hh": 158415,
+    "hh_with_tap": 158415,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "FARIDKOT": {
+    "state": "Punjab",
+    "district": "Faridkot",
+    "total_hh": 78408,
+    "hh_with_tap": 78408,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "FATEHGARH SAHIB": {
+    "state": "Punjab",
+    "district": "Fatehgarh Sahib",
+    "total_hh": 78475,
+    "hh_with_tap": 78475,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "FAZILKA": {
+    "state": "Punjab",
+    "district": "Fazilka",
+    "total_hh": 141539,
+    "hh_with_tap": 141539,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "FEROZEPUR": {
+    "state": "Punjab",
+    "district": "Ferozepur",
+    "total_hh": 127014,
+    "hh_with_tap": 127014,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "GURDASPUR": {
+    "state": "Punjab",
+    "district": "Gurdaspur",
+    "total_hh": 248742,
+    "hh_with_tap": 248742,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "HOSHIARPUR": {
+    "state": "Punjab",
+    "district": "Hoshiarpur",
+    "total_hh": 273829,
+    "hh_with_tap": 273829,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "JALANDHAR": {
+    "state": "Punjab",
+    "district": "Jalandhar",
+    "total_hh": 224197,
+    "hh_with_tap": 224197,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KAPURTHALA": {
+    "state": "Punjab",
+    "district": "Kapurthala",
+    "total_hh": 111598,
+    "hh_with_tap": 111598,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "LUDHIANA": {
+    "state": "Punjab",
+    "district": "Ludhiana",
+    "total_hh": 325877,
+    "hh_with_tap": 325877,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MALERKOTLA": {
+    "state": "Punjab",
+    "district": "Malerkotla",
+    "total_hh": 49881,
+    "hh_with_tap": 49881,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MANSA": {
+    "state": "Punjab",
+    "district": "Mansa",
+    "total_hh": 108594,
+    "hh_with_tap": 108594,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MOGA": {
+    "state": "Punjab",
+    "district": "Moga",
+    "total_hh": 144042,
+    "hh_with_tap": 144042,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PATHANKOT": {
+    "state": "Punjab",
+    "district": "Pathankot",
+    "total_hh": 82592,
+    "hh_with_tap": 82592,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PATIALA": {
+    "state": "Punjab",
+    "district": "Patiala",
+    "total_hh": 223973,
+    "hh_with_tap": 223973,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "RUPNAGAR": {
+    "state": "Punjab",
+    "district": "Rupnagar",
+    "total_hh": 104819,
+    "hh_with_tap": 104819,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "S.A.S NAGAR": {
+    "state": "Punjab",
+    "district": "S.A.S Nagar",
+    "total_hh": 82024,
+    "hh_with_tap": 82024,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SANGRUR": {
+    "state": "Punjab",
+    "district": "Sangrur",
+    "total_hh": 170951,
+    "hh_with_tap": 170951,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SHAHID BHAGAT SINGH NAGAR": {
+    "state": "Punjab",
+    "district": "Shahid Bhagat Singh Nagar",
+    "total_hh": 110148,
+    "hh_with_tap": 110148,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SRI MUKTSAR SAHIB": {
+    "state": "Punjab",
+    "district": "Sri Muktsar Sahib",
+    "total_hh": 125789,
+    "hh_with_tap": 125789,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "TARN TARAN": {
+    "state": "Punjab",
+    "district": "Tarn Taran",
+    "total_hh": 167820,
+    "hh_with_tap": 167820,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "GANGTOK": {
+    "state": "Sikkim",
+    "district": "GANGTOK",
+    "total_hh": 19125,
+    "hh_with_tap": 19125,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "GYALSHING": {
+    "state": "Sikkim",
+    "district": "GYALSHING",
+    "total_hh": 21401,
+    "hh_with_tap": 19488,
+    "fhtc_pct": 91.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MANGAN": {
+    "state": "Sikkim",
+    "district": "MANGAN",
+    "total_hh": 12739,
+    "hh_with_tap": 11673,
+    "fhtc_pct": 91.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "NAMCHI": {
+    "state": "Sikkim",
+    "district": "NAMCHI",
+    "total_hh": 35843,
+    "hh_with_tap": 32589,
+    "fhtc_pct": 90.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PAKYONG": {
+    "state": "Sikkim",
+    "district": "PAKYONG",
+    "total_hh": 24862,
+    "hh_with_tap": 21789,
+    "fhtc_pct": 87.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SORENG": {
+    "state": "Sikkim",
+    "district": "SORENG",
+    "total_hh": 18820,
+    "hh_with_tap": 17628,
+    "fhtc_pct": 93.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "ARIYALUR": {
+    "state": "Tamil Nadu",
+    "district": "Ariyalur",
+    "total_hh": 207503,
+    "hh_with_tap": 207503,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "CHENGALPATTU": {
+    "state": "Tamil Nadu",
+    "district": "Chengalpattu",
+    "total_hh": 415800,
+    "hh_with_tap": 415579,
+    "fhtc_pct": 99.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "COIMBATORE": {
+    "state": "Tamil Nadu",
+    "district": "Coimbatore",
+    "total_hh": 372578,
+    "hh_with_tap": 372578,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "CUDDALORE": {
+    "state": "Tamil Nadu",
+    "district": "Cuddalore",
+    "total_hh": 522440,
+    "hh_with_tap": 522440,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DHARMAPURI": {
+    "state": "Tamil Nadu",
+    "district": "Dharmapuri",
+    "total_hh": 342782,
+    "hh_with_tap": 209307,
+    "fhtc_pct": 61.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DINDIGUL": {
+    "state": "Tamil Nadu",
+    "district": "Dindigul",
+    "total_hh": 452054,
+    "hh_with_tap": 413270,
+    "fhtc_pct": 91.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "ERODE": {
+    "state": "Tamil Nadu",
+    "district": "Erode",
+    "total_hh": 418973,
+    "hh_with_tap": 390987,
+    "fhtc_pct": 93.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KALLAKURICHI": {
+    "state": "Tamil Nadu",
+    "district": "Kallakurichi",
+    "total_hh": 301829,
+    "hh_with_tap": 205819,
+    "fhtc_pct": 68.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KANCHEEPURAM": {
+    "state": "Tamil Nadu",
+    "district": "Kancheepuram",
+    "total_hh": 216311,
+    "hh_with_tap": 216311,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KANNIYAKUMARI": {
+    "state": "Tamil Nadu",
+    "district": "Kanniyakumari",
+    "total_hh": 216738,
+    "hh_with_tap": 216738,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KARUR": {
+    "state": "Tamil Nadu",
+    "district": "Karur",
+    "total_hh": 204464,
+    "hh_with_tap": 185789,
+    "fhtc_pct": 90.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KRISHNAGIRI": {
+    "state": "Tamil Nadu",
+    "district": "Krishnagiri",
+    "total_hh": 409435,
+    "hh_with_tap": 297655,
+    "fhtc_pct": 72.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MADURAI": {
+    "state": "Tamil Nadu",
+    "district": "Madurai",
+    "total_hh": 449328,
+    "hh_with_tap": 420325,
+    "fhtc_pct": 93.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MAYILADUTHURAI": {
+    "state": "Tamil Nadu",
+    "district": "MAYILADUTHURAI",
+    "total_hh": 202551,
+    "hh_with_tap": 202551,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "NAGAPATTINAM": {
+    "state": "Tamil Nadu",
+    "district": "Nagapattinam",
+    "total_hh": 157116,
+    "hh_with_tap": 123212,
+    "fhtc_pct": 78.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "NAMAKKAL": {
+    "state": "Tamil Nadu",
+    "district": "Namakkal",
+    "total_hh": 362228,
+    "hh_with_tap": 362228,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PERAMBALUR": {
+    "state": "Tamil Nadu",
+    "district": "Perambalur",
+    "total_hh": 146735,
+    "hh_with_tap": 136769,
+    "fhtc_pct": 93.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PUDUKKOTTAI": {
+    "state": "Tamil Nadu",
+    "district": "Pudukkottai",
+    "total_hh": 369509,
+    "hh_with_tap": 222514,
+    "fhtc_pct": 60.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "RAMANATHAPURAM": {
+    "state": "Tamil Nadu",
+    "district": "Ramanathapuram",
+    "total_hh": 332191,
+    "hh_with_tap": 157709,
+    "fhtc_pct": 47.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "RANIPET": {
+    "state": "Tamil Nadu",
+    "district": "Ranipet",
+    "total_hh": 189334,
+    "hh_with_tap": 189334,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SALEM": {
+    "state": "Tamil Nadu",
+    "district": "Salem",
+    "total_hh": 646114,
+    "hh_with_tap": 574316,
+    "fhtc_pct": 88.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SIVAGANGA": {
+    "state": "Tamil Nadu",
+    "district": "Sivaganga",
+    "total_hh": 327234,
+    "hh_with_tap": 253781,
+    "fhtc_pct": 77.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "TENKASI": {
+    "state": "Tamil Nadu",
+    "district": "Tenkasi",
+    "total_hh": 342341,
+    "hh_with_tap": 249035,
+    "fhtc_pct": 72.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "THANJAVUR": {
+    "state": "Tamil Nadu",
+    "district": "Thanjavur",
+    "total_hh": 421955,
+    "hh_with_tap": 421955,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "THE NILGIRIS": {
+    "state": "Tamil Nadu",
+    "district": "The Nilgiris",
+    "total_hh": 96916,
+    "hh_with_tap": 96916,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "THENI": {
+    "state": "Tamil Nadu",
+    "district": "Theni",
+    "total_hh": 185013,
+    "hh_with_tap": 185013,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "THIRUVALLUR": {
+    "state": "Tamil Nadu",
+    "district": "Thiruvallur",
+    "total_hh": 475915,
+    "hh_with_tap": 475915,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "THIRUVARUR": {
+    "state": "Tamil Nadu",
+    "district": "Thiruvarur",
+    "total_hh": 304730,
+    "hh_with_tap": 247639,
+    "fhtc_pct": 81.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "THOOTHUKKUDI": {
+    "state": "Tamil Nadu",
+    "district": "Thoothukkudi",
+    "total_hh": 365524,
+    "hh_with_tap": 321141,
+    "fhtc_pct": 87.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "TIRUCHIRAPPALLI": {
+    "state": "Tamil Nadu",
+    "district": "Tiruchirappalli",
+    "total_hh": 472403,
+    "hh_with_tap": 444751,
+    "fhtc_pct": 94.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "TIRUNELVELI": {
+    "state": "Tamil Nadu",
+    "district": "Tirunelveli",
+    "total_hh": 280241,
+    "hh_with_tap": 267510,
+    "fhtc_pct": 95.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "TIRUPATHUR": {
+    "state": "Tamil Nadu",
+    "district": "Tirupathur",
+    "total_hh": 212012,
+    "hh_with_tap": 212012,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "TIRUPPUR": {
+    "state": "Tamil Nadu",
+    "district": "Tiruppur",
+    "total_hh": 456206,
+    "hh_with_tap": 430121,
+    "fhtc_pct": 94.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "TIRUVANNAMALAI": {
+    "state": "Tamil Nadu",
+    "district": "Tiruvannamalai",
+    "total_hh": 530392,
+    "hh_with_tap": 529632,
+    "fhtc_pct": 99.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "VELLORE": {
+    "state": "Tamil Nadu",
+    "district": "Vellore",
+    "total_hh": 212528,
+    "hh_with_tap": 212528,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "VILUPPURAM": {
+    "state": "Tamil Nadu",
+    "district": "Viluppuram",
+    "total_hh": 437317,
+    "hh_with_tap": 437317,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "VIRUDHUNAGAR": {
+    "state": "Tamil Nadu",
+    "district": "Virudhunagar",
+    "total_hh": 468993,
+    "hh_with_tap": 431476,
+    "fhtc_pct": 92.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "ADILABAD": {
+    "state": "Telangana",
+    "district": "Adilabad",
+    "total_hh": 144889,
+    "hh_with_tap": 144889,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BHADRADRI KOTHAGUDEM": {
+    "state": "Telangana",
+    "district": "Bhadradri Kothagudem",
+    "total_hh": 230893,
+    "hh_with_tap": 230893,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "HANUMAKONDA": {
+    "state": "Telangana",
+    "district": "Hanumakonda",
+    "total_hh": 111545,
+    "hh_with_tap": 111545,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "JAGITIAL": {
+    "state": "Telangana",
+    "district": "Jagitial",
+    "total_hh": 226385,
+    "hh_with_tap": 226385,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "JANGOAN": {
+    "state": "Telangana",
+    "district": "Jangoan",
+    "total_hh": 129847,
+    "hh_with_tap": 129847,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "JAYASHANKAR BHUPALAPALLY": {
+    "state": "Telangana",
+    "district": "Jayashankar Bhupalapally",
+    "total_hh": 100565,
+    "hh_with_tap": 100565,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "JOGULAMBA GADWAL": {
+    "state": "Telangana",
+    "district": "Jogulamba Gadwal",
+    "total_hh": 130834,
+    "hh_with_tap": 130834,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KAMAREDDY": {
+    "state": "Telangana",
+    "district": "Kamareddy",
+    "total_hh": 226872,
+    "hh_with_tap": 226872,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KARIMNAGAR": {
+    "state": "Telangana",
+    "district": "Karimnagar",
+    "total_hh": 171013,
+    "hh_with_tap": 171013,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KHAMMAM": {
+    "state": "Telangana",
+    "district": "Khammam",
+    "total_hh": 270254,
+    "hh_with_tap": 270254,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KUMURAM BHEEM ASIFABAD": {
+    "state": "Telangana",
+    "district": "Kumuram Bheem Asifabad",
+    "total_hh": 113341,
+    "hh_with_tap": 113341,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MAHABUBABAD": {
+    "state": "Telangana",
+    "district": "Mahabubabad",
+    "total_hh": 180460,
+    "hh_with_tap": 180460,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MAHABUBNAGAR": {
+    "state": "Telangana",
+    "district": "MAHABUBNAGAR",
+    "total_hh": 160915,
+    "hh_with_tap": 160915,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MANCHERIAL": {
+    "state": "Telangana",
+    "district": "Mancherial",
+    "total_hh": 123959,
+    "hh_with_tap": 123959,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MEDAK": {
+    "state": "Telangana",
+    "district": "Medak",
+    "total_hh": 173184,
+    "hh_with_tap": 173184,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MEDCHAL MALKAJGIRI": {
+    "state": "Telangana",
+    "district": "Medchal Malkajgiri",
+    "total_hh": 34197,
+    "hh_with_tap": 34197,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MULUGU": {
+    "state": "Telangana",
+    "district": "Mulugu",
+    "total_hh": 83922,
+    "hh_with_tap": 83922,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "NAGARKURNOOL": {
+    "state": "Telangana",
+    "district": "Nagarkurnool",
+    "total_hh": 191837,
+    "hh_with_tap": 191837,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "NALGONDA": {
+    "state": "Telangana",
+    "district": "Nalgonda",
+    "total_hh": 358130,
+    "hh_with_tap": 358130,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "NARAYANPET": {
+    "state": "Telangana",
+    "district": "Narayanpet",
+    "total_hh": 109715,
+    "hh_with_tap": 109715,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "NIRMAL": {
+    "state": "Telangana",
+    "district": "Nirmal",
+    "total_hh": 152762,
+    "hh_with_tap": 152762,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "NIZAMABAD": {
+    "state": "Telangana",
+    "district": "Nizamabad",
+    "total_hh": 260131,
+    "hh_with_tap": 260131,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PEDDAPALLI": {
+    "state": "Telangana",
+    "district": "Peddapalli",
+    "total_hh": 130856,
+    "hh_with_tap": 130856,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "RAJANNA SIRCILLA": {
+    "state": "Telangana",
+    "district": "Rajanna Sircilla",
+    "total_hh": 105043,
+    "hh_with_tap": 105043,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "RANGA REDDY": {
+    "state": "Telangana",
+    "district": "Ranga Reddy",
+    "total_hh": 228060,
+    "hh_with_tap": 228060,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SANGAREDDY": {
+    "state": "Telangana",
+    "district": "Sangareddy",
+    "total_hh": 253747,
+    "hh_with_tap": 253747,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SIDDIPET": {
+    "state": "Telangana",
+    "district": "Siddipet",
+    "total_hh": 210161,
+    "hh_with_tap": 210161,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SURYAPET": {
+    "state": "Telangana",
+    "district": "Suryapet",
+    "total_hh": 217003,
+    "hh_with_tap": 217003,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "VIKARABAD": {
+    "state": "Telangana",
+    "district": "Vikarabad",
+    "total_hh": 191296,
+    "hh_with_tap": 191296,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "WANAPARTHY": {
+    "state": "Telangana",
+    "district": "Wanaparthy",
+    "total_hh": 97598,
+    "hh_with_tap": 97598,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "WARANGAL": {
+    "state": "Telangana",
+    "district": "Warangal",
+    "total_hh": 122938,
+    "hh_with_tap": 122938,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "YADADRI BHUVANAGIRI": {
+    "state": "Telangana",
+    "district": "Yadadri Bhuvanagiri",
+    "total_hh": 155867,
+    "hh_with_tap": 155867,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DHALAI": {
+    "state": "Tripura",
+    "district": "Dhalai",
+    "total_hh": 103844,
+    "hh_with_tap": 85178,
+    "fhtc_pct": 82.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "GOMATI": {
+    "state": "Tripura",
+    "district": "Gomati",
+    "total_hh": 107189,
+    "hh_with_tap": 91332,
+    "fhtc_pct": 85.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KHOWAI": {
+    "state": "Tripura",
+    "district": "Khowai",
+    "total_hh": 73219,
+    "hh_with_tap": 63777,
+    "fhtc_pct": 87.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "NORTH TRIPURA": {
+    "state": "Tripura",
+    "district": "North Tripura",
+    "total_hh": 83012,
+    "hh_with_tap": 71062,
+    "fhtc_pct": 85.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SEPAHIJALA": {
+    "state": "Tripura",
+    "district": "Sepahijala",
+    "total_hh": 117175,
+    "hh_with_tap": 101370,
+    "fhtc_pct": 86.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SOUTH TRIPURA": {
+    "state": "Tripura",
+    "district": "South Tripura",
+    "total_hh": 107925,
+    "hh_with_tap": 89879,
+    "fhtc_pct": 83.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "UNAKOTI": {
+    "state": "Tripura",
+    "district": "Unakoti",
+    "total_hh": 53619,
+    "hh_with_tap": 47809,
+    "fhtc_pct": 89.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "WEST TRIPURA": {
+    "state": "Tripura",
+    "district": "West Tripura",
+    "total_hh": 104866,
+    "hh_with_tap": 98464,
+    "fhtc_pct": 93.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "AGRA": {
+    "state": "Uttar Pradesh",
+    "district": "Agra",
+    "total_hh": 398376,
+    "hh_with_tap": 132682,
+    "fhtc_pct": 33.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "ALIGARH": {
+    "state": "Uttar Pradesh",
+    "district": "Aligarh",
+    "total_hh": 427995,
+    "hh_with_tap": 420391,
+    "fhtc_pct": 98.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "AMBEDKAR NAGAR": {
+    "state": "Uttar Pradesh",
+    "district": "Ambedkar Nagar",
+    "total_hh": 316080,
+    "hh_with_tap": 310987,
+    "fhtc_pct": 98.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "AMETHI": {
+    "state": "Uttar Pradesh",
+    "district": "Amethi",
+    "total_hh": 332548,
+    "hh_with_tap": 328807,
+    "fhtc_pct": 98.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "AMROHA": {
+    "state": "Uttar Pradesh",
+    "district": "Amroha",
+    "total_hh": 297581,
+    "hh_with_tap": 284880,
+    "fhtc_pct": 95.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "AURAIYA": {
+    "state": "Uttar Pradesh",
+    "district": "Auraiya",
+    "total_hh": 217894,
+    "hh_with_tap": 214359,
+    "fhtc_pct": 98.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "AYODHYA": {
+    "state": "Uttar Pradesh",
+    "district": "Ayodhya",
+    "total_hh": 351751,
+    "hh_with_tap": 346417,
+    "fhtc_pct": 98.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "AZAMGARH": {
+    "state": "Uttar Pradesh",
+    "district": "Azamgarh",
+    "total_hh": 623736,
+    "hh_with_tap": 597286,
+    "fhtc_pct": 95.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BAGHPAT": {
+    "state": "Uttar Pradesh",
+    "district": "Baghpat",
+    "total_hh": 165523,
+    "hh_with_tap": 163674,
+    "fhtc_pct": 98.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BAHRAICH": {
+    "state": "Uttar Pradesh",
+    "district": "Bahraich",
+    "total_hh": 553817,
+    "hh_with_tap": 543576,
+    "fhtc_pct": 98.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BALLIA": {
+    "state": "Uttar Pradesh",
+    "district": "Ballia",
+    "total_hh": 437257,
+    "hh_with_tap": 145413,
+    "fhtc_pct": 33.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BALRAMPUR": {
+    "state": "Uttar Pradesh",
+    "district": "Balrampur",
+    "total_hh": 312496,
+    "hh_with_tap": 302708,
+    "fhtc_pct": 96.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BANDA": {
+    "state": "Uttar Pradesh",
+    "district": "Banda",
+    "total_hh": 268942,
+    "hh_with_tap": 268722,
+    "fhtc_pct": 99.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BARA BANKI": {
+    "state": "Uttar Pradesh",
+    "district": "Bara Banki",
+    "total_hh": 516017,
+    "hh_with_tap": 508637,
+    "fhtc_pct": 98.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BAREILLY": {
+    "state": "Uttar Pradesh",
+    "district": "Bareilly",
+    "total_hh": 515431,
+    "hh_with_tap": 509945,
+    "fhtc_pct": 98.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BASTI": {
+    "state": "Uttar Pradesh",
+    "district": "Basti",
+    "total_hh": 358590,
+    "hh_with_tap": 346321,
+    "fhtc_pct": 96.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BHADOHI": {
+    "state": "Uttar Pradesh",
+    "district": "Bhadohi",
+    "total_hh": 251255,
+    "hh_with_tap": 247641,
+    "fhtc_pct": 98.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BIJNOR": {
+    "state": "Uttar Pradesh",
+    "district": "Bijnor",
+    "total_hh": 516078,
+    "hh_with_tap": 508408,
+    "fhtc_pct": 98.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BUDAUN": {
+    "state": "Uttar Pradesh",
+    "district": "Budaun",
+    "total_hh": 449419,
+    "hh_with_tap": 445621,
+    "fhtc_pct": 99.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BULANDSHAHR": {
+    "state": "Uttar Pradesh",
+    "district": "Bulandshahr",
+    "total_hh": 463487,
+    "hh_with_tap": 456761,
+    "fhtc_pct": 98.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "CHANDAULI": {
+    "state": "Uttar Pradesh",
+    "district": "Chandauli",
+    "total_hh": 283524,
+    "hh_with_tap": 268063,
+    "fhtc_pct": 94.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "CHITRAKOOT": {
+    "state": "Uttar Pradesh",
+    "district": "Chitrakoot",
+    "total_hh": 163950,
+    "hh_with_tap": 163698,
+    "fhtc_pct": 99.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DEORIA": {
+    "state": "Uttar Pradesh",
+    "district": "Deoria",
+    "total_hh": 432079,
+    "hh_with_tap": 424418,
+    "fhtc_pct": 98.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "ETAH": {
+    "state": "Uttar Pradesh",
+    "district": "Etah",
+    "total_hh": 266760,
+    "hh_with_tap": 261713,
+    "fhtc_pct": 98.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "ETAWAH": {
+    "state": "Uttar Pradesh",
+    "district": "Etawah",
+    "total_hh": 239209,
+    "hh_with_tap": 232982,
+    "fhtc_pct": 97.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "FARRUKHABAD": {
+    "state": "Uttar Pradesh",
+    "district": "Farrukhabad",
+    "total_hh": 251646,
+    "hh_with_tap": 247203,
+    "fhtc_pct": 98.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "FATEHPUR": {
+    "state": "Uttar Pradesh",
+    "district": "Fatehpur",
+    "total_hh": 433640,
+    "hh_with_tap": 407821,
+    "fhtc_pct": 94.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "FIROZABAD": {
+    "state": "Uttar Pradesh",
+    "district": "Firozabad",
+    "total_hh": 282650,
+    "hh_with_tap": 86543,
+    "fhtc_pct": 30.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "GAUTAM BUDDHA NAGAR": {
+    "state": "Uttar Pradesh",
+    "district": "Gautam Buddha Nagar",
+    "total_hh": 45453,
+    "hh_with_tap": 43889,
+    "fhtc_pct": 96.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "GHAZIABAD": {
+    "state": "Uttar Pradesh",
+    "district": "Ghaziabad",
+    "total_hh": 118734,
+    "hh_with_tap": 116515,
+    "fhtc_pct": 98.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "GHAZIPUR": {
+    "state": "Uttar Pradesh",
+    "district": "Ghazipur",
+    "total_hh": 516149,
+    "hh_with_tap": 471404,
+    "fhtc_pct": 91.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "GONDA": {
+    "state": "Uttar Pradesh",
+    "district": "Gonda",
+    "total_hh": 510679,
+    "hh_with_tap": 500725,
+    "fhtc_pct": 98.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "GORAKHPUR": {
+    "state": "Uttar Pradesh",
+    "district": "Gorakhpur",
+    "total_hh": 564512,
+    "hh_with_tap": 555877,
+    "fhtc_pct": 98.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "HAPUR": {
+    "state": "Uttar Pradesh",
+    "district": "Hapur",
+    "total_hh": 183484,
+    "hh_with_tap": 180962,
+    "fhtc_pct": 98.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "HARDOI": {
+    "state": "Uttar Pradesh",
+    "district": "Hardoi",
+    "total_hh": 622134,
+    "hh_with_tap": 611927,
+    "fhtc_pct": 98.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "HATHRAS": {
+    "state": "Uttar Pradesh",
+    "district": "Hathras",
+    "total_hh": 203986,
+    "hh_with_tap": 200184,
+    "fhtc_pct": 98.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "JALAUN": {
+    "state": "Uttar Pradesh",
+    "district": "Jalaun",
+    "total_hh": 212024,
+    "hh_with_tap": 208192,
+    "fhtc_pct": 98.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "JAUNPUR": {
+    "state": "Uttar Pradesh",
+    "district": "Jaunpur",
+    "total_hh": 593225,
+    "hh_with_tap": 538705,
+    "fhtc_pct": 90.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "JHANSI": {
+    "state": "Uttar Pradesh",
+    "district": "Jhansi",
+    "total_hh": 251196,
+    "hh_with_tap": 249129,
+    "fhtc_pct": 99.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KANNAUJ": {
+    "state": "Uttar Pradesh",
+    "district": "Kannauj",
+    "total_hh": 274366,
+    "hh_with_tap": 268754,
+    "fhtc_pct": 98.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KANPUR DEHAT": {
+    "state": "Uttar Pradesh",
+    "district": "Kanpur Dehat",
+    "total_hh": 293647,
+    "hh_with_tap": 290179,
+    "fhtc_pct": 98.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KANPUR NAGAR": {
+    "state": "Uttar Pradesh",
+    "district": "Kanpur Nagar",
+    "total_hh": 303816,
+    "hh_with_tap": 294217,
+    "fhtc_pct": 96.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KASGANJ": {
+    "state": "Uttar Pradesh",
+    "district": "Kasganj",
+    "total_hh": 205190,
+    "hh_with_tap": 197334,
+    "fhtc_pct": 96.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KAUSHAMBI": {
+    "state": "Uttar Pradesh",
+    "district": "Kaushambi",
+    "total_hh": 249223,
+    "hh_with_tap": 236675,
+    "fhtc_pct": 95.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KHERI": {
+    "state": "Uttar Pradesh",
+    "district": "Kheri",
+    "total_hh": 674187,
+    "hh_with_tap": 649066,
+    "fhtc_pct": 96.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KUSHINAGAR": {
+    "state": "Uttar Pradesh",
+    "district": "Kushinagar",
+    "total_hh": 552046,
+    "hh_with_tap": 538300,
+    "fhtc_pct": 97.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "LALITPUR": {
+    "state": "Uttar Pradesh",
+    "district": "Lalitpur",
+    "total_hh": 206820,
+    "hh_with_tap": 205966,
+    "fhtc_pct": 99.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "LUCKNOW": {
+    "state": "Uttar Pradesh",
+    "district": "Lucknow",
+    "total_hh": 249897,
+    "hh_with_tap": 246211,
+    "fhtc_pct": 98.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MAHOBA": {
+    "state": "Uttar Pradesh",
+    "district": "Mahoba",
+    "total_hh": 140143,
+    "hh_with_tap": 139904,
+    "fhtc_pct": 99.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MAHRAJGANJ": {
+    "state": "Uttar Pradesh",
+    "district": "Mahrajganj",
+    "total_hh": 436158,
+    "hh_with_tap": 419619,
+    "fhtc_pct": 96.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MAINPURI": {
+    "state": "Uttar Pradesh",
+    "district": "Mainpuri",
+    "total_hh": 259933,
+    "hh_with_tap": 254932,
+    "fhtc_pct": 98.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MATHURA": {
+    "state": "Uttar Pradesh",
+    "district": "Mathura",
+    "total_hh": 294054,
+    "hh_with_tap": 97992,
+    "fhtc_pct": 33.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MAU": {
+    "state": "Uttar Pradesh",
+    "district": "Mau",
+    "total_hh": 263438,
+    "hh_with_tap": 249521,
+    "fhtc_pct": 94.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MEERUT": {
+    "state": "Uttar Pradesh",
+    "district": "Meerut",
+    "total_hh": 313605,
+    "hh_with_tap": 303688,
+    "fhtc_pct": 96.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MIRZAPUR": {
+    "state": "Uttar Pradesh",
+    "district": "Mirzapur",
+    "total_hh": 354185,
+    "hh_with_tap": 349355,
+    "fhtc_pct": 98.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MORADABAD": {
+    "state": "Uttar Pradesh",
+    "district": "Moradabad",
+    "total_hh": 350032,
+    "hh_with_tap": 341471,
+    "fhtc_pct": 97.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MUZAFFARNAGAR": {
+    "state": "Uttar Pradesh",
+    "district": "Muzaffarnagar",
+    "total_hh": 380095,
+    "hh_with_tap": 368598,
+    "fhtc_pct": 97.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PILIBHIT": {
+    "state": "Uttar Pradesh",
+    "district": "Pilibhit",
+    "total_hh": 306705,
+    "hh_with_tap": 301177,
+    "fhtc_pct": 98.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PRAYAGRAJ": {
+    "state": "Uttar Pradesh",
+    "district": "Prayagraj",
+    "total_hh": 651457,
+    "hh_with_tap": 491065,
+    "fhtc_pct": 75.4,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "RAE BARELI": {
+    "state": "Uttar Pradesh",
+    "district": "Rae Bareli",
+    "total_hh": 503473,
+    "hh_with_tap": 470993,
+    "fhtc_pct": 93.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "RAMPUR": {
+    "state": "Uttar Pradesh",
+    "district": "Rampur",
+    "total_hh": 311550,
+    "hh_with_tap": 305542,
+    "fhtc_pct": 98.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SAHARANPUR": {
+    "state": "Uttar Pradesh",
+    "district": "Saharanpur",
+    "total_hh": 467876,
+    "hh_with_tap": 449536,
+    "fhtc_pct": 96.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SAMBHAL": {
+    "state": "Uttar Pradesh",
+    "district": "Sambhal",
+    "total_hh": 327002,
+    "hh_with_tap": 306059,
+    "fhtc_pct": 93.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SANT KABIR NAGAR": {
+    "state": "Uttar Pradesh",
+    "district": "Sant Kabir Nagar",
+    "total_hh": 228040,
+    "hh_with_tap": 215407,
+    "fhtc_pct": 94.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SHAHJAHANPUR": {
+    "state": "Uttar Pradesh",
+    "district": "Shahjahanpur",
+    "total_hh": 464195,
+    "hh_with_tap": 462258,
+    "fhtc_pct": 99.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SHAMLI": {
+    "state": "Uttar Pradesh",
+    "district": "Shamli",
+    "total_hh": 164798,
+    "hh_with_tap": 161885,
+    "fhtc_pct": 98.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SHRAWASTI": {
+    "state": "Uttar Pradesh",
+    "district": "Shrawasti",
+    "total_hh": 186056,
+    "hh_with_tap": 182549,
+    "fhtc_pct": 98.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SIDDHARTHNAGAR": {
+    "state": "Uttar Pradesh",
+    "district": "Siddharthnagar",
+    "total_hh": 400366,
+    "hh_with_tap": 347172,
+    "fhtc_pct": 86.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SITAPUR": {
+    "state": "Uttar Pradesh",
+    "district": "Sitapur",
+    "total_hh": 713183,
+    "hh_with_tap": 700500,
+    "fhtc_pct": 98.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SONBHADRA": {
+    "state": "Uttar Pradesh",
+    "district": "Sonbhadra",
+    "total_hh": 312972,
+    "hh_with_tap": 299053,
+    "fhtc_pct": 95.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SULTANPUR": {
+    "state": "Uttar Pradesh",
+    "district": "Sultanpur",
+    "total_hh": 386302,
+    "hh_with_tap": 375593,
+    "fhtc_pct": 97.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "UNNAO": {
+    "state": "Uttar Pradesh",
+    "district": "Unnao",
+    "total_hh": 488178,
+    "hh_with_tap": 163299,
+    "fhtc_pct": 33.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "VARANASI": {
+    "state": "Uttar Pradesh",
+    "district": "Varanasi",
+    "total_hh": 343385,
+    "hh_with_tap": 326551,
+    "fhtc_pct": 95.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "ALMORA": {
+    "state": "Uttarakhand",
+    "district": "Almora",
+    "total_hh": 125867,
+    "hh_with_tap": 116782,
+    "fhtc_pct": 92.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BAGESHWAR": {
+    "state": "Uttarakhand",
+    "district": "Bageshwar",
+    "total_hh": 54659,
+    "hh_with_tap": 54659,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "CHAMOLI": {
+    "state": "Uttarakhand",
+    "district": "Chamoli",
+    "total_hh": 76716,
+    "hh_with_tap": 76686,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "CHAMPAWAT": {
+    "state": "Uttarakhand",
+    "district": "Champawat",
+    "total_hh": 45086,
+    "hh_with_tap": 45012,
+    "fhtc_pct": 99.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DEHRADUN": {
+    "state": "Uttarakhand",
+    "district": "Dehradun",
+    "total_hh": 129491,
+    "hh_with_tap": 129449,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "HARIDWAR": {
+    "state": "Uttarakhand",
+    "district": "Haridwar",
+    "total_hh": 249092,
+    "hh_with_tap": 241513,
+    "fhtc_pct": 97.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "NAINITAL": {
+    "state": "Uttarakhand",
+    "district": "Nainital",
+    "total_hh": 114069,
+    "hh_with_tap": 107272,
+    "fhtc_pct": 94.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PAURI GARHWAL": {
+    "state": "Uttarakhand",
+    "district": "PAURI GARHWAL",
+    "total_hh": 110761,
+    "hh_with_tap": 110723,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PITHORAGARH": {
+    "state": "Uttarakhand",
+    "district": "Pithoragarh",
+    "total_hh": 94159,
+    "hh_with_tap": 94137,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "RUDRA PRAYAG": {
+    "state": "Uttarakhand",
+    "district": "Rudra Prayag",
+    "total_hh": 54880,
+    "hh_with_tap": 54850,
+    "fhtc_pct": 99.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "TEHRI GARHWAL": {
+    "state": "Uttarakhand",
+    "district": "Tehri Garhwal",
+    "total_hh": 128780,
+    "hh_with_tap": 128704,
+    "fhtc_pct": 99.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "UDAM SINGH NAGAR": {
+    "state": "Uttarakhand",
+    "district": "Udam Singh Nagar",
+    "total_hh": 197888,
+    "hh_with_tap": 195066,
+    "fhtc_pct": 98.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "UTTAR KASHI": {
+    "state": "Uttarakhand",
+    "district": "Uttar Kashi",
+    "total_hh": 65013,
+    "hh_with_tap": 65010,
+    "fhtc_pct": 100.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "ALIPURDUAR": {
+    "state": "West Bengal",
+    "district": "Alipurduar",
+    "total_hh": 358035,
+    "hh_with_tap": 213196,
+    "fhtc_pct": 59.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BANKURA": {
+    "state": "West Bengal",
+    "district": "Bankura",
+    "total_hh": 741446,
+    "hh_with_tap": 433590,
+    "fhtc_pct": 58.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "BIRBHUM": {
+    "state": "West Bengal",
+    "district": "Birbhum",
+    "total_hh": 849894,
+    "hh_with_tap": 378215,
+    "fhtc_pct": 44.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "COOCH BEHAR": {
+    "state": "West Bengal",
+    "district": "Cooch Behar",
+    "total_hh": 695114,
+    "hh_with_tap": 467021,
+    "fhtc_pct": 67.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DAKSHIN DINAJPUR": {
+    "state": "West Bengal",
+    "district": "Dakshin Dinajpur",
+    "total_hh": 338228,
+    "hh_with_tap": 184254,
+    "fhtc_pct": 54.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "DARJEELING": {
+    "state": "West Bengal",
+    "district": "Darjeeling",
+    "total_hh": 340778,
+    "hh_with_tap": 168747,
+    "fhtc_pct": 49.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "HOOGHLY": {
+    "state": "West Bengal",
+    "district": "Hooghly",
+    "total_hh": 973117,
+    "hh_with_tap": 664411,
+    "fhtc_pct": 68.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "HOWRAH": {
+    "state": "West Bengal",
+    "district": "Howrah",
+    "total_hh": 676987,
+    "hh_with_tap": 416992,
+    "fhtc_pct": 61.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "JALPAIGURI": {
+    "state": "West Bengal",
+    "district": "Jalpaiguri",
+    "total_hh": 436119,
+    "hh_with_tap": 234362,
+    "fhtc_pct": 53.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "JHARGRAM": {
+    "state": "West Bengal",
+    "district": "Jhargram",
+    "total_hh": 255152,
+    "hh_with_tap": 155859,
+    "fhtc_pct": 61.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "KALIMPONG": {
+    "state": "West Bengal",
+    "district": "Kalimpong",
+    "total_hh": 64555,
+    "hh_with_tap": 35477,
+    "fhtc_pct": 55.0,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MALDA": {
+    "state": "West Bengal",
+    "district": "Malda",
+    "total_hh": 869847,
+    "hh_with_tap": 331866,
+    "fhtc_pct": 38.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "MURSHIDABAD": {
+    "state": "West Bengal",
+    "district": "Murshidabad",
+    "total_hh": 1670358,
+    "hh_with_tap": 732955,
+    "fhtc_pct": 43.9,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "NADIA": {
+    "state": "West Bengal",
+    "district": "Nadia",
+    "total_hh": 1188841,
+    "hh_with_tap": 1062123,
+    "fhtc_pct": 89.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "NORTH 24 PARGANAS": {
+    "state": "West Bengal",
+    "district": "North 24 Parganas",
+    "total_hh": 1433870,
+    "hh_with_tap": 957503,
+    "fhtc_pct": 66.8,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PASCHIM BARDHAMAN": {
+    "state": "West Bengal",
+    "district": "Paschim Bardhaman",
+    "total_hh": 255243,
+    "hh_with_tap": 183113,
+    "fhtc_pct": 71.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PASCHIM MEDINIPUR": {
+    "state": "West Bengal",
+    "district": "Paschim Medinipur",
+    "total_hh": 1042111,
+    "hh_with_tap": 419910,
+    "fhtc_pct": 40.3,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PURBA BARDHAMAN": {
+    "state": "West Bengal",
+    "district": "Purba Bardhaman",
+    "total_hh": 1120030,
+    "hh_with_tap": 857998,
+    "fhtc_pct": 76.6,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PURBA MEDINIPUR": {
+    "state": "West Bengal",
+    "district": "Purba Medinipur",
+    "total_hh": 1161792,
+    "hh_with_tap": 652108,
+    "fhtc_pct": 56.1,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "PURULIA": {
+    "state": "West Bengal",
+    "district": "Purulia",
+    "total_hh": 547458,
+    "hh_with_tap": 177745,
+    "fhtc_pct": 32.5,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "SOUTH 24 PARGANAS": {
+    "state": "West Bengal",
+    "district": "South 24 Parganas",
+    "total_hh": 1914544,
+    "hh_with_tap": 1008178,
+    "fhtc_pct": 52.7,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  },
+  "UTTAR DINAJPUR": {
+    "state": "West Bengal",
+    "district": "Uttar Dinajpur",
+    "total_hh": 581343,
+    "hh_with_tap": 239728,
+    "fhtc_pct": 41.2,
+    "source": "JJM IMIS J1",
+    "date": "2026-07-07"
+  }
+}
