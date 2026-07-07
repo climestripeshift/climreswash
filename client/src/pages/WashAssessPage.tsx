@@ -1,6 +1,8 @@
 import { useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
+import { MapContainer, TileLayer, Polygon, Tooltip as MapTooltip } from "react-leaflet";
+import { cellToBoundary } from "h3-js";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -190,6 +192,110 @@ function AssessCard({
       {isEditing && editContent && (
         <div className="border-t border-border pt-3 mt-1 space-y-3">{editContent}</div>
       )}
+    </div>
+  );
+}
+
+// ─── District Hex Map ─────────────────────────────────────────────────────────
+
+const BLUES:   [number,number,number][] = [[240,249,255],[189,215,231],[107,174,214],[33,113,181],[8,48,107]];
+const GREENS2: [number,number,number][] = [[255,255,255],[199,233,192],[116,196,118],[49,163,84],[0,109,44]];
+const RISK2:   [number,number,number][] = [[34,197,94],[234,179,8],[249,115,22],[239,68,68],[153,27,27]];
+const ORANGES2:[number,number,number][] = [[255,255,229],[254,217,142],[254,153,41],[217,95,14],[153,52,4]];
+
+const MAP_LAYERS = [
+  { key: "jjm_fhtc_pct",       label: "JJM FHTC %",   ramp: BLUES,    domain: [0, 100] as [number,number] },
+  { key: "hex_risk",            label: "Risk Score",    ramp: RISK2,    domain: [0, 10]  as [number,number] },
+  { key: "wash_sanitation_pct", label: "Sanitation %",  ramp: GREENS2,  domain: [0, 100] as [number,number] },
+  { key: "flood_risk",          label: "Flood Risk",    ramp: BLUES,    domain: [0, 10]  as [number,number] },
+  { key: "drought_risk",        label: "Drought Risk",  ramp: ORANGES2, domain: [0, 10]  as [number,number] },
+  { key: "wash_water_pct",      label: "Water % (NFHS)",ramp: BLUES,    domain: [0, 100] as [number,number] },
+];
+
+function hexColor(ramp: [number,number,number][], domain: [number,number], val: number | undefined): string {
+  if (val == null) return "rgba(100,100,100,0.25)";
+  const t = Math.max(0, Math.min(1, (val - domain[0]) / (domain[1] - domain[0])));
+  const n = ramp.length - 1;
+  const lo = Math.floor(t * n), hi = Math.min(lo + 1, n);
+  const f = t * n - lo;
+  const [a, b] = [ramp[lo], ramp[hi]];
+  return `rgba(${a.map((c, i) => Math.round(c + f * (b[i] - c))).join(",")},0.85)`;
+}
+
+function DistrictHexMap({ hexes }: { hexes: any[] }) {
+  const [activeLayer, setActiveLayer] = useState("jjm_fhtc_pct");
+  const layer = MAP_LAYERS.find(l => l.key === activeLayer)!;
+
+  const bounds = useMemo<[[number,number],[number,number]] | null>(() => {
+    if (!hexes.length) return null;
+    let minLat = 90, maxLat = -90, minLng = 180, maxLng = -180;
+    hexes.forEach(h => {
+      cellToBoundary(h.h3_id).forEach(([lat, lng]) => {
+        if (lat < minLat) minLat = lat; if (lat > maxLat) maxLat = lat;
+        if (lng < minLng) minLng = lng; if (lng > maxLng) maxLng = lng;
+      });
+    });
+    const pad = 0.15;
+    return [[minLat - pad, minLng - pad], [maxLat + pad, maxLng + pad]];
+  }, [hexes]);
+
+  if (!hexes.length || !bounds) return null;
+
+  return (
+    <div className="mb-6 bg-card border border-border rounded-xl overflow-hidden">
+      {/* Layer switcher */}
+      <div className="flex items-center gap-1 px-3 py-2 border-b border-border/40 flex-wrap">
+        <span className="text-[11px] text-muted-foreground mr-1">Layer:</span>
+        {MAP_LAYERS.map(l => (
+          <button
+            key={l.key}
+            onClick={() => setActiveLayer(l.key)}
+            className={`text-[11px] px-2 py-0.5 rounded-full border transition-colors ${
+              activeLayer === l.key
+                ? "bg-[#00AEEF] text-white border-[#00AEEF]"
+                : "border-border text-muted-foreground hover:border-[#00AEEF]/50"
+            }`}
+          >
+            {l.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Map */}
+      <div style={{ height: 280 }}>
+        <MapContainer
+          bounds={bounds}
+          style={{ height: "100%", width: "100%" }}
+          zoomControl={false}
+          attributionControl={false}
+        >
+          <TileLayer
+            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          />
+          {hexes.map(h => {
+            const latLngs = cellToBoundary(h.h3_id).map(([lat, lng]) => [lat, lng] as [number, number]);
+            const val = h[activeLayer];
+            const color = hexColor(layer.ramp, layer.domain, val);
+            return (
+              <Polygon
+                key={h.h3_id}
+                positions={latLngs}
+                pathOptions={{ color: "rgba(255,255,255,0.15)", weight: 0.5, fillColor: color, fillOpacity: 0.85 }}
+              >
+                <MapTooltip sticky>
+                  <div className="text-xs">
+                    <div className="font-semibold">{h.district_name}</div>
+                    <div>{layer.label}: {val != null ? `${val.toFixed(1)}${activeLayer.includes("pct") ? "%" : ""}` : "—"}</div>
+                    {h.jjm_fhtc_pct != null && activeLayer !== "jjm_fhtc_pct" && (
+                      <div className="text-blue-300">JJM FHTC: {h.jjm_fhtc_pct.toFixed(1)}%</div>
+                    )}
+                  </div>
+                </MapTooltip>
+              </Polygon>
+            );
+          })}
+        </MapContainer>
+      </div>
     </div>
   );
 }
@@ -444,6 +550,9 @@ export default function WashAssessPage() {
               </div>
             </div>
           </div>
+
+          {/* Hex map */}
+          <DistrictHexMap hexes={districtHexes} />
 
           {/* Top vulnerabilities */}
           {rank?.top_vulnerabilities?.length > 0 && (
