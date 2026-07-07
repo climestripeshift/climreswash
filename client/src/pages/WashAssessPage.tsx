@@ -1,7 +1,9 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { MapContainer, TileLayer, Polygon, Tooltip as MapTooltip } from "react-leaflet";
+import { MapContainer, TileLayer, GeoJSON, useMap } from "react-leaflet";
+import type { Map as LeafletMap } from "leaflet";
+import L from "leaflet";
 import { cellToBoundary } from "h3-js";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Badge } from "@/components/ui/badge";
@@ -196,7 +198,7 @@ function AssessCard({
   );
 }
 
-// ─── District Hex Map ─────────────────────────────────────────────────────────
+// ─── Hex Map (full-country with boundary filters) ────────────────────────────
 
 const BLUES:   [number,number,number][] = [[240,249,255],[189,215,231],[107,174,214],[33,113,181],[8,48,107]];
 const GREENS2: [number,number,number][] = [[255,255,255],[199,233,192],[116,196,118],[49,163,84],[0,109,44]];
@@ -204,16 +206,37 @@ const RISK2:   [number,number,number][] = [[34,197,94],[234,179,8],[249,115,22],
 const ORANGES2:[number,number,number][] = [[255,255,229],[254,217,142],[254,153,41],[217,95,14],[153,52,4]];
 
 const MAP_LAYERS = [
-  { key: "jjm_fhtc_pct",       label: "JJM FHTC %",   ramp: BLUES,    domain: [0, 100] as [number,number] },
-  { key: "hex_risk",            label: "Risk Score",    ramp: RISK2,    domain: [0, 10]  as [number,number] },
-  { key: "wash_sanitation_pct", label: "Sanitation %",  ramp: GREENS2,  domain: [0, 100] as [number,number] },
-  { key: "flood_risk",          label: "Flood Risk",    ramp: BLUES,    domain: [0, 10]  as [number,number] },
-  { key: "drought_risk",        label: "Drought Risk",  ramp: ORANGES2, domain: [0, 10]  as [number,number] },
-  { key: "wash_water_pct",      label: "Water % (NFHS)",ramp: BLUES,    domain: [0, 100] as [number,number] },
+  { key: "jjm_fhtc_pct",       label: "🚰 JJM FHTC",   ramp: BLUES,    domain: [0, 100] as [number,number] },
+  { key: "hex_risk",            label: "⚠️ Risk",        ramp: RISK2,    domain: [0, 10]  as [number,number] },
+  { key: "wash_sanitation_pct", label: "🚽 Sanitation",  ramp: GREENS2,  domain: [0, 100] as [number,number] },
+  { key: "flood_risk",          label: "🌊 Flood",       ramp: BLUES,    domain: [0, 10]  as [number,number] },
+  { key: "drought_risk",        label: "☀️ Drought",     ramp: ORANGES2, domain: [0, 10]  as [number,number] },
+  { key: "wash_water_pct",      label: "💧 Water (NFHS)",ramp: BLUES,    domain: [0, 100] as [number,number] },
 ];
 
-function hexColor(ramp: [number,number,number][], domain: [number,number], val: number | undefined): string {
-  if (val == null) return "rgba(100,100,100,0.25)";
+const canvasRenderer = L.canvas({ padding: 0.5 });
+
+function SetupCanvas() {
+  const map = useMap();
+  useEffect(() => { (map as any).options.renderer = canvasRenderer; }, [map]);
+  return null;
+}
+
+function fitMapToBounds(map: LeafletMap, hexes: any[]) {
+  if (!hexes.length) return;
+  let minLat = 90, maxLat = -90, minLng = 180, maxLng = -180;
+  hexes.forEach(h => {
+    cellToBoundary(h.h3_id).forEach(([lat, lng]) => {
+      if (lat < minLat) minLat = lat; if (lat > maxLat) maxLat = lat;
+      if (lng < minLng) minLng = lng; if (lng > maxLng) maxLng = lng;
+    });
+  });
+  const pad = 0.4;
+  map.fitBounds([[minLat - pad, minLng - pad], [maxLat + pad, maxLng + pad]]);
+}
+
+function hexFillColor(ramp: [number,number,number][], domain: [number,number], val: number | undefined | null): string {
+  if (val == null) return "rgba(80,80,80,0.3)";
   const t = Math.max(0, Math.min(1, (val - domain[0]) / (domain[1] - domain[0])));
   const n = ramp.length - 1;
   const lo = Math.floor(t * n), hi = Math.min(lo + 1, n);
@@ -222,78 +245,164 @@ function hexColor(ramp: [number,number,number][], domain: [number,number], val: 
   return `rgba(${a.map((c, i) => Math.round(c + f * (b[i] - c))).join(",")},0.85)`;
 }
 
-function DistrictHexMap({ hexes }: { hexes: any[] }) {
+function WashHexMap({ hexProps, selectedDistrict, onSelectDistrict }: {
+  hexProps: any[];
+  selectedDistrict: string | null;
+  onSelectDistrict: (district: string) => void;
+}) {
   const [activeLayer, setActiveLayer] = useState("jjm_fhtc_pct");
+  const [showDistricts, setShowDistricts] = useState(true);
+  const mapRef = useRef<LeafletMap | null>(null);
+  const geoJsonRef = useRef<any>(null);
   const layer = MAP_LAYERS.find(l => l.key === activeLayer)!;
 
-  const bounds = useMemo<[[number,number],[number,number]] | null>(() => {
-    if (!hexes.length) return null;
-    let minLat = 90, maxLat = -90, minLng = 180, maxLng = -180;
-    hexes.forEach(h => {
-      cellToBoundary(h.h3_id).forEach(([lat, lng]) => {
-        if (lat < minLat) minLat = lat; if (lat > maxLat) maxLat = lat;
-        if (lng < minLng) minLng = lng; if (lng > maxLng) maxLng = lng;
-      });
+  // Build GeoJSON from all hex props
+  const geoData = useMemo(() => {
+    if (!hexProps.length) return null;
+    const features = hexProps.map(p => {
+      const boundary = cellToBoundary(p.h3_id);
+      const coords = boundary.map(([lat, lng]: [number,number]) => [lng, lat]);
+      coords.push(coords[0]);
+      return { type: "Feature", properties: p, geometry: { type: "Polygon", coordinates: [coords] } };
     });
-    const pad = 0.15;
-    return [[minLat - pad, minLng - pad], [maxLat + pad, maxLng + pad]];
-  }, [hexes]);
+    return { type: "FeatureCollection" as const, features };
+  }, [hexProps]);
 
-  if (!hexes.length || !bounds) return null;
+  // Fit to selected district when it changes
+  useEffect(() => {
+    if (!mapRef.current) return;
+    if (selectedDistrict) {
+      const distHexes = hexProps.filter(h => h.district_name === selectedDistrict);
+      if (distHexes.length) fitMapToBounds(mapRef.current, distHexes);
+    } else {
+      mapRef.current.setView([22.5, 80], 5);
+    }
+  }, [selectedDistrict, hexProps]);
+
+  const styleFeature = useCallback((feature: any) => {
+    const p = feature.properties;
+    const isSelected = selectedDistrict && p.district_name === selectedDistrict;
+    return {
+      fillColor: hexFillColor(layer.ramp, layer.domain, p[activeLayer]),
+      fillOpacity: isSelected ? 1 : 0.78,
+      color: isSelected ? "#ffffff" : "#1e293b",
+      weight: isSelected ? 1.5 : 0.25,
+      renderer: canvasRenderer,
+    };
+  }, [activeLayer, layer, selectedDistrict]);
+
+  useEffect(() => { geoJsonRef.current?.setStyle(styleFeature); }, [styleFeature]);
+
+  const onEachFeature = useCallback((feature: any, lyr: any) => {
+    const p = feature.properties;
+    const val = p[activeLayer];
+    const suffix = activeLayer.includes("pct") ? "%" : "";
+    lyr.bindTooltip(
+      `<b>${p.district_name ?? "—"}</b>, ${p.state ?? ""}<br/>${layer.label.replace(/.*\s/, "")}: ${val != null ? val.toFixed(1) + suffix : "—"}<br/><span style="font-size:9px;color:#94a3b8">Click to assess</span>`,
+      { sticky: true }
+    );
+    lyr.on("click", () => onSelectDistrict(p.district_name));
+  }, [activeLayer, layer, onSelectDistrict]);
+
+  // Boundary layers
+  const districtQ = useQuery<any>({
+    queryKey: ["india-districts-boundary"],
+    queryFn: () => fetch("/data/india.json").then(r => r.json()),
+    staleTime: Infinity,
+    enabled: showDistricts,
+  });
+  const stateQ = useQuery<any>({
+    queryKey: ["india-states-boundary"],
+    queryFn: () => fetch("/data/india_states.geojson").then(r => r.json()),
+    staleTime: Infinity,
+  });
+
+  const districtBoundaryStyle = useCallback(() => ({
+    fillOpacity: 0, color: "#ffffff", weight: 1, dashArray: "4 3", opacity: 0.5,
+  }), []);
+  const stateBoundaryStyle = useCallback(() => ({
+    fillOpacity: 0, color: "#f59e0b", weight: 2,
+  }), []);
+
+  const onDistrictBoundary = useCallback((feature: any, lyr: any) => {
+    const name = feature.properties.NAME;
+    const state = feature.properties.STATE;
+    lyr.bindTooltip(`<b>${name}</b><br/>${state}`, { sticky: true });
+    lyr.on("click", (e: any) => { L.DomEvent.stopPropagation(e); onSelectDistrict(name); });
+  }, [onSelectDistrict]);
+
+  const onStateBoundary = useCallback((feature: any, lyr: any) => {
+    const state = feature.properties.state || feature.properties.STATE || feature.properties.name;
+    lyr.bindTooltip(`<b>${state}</b>`, { sticky: true });
+    lyr.on("click", (e: any) => {
+      L.DomEvent.stopPropagation(e);
+      // zoom to state
+      if (mapRef.current) {
+        const stateHexes = hexProps.filter(h => h.state === state);
+        if (stateHexes.length) fitMapToBounds(mapRef.current, stateHexes);
+      }
+    });
+  }, [hexProps]);
+
+  if (!geoData) return (
+    <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+      Loading hex grid…
+    </div>
+  );
 
   return (
-    <div className="mb-6 bg-card border border-border rounded-xl overflow-hidden">
-      {/* Layer switcher */}
-      <div className="flex items-center gap-1 px-3 py-2 border-b border-border/40 flex-wrap">
-        <span className="text-[11px] text-muted-foreground mr-1">Layer:</span>
+    <div className="flex flex-col h-full">
+      {/* Layer + boundary controls */}
+      <div className="flex items-center gap-1 px-3 py-2 border-b border-border/40 flex-wrap bg-card/80 backdrop-blur-sm z-10 shrink-0">
         {MAP_LAYERS.map(l => (
-          <button
-            key={l.key}
-            onClick={() => setActiveLayer(l.key)}
-            className={`text-[11px] px-2 py-0.5 rounded-full border transition-colors ${
-              activeLayer === l.key
-                ? "bg-[#00AEEF] text-white border-[#00AEEF]"
-                : "border-border text-muted-foreground hover:border-[#00AEEF]/50"
-            }`}
-          >
+          <button key={l.key} onClick={() => setActiveLayer(l.key)}
+            className={`text-[11px] px-2 py-0.5 rounded-full border transition-colors whitespace-nowrap ${
+              activeLayer === l.key ? "bg-[#00AEEF] text-white border-[#00AEEF]" : "border-border text-muted-foreground hover:border-[#00AEEF]/50"
+            }`}>
             {l.label}
           </button>
         ))}
+        <div className="w-px h-4 bg-border/60 mx-1" />
+        <button onClick={() => setShowDistricts(v => !v)}
+          className={`text-[11px] px-2 py-0.5 rounded-full border transition-colors ${showDistricts ? "border-white/40 text-white/80" : "border-border text-muted-foreground"}`}>
+          Districts
+        </button>
+        {selectedDistrict && (
+          <button onClick={() => { onSelectDistrict(""); mapRef.current?.setView([22.5, 80], 5); }}
+            className="text-[11px] px-2 py-0.5 rounded-full border border-red-400/50 text-red-400 hover:bg-red-400/10 ml-auto">
+            ✕ Clear
+          </button>
+        )}
       </div>
 
       {/* Map */}
-      <div style={{ height: 280 }}>
+      <div className="flex-1 min-h-0">
         <MapContainer
-          bounds={bounds}
+          center={[22.5, 80]} zoom={5}
           style={{ height: "100%", width: "100%" }}
-          zoomControl={false}
+          scrollWheelZoom
+          maxBounds={[[6, 68], [37, 98]]}
+          minZoom={4} maxZoom={11}
+          ref={mapRef}
           attributionControl={false}
         >
-          <TileLayer
-            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          <SetupCanvas />
+          <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png" />
+          <GeoJSON
+            ref={geoJsonRef}
+            key={activeLayer}
+            data={geoData}
+            style={styleFeature}
+            onEachFeature={onEachFeature}
           />
-          {hexes.map(h => {
-            const latLngs = cellToBoundary(h.h3_id).map(([lat, lng]) => [lat, lng] as [number, number]);
-            const val = h[activeLayer];
-            const color = hexColor(layer.ramp, layer.domain, val);
-            return (
-              <Polygon
-                key={h.h3_id}
-                positions={latLngs}
-                pathOptions={{ color: "rgba(255,255,255,0.15)", weight: 0.5, fillColor: color, fillOpacity: 0.85 }}
-              >
-                <MapTooltip sticky>
-                  <div className="text-xs">
-                    <div className="font-semibold">{h.district_name}</div>
-                    <div>{layer.label}: {val != null ? `${val.toFixed(1)}${activeLayer.includes("pct") ? "%" : ""}` : "—"}</div>
-                    {h.jjm_fhtc_pct != null && activeLayer !== "jjm_fhtc_pct" && (
-                      <div className="text-blue-300">JJM FHTC: {h.jjm_fhtc_pct.toFixed(1)}%</div>
-                    )}
-                  </div>
-                </MapTooltip>
-              </Polygon>
-            );
-          })}
+          {showDistricts && districtQ.data && (
+            <GeoJSON key="dist-bounds" data={districtQ.data}
+              style={districtBoundaryStyle} onEachFeature={onDistrictBoundary} />
+          )}
+          {stateQ.data && (
+            <GeoJSON key="state-bounds" data={stateQ.data}
+              style={stateBoundaryStyle} onEachFeature={onStateBoundary} />
+          )}
         </MapContainer>
       </div>
     </div>
@@ -456,11 +565,17 @@ export default function WashAssessPage() {
   const lwmPct = pct("lwm_coverage_pct", null);
   const gwStress = hexAgg?.gw_stress;
 
+  const handleMapDistrictSelect = useCallback((district: string) => {
+    if (!district) { setSelectedDistrict(null); setSearch(""); return; }
+    selectDistrict(district);
+    setSearch(district);
+  }, [selectDistrict]);
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-screen flex flex-col bg-background overflow-hidden">
       {/* Top bar */}
-      <div className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3">
+      <div className="shrink-0 z-20 border-b border-border bg-card/95 backdrop-blur-sm">
+        <div className="px-4 py-2 flex items-center gap-3">
           <Link href="/">
             <Button variant="ghost" size="sm" className="h-7 gap-1.5 text-xs">
               <ArrowLeft className="w-3.5 h-3.5" /> Home
@@ -470,27 +585,20 @@ export default function WashAssessPage() {
           <Droplets className="w-4 h-4 text-[#00AEEF]" />
           <span className="font-semibold text-sm text-foreground">WASH Climate Assessment</span>
           <Badge variant="outline" className="text-[10px]">District-Level</Badge>
-
-          {/* District search */}
-          <div className="relative ml-auto w-64">
+          <div className="relative ml-auto w-56">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
             <Input
               placeholder="Search district…"
               value={search}
               onChange={e => { setSearch(e.target.value); setShowDropdown(true); }}
               onFocus={() => setShowDropdown(true)}
-              className="pl-8 h-8 text-xs"
+              className="pl-8 h-7 text-xs"
             />
             {showDropdown && filtered.length > 0 && (
               <div className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-md shadow-lg z-50 max-h-52 overflow-y-auto">
                 {filtered.map(d => (
-                  <button
-                    key={d}
-                    className="w-full text-left text-xs px-3 py-2 hover:bg-accent"
-                    onMouseDown={() => selectDistrict(d)}
-                  >
-                    {d}
-                  </button>
+                  <button key={d} className="w-full text-left text-xs px-3 py-2 hover:bg-accent"
+                    onMouseDown={() => selectDistrict(d)}>{d}</button>
                 ))}
               </div>
             )}
@@ -499,60 +607,63 @@ export default function WashAssessPage() {
         </div>
       </div>
 
-      {!selectedDistrict ? (
-        /* Empty state */
-        <div className="flex flex-col items-center justify-center py-32 text-center px-4">
-          <Droplets className="w-12 h-12 text-[#00AEEF]/40 mb-4" />
-          <h2 className="text-xl font-semibold text-foreground mb-2">Select a District to Begin</h2>
-          <p className="text-sm text-muted-foreground max-w-sm">
-            Search for any of India's 713 districts to view its climate hazard profile and WASH infrastructure assessment.
-          </p>
-          <div className="mt-6 flex flex-wrap gap-2 justify-center max-w-lg">
-            {["Araria", "Jaisalmer", "Leh(Ladakh)", "Wayanad", "Balasore", "Chandrapur"].map(d => (
-              <button key={d} onClick={() => { selectDistrict(d); setSearch(d); }}
-                className="text-xs px-3 py-1.5 rounded-full border border-border hover:border-[#00AEEF] hover:text-[#00AEEF] transition-colors">
-                {d}
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          {/* District header */}
-          <div className="mb-6 flex items-start justify-between flex-wrap gap-3">
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">{selectedDistrict}</h1>
-              <p className="text-muted-foreground text-sm">{rank?.state ?? "—"} · {rank?.population_at_risk ? `Pop. ${(rank.population_at_risk / 1e6).toFixed(2)}M at-risk` : ""}</p>
+      {/* Body: map (left) + assessment panel (right) */}
+      <div className="flex-1 min-h-0 flex">
+
+        {/* ── Map pane ───────────────────────────────────────────────────── */}
+        <div className="flex-1 min-w-0 border-r border-border flex flex-col">
+          {hexProps ? (
+            <WashHexMap
+              hexProps={hexProps}
+              selectedDistrict={selectedDistrict}
+              onSelectDistrict={handleMapDistrictSelect}
+            />
+          ) : (
+            <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
+              Loading hex grid…
             </div>
-            <div className="flex items-center gap-3 flex-wrap">
-              {rank && (
-                <>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold" style={{ color: season?.color ?? "#888" }}>{rank.risk_score.toFixed(1)}</div>
-                    <div className="text-[10px] text-muted-foreground">Risk Score</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl">{HAZARD_ICONS[rank.dominant_hazard] ?? "⚠️"}</div>
-                    <div className="text-[10px] text-muted-foreground capitalize">{rank.dominant_hazard}</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-amber-500">{rank.wash_disruption_days?.toFixed(0) ?? "—"}</div>
-                    <div className="text-[10px] text-muted-foreground">Disruption Days/yr</div>
-                  </div>
-                </>
-              )}
-              {/* Completeness */}
-              <div className="text-center">
-                <div className="text-2xl font-bold" style={{ color: completeness > 75 ? "#22c55e" : completeness > 50 ? "#f97316" : "#ef4444" }}>
-                  {completeness}%
-                </div>
-                <div className="text-[10px] text-muted-foreground">Complete</div>
+          )}
+        </div>
+
+        {/* ── Assessment pane ────────────────────────────────────────────── */}
+        <div className="w-[420px] shrink-0 overflow-y-auto">
+          {!selectedDistrict ? (
+            <div className="flex flex-col items-center justify-center h-full text-center px-6 py-12">
+              <Droplets className="w-10 h-10 text-[#00AEEF]/40 mb-3" />
+              <h2 className="text-base font-semibold text-foreground mb-1">Select a District</h2>
+              <p className="text-xs text-muted-foreground mb-4">
+                Click a district on the map, or use the search. State boundaries (amber) zoom to state. District boundaries (white) select a district.
+              </p>
+              <div className="flex flex-wrap gap-2 justify-center">
+                {["Araria", "Jaisalmer", "Wayanad", "Balasore"].map(d => (
+                  <button key={d} onClick={() => { selectDistrict(d); setSearch(d); }}
+                    className="text-xs px-3 py-1 rounded-full border border-border hover:border-[#00AEEF] hover:text-[#00AEEF] transition-colors">
+                    {d}
+                  </button>
+                ))}
               </div>
             </div>
-          </div>
-
-          {/* Hex map */}
-          <DistrictHexMap hexes={districtHexes} />
+          ) : (
+            <div className="p-4">
+              {/* District header */}
+              <div className="mb-4 flex items-start justify-between gap-2">
+                <div>
+                  <h1 className="text-lg font-bold text-foreground leading-tight">{selectedDistrict}</h1>
+                  <p className="text-muted-foreground text-xs">{rank?.state ?? "—"}{rank?.population_at_risk ? ` · Pop. ${(rank.population_at_risk / 1e6).toFixed(2)}M at-risk` : ""}</p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  {rank && (
+                    <div className="text-center">
+                      <div className="text-lg font-bold" style={{ color: season?.color ?? "#888" }}>{rank.risk_score.toFixed(1)}</div>
+                      <div className="text-[10px] text-muted-foreground">Risk</div>
+                    </div>
+                  )}
+                  <div className="text-center">
+                    <div className="text-lg font-bold" style={{ color: completeness > 75 ? "#22c55e" : completeness > 50 ? "#f97316" : "#ef4444" }}>{completeness}%</div>
+                    <div className="text-[10px] text-muted-foreground">Complete</div>
+                  </div>
+                </div>
+              </div>
 
           {/* Top vulnerabilities */}
           {rank?.top_vulnerabilities?.length > 0 && (
@@ -566,7 +677,7 @@ export default function WashAssessPage() {
           )}
 
           {/* 8-card grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 gap-3">
 
             {/* 1. Hazard Type */}
             <AssessCard
@@ -816,9 +927,11 @@ export default function WashAssessPage() {
               Manual data last saved: {new Date(manual.last_updated).toLocaleString()}
             </div>
           )}
+              </div>
+            )}
+          </div>
         </div>
-      )}
-    </div>
+      </div>
   );
 }
 
