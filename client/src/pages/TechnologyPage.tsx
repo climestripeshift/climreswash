@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useMemo } from "react";
 import { useRoute, Link, useSearch } from "wouter";
 import { getTechnologyBySlug, getAllTechnologies, ALL_HAZARDS, ALL_TYPOLOGIES, TechnologyInfo, MATRIX_HAZARDS, MATRIX_HAZARD_ICONS, MATRIX_HAZARD_COLORS, HazardSuitability } from "@/lib/technologyContent";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -80,6 +80,54 @@ const TYPOLOGY_MAP_COLORS: Record<string, string> = {
 };
 
 
+// dominant_hazard values in district_rankings.json → tech filter hazard names
+const DOMINANT_TO_TECH: Record<string, string[]> = {
+  'flood':        ['Flood', 'Cyclone'],
+  'drought':      ['Drought', 'Dust Storm', 'Groundwater Depletion'],
+  'wet-bulb heat':['Heatwave'],
+  'cold wave':    ['Cold Wave'],
+  'landslide':    [],
+};
+
+// dominant_hazard → applicable typologies (approximate from terrain/climate patterns)
+const COASTAL_STATES = new Set(['Kerala', 'Tamil Nadu', 'Andhra Pradesh', 'Telangana',
+  'Odisha', 'West Bengal', 'Goa', 'Karnataka', 'Maharashtra', 'Gujarat']);
+const MOUNTAIN_STATES = new Set(['Himachal Pradesh', 'Uttarakhand', 'Jammu & Kashmir',
+  'Ladakh', 'Sikkim', 'Arunachal Pradesh', 'Manipur', 'Mizoram', 'Meghalaya',
+  'Nagaland', 'Tripura', 'Assam']);
+const DESERT_STATES = new Set(['Rajasthan', 'Gujarat']);
+
+function getTypologiesForDistrict(dom: string, state: string): string[] {
+  const t: string[] = [];
+  if (dom === 'flood') {
+    t.push('Flood Prone', 'Rain Intensive');
+    if (COASTAL_STATES.has(state)) t.push('Coastal');
+    else t.push('Plains / Alluvial');
+  }
+  if (dom === 'drought') {
+    t.push('Desert / Arid', 'Plains / Alluvial');
+  }
+  if (dom === 'wet-bulb heat') {
+    t.push('Plains / Alluvial');
+    if (DESERT_STATES.has(state)) t.push('Desert / Arid');
+  }
+  if (dom === 'cold wave') {
+    t.push('Rocky / Hilly');
+  }
+  if (dom === 'landslide') {
+    t.push('Rocky / Hilly', 'Rain Intensive');
+  }
+  return t;
+}
+
+const DOMINANT_COLORS: Record<string, string> = {
+  'flood':         '#3b82f6',
+  'drought':       '#f97316',
+  'wet-bulb heat': '#ef4444',
+  'cold wave':     '#06b6d4',
+  'landslide':     '#84cc16',
+};
+
 function HazardDistrictMap({ selectedHazards, selectedTypologies, onDistrictClick }: {
   selectedHazards: string[];
   selectedTypologies: string[];
@@ -91,30 +139,68 @@ function HazardDistrictMap({ selectedHazards, selectedTypologies, onDistrictClic
     staleTime: Infinity,
   });
 
-  const style = useCallback((feature: any) => {
-    const { HAZARD = 0, VULNERABILITY = 0 } = feature.properties;
+  const { data: rankings } = useQuery<any[]>({
+    queryKey: ['district-rankings'],
+    queryFn: () => fetch('/data/district_rankings.json').then(r => r.json()),
+    staleTime: Infinity,
+  });
+
+  // Build lookup: NAME.toUpperCase() → ranking entry
+  const rankMap = useMemo<Record<string, any>>(() => {
+    if (!rankings) return {};
+    const m: Record<string, any> = {};
+    rankings.forEach(d => { m[d.district.toUpperCase()] = d; });
+    return m;
+  }, [rankings]);
+
+  const isMatch = useCallback((feature: any): boolean => {
+    const name = (feature.properties.NAME || '').toUpperCase();
+    const rank = rankMap[name];
+    const dom: string = rank?.dominant_hazard || '';
+    const state: string = feature.properties.STATE || '';
 
     if (selectedHazards.length > 0) {
-      // Color districts by their HAZARD score — high score = high general hazard exposure
-      const t = Math.max(0, Math.min(1, (HAZARD - 0.02) / 0.5));
-      if (t > 0.6) return { fillColor: '#ef4444', weight: 1, color: '#0f172a', fillOpacity: 0.85 };
-      if (t > 0.4) return { fillColor: '#f97316', weight: 0.8, color: '#0f172a', fillOpacity: 0.75 };
-      if (t > 0.25) return { fillColor: '#eab308', weight: 0.8, color: '#1e293b', fillOpacity: 0.6 };
-      return { fillColor: '#334155', weight: 0.5, color: '#0f172a', fillOpacity: 0.2 };
+      const techsForDom = DOMINANT_TO_TECH[dom] || [];
+      return selectedHazards.some(h => techsForDom.includes(h));
+    }
+    if (selectedTypologies.length > 0) {
+      const typologies = getTypologiesForDistrict(dom, state);
+      return selectedTypologies.some(t => typologies.includes(t));
+    }
+    return true;
+  }, [rankMap, selectedHazards, selectedTypologies]);
+
+  const style = useCallback((feature: any) => {
+    const { VULNERABILITY = 0 } = feature.properties;
+
+    // No filter → color by VULNERABILITY
+    if (selectedHazards.length === 0 && selectedTypologies.length === 0) {
+      const v = VULNERABILITY;
+      const fillColor = v > 0.8 ? '#ef4444' : v > 0.6 ? '#f97316' : v > 0.4 ? '#eab308' : v > 0.2 ? '#22c55e' : '#16a34a';
+      return { fillColor, weight: 0.5, color: '#1e293b', fillOpacity: 0.6 };
     }
 
-    // Default / typology mode: color by VULNERABILITY
-    const v = VULNERABILITY;
-    let fillColor = '#16a34a';
-    if (v > 0.8) fillColor = '#ef4444';
-    else if (v > 0.6) fillColor = '#f97316';
-    else if (v > 0.4) fillColor = '#eab308';
-    else if (v > 0.2) fillColor = '#22c55e';
-    return { fillColor, weight: 0.5, color: '#1e293b', fillOpacity: 0.6 };
-  }, [selectedHazards, selectedTypologies]);
+    if (!isMatch(feature)) {
+      return { fillColor: '#1e293b', weight: 0.3, color: '#0f172a', fillOpacity: 0.15 };
+    }
+
+    // Matched → color by dominant hazard
+    const name = (feature.properties.NAME || '').toUpperCase();
+    const rank = rankMap[name];
+    const dom: string = rank?.dominant_hazard || '';
+    return {
+      fillColor: DOMINANT_COLORS[dom] || '#94a3b8',
+      weight: 1,
+      color: '#1e293b',
+      fillOpacity: 0.85,
+    };
+  }, [isMatch, rankMap, selectedHazards, selectedTypologies]);
 
   const onEachFeature = useCallback((feature: any, layer: L.Layer) => {
     const { NAME, STATE, HAZARD = 0, EXPOSURE = 0, VULNERABILITY = 0 } = feature.properties;
+    const rank = rankMap[(NAME || '').toUpperCase()];
+    const dom: string = rank?.dominant_hazard || '';
+    const domColor = DOMINANT_COLORS[dom] || '#94a3b8';
 
     (layer as any).on({
       mouseover: (e: any) => {
@@ -128,8 +214,8 @@ function HazardDistrictMap({ selectedHazards, selectedTypologies, onDistrictClic
         onDistrictClick({
           name: NAME,
           state: STATE || '',
-          hazards: [],
-          typologies: [],
+          hazards: dom ? [dom] : [],
+          typologies: getTypologiesForDistrict(dom, STATE || ''),
           vulnerabilityScore: VULNERABILITY,
           hazardScore: HAZARD,
           exposureScore: EXPOSURE,
@@ -137,16 +223,23 @@ function HazardDistrictMap({ selectedHazards, selectedTypologies, onDistrictClic
       },
     });
 
+    const hazardLine = dom
+      ? `<br/><span style="color:${domColor}">⚠ ${dom}</span>`
+      : '';
+
     (layer as any).bindTooltip(
       `<div style="font-size:12px;line-height:1.7">
-        <strong>${NAME}</strong>, ${STATE}<br/>
-        <span style="color:#94a3b8">Hazard:</span> <strong>${(HAZARD * 100).toFixed(0)}%</strong> &nbsp;
-        <span style="color:#94a3b8">Exposure:</span> <strong>${(EXPOSURE * 100).toFixed(0)}%</strong> &nbsp;
+        <strong>${NAME}</strong>, ${STATE}${hazardLine}<br/>
         <span style="color:#94a3b8">Vulnerability:</span> <strong>${(VULNERABILITY * 100).toFixed(0)}%</strong>
       </div>`,
       { sticky: true, className: 'leaflet-hazard-tooltip' }
     );
-  }, [selectedHazards, onDistrictClick]);
+  }, [rankMap, onDistrictClick]);
+
+  const matchCount = useMemo(() => {
+    if (!geoData || (selectedHazards.length === 0 && selectedTypologies.length === 0)) return 0;
+    return geoData.features.filter((f: any) => isMatch(f)).length;
+  }, [geoData, isMatch, selectedHazards, selectedTypologies]);
 
   if (isLoading) {
     return (
@@ -156,6 +249,8 @@ function HazardDistrictMap({ selectedHazards, selectedTypologies, onDistrictClic
       </div>
     );
   }
+
+  const hasFilter = selectedHazards.length > 0 || selectedTypologies.length > 0;
 
   return (
     <div className="relative h-full w-full rounded-lg overflow-hidden border border-border">
@@ -179,31 +274,43 @@ function HazardDistrictMap({ selectedHazards, selectedTypologies, onDistrictClic
         )}
       </MapContainer>
 
-      {/* Active filter label */}
-      {(selectedHazards.length > 0 || selectedTypologies.length > 0) && (
+      {/* Stats overlay */}
+      {hasFilter && (
         <div className="absolute top-3 left-3 z-[1000] bg-card/95 backdrop-blur border border-border px-3 py-2 rounded-md text-xs">
-          {selectedHazards.length > 0 && (
-            <><div className="font-semibold text-foreground">Colored by hazard exposure</div>
-            <div className="text-muted-foreground">Red = high · Grey = low</div></>
-          )}
-          {selectedHazards.length === 0 && selectedTypologies.length > 0 && (
-            <><div className="font-semibold text-foreground">Colored by vulnerability</div>
-            <div className="text-muted-foreground">{selectedTypologies.join(', ')}</div></>
-          )}
+          <div className="font-semibold text-foreground">{matchCount} districts match</div>
+          <div className="text-muted-foreground">
+            {selectedHazards.length > 0 ? selectedHazards.join(', ') : selectedTypologies.join(', ')}
+          </div>
         </div>
       )}
 
       {/* Legend */}
       <div className="absolute bottom-3 right-3 z-[1000] bg-card/95 backdrop-blur border border-border p-2.5 rounded-md text-xs space-y-1.5">
-        <div className="font-semibold text-muted-foreground uppercase tracking-wider text-[10px] mb-1">
-          {selectedHazards.length > 0 ? 'Hazard Exposure' : 'Vulnerability'}
-        </div>
-        {[['#ef4444', 'Very High'], ['#f97316', 'High'], ['#eab308', 'Moderate'], ['#22c55e', 'Low'], ['#16a34a', 'Very Low']].map(([c, l]) => (
-          <div key={l} className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: c }} />
-            <span>{l}</span>
-          </div>
-        ))}
+        {hasFilter ? (
+          <>
+            <div className="font-semibold text-muted-foreground uppercase tracking-wider text-[10px] mb-1">Dominant Hazard</div>
+            {Object.entries(DOMINANT_COLORS).map(([dom, color]) => (
+              <div key={dom} className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: color }} />
+                <span className="capitalize">{dom}</span>
+              </div>
+            ))}
+            <div className="flex items-center gap-1.5 pt-1 border-t border-border">
+              <span className="w-2.5 h-2.5 rounded-full shrink-0 bg-slate-800" />
+              <span className="text-muted-foreground">Not matching</span>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="font-semibold text-muted-foreground uppercase tracking-wider text-[10px] mb-1">Vulnerability</div>
+            {[['#ef4444', 'Very High'], ['#f97316', 'High'], ['#eab308', 'Moderate'], ['#22c55e', 'Low']].map(([c, l]) => (
+              <div key={l} className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: c }} />
+                <span>{l}</span>
+              </div>
+            ))}
+          </>
+        )}
       </div>
     </div>
   );
@@ -485,12 +592,14 @@ function TechnologyIndex() {
   });
   const [selectedTypologies, setSelectedTypologies] = useState<string[]>([]);
   const [activeMatrixHazard, setActiveMatrixHazard] = useState<string | null>(null);
-  const [showMap, setShowMap] = useState(false);
+  const [showMap, setShowMap] = useState(true);
   const [clickedDistrict, setClickedDistrict] = useState<ClickedDistrict | null>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
 
   const handleDistrictClick = (d: ClickedDistrict) => {
     setClickedDistrict(d);
+    // Auto-apply typologies derived from dominant hazard
+    if (d.typologies.length > 0) setSelectedTypologies(d.typologies);
     setTimeout(() => {
       resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 120);
