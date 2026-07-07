@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useRoute, Link, useSearch } from "wouter";
-import { getTechnologyBySlug, getAllTechnologies, ALL_HAZARDS, ALL_TYPOLOGIES, TechnologyInfo, getRecommendedTechnologies, MATRIX_HAZARDS, MATRIX_HAZARD_ICONS, MATRIX_HAZARD_COLORS, HazardSuitability } from "@/lib/technologyContent";
+import { getTechnologyBySlug, getAllTechnologies, ALL_HAZARDS, ALL_TYPOLOGIES, TechnologyInfo, MATRIX_HAZARDS, MATRIX_HAZARD_ICONS, MATRIX_HAZARD_COLORS, HazardSuitability } from "@/lib/technologyContent";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -66,9 +66,8 @@ interface ClickedDistrict {
   hazards: string[];
   typologies: string[];
   vulnerabilityScore: number;
-  soilType?: string;
-  waterAccessPercent?: number;
-  toiletCoveragePercent?: number;
+  hazardScore?: number;
+  exposureScore?: number;
 }
 
 const TYPOLOGY_MAP_COLORS: Record<string, string> = {
@@ -80,115 +79,42 @@ const TYPOLOGY_MAP_COLORS: Record<string, string> = {
   'Flood Prone': '#60a5fa',
 };
 
-function getDistrictTypologies(d: any): string[] {
-  const soil: string = d.soilType || '';
-  const rock: string = d.rockType || '';
-  const risks: string[] = d.climateRisks || [];
-  const result: string[] = [];
-  if (['Alluvial', 'Loamy', 'Black Cotton'].includes(soil)) result.push('Plains / Alluvial');
-  if (soil === 'Sandy') result.push('Desert / Arid');
-  if (['Granite', 'Basalt', 'Limestone', 'Shale', 'Sandstone'].includes(rock) && soil !== 'Alluvial') result.push('Rocky / Hilly');
-  if (risks.includes('Cyclone')) result.push('Coastal');
-  if (risks.includes('Flood') && ['Alluvial', 'Loamy'].includes(soil)) result.push('Rain Intensive');
-  if (risks.includes('Flood')) result.push('Flood Prone');
-  return result;
-}
 
 function HazardDistrictMap({ selectedHazards, selectedTypologies, onDistrictClick }: {
   selectedHazards: string[];
   selectedTypologies: string[];
   onDistrictClick: (d: ClickedDistrict) => void;
 }) {
-  const [geoJsonData, setGeoJsonData] = useState<any>(null);
-  const [districtDataMap, setDistrictDataMap] = useState<Record<string, any>>({});
-
-  const { data: districts } = useQuery<any[]>({
-    queryKey: ['districts'],
-    queryFn: () => fetch('/api/districts').then(r => r.json()),
-    staleTime: 5 * 60 * 1000,
+  const { data: geoData, isLoading } = useQuery<any>({
+    queryKey: ['india-geojson'],
+    queryFn: () => fetch('/data/india.json').then(r => r.json()),
+    staleTime: Infinity,
   });
 
-  useEffect(() => {
-    fetch('/data/india.json')
-      .then(r => r.json())
-      .then(setGeoJsonData)
-      .catch(console.error);
-  }, []);
-
-  useEffect(() => {
-    if (districts) {
-      const rec: Record<string, any> = {};
-      districts.forEach((d: any) => { rec[d.name.toUpperCase()] = d; });
-      setDistrictDataMap(rec);
-    }
-  }, [districts]);
-
   const style = useCallback((feature: any) => {
-    const name = feature.properties.DISTRICT?.toUpperCase();
-    const data = name ? districtDataMap[name] : undefined;
-    if (!data) return { fillColor: '#334155', weight: 0.5, opacity: 1, color: '#1e293b', fillOpacity: 0.25 };
+    const { HAZARD = 0, VULNERABILITY = 0 } = feature.properties;
 
-    // Typology mode: when typologies are selected and no hazards
-    if (selectedHazards.length === 0 && selectedTypologies.length > 0) {
-      const districtTypologies = getDistrictTypologies(data);
-      const matchingTypology = selectedTypologies.find(t => districtTypologies.includes(t));
-      if (!matchingTypology) {
-        return { fillColor: '#334155', weight: 0.5, opacity: 1, color: '#0f172a', fillOpacity: 0.15 };
-      }
-      return {
-        fillColor: TYPOLOGY_MAP_COLORS[matchingTypology] || '#94a3b8',
-        weight: 1,
-        opacity: 1,
-        color: '#1e293b',
-        fillOpacity: 0.8,
-      };
+    if (selectedHazards.length > 0) {
+      // Color districts by their HAZARD score — high score = high general hazard exposure
+      const t = Math.max(0, Math.min(1, (HAZARD - 0.02) / 0.5));
+      if (t > 0.6) return { fillColor: '#ef4444', weight: 1, color: '#0f172a', fillOpacity: 0.85 };
+      if (t > 0.4) return { fillColor: '#f97316', weight: 0.8, color: '#0f172a', fillOpacity: 0.75 };
+      if (t > 0.25) return { fillColor: '#eab308', weight: 0.8, color: '#1e293b', fillOpacity: 0.6 };
+      return { fillColor: '#334155', weight: 0.5, color: '#0f172a', fillOpacity: 0.2 };
     }
 
-    // No filters: color by vulnerability
-    if (selectedHazards.length === 0) {
-      const v = data.vulnerabilityScore ?? 0;
-      let fillColor = '#16a34a';
-      if (v > 0.8) fillColor = '#ef4444';
-      else if (v > 0.6) fillColor = '#f97316';
-      else if (v > 0.4) fillColor = '#eab308';
-      else if (v > 0.2) fillColor = '#22c55e';
-      return { fillColor, weight: 0.5, opacity: 1, color: '#1e293b', fillOpacity: 0.55 };
-    }
-
-    // Hazard mode — color by number of matching hazards
-    const risks: string[] = data.climateRisks || [];
-    const intensities: Record<string, number> = data.hazardIntensities || {};
-    const matchingHazards = selectedHazards.filter(h => risks.includes(h));
-    if (matchingHazards.length === 0) {
-      return { fillColor: '#334155', weight: 0.5, opacity: 1, color: '#0f172a', fillOpacity: 0.2 };
-    }
-    if (matchingHazards.length >= 3) {
-      // 3+ hazards: critical multi-hazard — violet
-      return { fillColor: '#7c3aed', weight: 1.5, opacity: 1, color: '#1e293b', fillOpacity: 0.9 };
-    }
-    if (matchingHazards.length === 2) {
-      // 2 hazards: compound risk — rose/red
-      return { fillColor: '#f43f5e', weight: 1.5, opacity: 1, color: '#1e293b', fillOpacity: 0.85 };
-    }
-    // Exactly 1 matching hazard — use that hazard's specific color
-    const intensity = intensities[matchingHazards[0]] ?? null;
-    const fillOpacity = intensity !== null ? 0.25 + intensity * 0.7 : 0.75;
-    return {
-      fillColor: HAZARD_COLORS[matchingHazards[0]] || '#888',
-      weight: 1,
-      opacity: 1,
-      color: '#1e293b',
-      fillOpacity,
-    };
-  }, [districtDataMap, selectedHazards, selectedTypologies]);
+    // Default / typology mode: color by VULNERABILITY
+    const v = VULNERABILITY;
+    let fillColor = '#16a34a';
+    if (v > 0.8) fillColor = '#ef4444';
+    else if (v > 0.6) fillColor = '#f97316';
+    else if (v > 0.4) fillColor = '#eab308';
+    else if (v > 0.2) fillColor = '#22c55e';
+    return { fillColor, weight: 0.5, color: '#1e293b', fillOpacity: 0.6 };
+  }, [selectedHazards, selectedTypologies]);
 
   const onEachFeature = useCallback((feature: any, layer: L.Layer) => {
-    const name = feature.properties.DISTRICT?.toUpperCase();
-    const data = name ? districtDataMap[name] : undefined;
-    if (!data) return;
-
-    const risks: string[] = data.climateRisks || [];
-    const isAffected = selectedHazards.length === 0 || selectedHazards.some(h => risks.includes(h));
+    const { NAME, STATE, HAZARD = 0, EXPOSURE = 0, VULNERABILITY = 0 } = feature.properties;
 
     (layer as any).on({
       mouseover: (e: any) => {
@@ -196,55 +122,33 @@ function HazardDistrictMap({ selectedHazards, selectedTypologies, onDistrictClic
         e.target.bringToFront();
       },
       mouseout: (e: any) => {
-        e.target.setStyle({
-          weight: isAffected ? 1 : 0.5,
-          color: isAffected ? '#1e293b' : '#0f172a',
-          fillOpacity: isAffected ? (selectedHazards.length === 0 ? 0.55 : 0.8) : 0.2,
-        });
+        e.target.setStyle({ weight: 0.5, color: '#1e293b', fillOpacity: 0.6 });
       },
       click: () => {
         onDistrictClick({
-          name: data.name,
-          state: data.state || '',
-          hazards: risks,
-          typologies: getDistrictTypologies(data),
-          vulnerabilityScore: data.vulnerabilityScore ?? 0,
-          soilType: data.soilType,
-          waterAccessPercent: data.waterAccessPercent,
-          toiletCoveragePercent: data.toiletCoveragePercent,
+          name: NAME,
+          state: STATE || '',
+          hazards: [],
+          typologies: [],
+          vulnerabilityScore: VULNERABILITY,
+          hazardScore: HAZARD,
+          exposureScore: EXPOSURE,
         });
       },
     });
 
-    const matchCount = selectedHazards.length > 0
-      ? selectedHazards.filter(h => risks.includes(h)).length
-      : 0;
-    const intensities: Record<string, number> = data.hazardIntensities || {};
-
-    const intensityLines = selectedHazards
-      .filter(h => risks.includes(h) && intensities[h] != null)
-      .map(h => `<span style="color:${HAZARD_COLORS[h]}">${HAZARD_ICONS[h]} ${h}: <strong>${Math.round(intensities[h] * 100)}%</strong></span>`)
-      .join('<br/>');
-
-    const districtTypologies = getDistrictTypologies(data);
-    const matchingTypologies = selectedTypologies.filter(t => districtTypologies.includes(t));
-    const typologyLine = matchingTypologies.length > 0
-      ? `<br/><span style="color:#94a3b8;font-size:11px">Landscape: </span>${matchingTypologies.map(t => `<span style="color:${TYPOLOGY_MAP_COLORS[t]}">${t}</span>`).join(', ')}`
-      : '';
-
     (layer as any).bindTooltip(
-      `<div style="font-size:12px;line-height:1.6">
-        <strong>${data.name}</strong>${data.state ? `, ${data.state}` : ''}<br/>
-        ${risks.length > 0 ? risks.map((r: string) => `<span style="color:${HAZARD_COLORS[r] || '#aaa'}">${HAZARD_ICONS[r] || '⚠️'} ${r}</span>`).join(' · ') : 'No risk data'}
-        ${typologyLine}
-        ${intensityLines ? `<br/><span style="font-size:11px;color:#94a3b8">Intensity:</span><br/>${intensityLines}` : ''}
-        ${matchCount >= 3 && !intensityLines ? `<br/><span style="color:#a78bfa;font-size:11px;font-weight:600">⚠ ${matchCount} hazards — Critical Multi-Hazard</span>` : matchCount === 2 && !intensityLines ? `<br/><span style="color:#f43f5e;font-size:11px;font-weight:600">⚠ 2 hazards — Compound Risk</span>` : matchCount === 1 && !intensityLines ? `<br/><span style="color:#86efac;font-size:11px">1 hazard match</span>` : ''}
+      `<div style="font-size:12px;line-height:1.7">
+        <strong>${NAME}</strong>, ${STATE}<br/>
+        <span style="color:#94a3b8">Hazard:</span> <strong>${(HAZARD * 100).toFixed(0)}%</strong> &nbsp;
+        <span style="color:#94a3b8">Exposure:</span> <strong>${(EXPOSURE * 100).toFixed(0)}%</strong> &nbsp;
+        <span style="color:#94a3b8">Vulnerability:</span> <strong>${(VULNERABILITY * 100).toFixed(0)}%</strong>
       </div>`,
       { sticky: true, className: 'leaflet-hazard-tooltip' }
     );
-  }, [districtDataMap, selectedHazards, selectedTypologies, onDistrictClick]);
+  }, [selectedHazards, onDistrictClick]);
 
-  if (!geoJsonData || Object.keys(districtDataMap).length === 0) {
+  if (isLoading) {
     return (
       <div className="h-full w-full flex items-center justify-center bg-slate-950 rounded-lg text-white">
         <Loader2 className="h-5 w-5 animate-spin mr-2" />
@@ -252,13 +156,6 @@ function HazardDistrictMap({ selectedHazards, selectedTypologies, onDistrictClic
       </div>
     );
   }
-
-  const affectedCount = selectedHazards.length > 0
-    ? Object.values(districtDataMap).filter(d => {
-        const risks: string[] = d.climateRisks || [];
-        return selectedHazards.some(h => risks.includes(h));
-      }).length
-    : 0;
 
   return (
     <div className="relative h-full w-full rounded-lg overflow-hidden border border-border">
@@ -272,89 +169,41 @@ function HazardDistrictMap({ selectedHazards, selectedTypologies, onDistrictClic
           attribution='&copy; OpenStreetMap contributors &copy; CARTO'
           url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
         />
-        {geoJsonData && (
+        {geoData && (
           <GeoJSON
-            data={geoJsonData}
+            data={geoData}
             style={style}
             onEachFeature={onEachFeature}
-            key={`map-${selectedHazards.join(',')}-${selectedTypologies.join(',')}-${Object.keys(districtDataMap).length}`}
+            key={`map-${selectedHazards.join(',')}-${selectedTypologies.join(',')}`}
           />
         )}
       </MapContainer>
 
-      {/* Stats overlay */}
-      {selectedHazards.length > 0 && (
+      {/* Active filter label */}
+      {(selectedHazards.length > 0 || selectedTypologies.length > 0) && (
         <div className="absolute top-3 left-3 z-[1000] bg-card/95 backdrop-blur border border-border px-3 py-2 rounded-md text-xs">
-          <div className="font-semibold text-foreground">{affectedCount} districts affected</div>
-          <div className="text-muted-foreground">by {selectedHazards.join(' or ')}</div>
-        </div>
-      )}
-      {selectedHazards.length === 0 && selectedTypologies.length > 0 && (
-        <div className="absolute top-3 left-3 z-[1000] bg-card/95 backdrop-blur border border-border px-3 py-2 rounded-md text-xs">
-          <div className="font-semibold text-foreground">
-            {Object.values(districtDataMap).filter(d => selectedTypologies.some(t => getDistrictTypologies(d).includes(t))).length} districts match
-          </div>
-          <div className="text-muted-foreground">{selectedTypologies.join(', ')}</div>
+          {selectedHazards.length > 0 && (
+            <><div className="font-semibold text-foreground">Colored by hazard exposure</div>
+            <div className="text-muted-foreground">Red = high · Grey = low</div></>
+          )}
+          {selectedHazards.length === 0 && selectedTypologies.length > 0 && (
+            <><div className="font-semibold text-foreground">Colored by vulnerability</div>
+            <div className="text-muted-foreground">{selectedTypologies.join(', ')}</div></>
+          )}
         </div>
       )}
 
       {/* Legend */}
-      <div className="absolute bottom-3 right-3 z-[1000] bg-card/95 backdrop-blur border border-border p-2.5 rounded-md text-xs space-y-1.5 max-w-[180px]">
-        {selectedHazards.length > 0 ? (
-          <>
-            <div className="font-semibold text-muted-foreground uppercase tracking-wider text-[10px] mb-1">Hazard Filter</div>
-            {selectedHazards.map(h => (
-              <div key={h} className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: HAZARD_COLORS[h] }} />
-                <span>{HAZARD_ICONS[h]} {h} only</span>
-              </div>
-            ))}
-            {selectedHazards.length > 1 && (
-              <>
-                <div className="border-t border-border my-1" />
-                <div className="font-semibold text-muted-foreground uppercase tracking-wider text-[10px] mb-1">Multi-Hazard</div>
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: '#f43f5e' }} />
-                  <span>2 hazards</span>
-                </div>
-                {selectedHazards.length > 2 && (
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: '#7c3aed' }} />
-                    <span>3+ hazards</span>
-                  </div>
-                )}
-              </>
-            )}
-            <div className="flex items-center gap-1.5 pt-1 border-t border-border">
-              <span className="w-2.5 h-2.5 rounded-full shrink-0 bg-slate-600" />
-              <span className="text-muted-foreground">Not affected</span>
-            </div>
-          </>
-        ) : selectedTypologies.length > 0 ? (
-          <>
-            <div className="font-semibold text-muted-foreground uppercase tracking-wider text-[10px] mb-1">Landscape Typology</div>
-            {selectedTypologies.map(t => (
-              <div key={t} className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: TYPOLOGY_MAP_COLORS[t] || '#888' }} />
-                <span>{t}</span>
-              </div>
-            ))}
-            <div className="flex items-center gap-1.5 pt-1 border-t border-border">
-              <span className="w-2.5 h-2.5 rounded-full shrink-0 bg-slate-600 opacity-50" />
-              <span className="text-muted-foreground">Not matching</span>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="font-semibold text-muted-foreground uppercase tracking-wider text-[10px] mb-1">Vulnerability Index</div>
-            {[['#ef4444','Very High'],['#f97316','High'],['#eab308','Moderate'],['#22c55e','Low'],['#16a34a','Very Low']].map(([c,l]) => (
-              <div key={l} className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: c }} />
-                <span>{l}</span>
-              </div>
-            ))}
-          </>
-        )}
+      <div className="absolute bottom-3 right-3 z-[1000] bg-card/95 backdrop-blur border border-border p-2.5 rounded-md text-xs space-y-1.5">
+        <div className="font-semibold text-muted-foreground uppercase tracking-wider text-[10px] mb-1">
+          {selectedHazards.length > 0 ? 'Hazard Exposure' : 'Vulnerability'}
+        </div>
+        {[['#ef4444', 'Very High'], ['#f97316', 'High'], ['#eab308', 'Moderate'], ['#22c55e', 'Low'], ['#16a34a', 'Very Low']].map(([c, l]) => (
+          <div key={l} className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: c }} />
+            <span>{l}</span>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -642,10 +491,6 @@ function TechnologyIndex() {
 
   const handleDistrictClick = (d: ClickedDistrict) => {
     setClickedDistrict(d);
-    // Auto-apply hazard and typology filters from the district
-    if (d.hazards.length > 0) setSelectedHazards(d.hazards);
-    if (d.typologies.length > 0) setSelectedTypologies(d.typologies);
-    // Scroll to the technology results
     setTimeout(() => {
       resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 120);
@@ -880,63 +725,41 @@ function TechnologyIndex() {
 
             {/* Clicked district info panel */}
             {clickedDistrict && (
-              <div className="mt-3 p-4 bg-card border border-border rounded-lg flex flex-col sm:flex-row sm:items-start gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Info className="h-4 w-4 text-[#00AEEF]" />
-                    <h3 className="font-semibold text-base">{clickedDistrict.name}</h3>
-                    {clickedDistrict.state && (
-                      <span className="text-xs text-muted-foreground">{clickedDistrict.state}</span>
-                    )}
-                    <button onClick={() => setClickedDistrict(null)} className="ml-auto text-muted-foreground hover:text-foreground">
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5 mb-2">
-                    {clickedDistrict.hazards.map(h => (
-                      <span
-                        key={h}
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold text-white"
-                        style={{ background: HAZARD_COLORS[h] || '#888' }}
-                      >
-                        {HAZARD_ICONS[h]} {h}
-                      </span>
-                    ))}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Vulnerability score: <span className="font-medium text-foreground">{(clickedDistrict.vulnerabilityScore * 100).toFixed(0)}/100</span>
-                  </p>
+              <div className="mt-3 p-4 bg-card border border-border rounded-lg">
+                <div className="flex items-center gap-2 mb-3">
+                  <Info className="h-4 w-4 text-[#00AEEF]" />
+                  <h3 className="font-semibold text-base">{clickedDistrict.name}</h3>
+                  {clickedDistrict.state && (
+                    <span className="text-xs text-muted-foreground">{clickedDistrict.state}</span>
+                  )}
+                  <button onClick={() => setClickedDistrict(null)} className="ml-auto text-muted-foreground hover:text-foreground">
+                    <X className="h-3.5 w-3.5" />
+                  </button>
                 </div>
-                <div className="shrink-0 min-w-0 w-full sm:w-auto">
-                  <p className="text-xs text-muted-foreground mb-1.5">Context-matched recommendations:</p>
-                  <div className="flex flex-col gap-1.5">
-                    {getRecommendedTechnologies({
-                      climateRisks: clickedDistrict.hazards,
-                      soilType: clickedDistrict.soilType,
-                      waterAccessPercent: clickedDistrict.waterAccessPercent,
-                      toiletCoveragePercent: clickedDistrict.toiletCoveragePercent,
-                      vulnerabilityScore: clickedDistrict.vulnerabilityScore,
-                    }).slice(0, 5).map(({ tech, reason, priority }) => {
-                      const priColor = priority === 'High' ? '#ef4444' : priority === 'Medium' ? '#f97316' : '#22c55e';
-                      return (
-                        <Link key={tech.slug} href={`/technology/${tech.slug}`}>
-                          <div className="flex items-start gap-2 px-2 py-1.5 rounded-md border border-border hover:bg-accent cursor-pointer transition-colors">
-                            <span
-                              className="text-[10px] font-bold px-1 py-0.5 rounded shrink-0 mt-0.5 uppercase"
-                              style={{ background: priColor + '20', color: priColor }}
-                            >
-                              {priority[0]}
-                            </span>
-                            <div className="min-w-0">
-                              <div className="text-xs font-medium text-foreground leading-tight">{tech.title}</div>
-                              <div className="text-[10px] text-muted-foreground leading-snug line-clamp-1 mt-0.5">{reason}</div>
-                            </div>
-                          </div>
-                        </Link>
-                      );
-                    })}
-                  </div>
+                <div className="grid grid-cols-3 gap-3 mb-3">
+                  {[
+                    { label: 'Hazard', val: clickedDistrict.hazardScore ?? 0, max: 0.52 },
+                    { label: 'Exposure', val: clickedDistrict.exposureScore ?? 0, max: 0.58 },
+                    { label: 'Vulnerability', val: clickedDistrict.vulnerabilityScore, max: 1 },
+                  ].map(({ label, val, max }) => {
+                    const pct = Math.round((val / max) * 100);
+                    const color = pct > 60 ? '#ef4444' : pct > 40 ? '#f97316' : pct > 20 ? '#eab308' : '#22c55e';
+                    return (
+                      <div key={label}>
+                        <div className="flex justify-between text-[10px] mb-0.5">
+                          <span className="text-muted-foreground">{label}</span>
+                          <span className="font-mono">{val.toFixed(3)}</span>
+                        </div>
+                        <div className="h-2 rounded-full bg-muted overflow-hidden">
+                          <div className="h-full rounded-full transition-all" style={{ width: `${Math.max(2, pct)}%`, background: color }} />
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  Use the <strong>hazard</strong> and <strong>typology</strong> filters above to find suitable technologies for this region.
+                </p>
               </div>
             )}
           </div>
