@@ -71,6 +71,7 @@ const ATTRIBUTES: AttrDef[] = [
   { key: "multi_hazard_days",      label: "Multi-Hazard Days",       icon: "⚡", category: "overview", desc: "Days/yr under 2+ hazards simultaneously (compounded stress)" },
   { key: "pm25_annual",             label: "PM2.5 (ug/m3)",           icon: "💨", category: "climate", desc: "Annual mean PM2.5 concentration — mock data" },
   { key: "adaptive_capacity",      label: "Adaptive Capacity",      icon: "🛡️", category: "wash", desc: "WASH-based coping capacity (NFHS-5 district-level)" },
+  { key: "jjm_fhtc_pct",           label: "JJM Tap Water %",        icon: "🚰", category: "wash", desc: "Functional Household Tap Connections — JJM IMIS (ejalshakti.gov.in, Jul 2026)" },
   { key: "wash_sanitation_pct",    label: "Sanitation %",            icon: "🚽", category: "wash", desc: "Improved sanitation coverage (NFHS-5 district)" },
   { key: "wash_water_pct",         label: "Water Access %",         icon: "💧", category: "wash", desc: "Improved water source coverage (NFHS-5 district)" },
   { key: "wash_health_pct",        label: "Health Access %",        icon: "🏥", category: "wash", desc: "Institutional births as health access proxy (NFHS-5)" },
@@ -98,6 +99,7 @@ const ATTR_RAMP: Record<string, [number,number,number][]> = {
   adaptive_capacity: GREENS,
   pollution_risk: RISK, pm25_annual: ORANGES,
   total_burden_days: ORANGES, multi_hazard_days: RISK,
+  jjm_fhtc_pct: BLUES,
   wash_sanitation_pct: GREENS, wash_water_pct: BLUES, wash_health_pct: GREENS,
   wash_stunting_pct: RISK, wash_diarrhoea_pct: RISK, wash_anaemia_pct: RISK,
 };
@@ -119,6 +121,7 @@ const FIXED_DOMAIN: Record<string, [number, number]> = {
   coldwave_risk: [0, 10], flashflood_risk: [0, 10], sealevel_risk: [0, 10],
   fire_risk: [0, 10],
   adaptive_capacity: [0, 1],
+  jjm_fhtc_pct: [0, 100],
   wash_sanitation_pct: [0, 100], wash_water_pct: [0, 100], wash_health_pct: [0, 100],
   pollution_risk: [0, 10], pm25_annual: [0, 100],
   total_burden_days: [0, 365], multi_hazard_days: [0, 100],
@@ -663,7 +666,7 @@ function FilterSidebar({
       {/* Export */}
       <div className="px-3 py-2 border-t border-border/30">
         <button onClick={() => {
-          const csvKeys = ["h3_id","state","district_name","population","pop_children_under_5","pop_elderly_60plus","pop_women_15_49","hex_risk","hazard_count_5","hazard_count_3","flood_risk","heat_risk","cyclone_risk","drought_risk","wetbulb_risk","landslide_risk","coldwave_risk","flashflood_risk","sealevel_risk","fire_risk","cascade_count","adaptive_capacity","wash_sanitation_pct","wash_water_pct","wash_health_pct","wash_stunting_pct","wash_diarrhoea_pct","wash_anaemia_pct","elevation_mean","ndvi_mean","land_use","slope_deg","dist_water_m"];
+          const csvKeys = ["h3_id","state","district_name","population","pop_children_under_5","pop_elderly_60plus","pop_women_15_49","hex_risk","hazard_count_5","hazard_count_3","flood_risk","heat_risk","cyclone_risk","drought_risk","wetbulb_risk","landslide_risk","coldwave_risk","flashflood_risk","sealevel_risk","fire_risk","cascade_count","adaptive_capacity","jjm_fhtc_pct","wash_sanitation_pct","wash_water_pct","wash_health_pct","wash_stunting_pct","wash_diarrhoea_pct","wash_anaemia_pct","elevation_mean","ndvi_mean","land_use","slope_deg","dist_water_m"];
           const header = csvKeys.join(",");
           const rows = features.map((f: any) => csvKeys.map((k) => {
             const v = f.properties[k]; return v == null ? "" : typeof v === "string" && v.includes(",") ? `"${v}"` : v;
