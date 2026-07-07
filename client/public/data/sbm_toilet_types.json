@@ -1,0 +1,412 @@
+{
+  "AJMER": {
+    "state": "Rajasthan",
+    "district": "AJMER",
+    "total_ihhl": 330292,
+    "toilet_twin_pit_pct": 21.1,
+    "toilet_single_pit_pct": 53.4,
+    "toilet_septic_with_soak_pct": 24.8,
+    "toilet_septic_without_soak_pct": 0.6,
+    "toilet_others_pct": 0.0
+  },
+  "ALWAR": {
+    "state": "Rajasthan",
+    "district": "ALWAR",
+    "total_ihhl": 317541,
+    "toilet_twin_pit_pct": 49.9,
+    "toilet_single_pit_pct": 44.5,
+    "toilet_septic_with_soak_pct": 3.9,
+    "toilet_septic_without_soak_pct": 0.8,
+    "toilet_others_pct": 0.9
+  },
+  "BALOTRA": {
+    "state": "Rajasthan",
+    "district": "Balotra",
+    "total_ihhl": 210249,
+    "toilet_twin_pit_pct": 18.6,
+    "toilet_single_pit_pct": 66.6,
+    "toilet_septic_with_soak_pct": 8.1,
+    "toilet_septic_without_soak_pct": 1.6,
+    "toilet_others_pct": 5.0
+  },
+  "BANSWARA": {
+    "state": "Rajasthan",
+    "district": "BANSWARA",
+    "total_ihhl": 318023,
+    "toilet_twin_pit_pct": 90.4,
+    "toilet_single_pit_pct": 4.9,
+    "toilet_septic_with_soak_pct": 4.6,
+    "toilet_septic_without_soak_pct": 0.0,
+    "toilet_others_pct": 0.1
+  },
+  "BARAN": {
+    "state": "Rajasthan",
+    "district": "BARAN",
+    "total_ihhl": 187220,
+    "toilet_twin_pit_pct": 86.2,
+    "toilet_single_pit_pct": 7.5,
+    "toilet_septic_with_soak_pct": 1.5,
+    "toilet_septic_without_soak_pct": 3.6,
+    "toilet_others_pct": 1.2
+  },
+  "BARMER": {
+    "state": "Rajasthan",
+    "district": "BARMER",
+    "total_ihhl": 294675,
+    "toilet_twin_pit_pct": 30.5,
+    "toilet_single_pit_pct": 66.6,
+    "toilet_septic_with_soak_pct": 0.6,
+    "toilet_septic_without_soak_pct": 0.1,
+    "toilet_others_pct": 2.2
+  },
+  "BEAWAR": {
+    "state": "Rajasthan",
+    "district": "Beawar",
+    "total_ihhl": 228555,
+    "toilet_twin_pit_pct": 26.9,
+    "toilet_single_pit_pct": 66.3,
+    "toilet_septic_with_soak_pct": 6.1,
+    "toilet_septic_without_soak_pct": 0.6,
+    "toilet_others_pct": 0.1
+  },
+  "BHARATPUR": {
+    "state": "Rajasthan",
+    "district": "BHARATPUR",
+    "total_ihhl": 186884,
+    "toilet_twin_pit_pct": 40.7,
+    "toilet_single_pit_pct": 49.6,
+    "toilet_septic_with_soak_pct": 8.8,
+    "toilet_septic_without_soak_pct": 0.6,
+    "toilet_others_pct": 0.2
+  },
+  "BHILWARA": {
+    "state": "Rajasthan",
+    "district": "BHILWARA",
+    "total_ihhl": 501902,
+    "toilet_twin_pit_pct": 52.1,
+    "toilet_single_pit_pct": 6.6,
+    "toilet_septic_with_soak_pct": 40.7,
+    "toilet_septic_without_soak_pct": 0.0,
+    "toilet_others_pct": 0.5
+  },
+  "BIKANER": {
+    "state": "Rajasthan",
+    "district": "BIKANER",
+    "total_ihhl": 319640,
+    "toilet_twin_pit_pct": 70.2,
+    "toilet_single_pit_pct": 29.4,
+    "toilet_septic_with_soak_pct": 0.4,
+    "toilet_septic_without_soak_pct": 0.0,
+    "toilet_others_pct": 0.0
+  },
+  "BUNDI": {
+    "state": "Rajasthan",
+    "district": "BUNDI",
+    "total_ihhl": 208097,
+    "toilet_twin_pit_pct": 35.4,
+    "toilet_single_pit_pct": 50.8,
+    "toilet_septic_with_soak_pct": 13.4,
+    "toilet_septic_without_soak_pct": 0.4,
+    "toilet_others_pct": 0.0
+  },
+  "CHITTORGARH": {
+    "state": "Rajasthan",
+    "district": "CHITTORGARH",
+    "total_ihhl": 282627,
+    "toilet_twin_pit_pct": 21.7,
+    "toilet_single_pit_pct": 35.1,
+    "toilet_septic_with_soak_pct": 42.6,
+    "toilet_septic_without_soak_pct": 0.2,
+    "toilet_others_pct": 0.5
+  },
+  "CHURU": {
+    "state": "Rajasthan",
+    "district": "CHURU",
+    "total_ihhl": 299562,
+    "toilet_twin_pit_pct": 43.8,
+    "toilet_single_pit_pct": 56.2,
+    "toilet_septic_with_soak_pct": 0.0,
+    "toilet_septic_without_soak_pct": 0.0,
+    "toilet_others_pct": 0.0
+  },
+  "DAUSA": {
+    "state": "Rajasthan",
+    "district": "DAUSA",
+    "total_ihhl": 247064,
+    "toilet_twin_pit_pct": 15.5,
+    "toilet_single_pit_pct": 84.3,
+    "toilet_septic_with_soak_pct": 0.2,
+    "toilet_septic_without_soak_pct": 0.0,
+    "toilet_others_pct": 0.0
+  },
+  "DEEG": {
+    "state": "Rajasthan",
+    "district": "Deeg",
+    "total_ihhl": 165736,
+    "toilet_twin_pit_pct": 16.7,
+    "toilet_single_pit_pct": 75.9,
+    "toilet_septic_with_soak_pct": 6.7,
+    "toilet_septic_without_soak_pct": 0.2,
+    "toilet_others_pct": 0.6
+  },
+  "DHOLPUR": {
+    "state": "Rajasthan",
+    "district": "DHOLPUR",
+    "total_ihhl": 165295,
+    "toilet_twin_pit_pct": 82.8,
+    "toilet_single_pit_pct": 6.5,
+    "toilet_septic_with_soak_pct": 10.7,
+    "toilet_septic_without_soak_pct": 0.0,
+    "toilet_others_pct": 0.0
+  },
+  "DIDWANA-KUCHAMAN": {
+    "state": "Rajasthan",
+    "district": "Didwana-Kuchaman",
+    "total_ihhl": 301648,
+    "toilet_twin_pit_pct": 46.9,
+    "toilet_single_pit_pct": 50.7,
+    "toilet_septic_with_soak_pct": 2.4,
+    "toilet_septic_without_soak_pct": 0.0,
+    "toilet_others_pct": 0.0
+  },
+  "DUNGARPUR": {
+    "state": "Rajasthan",
+    "district": "DUNGARPUR",
+    "total_ihhl": 304603,
+    "toilet_twin_pit_pct": 70.9,
+    "toilet_single_pit_pct": 15.0,
+    "toilet_septic_with_soak_pct": 13.5,
+    "toilet_septic_without_soak_pct": 0.5,
+    "toilet_others_pct": 0.1
+  },
+  "GANGANAGAR": {
+    "state": "Rajasthan",
+    "district": "GANGANAGAR",
+    "total_ihhl": 325560,
+    "toilet_twin_pit_pct": 70.5,
+    "toilet_single_pit_pct": 19.1,
+    "toilet_septic_with_soak_pct": 9.0,
+    "toilet_septic_without_soak_pct": 0.2,
+    "toilet_others_pct": 1.1
+  },
+  "HANUMANGARH": {
+    "state": "Rajasthan",
+    "district": "HANUMANGARH",
+    "total_ihhl": 315185,
+    "toilet_twin_pit_pct": 98.8,
+    "toilet_single_pit_pct": 0.7,
+    "toilet_septic_with_soak_pct": 0.6,
+    "toilet_septic_without_soak_pct": 0.0,
+    "toilet_others_pct": 0.0
+  },
+  "JAIPUR": {
+    "state": "Rajasthan",
+    "district": "JAIPUR",
+    "total_ihhl": 594881,
+    "toilet_twin_pit_pct": 64.0,
+    "toilet_single_pit_pct": 35.2,
+    "toilet_septic_with_soak_pct": 0.5,
+    "toilet_septic_without_soak_pct": 0.2,
+    "toilet_others_pct": 0.1
+  },
+  "JAISALMER": {
+    "state": "Rajasthan",
+    "district": "JAISALMER",
+    "total_ihhl": 134146,
+    "toilet_twin_pit_pct": 68.9,
+    "toilet_single_pit_pct": 29.1,
+    "toilet_septic_with_soak_pct": 1.1,
+    "toilet_septic_without_soak_pct": 0.0,
+    "toilet_others_pct": 0.8
+  },
+  "JALORE": {
+    "state": "Rajasthan",
+    "district": "Jalore",
+    "total_ihhl": 362100,
+    "toilet_twin_pit_pct": 32.1,
+    "toilet_single_pit_pct": 67.7,
+    "toilet_septic_with_soak_pct": 0.2,
+    "toilet_septic_without_soak_pct": 0.0,
+    "toilet_others_pct": 0.0
+  },
+  "JHALAWAR": {
+    "state": "Rajasthan",
+    "district": "JHALAWAR",
+    "total_ihhl": 264360,
+    "toilet_twin_pit_pct": 84.5,
+    "toilet_single_pit_pct": 12.3,
+    "toilet_septic_with_soak_pct": 3.1,
+    "toilet_septic_without_soak_pct": 0.0,
+    "toilet_others_pct": 0.1
+  },
+  "JHUNJHUNU": {
+    "state": "Rajasthan",
+    "district": "JHUNJHUNU",
+    "total_ihhl": 362083,
+    "toilet_twin_pit_pct": 24.5,
+    "toilet_single_pit_pct": 75.0,
+    "toilet_septic_with_soak_pct": 0.2,
+    "toilet_septic_without_soak_pct": 0.0,
+    "toilet_others_pct": 0.2
+  },
+  "JODHPUR": {
+    "state": "Rajasthan",
+    "district": "JODHPUR",
+    "total_ihhl": 376945,
+    "toilet_twin_pit_pct": 37.5,
+    "toilet_single_pit_pct": 60.4,
+    "toilet_septic_with_soak_pct": 2.0,
+    "toilet_septic_without_soak_pct": 0.1,
+    "toilet_others_pct": 0.0
+  },
+  "KARAULI": {
+    "state": "Rajasthan",
+    "district": "KARAULI",
+    "total_ihhl": 245153,
+    "toilet_twin_pit_pct": 44.9,
+    "toilet_single_pit_pct": 54.1,
+    "toilet_septic_with_soak_pct": 0.4,
+    "toilet_septic_without_soak_pct": 0.6,
+    "toilet_others_pct": 0.1
+  },
+  "KHAIRTHAL-TIJARA": {
+    "state": "Rajasthan",
+    "district": "Khairthal-Tijara",
+    "total_ihhl": 162367,
+    "toilet_twin_pit_pct": 13.3,
+    "toilet_single_pit_pct": 60.1,
+    "toilet_septic_with_soak_pct": 26.1,
+    "toilet_septic_without_soak_pct": 0.1,
+    "toilet_others_pct": 0.5
+  },
+  "KOTA": {
+    "state": "Rajasthan",
+    "district": "KOTA",
+    "total_ihhl": 159789,
+    "toilet_twin_pit_pct": 88.9,
+    "toilet_single_pit_pct": 11.0,
+    "toilet_septic_with_soak_pct": 0.1,
+    "toilet_septic_without_soak_pct": 0.0,
+    "toilet_others_pct": 0.0
+  },
+  "KOTPUTLI-BEHROR": {
+    "state": "Rajasthan",
+    "district": "Kotputli-Behror",
+    "total_ihhl": 214018,
+    "toilet_twin_pit_pct": 44.2,
+    "toilet_single_pit_pct": 55.5,
+    "toilet_septic_with_soak_pct": 0.1,
+    "toilet_septic_without_soak_pct": 0.0,
+    "toilet_others_pct": 0.2
+  },
+  "NAGAUR": {
+    "state": "Rajasthan",
+    "district": "NAGAUR",
+    "total_ihhl": 360580,
+    "toilet_twin_pit_pct": 47.1,
+    "toilet_single_pit_pct": 51.4,
+    "toilet_septic_with_soak_pct": 1.6,
+    "toilet_septic_without_soak_pct": 0.0,
+    "toilet_others_pct": 0.0
+  },
+  "PALI": {
+    "state": "Rajasthan",
+    "district": "PALI",
+    "total_ihhl": 303869,
+    "toilet_twin_pit_pct": 13.7,
+    "toilet_single_pit_pct": 85.7,
+    "toilet_septic_with_soak_pct": 0.5,
+    "toilet_septic_without_soak_pct": 0.0,
+    "toilet_others_pct": 0.0
+  },
+  "PHALODI": {
+    "state": "Rajasthan",
+    "district": "Phalodi",
+    "total_ihhl": 158201,
+    "toilet_twin_pit_pct": 29.3,
+    "toilet_single_pit_pct": 69.8,
+    "toilet_septic_with_soak_pct": 0.1,
+    "toilet_septic_without_soak_pct": 0.6,
+    "toilet_others_pct": 0.2
+  },
+  "PRATAPGARH": {
+    "state": "Rajasthan",
+    "district": "PRATAPGARH",
+    "total_ihhl": 201208,
+    "toilet_twin_pit_pct": 69.1,
+    "toilet_single_pit_pct": 13.3,
+    "toilet_septic_with_soak_pct": 12.8,
+    "toilet_septic_without_soak_pct": 1.5,
+    "toilet_others_pct": 3.2
+  },
+  "RAJSAMAND": {
+    "state": "Rajasthan",
+    "district": "RAJSAMAND",
+    "total_ihhl": 242512,
+    "toilet_twin_pit_pct": 37.4,
+    "toilet_single_pit_pct": 24.4,
+    "toilet_septic_with_soak_pct": 33.7,
+    "toilet_septic_without_soak_pct": 2.2,
+    "toilet_others_pct": 2.4
+  },
+  "SALUMBAR": {
+    "state": "Rajasthan",
+    "district": "Salumbar",
+    "total_ihhl": 151103,
+    "toilet_twin_pit_pct": 80.2,
+    "toilet_single_pit_pct": 10.4,
+    "toilet_septic_with_soak_pct": 8.6,
+    "toilet_septic_without_soak_pct": 0.8,
+    "toilet_others_pct": 0.0
+  },
+  "SAWAI MADHOPUR": {
+    "state": "Rajasthan",
+    "district": "SAWAI MADHOPUR",
+    "total_ihhl": 195861,
+    "toilet_twin_pit_pct": 24.1,
+    "toilet_single_pit_pct": 75.6,
+    "toilet_septic_with_soak_pct": 0.2,
+    "toilet_septic_without_soak_pct": 0.0,
+    "toilet_others_pct": 0.1
+  },
+  "SIKAR": {
+    "state": "Rajasthan",
+    "district": "SIKAR",
+    "total_ihhl": 493570,
+    "toilet_twin_pit_pct": 57.6,
+    "toilet_single_pit_pct": 42.1,
+    "toilet_septic_with_soak_pct": 0.2,
+    "toilet_septic_without_soak_pct": 0.0,
+    "toilet_others_pct": 0.1
+  },
+  "SIROHI": {
+    "state": "Rajasthan",
+    "district": "SIROHI",
+    "total_ihhl": 195561,
+    "toilet_twin_pit_pct": 11.6,
+    "toilet_single_pit_pct": 83.7,
+    "toilet_septic_with_soak_pct": 4.7,
+    "toilet_septic_without_soak_pct": 0.0,
+    "toilet_others_pct": 0.0
+  },
+  "TONK": {
+    "state": "Rajasthan",
+    "district": "TONK",
+    "total_ihhl": 205432,
+    "toilet_twin_pit_pct": 46.4,
+    "toilet_single_pit_pct": 30.6,
+    "toilet_septic_with_soak_pct": 7.7,
+    "toilet_septic_without_soak_pct": 15.3,
+    "toilet_others_pct": 0.0
+  },
+  "UDAIPUR": {
+    "state": "Rajasthan",
+    "district": "UDAIPUR",
+    "total_ihhl": 491245,
+    "toilet_twin_pit_pct": 64.2,
+    "toilet_single_pit_pct": 25.3,
+    "toilet_septic_with_soak_pct": 6.7,
+    "toilet_septic_without_soak_pct": 3.5,
+    "toilet_others_pct": 0.2
+  }
+}

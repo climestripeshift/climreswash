@@ -212,6 +212,12 @@ export default function WashAssessPage() {
     staleTime: Infinity,
   });
 
+  const { data: sbmToilets } = useQuery<Record<string, any>>({
+    queryKey: ["sbm-toilet-types"],
+    queryFn: () => fetch("/data/sbm_toilet_types.json").then(r => r.json()),
+    staleTime: Infinity,
+  });
+
   const { data: hexProps } = useQuery<any[]>({
     queryKey: ["hex-props-wash"],
     queryFn: () => fetch("/data/india_hex_props.json").then(r => r.json()),
@@ -246,6 +252,12 @@ export default function WashAssessPage() {
   }, [districtHexes]);
 
   const season = rank ? HAZARD_SEASONS[rank.dominant_hazard] ?? null : null;
+
+  // SBM toilet type data (Rajasthan districts only for now)
+  const sbmData = useMemo(() => {
+    if (!sbmToilets || !selectedDistrict) return null;
+    return sbmToilets[selectedDistrict.toUpperCase()] ?? null;
+  }, [sbmToilets, selectedDistrict]);
 
   // ─── District selection ───────────────────────────────────────────────────
 
@@ -540,10 +552,23 @@ export default function WashAssessPage() {
               }
             >
               <StatRow label="Sanitation coverage" value={hexAgg?.sanitation_pct?.toFixed(1)} unit="%" source="auto" />
-              <StatRow label="Twin pit toilet" value={manual.toilet_twin_pit_pct} unit="%" source={manual.toilet_twin_pit_pct ? "manual" : undefined} />
-              <StatRow label="Septic tank" value={manual.toilet_septic_pct} unit="%" source={manual.toilet_septic_pct ? "manual" : undefined} />
-              <StatRow label="Soak pit" value={manual.toilet_soak_pit_pct} unit="%" source={manual.toilet_soak_pit_pct ? "manual" : undefined} />
-              <StatRow label="Open defecation" value={manual.toilet_od_pct} unit="%" source={manual.toilet_od_pct ? "manual" : undefined} />
+              {sbmData ? (
+                <>
+                  <StatRow label="Twin pit" value={sbmData.toilet_twin_pit_pct?.toFixed(1)} unit="%" source="auto" />
+                  <StatRow label="Single pit" value={sbmData.toilet_single_pit_pct?.toFixed(1)} unit="%" source="auto" />
+                  <StatRow label="Septic w/ soak" value={sbmData.toilet_septic_with_soak_pct?.toFixed(1)} unit="%" source="auto" />
+                  <StatRow label="Septic w/o soak" value={sbmData.toilet_septic_without_soak_pct?.toFixed(1)} unit="%" source="auto" />
+                  <StatRow label="Others (Ecosan)" value={sbmData.toilet_others_pct?.toFixed(1)} unit="%" source="auto" />
+                  <StatRow label="Total IHHL" value={sbmData.total_ihhl?.toLocaleString("en-IN")} source="auto" />
+                  <p className="text-[10px] text-blue-500/80 mt-1">Source: SBM Phase 2 portal</p>
+                </>
+              ) : (
+                <>
+                  <StatRow label="Twin pit toilet" value={manual.toilet_twin_pit_pct} unit="%" source={manual.toilet_twin_pit_pct ? "manual" : undefined} />
+                  <StatRow label="Septic tank" value={manual.toilet_septic_pct} unit="%" source={manual.toilet_septic_pct ? "manual" : undefined} />
+                  <StatRow label="Open defecation" value={manual.toilet_od_pct} unit="%" source={manual.toilet_od_pct ? "manual" : undefined} />
+                </>
+              )}
             </AssessCard>
 
             {/* 6. Handwashing */}
