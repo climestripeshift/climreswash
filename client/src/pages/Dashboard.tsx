@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
 import L from "leaflet";
@@ -193,32 +193,30 @@ function AlertsList({ alerts }: { alerts: any[] }) {
 }
 
 function IndiaMap({ geoData, mode, onSelect }: { geoData: any; mode: Mode; onSelect: (f: any) => void }) {
-  const geoRef = useRef<L.GeoJSON | null>(null);
-
-  const style = useMemo(() => (feature: any) => ({
+  const style = useCallback((feature: any) => ({
     fillColor: scoreToColor(feature.properties[mode], MODE_RANGE[mode][0], MODE_RANGE[mode][1]),
-    fillOpacity: 0.7,
-    color: "#334155",
-    weight: 0.5,
+    fillOpacity: 0.65,
+    color: "#1e293b",
+    weight: 0.8,
   }), [mode]);
 
-  const onEachFeature = useMemo(() => (feature: any, layer: L.Layer) => {
+  const onEachFeature = useCallback((feature: any, layer: L.Layer) => {
     (layer as L.Path).on({
       click: () => onSelect(feature),
       mouseover: (e) => {
-        const l = e.target as L.Path;
-        l.setStyle({ fillOpacity: 0.9, weight: 1.5, color: "#e2e8f0" });
+        e.target.setStyle({ fillOpacity: 0.9, weight: 2, color: "#e2e8f0" });
+        e.target.bringToFront();
       },
       mouseout: (e) => {
-        geoRef.current?.resetStyle(e.target);
+        e.target.setStyle({ fillOpacity: 0.65, weight: 0.8, color: "#1e293b" });
       },
     });
   }, [onSelect]);
 
   return (
     <MapContainer
-      center={[22, 80]}
-      zoom={4}
+      center={[22.5, 82]}
+      zoom={5}
       className="w-full h-full"
       scrollWheelZoom={true}
       zoomControl={true}
@@ -233,7 +231,6 @@ function IndiaMap({ geoData, mode, onSelect }: { geoData: any; mode: Mode; onSel
           data={geoData}
           style={style}
           onEachFeature={onEachFeature}
-          ref={geoRef}
         />
       )}
     </MapContainer>
