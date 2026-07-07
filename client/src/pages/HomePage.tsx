@@ -77,6 +77,7 @@ const FEATURES = [
   { icon: <Radio className="w-5 h-5 text-primary" />, title: "Forecast Early Warning", desc: "7-day weather forecast × risk formulas = live flood, heat, and wet-bulb alerts at hex resolution.", tag: "Live", link: "/forecast", highlight: true },
   { icon: <FlaskConical className="w-5 h-5 text-primary" />, title: "What-If Simulator", desc: "Adjust rainfall, temperature, or drought index and watch the risk map respond live. Presets: 2022 Heatwave, El Niño, +2°C.", tag: "New", link: "/simulator", highlight: true },
   { icon: <Wrench className="w-5 h-5 text-primary" />, title: "WASH Technologies", desc: "Filter sanitation, water, and adaptation technologies by climate hazard and landscape typology — with per-district suitability matrix.", tag: "New", link: "/technology", highlight: true },
+  { icon: <Droplets className="w-5 h-5 text-primary" />, title: "WASH Assessment", desc: "District-level assessment linking climate hazards to groundwater, JJM water supply, sanitation, handwashing, and waste management — with manual field data entry.", tag: "New", link: "/wash-assess", highlight: true },
 ];
 
 const METHODOLOGY = [
@@ -136,6 +137,9 @@ export default function HomePage() {
               </Link>
               <Link href="/technology" className="text-sm font-semibold flex items-center gap-1.5 text-cyan-500 hover:text-cyan-400 transition-colors">
                 <Wrench className="w-3.5 h-3.5" /> Technologies
+              </Link>
+              <Link href="/wash-assess" className="text-sm font-semibold flex items-center gap-1.5 text-[#00AEEF] hover:text-[#00AEEF]/80 transition-colors">
+                <Droplets className="w-3.5 h-3.5" /> WASH Assess
               </Link>
             </div>
 

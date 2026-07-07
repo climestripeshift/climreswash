@@ -19,6 +19,7 @@ import GapAnalysisPage from "@/pages/GapAnalysisPage";
 import MethodologyPage from "@/pages/MethodologyPage";
 import ActionPlanPage from "@/pages/ActionPlanPage";
 import SimulatorPage from "@/pages/SimulatorPage";
+import WashAssessPage from "@/pages/WashAssessPage";
 
 function Router() {
   return (
@@ -38,6 +39,7 @@ function Router() {
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/technology" component={TechnologyPage} />
       <Route path="/technology/:slug" component={TechnologyPage} />
+      <Route path="/wash-assess" component={WashAssessPage} />
       <Route component={NotFound} />
     </Switch>
   );
