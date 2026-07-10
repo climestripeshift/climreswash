@@ -13,6 +13,7 @@ import {
   ArrowLeft, Search, Droplets, Trash2, Wind, Thermometer,
   AlertTriangle, CheckCircle, Edit3, Save, X, Info,
   Waves, Sprout, FlaskConical, Activity, Printer, Heart, Zap, BookOpen,
+  Target, TrendingUp, ListChecks, Baby, Flame,
 } from "lucide-react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -156,6 +157,48 @@ function StatRow({ label, value, unit = "", source, note }: {
     </div>
   );
 }
+
+// ─── Comparison row: district vs state vs national ────────────────────────────
+
+function CmpRow({ label, value, stateVal, natVal, unit = "%", higherIsBetter = true }: {
+  label: string; value: number | null | undefined;
+  stateVal?: number | null; natVal?: number | null;
+  unit?: string; higherIsBetter?: boolean;
+}) {
+  if (value == null) return null;
+  const vs = stateVal ?? null;
+  const vn = natVal ?? null;
+  const isGoodVsState = vs != null ? (higherIsBetter ? value >= vs : value <= vs) : null;
+  const isGoodVsNat   = vn != null ? (higherIsBetter ? value >= vn : value <= vn) : null;
+  return (
+    <div className="flex items-center justify-between gap-1 py-1 border-b border-border/30 last:border-0 text-[10px]">
+      <span className="text-muted-foreground flex-1">{label}</span>
+      <span className="font-semibold font-mono">{value.toFixed(1)}{unit}</span>
+      {vs != null && (
+        <span className={`font-mono ${isGoodVsState ? "text-green-500" : "text-red-400"}`}>
+          {isGoodVsState ? "▲" : "▼"} {Math.abs(value - vs).toFixed(1)}{unit} vs state
+        </span>
+      )}
+      {vn != null && (
+        <span className={`font-mono ${isGoodVsNat ? "text-green-500" : "text-red-400"}`}>
+          (nat: {vn.toFixed(0)}{unit})
+        </span>
+      )}
+    </div>
+  );
+}
+
+// ─── Gap chip ─────────────────────────────────────────────────────────────────
+
+const GAP_META_WA: Record<string, { icon: string; label: string; color: string }> = {
+  "flood-toilet":   { icon: "🚽", label: "Flood-unsafe toilets",  color: "bg-red-500/15 text-red-500 border-red-500/30" },
+  "water-gap":      { icon: "💧", label: "Water access gap",       color: "bg-blue-500/15 text-blue-500 border-blue-500/30" },
+  "MHM":            { icon: "🩸", label: "Menstrual hygiene gap",  color: "bg-pink-500/15 text-pink-500 border-pink-500/30" },
+  "clean-fuel":     { icon: "🔥", label: "Clean fuel gap",         color: "bg-orange-500/15 text-orange-500 border-orange-500/30" },
+  "child-marriage": { icon: "💍", label: "Child marriage high",    color: "bg-purple-500/15 text-purple-500 border-purple-500/30" },
+  "antenatal":      { icon: "🏥", label: "Antenatal care low",     color: "bg-teal-500/15 text-teal-500 border-teal-500/30" },
+  "ORS":            { icon: "💊", label: "ORS coverage low",       color: "bg-yellow-500/15 text-yellow-600 dark:text-yellow-400 border-yellow-500/30" },
+};
 
 // ─── Toilet type bar chart ────────────────────────────────────────────────────
 
@@ -490,6 +533,18 @@ export default function WashAssessPage() {
     staleTime: Infinity,
   });
 
+  const { data: decisionMatrix } = useQuery<any[]>({
+    queryKey: ["decision-matrix"],
+    queryFn: () => fetch("/data/decision_matrix.json").then(r => r.json()),
+    staleTime: Infinity,
+  });
+
+  const { data: districtClimate } = useQuery<{districts: Record<string,any>; states: Record<string,any>; national: Record<string,any>}>({
+    queryKey: ["district-climate"],
+    queryFn: () => fetch("/data/district_climate.json").then(r => r.json()),
+    staleTime: Infinity,
+  });
+
   // ─── Derived district data ────────────────────────────────────────────────
 
   const rank = useMemo(() =>
@@ -544,6 +599,7 @@ export default function WashAssessPage() {
       heat_peak_month: mode("heat_peak_month"),
       drought_peak_month: mode("drought_peak_month"),
       wetbulb_peak_month: mode("wetbulb_peak_month"),
+      wetbulb_risk: avg("wetbulb_risk"),
     };
   }, [districtHexes]);
 
@@ -570,6 +626,23 @@ export default function WashAssessPage() {
     if (!jjmFhtc || !selectedDistrict) return null;
     return jjmFhtc[selectedDistrict.toUpperCase()] ?? null;
   }, [jjmFhtc, selectedDistrict]);
+
+  // Decision matrix entry for selected district
+  const dmEntry = useMemo(() =>
+    decisionMatrix?.find(d => d.district === selectedDistrict) ?? null,
+  [decisionMatrix, selectedDistrict]);
+
+  // Future climate data for district
+  const dcDistrict = useMemo(() =>
+    (selectedDistrict && districtClimate) ? districtClimate.districts[selectedDistrict] ?? null : null,
+  [districtClimate, selectedDistrict]);
+
+  // State + national averages for comparison
+  const stateAvg = useMemo(() =>
+    (rank?.state && districtClimate) ? districtClimate.states[rank.state] ?? null : null,
+  [districtClimate, rank]);
+
+  const nationalAvg = useMemo(() => districtClimate?.national ?? null, [districtClimate]);
 
   // ─── District selection ───────────────────────────────────────────────────
 
@@ -766,12 +839,38 @@ export default function WashAssessPage() {
 
           {/* Top vulnerabilities */}
           {rank?.top_vulnerabilities?.length > 0 && (
-            <div className="mb-6 flex flex-wrap gap-2">
+            <div className="mb-3 flex flex-wrap gap-2">
               {rank.top_vulnerabilities.map((v: string) => (
                 <span key={v} className="text-[11px] px-2.5 py-1 rounded-full bg-red-500/10 text-red-600 border border-red-500/20">
                   ⚠ {v}
                 </span>
               ))}
+            </div>
+          )}
+
+          {/* Gap Summary */}
+          {dmEntry && dmEntry.gaps.length > 0 && (
+            <div className="mb-4 border border-red-500/20 bg-red-500/5 rounded-xl p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <Target className="w-3.5 h-3.5 text-red-400" />
+                <span className="text-xs font-semibold text-red-400">{dmEntry.gaps.length} WASH Gap{dmEntry.gaps.length > 1 ? "s" : ""} Identified</span>
+                <span className="ml-auto text-[10px] text-muted-foreground">Gap score: {dmEntry.gap_score?.toFixed(1)}</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {dmEntry.gaps.map((g: string) => {
+                  const m = GAP_META_WA[g];
+                  return m ? (
+                    <span key={g} className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold ${m.color}`}>
+                      {m.icon} {m.label}
+                    </span>
+                  ) : null;
+                })}
+              </div>
+              {dmEntry.primary_intervention && (
+                <p className="text-[10px] text-muted-foreground leading-snug">
+                  <span className="text-foreground font-medium">Priority: </span>{dmEntry.primary_intervention}
+                </p>
+              )}
             </div>
           )}
 
@@ -800,11 +899,31 @@ export default function WashAssessPage() {
                   <StatRow label="Risk escalation" value={gap.risk_escalation != null ? `${gap.risk_escalation >= 0 ? "+" : ""}${gap.risk_escalation.toFixed(2)}` : null} source="derived" />
                   <StatRow label="Capacity gap" value={gap.capacity_gap?.toFixed(2)} source="derived" />
                   {gap.hazard_shifted && <StatRow label="Hazard shift by 2050" value={gap.future_dominant_hazard} source="derived" />}
+                  {dcDistrict && (
+                    <>
+                      <div className="mt-2 pt-2 border-t border-border/40">
+                        <div className="text-[9px] text-muted-foreground uppercase tracking-wide mb-1">Future Hazard Exposure (SSP5-8.5)</div>
+                        <StatRow label="🌡️ Heat days/yr 2050" value={dcDistrict.heat_days_ssp585_2050?.toFixed(0)} unit=" days" source="derived" />
+                        <StatRow label="💦 Wet-bulb days/yr 2050" value={dcDistrict.wet_bulb_days_ssp585_2050?.toFixed(0)} unit=" days" source="derived" />
+                        <StatRow label="🌊 Flood days/yr 2050" value={dcDistrict.flood_days_ssp585_2050?.toFixed(1)} unit=" days" source="derived" />
+                        <StatRow label="🔥 Severe heat days 2050" value={dcDistrict.severe_heat_days_ssp585_2050?.toFixed(1)} unit=" days" source="derived" />
+                      </div>
+                    </>
+                  )}
                 </div>
                 <div>
                   <StatRow label="People at risk (now)" value={gap.people_at_risk_present != null ? (gap.people_at_risk_present / 1e5).toFixed(1) : null} unit=" L" source="auto" />
                   <StatRow label="People at risk (2050)" value={gap.people_at_risk_2050 != null ? (gap.people_at_risk_2050 / 1e5).toFixed(1) : null} unit=" L" source="derived" />
                   <StatRow label="Children <5 at risk (2050)" value={gap.children_u5_at_risk_2050 != null ? gap.children_u5_at_risk_2050.toLocaleString("en-IN") : null} source="derived" />
+                  {dcDistrict && (
+                    <>
+                      <div className="mt-2 pt-2 border-t border-border/40">
+                        <div className="text-[9px] text-muted-foreground uppercase tracking-wide mb-1">SSP2-4.5 (moderate)</div>
+                        <StatRow label="Heat days/yr 2050" value={dcDistrict.heat_days_ssp245_2050?.toFixed(0)} unit=" days" source="derived" />
+                        <StatRow label="Wet-bulb days/yr 2050" value={dcDistrict.wet_bulb_days_ssp245_2050?.toFixed(0)} unit=" days" source="derived" />
+                      </div>
+                    </>
+                  )}
                   {gap.gap_explanation && (
                     <p className="text-[10px] text-muted-foreground mt-2 italic leading-relaxed">{gap.gap_explanation}</p>
                   )}
@@ -831,6 +950,27 @@ export default function WashAssessPage() {
               <StatRow label="Burden days/yr" value={hexAgg?.burden_days?.toFixed(0)} source="derived" />
               <StatRow label="PM2.5 (µg/m³)" value={hexAgg?.pm25?.toFixed(1)} source="derived" />
               <StatRow label="Air quality risk" value={hexAgg?.pollution_risk?.toFixed(2)} unit="/10" source="derived" />
+              {/* Climate-social callouts */}
+              {hexAgg && (
+                <div className="mt-2 pt-2 border-t border-border/30 space-y-1">
+                  {(hexAgg.heat_risk ?? 0) > 1 && (
+                    <p className="text-[10px] text-orange-400 leading-snug">
+                      🌡️ Heat risk {hexAgg.heat_risk?.toFixed(1)} → associated with elevated anaemia (r=+0.30 nationally).
+                      {hexAgg.anaemia_pct != null && nationalAvg ? ` Anaemia here: ${hexAgg.anaemia_pct.toFixed(0)}% vs national ${nationalAvg.wash_anaemia_pct}%.` : ""}
+                    </p>
+                  )}
+                  {(hexAgg.pollution_risk ?? 0) > 2 && (
+                    <p className="text-[10px] text-gray-400 leading-snug">
+                      🏭 PM2.5 {hexAgg.pm25?.toFixed(0)} µg/m³ → elevated pollution linked to anaemia via chronic inflammation (r=+0.28).
+                    </p>
+                  )}
+                  {(hexAgg.wetbulb_risk ?? 0) > 2 && (
+                    <p className="text-[10px] text-blue-400 leading-snug">
+                      💦 Wet-bulb heat risk present → limits outdoor work & healthcare access for women, compounds MHM barriers.
+                    </p>
+                  )}
+                </div>
+              )}
             </AssessCard>
 
             {/* 2. Seasonality */}
@@ -910,6 +1050,7 @@ export default function WashAssessPage() {
               }
             >
               <StatRow label="FHTC coverage" value={waterPct?.toFixed(1)} unit="%" source={manual.jjm_tap_pct ? "manual" : jjmData ? "auto" : "derived"} />
+              <CmpRow label="Water access" value={dcDistrict?.wash_water_pct} stateVal={stateAvg?.wash_water_pct} natVal={nationalAvg?.wash_water_pct} />
               {jjmData && !manual.jjm_tap_pct ? (
                 <>
                   <StatRow label="HH with tap" value={jjmData.hh_with_tap?.toLocaleString("en-IN")} source="auto" />
@@ -946,6 +1087,7 @@ export default function WashAssessPage() {
               }
             >
               <StatRow label="Sanitation coverage" value={hexAgg?.sanitation_pct?.toFixed(1)} unit="%" source="auto" />
+              <CmpRow label="Sanitation" value={dcDistrict?.wash_sanitation_pct} stateVal={stateAvg?.wash_sanitation_pct} natVal={nationalAvg?.wash_sanitation_pct} />
               {sbmData ? (
                 <>
                   <div className="text-[10px] text-muted-foreground mt-1 mb-0.5">Toilet type breakdown (SBM)</div>
@@ -961,13 +1103,28 @@ export default function WashAssessPage() {
                   <p className="text-[11px] text-muted-foreground italic mt-1">SBM data not available for this state.</p>
                 </>
               )}
+              {/* Climate-sanitation callout */}
+              {rank?.dominant_hazard === "flood" && (sbmData?.single_pit_pct ?? 0) > 30 && (
+                <p className="text-[10px] text-red-400 mt-2 leading-snug">
+                  ⚠ Flood district + {sbmData?.single_pit_pct?.toFixed(0)}% single-pit toilets: pit collapse during floods contaminates groundwater. Twin-pit retrofit is critical.
+                </p>
+              )}
+              {rank?.dominant_hazard === "flood" && !sbmData && (
+                <p className="text-[10px] text-orange-400 mt-2 leading-snug">
+                  ⚠ Flood district — toilet type data needed. Single-pit toilets fail during floods; twin-pit is the flood-resilient standard.
+                </p>
+              )}
             </AssessCard>
 
-            {/* 6. Handwashing */}
+            {/* 6. Hygiene & MHM */}
             <AssessCard
               icon={<Sprout className="w-4 h-4" />}
-              title="Handwashing with Soap"
-              status={statusFromPct(hwwsPct, [70, 40])}
+              title="Hygiene & MHM"
+              status={
+                nfhsExtra?.menstrual_hygiene_pct != null
+                  ? statusFromPct(nfhsExtra.menstrual_hygiene_pct, [70, 50])
+                  : statusFromPct(hwwsPct, [70, 40])
+              }
               cardKey="hwws"
               editingCard={editingCard}
               setEditingCard={setEditingCard}
@@ -979,17 +1136,47 @@ export default function WashAssessPage() {
               }
             >
               <StatRow label="HWWS coverage" value={hwwsPct?.toString()} unit="%" source={manual.hwws_pct ? "manual" : undefined} />
-              <StatRow label="Menstrual hygiene" value={nfhsExtra?.menstrual_hygiene_pct?.toFixed(1)} unit="%" source="auto" />
+              {!manual.hwws_pct && <p className="text-[10px] text-muted-foreground italic">HWWS not in NFHS-5 — enter manually.</p>}
+              <StatRow label="Menstrual hygiene (MHM)" value={nfhsExtra?.menstrual_hygiene_pct?.toFixed(1)} unit="%" source="auto" />
+              <CmpRow label="MHM" value={nfhsExtra?.menstrual_hygiene_pct} stateVal={stateAvg?.wash_sanitation_pct ? undefined : undefined} natVal={undefined} />
               <StatRow label="ORS use (diarrhoea)" value={nfhsExtra?.ors_diarrhoea_pct?.toFixed(1)} unit="%" source="auto" />
               <StatRow label="Diarrhoea prevalence" value={hexAgg?.diarrhoea_pct?.toFixed(1)} unit="%" source="auto" />
               <StatRow label="ARI prevalence" value={nfhsExtra?.ari_prevalence_pct?.toFixed(1)} unit="%" source="auto" />
               <StatRow label="Vaccination coverage" value={hexAgg?.vaccination_pct?.toFixed(1)} unit="%" source="auto" />
-              <StatRow label="Electricity access" value={hexAgg?.electricity_pct?.toFixed(1)} unit="%" source="auto" />
+              {/* MHM-antenatal climate-social link */}
+              {nfhsExtra?.menstrual_hygiene_pct != null && nfhsExtra.menstrual_hygiene_pct < 55 && (
+                <p className="text-[10px] text-pink-400 mt-1 leading-snug">
+                  🩸 Low MHM ({nfhsExtra.menstrual_hygiene_pct.toFixed(0)}%) → predicts low antenatal care uptake (r=+0.42 nationally). Same access barrier.
+                </p>
+              )}
+              {(hexAgg?.heat_risk ?? 0) > 1 && nfhsExtra?.menstrual_hygiene_pct != null && nfhsExtra.menstrual_hygiene_pct < 60 && (
+                <p className="text-[10px] text-orange-400 mt-1 leading-snug">
+                  🌡️ Heat risk compounds MHM barriers — hotter districts show lower coverage (r=−0.19 nationally).
+                </p>
+              )}
+            </AssessCard>
+
+            {/* 6b. Social & Adaptive Capacity */}
+            <AssessCard
+              icon={<Baby className="w-4 h-4" />}
+              title="Social Indicators"
+              status={
+                nfhsExtra?.child_marriage_pct != null && nfhsExtra.child_marriage_pct > 35 ? "critical" :
+                nfhsExtra?.antenatal_4visit_pct != null && nfhsExtra.antenatal_4visit_pct < 50 ? "at-risk" : "good"
+              }
+            >
+              <StatRow label="Antenatal 4+ visits" value={nfhsExtra?.antenatal_4visit_pct?.toFixed(1)} unit="%" source="auto" />
+              <StatRow label="Child marriage rate" value={nfhsExtra?.child_marriage_pct?.toFixed(1)} unit="%" source="auto" />
+              <StatRow label="Health insurance" value={nfhsExtra?.health_insurance_pct?.toFixed(1)} unit="%" source="auto" />
               <StatRow label="Clean cooking fuel" value={nfhsExtra?.clean_fuel_pct?.toFixed(1)} unit="%" source="auto" />
+              <StatRow label="Electricity access" value={hexAgg?.electricity_pct?.toFixed(1)} unit="%" source="auto" />
               <StatRow label="Literacy rate" value={hexAgg?.literacy_pct?.toFixed(1)} unit="%" source="auto" />
-              {!manual.hwws_pct && (
-                <p className="text-[11px] text-muted-foreground mt-1 italic">
-                  HWWS not in NFHS-5 at district level — enter manually.
+              <StatRow label="Adaptive capacity" value={hexAgg?.adaptive_capacity?.toFixed(3)} source="derived" />
+              <CmpRow label="Literacy" value={dcDistrict?.wash_literacy_pct} stateVal={stateAvg?.wash_literacy_pct} natVal={nationalAvg?.wash_literacy_pct} />
+              <CmpRow label="Electricity" value={dcDistrict?.wash_electricity_pct} stateVal={stateAvg?.wash_electricity_pct} natVal={nationalAvg?.wash_electricity_pct} />
+              {nfhsExtra?.child_marriage_pct != null && nfhsExtra.child_marriage_pct > 30 && nfhsExtra?.menstrual_hygiene_pct != null && nfhsExtra.menstrual_hygiene_pct < 50 && (
+                <p className="text-[10px] text-purple-400 mt-1 leading-snug">
+                  💍 High child marriage + low MHM: antenatal coverage in similar districts is ~28% vs 60% elsewhere. Structural deprivation compound.
                 </p>
               )}
             </AssessCard>
@@ -1072,7 +1259,9 @@ export default function WashAssessPage() {
                     <Heart className="w-3 h-3" /> Child Health
                   </div>
                   <StatRow label="Stunting" value={hexAgg.stunting_pct?.toFixed(1)} unit="%" source="auto" />
+                  <CmpRow label="Stunting" value={dcDistrict?.wash_stunting_pct} stateVal={stateAvg?.wash_stunting_pct} natVal={nationalAvg?.wash_stunting_pct} higherIsBetter={false} />
                   <StatRow label="Anaemia (women)" value={hexAgg.anaemia_pct?.toFixed(1)} unit="%" source="auto" />
+                  <CmpRow label="Anaemia" value={dcDistrict?.wash_anaemia_pct} stateVal={stateAvg?.wash_anaemia_pct} natVal={nationalAvg?.wash_anaemia_pct} higherIsBetter={false} />
                   <StatRow label="Vaccination" value={hexAgg.vaccination_pct?.toFixed(1)} unit="%" source="auto" />
                 </div>
                 <div>
@@ -1080,7 +1269,9 @@ export default function WashAssessPage() {
                     <Zap className="w-3 h-3" /> Infrastructure
                   </div>
                   <StatRow label="Electricity" value={hexAgg.electricity_pct?.toFixed(1)} unit="%" source="auto" />
-                  <StatRow label="JJM FHTC (hex)" value={hexAgg.jjm_fhtc_hex?.toFixed(1)} unit="%" source="derived" />
+                  <CmpRow label="Electricity" value={dcDistrict?.wash_electricity_pct} stateVal={stateAvg?.wash_electricity_pct} natVal={nationalAvg?.wash_electricity_pct} />
+                  <StatRow label="JJM FHTC" value={hexAgg.jjm_fhtc_hex?.toFixed(1)} unit="%" source="derived" />
+                  <CmpRow label="JJM FHTC" value={dcDistrict?.jjm_fhtc_pct} stateVal={stateAvg?.jjm_fhtc_pct} natVal={nationalAvg?.jjm_fhtc_pct} />
                   <StatRow label="Diarrhoea" value={hexAgg.diarrhoea_pct?.toFixed(1)} unit="%" source="auto" />
                 </div>
                 <div>
@@ -1088,9 +1279,7 @@ export default function WashAssessPage() {
                     <BookOpen className="w-3 h-3" /> Social
                   </div>
                   <StatRow label="Literacy" value={hexAgg.literacy_pct?.toFixed(1)} unit="%" source="auto" />
-                  <StatRow label="Child marriage" value={nfhsExtra?.child_marriage_pct?.toFixed(1)} unit="%" source="auto" />
-                  <StatRow label="Antenatal 4+ visits" value={nfhsExtra?.antenatal_4visit_pct?.toFixed(1)} unit="%" source="auto" />
-                  <StatRow label="Health insurance" value={nfhsExtra?.health_insurance_pct?.toFixed(1)} unit="%" source="auto" />
+                  <CmpRow label="Literacy" value={dcDistrict?.wash_literacy_pct} stateVal={stateAvg?.wash_literacy_pct} natVal={nationalAvg?.wash_literacy_pct} />
                   <StatRow label="Adaptive capacity" value={hexAgg.adaptive_capacity?.toFixed(3)} source="derived" />
                 </div>
                 <div>
@@ -1105,22 +1294,67 @@ export default function WashAssessPage() {
             </div>
           )}
 
-          {/* Recommendations */}
-          {rank?.recommendations?.length > 0 && (
-            <div className="mt-6 bg-card border border-border rounded-xl p-4">
+          {/* Action Plan */}
+          {(dmEntry || rank) && (
+            <div className="mt-4 bg-card border border-[#00AEEF]/20 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-3">
-                <CheckCircle className="w-4 h-4 text-[#00AEEF]" />
-                <span className="text-sm font-semibold">System Recommendations</span>
+                <ListChecks className="w-4 h-4 text-[#00AEEF]" />
+                <span className="text-sm font-semibold">Action Plan</span>
                 <SourceBadge source="derived" />
+                <Link href={`/report/${encodeURIComponent(selectedDistrict!)}`}
+                  className="ml-auto text-[10px] text-[#00AEEF] hover:underline">
+                  Full report →
+                </Link>
               </div>
-              <ul className="space-y-2">
-                {rank.recommendations.map((r: string, i: number) => (
-                  <li key={i} className="flex items-start gap-2 text-xs text-foreground">
-                    <span className="text-[#00AEEF] shrink-0 mt-0.5">→</span>
-                    {r}
-                  </li>
-                ))}
-              </ul>
+
+              {/* Data-backed interventions from decision_matrix */}
+              {dmEntry?.interventions?.length > 0 && (
+                <div className="mb-3">
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1.5">Priority Interventions (data-backed)</div>
+                  <ol className="space-y-1.5">
+                    {dmEntry.interventions.map((iv: string, i: number) => (
+                      <li key={i} className="flex items-start gap-2 text-xs">
+                        <span className={`mt-0.5 flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                          i === 0 ? "bg-red-500/20 text-red-400" :
+                          i === 1 ? "bg-orange-500/20 text-orange-400" :
+                          "bg-muted text-muted-foreground"
+                        }`}>{i + 1}</span>
+                        <span className="text-foreground">{iv}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+
+              {/* Domain recommendations from district_rankings (by hazard) */}
+              {rank?.recommendations && Object.keys(rank.recommendations).length > 0 && (
+                <div>
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1.5">Program Recommendations by WASH System</div>
+                  <div className="space-y-2">
+                    {Object.entries(rank.recommendations as Record<string, {measures: string[]; schemes: string[]}>).map(([system, rec]) => (
+                      <div key={system} className="border border-border/50 rounded-lg p-2.5">
+                        <div className="text-[10px] font-semibold uppercase tracking-wide text-[#00AEEF] mb-1">{system}</div>
+                        {rec.measures?.length > 0 && (
+                          <ul className="space-y-0.5">
+                            {rec.measures.slice(0, 3).map((m: string, i: number) => (
+                              <li key={i} className="text-[10px] text-foreground flex items-start gap-1.5">
+                                <span className="text-[#00AEEF] shrink-0 mt-0.5">→</span>{m}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                        {rec.schemes?.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1.5">
+                            {rec.schemes.map((s: string) => (
+                              <span key={s} className="text-[9px] px-1.5 py-0.5 rounded bg-[#00AEEF]/10 text-[#00AEEF] border border-[#00AEEF]/20">{s}</span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
