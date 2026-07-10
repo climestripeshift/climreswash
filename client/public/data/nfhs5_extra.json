@@ -1,0 +1,6302 @@
+{
+  "Nicobar": {
+    "clean_fuel_pct": 56.9,
+    "health_insurance_pct": 2.7,
+    "child_marriage_pct": 11.4,
+    "menstrual_hygiene_pct": 100.0,
+    "antenatal_4visit_pct": 71.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.8
+  },
+  "North & Middle Andaman": {
+    "clean_fuel_pct": 61.3,
+    "health_insurance_pct": 2.1,
+    "child_marriage_pct": 15.4,
+    "menstrual_hygiene_pct": 100.0,
+    "antenatal_4visit_pct": 79.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 7.0
+  },
+  "South Andaman": {
+    "clean_fuel_pct": 91.9,
+    "health_insurance_pct": 1.2,
+    "child_marriage_pct": 17.1,
+    "menstrual_hygiene_pct": 98.2,
+    "antenatal_4visit_pct": 85.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Anantapur": {
+    "clean_fuel_pct": 86.4,
+    "health_insurance_pct": 73.2,
+    "child_marriage_pct": 37.3,
+    "menstrual_hygiene_pct": 95.0,
+    "antenatal_4visit_pct": 66.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.6
+  },
+  "Chittoor": {
+    "clean_fuel_pct": 86.6,
+    "health_insurance_pct": 70.7,
+    "child_marriage_pct": 28.1,
+    "menstrual_hygiene_pct": 94.7,
+    "antenatal_4visit_pct": 65.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.1
+  },
+  "East Godavari": {
+    "clean_fuel_pct": 80.3,
+    "health_insurance_pct": 66.4,
+    "child_marriage_pct": 26.0,
+    "menstrual_hygiene_pct": 71.0,
+    "antenatal_4visit_pct": 51.0,
+    "ors_diarrhoea_pct": 72.9,
+    "ari_prevalence_pct": 2.2
+  },
+  "Guntur": {
+    "clean_fuel_pct": 91.7,
+    "health_insurance_pct": 71.1,
+    "child_marriage_pct": 35.4,
+    "menstrual_hygiene_pct": 88.0,
+    "antenatal_4visit_pct": 62.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.0
+  },
+  "Krishna": {
+    "clean_fuel_pct": 89.8,
+    "health_insurance_pct": 68.1,
+    "child_marriage_pct": 25.3,
+    "menstrual_hygiene_pct": 92.6,
+    "antenatal_4visit_pct": 73.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.4
+  },
+  "Kurnool": {
+    "clean_fuel_pct": 78.1,
+    "health_insurance_pct": 73.3,
+    "child_marriage_pct": 36.9,
+    "menstrual_hygiene_pct": 78.9,
+    "antenatal_4visit_pct": 74.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 4.2
+  },
+  "Prakasam": {
+    "clean_fuel_pct": 90.8,
+    "health_insurance_pct": 67.6,
+    "child_marriage_pct": 37.3,
+    "menstrual_hygiene_pct": 86.6,
+    "antenatal_4visit_pct": 73.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.9
+  },
+  "Sri Potti Sriramulu Nellore": {
+    "clean_fuel_pct": 84.6,
+    "health_insurance_pct": 72.3,
+    "child_marriage_pct": 23.8,
+    "menstrual_hygiene_pct": 84.0,
+    "antenatal_4visit_pct": 73.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.9
+  },
+  "Srikakulam": {
+    "clean_fuel_pct": 74.7,
+    "health_insurance_pct": 75.6,
+    "child_marriage_pct": 25.4,
+    "menstrual_hygiene_pct": 78.0,
+    "antenatal_4visit_pct": 78.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.3
+  },
+  "Visakhapatnam": {
+    "clean_fuel_pct": 72.9,
+    "health_insurance_pct": 64.9,
+    "child_marriage_pct": 25.4,
+    "menstrual_hygiene_pct": 85.7,
+    "antenatal_4visit_pct": 58.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.0
+  },
+  "Vizianagaram": {
+    "clean_fuel_pct": 60.3,
+    "health_insurance_pct": 76.7,
+    "child_marriage_pct": 33.7,
+    "menstrual_hygiene_pct": 72.5,
+    "antenatal_4visit_pct": 71.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.4
+  },
+  "West Godavari": {
+    "clean_fuel_pct": 86.8,
+    "health_insurance_pct": 67.6,
+    "child_marriage_pct": 22.1,
+    "menstrual_hygiene_pct": 84.4,
+    "antenatal_4visit_pct": 62.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.0
+  },
+  "Y.S.R.": {
+    "clean_fuel_pct": 94.3,
+    "health_insurance_pct": 73.3,
+    "child_marriage_pct": 25.6,
+    "menstrual_hygiene_pct": 92.5,
+    "antenatal_4visit_pct": 82.8,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.3
+  },
+  "Anjaw": {
+    "clean_fuel_pct": 29.0,
+    "health_insurance_pct": 17.5,
+    "child_marriage_pct": 21.8,
+    "menstrual_hygiene_pct": 89.0,
+    "antenatal_4visit_pct": 32.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 7.1
+  },
+  "Changlang": {
+    "clean_fuel_pct": 34.1,
+    "health_insurance_pct": 40.5,
+    "child_marriage_pct": 16.8,
+    "menstrual_hygiene_pct": 89.1,
+    "antenatal_4visit_pct": 46.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.8
+  },
+  "Dibang Valley": {
+    "clean_fuel_pct": 49.3,
+    "health_insurance_pct": 28.7,
+    "child_marriage_pct": 20.7,
+    "menstrual_hygiene_pct": 88.6,
+    "antenatal_4visit_pct": 40.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.7
+  },
+  "East Kameng": {
+    "clean_fuel_pct": 49.5,
+    "health_insurance_pct": 25.1,
+    "child_marriage_pct": 26.5,
+    "menstrual_hygiene_pct": 85.4,
+    "antenatal_4visit_pct": 29.1,
+    "ors_diarrhoea_pct": 74.4,
+    "ari_prevalence_pct": 2.4
+  },
+  "East Siang": {
+    "clean_fuel_pct": 52.4,
+    "health_insurance_pct": 30.5,
+    "child_marriage_pct": 14.9,
+    "menstrual_hygiene_pct": 87.8,
+    "antenatal_4visit_pct": 34.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.0
+  },
+  "Kra Daadi": {
+    "clean_fuel_pct": 78.3,
+    "health_insurance_pct": 24.0,
+    "child_marriage_pct": 24.8,
+    "menstrual_hygiene_pct": 89.6,
+    "antenatal_4visit_pct": 18.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.8
+  },
+  "Kurung Kumey": {
+    "clean_fuel_pct": 57.3,
+    "health_insurance_pct": 13.4,
+    "child_marriage_pct": 19.8,
+    "menstrual_hygiene_pct": 96.1,
+    "antenatal_4visit_pct": 44.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 5.6
+  },
+  "Lohit": {
+    "clean_fuel_pct": 63.9,
+    "health_insurance_pct": 31.9,
+    "child_marriage_pct": 20.0,
+    "menstrual_hygiene_pct": 91.4,
+    "antenatal_4visit_pct": 39.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.7
+  },
+  "Longding": {
+    "clean_fuel_pct": 22.4,
+    "health_insurance_pct": 23.8,
+    "child_marriage_pct": 7.9,
+    "menstrual_hygiene_pct": 92.0,
+    "antenatal_4visit_pct": 39.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.8
+  },
+  "Lower Dibang Valley": {
+    "clean_fuel_pct": 57.4,
+    "health_insurance_pct": 36.8,
+    "child_marriage_pct": 13.8,
+    "menstrual_hygiene_pct": 96.0,
+    "antenatal_4visit_pct": 48.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.0
+  },
+  "Lower Subansiri": {
+    "clean_fuel_pct": 60.8,
+    "health_insurance_pct": 24.5,
+    "child_marriage_pct": 16.0,
+    "menstrual_hygiene_pct": 92.4,
+    "antenatal_4visit_pct": 39.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 4.2
+  },
+  "Namsai": {
+    "clean_fuel_pct": 28.7,
+    "health_insurance_pct": 30.9,
+    "child_marriage_pct": 26.7,
+    "menstrual_hygiene_pct": 93.0,
+    "antenatal_4visit_pct": 35.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.2
+  },
+  "Papum Pare": {
+    "clean_fuel_pct": 81.3,
+    "health_insurance_pct": 26.9,
+    "child_marriage_pct": 25.4,
+    "menstrual_hygiene_pct": 95.4,
+    "antenatal_4visit_pct": 39.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.9
+  },
+  "Siang": {
+    "clean_fuel_pct": 27.6,
+    "health_insurance_pct": 26.1,
+    "child_marriage_pct": 10.0,
+    "menstrual_hygiene_pct": 98.1,
+    "antenatal_4visit_pct": 31.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.9
+  },
+  "Tawang": {
+    "clean_fuel_pct": 88.1,
+    "health_insurance_pct": 33.5,
+    "child_marriage_pct": 11.9,
+    "menstrual_hygiene_pct": 88.4,
+    "antenatal_4visit_pct": 37.6,
+    "ors_diarrhoea_pct": 73.3,
+    "ari_prevalence_pct": 6.2
+  },
+  "Tirap": {
+    "clean_fuel_pct": 50.4,
+    "health_insurance_pct": 30.8,
+    "child_marriage_pct": 12.0,
+    "menstrual_hygiene_pct": 88.4,
+    "antenatal_4visit_pct": 35.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.3
+  },
+  "Upper Siang": {
+    "clean_fuel_pct": 36.3,
+    "health_insurance_pct": 34.6,
+    "child_marriage_pct": 17.1,
+    "menstrual_hygiene_pct": 91.5,
+    "antenatal_4visit_pct": 34.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.5
+  },
+  "Upper Subansiri": {
+    "clean_fuel_pct": 32.8,
+    "health_insurance_pct": 21.5,
+    "child_marriage_pct": 26.7,
+    "menstrual_hygiene_pct": 92.7,
+    "antenatal_4visit_pct": 32.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.3
+  },
+  "West Kameng": {
+    "clean_fuel_pct": 88.9,
+    "health_insurance_pct": 38.3,
+    "child_marriage_pct": 12.5,
+    "menstrual_hygiene_pct": 90.3,
+    "antenatal_4visit_pct": 27.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.5
+  },
+  "West Siang": {
+    "clean_fuel_pct": 57.1,
+    "health_insurance_pct": 26.6,
+    "child_marriage_pct": 18.9,
+    "menstrual_hygiene_pct": 94.2,
+    "antenatal_4visit_pct": 30.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.2
+  },
+  "Baksa": {
+    "clean_fuel_pct": 35.2,
+    "health_insurance_pct": 69.0,
+    "child_marriage_pct": 24.9,
+    "menstrual_hygiene_pct": 67.0,
+    "antenatal_4visit_pct": 56.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.8
+  },
+  "Barpeta": {
+    "clean_fuel_pct": 38.7,
+    "health_insurance_pct": 58.9,
+    "child_marriage_pct": 40.1,
+    "menstrual_hygiene_pct": 61.5,
+    "antenatal_4visit_pct": 43.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.5
+  },
+  "Biswanath": {
+    "clean_fuel_pct": 35.0,
+    "health_insurance_pct": 68.4,
+    "child_marriage_pct": 25.3,
+    "menstrual_hygiene_pct": 70.9,
+    "antenatal_4visit_pct": 46.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.0
+  },
+  "Bongaigaon": {
+    "clean_fuel_pct": 49.8,
+    "health_insurance_pct": 57.6,
+    "child_marriage_pct": 41.7,
+    "menstrual_hygiene_pct": 69.0,
+    "antenatal_4visit_pct": 33.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.6
+  },
+  "Cachar": {
+    "clean_fuel_pct": 43.0,
+    "health_insurance_pct": 57.9,
+    "child_marriage_pct": 29.9,
+    "menstrual_hygiene_pct": 57.8,
+    "antenatal_4visit_pct": 32.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.1
+  },
+  "Charaideo": {
+    "clean_fuel_pct": 27.3,
+    "health_insurance_pct": 64.9,
+    "child_marriage_pct": 22.6,
+    "menstrual_hygiene_pct": 68.7,
+    "antenatal_4visit_pct": 64.5,
+    "ors_diarrhoea_pct": 68.6,
+    "ari_prevalence_pct": 2.2
+  },
+  "Chirang": {
+    "clean_fuel_pct": 44.5,
+    "health_insurance_pct": 61.5,
+    "child_marriage_pct": 30.9,
+    "menstrual_hygiene_pct": 63.5,
+    "antenatal_4visit_pct": 56.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.6
+  },
+  "Darrang": {
+    "clean_fuel_pct": 30.1,
+    "health_insurance_pct": 53.7,
+    "child_marriage_pct": 42.8,
+    "menstrual_hygiene_pct": 62.2,
+    "antenatal_4visit_pct": 37.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.3
+  },
+  "Dhemaji": {
+    "clean_fuel_pct": 21.6,
+    "health_insurance_pct": 66.8,
+    "child_marriage_pct": 32.0,
+    "menstrual_hygiene_pct": 74.7,
+    "antenatal_4visit_pct": 62.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.0
+  },
+  "Dhubri": {
+    "clean_fuel_pct": 40.7,
+    "health_insurance_pct": 59.4,
+    "child_marriage_pct": 50.8,
+    "menstrual_hygiene_pct": 48.8,
+    "antenatal_4visit_pct": 37.6,
+    "ors_diarrhoea_pct": 69.5,
+    "ari_prevalence_pct": 1.7
+  },
+  "Dibrugarh": {
+    "clean_fuel_pct": 44.7,
+    "health_insurance_pct": 58.8,
+    "child_marriage_pct": 23.0,
+    "menstrual_hygiene_pct": 79.8,
+    "antenatal_4visit_pct": 75.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.5
+  },
+  "Dima Hasao": {
+    "clean_fuel_pct": 48.2,
+    "health_insurance_pct": 61.9,
+    "child_marriage_pct": 16.5,
+    "menstrual_hygiene_pct": 79.1,
+    "antenatal_4visit_pct": 46.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.7
+  },
+  "Goalpara": {
+    "clean_fuel_pct": 36.3,
+    "health_insurance_pct": 71.1,
+    "child_marriage_pct": 41.8,
+    "menstrual_hygiene_pct": 64.5,
+    "antenatal_4visit_pct": 44.1,
+    "ors_diarrhoea_pct": 84.2,
+    "ari_prevalence_pct": 2.1
+  },
+  "Golaghat": {
+    "clean_fuel_pct": 33.1,
+    "health_insurance_pct": 69.3,
+    "child_marriage_pct": 20.7,
+    "menstrual_hygiene_pct": 70.6,
+    "antenatal_4visit_pct": 65.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 4.1
+  },
+  "Hailakandi": {
+    "clean_fuel_pct": 35.2,
+    "health_insurance_pct": 53.6,
+    "child_marriage_pct": 32.9,
+    "menstrual_hygiene_pct": 56.1,
+    "antenatal_4visit_pct": 43.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 4.9
+  },
+  "Hojai": {
+    "clean_fuel_pct": 52.0,
+    "health_insurance_pct": 67.4,
+    "child_marriage_pct": 30.9,
+    "menstrual_hygiene_pct": 64.6,
+    "antenatal_4visit_pct": 51.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.4
+  },
+  "Jorhat": {
+    "clean_fuel_pct": 48.3,
+    "health_insurance_pct": 60.1,
+    "child_marriage_pct": 24.9,
+    "menstrual_hygiene_pct": 76.7,
+    "antenatal_4visit_pct": 67.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.0
+  },
+  "Kamrup Metropolitan": {
+    "clean_fuel_pct": 85.1,
+    "health_insurance_pct": 45.5,
+    "child_marriage_pct": 21.9,
+    "menstrual_hygiene_pct": 86.3,
+    "antenatal_4visit_pct": 68.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.3
+  },
+  "Kamrup": {
+    "clean_fuel_pct": 57.4,
+    "health_insurance_pct": 47.0,
+    "child_marriage_pct": 21.9,
+    "menstrual_hygiene_pct": 62.1,
+    "antenatal_4visit_pct": 46.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.5
+  },
+  "Karbi Anglong": {
+    "clean_fuel_pct": 33.4,
+    "health_insurance_pct": 54.1,
+    "child_marriage_pct": 26.1,
+    "menstrual_hygiene_pct": 77.6,
+    "antenatal_4visit_pct": 63.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.2
+  },
+  "Karimganj": {
+    "clean_fuel_pct": 39.6,
+    "health_insurance_pct": 64.4,
+    "child_marriage_pct": 27.7,
+    "menstrual_hygiene_pct": 59.8,
+    "antenatal_4visit_pct": 42.8,
+    "ors_diarrhoea_pct": 68.4,
+    "ari_prevalence_pct": 2.3
+  },
+  "Kokrajhar": {
+    "clean_fuel_pct": 43.3,
+    "health_insurance_pct": 50.2,
+    "child_marriage_pct": 36.2,
+    "menstrual_hygiene_pct": 72.3,
+    "antenatal_4visit_pct": 36.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.8
+  },
+  "Lakhimpur": {
+    "clean_fuel_pct": 36.1,
+    "health_insurance_pct": 67.0,
+    "child_marriage_pct": 36.3,
+    "menstrual_hygiene_pct": 79.7,
+    "antenatal_4visit_pct": 51.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.9
+  },
+  "Majuli": {
+    "clean_fuel_pct": 19.3,
+    "health_insurance_pct": 60.8,
+    "child_marriage_pct": 25.5,
+    "menstrual_hygiene_pct": 75.4,
+    "antenatal_4visit_pct": 72.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.0
+  },
+  "Morigaon": {
+    "clean_fuel_pct": 37.6,
+    "health_insurance_pct": 62.5,
+    "child_marriage_pct": 39.1,
+    "menstrual_hygiene_pct": 69.1,
+    "antenatal_4visit_pct": 42.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 5.9
+  },
+  "Nagaon": {
+    "clean_fuel_pct": 38.6,
+    "health_insurance_pct": 59.4,
+    "child_marriage_pct": 42.6,
+    "menstrual_hygiene_pct": 58.4,
+    "antenatal_4visit_pct": 59.4,
+    "ors_diarrhoea_pct": 75.4,
+    "ari_prevalence_pct": 2.8
+  },
+  "Nalbari": {
+    "clean_fuel_pct": 51.1,
+    "health_insurance_pct": 52.5,
+    "child_marriage_pct": 28.1,
+    "menstrual_hygiene_pct": 74.0,
+    "antenatal_4visit_pct": 55.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.2
+  },
+  "Sivasagar": {
+    "clean_fuel_pct": 45.5,
+    "health_insurance_pct": 60.7,
+    "child_marriage_pct": 27.9,
+    "menstrual_hygiene_pct": 75.7,
+    "antenatal_4visit_pct": 80.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.4
+  },
+  "Sonitpur": {
+    "clean_fuel_pct": 45.8,
+    "health_insurance_pct": 66.9,
+    "child_marriage_pct": 24.0,
+    "menstrual_hygiene_pct": 63.4,
+    "antenatal_4visit_pct": 45.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.4
+  },
+  "South Salmara Mancachar": {
+    "clean_fuel_pct": 28.5,
+    "health_insurance_pct": 68.2,
+    "child_marriage_pct": 44.7,
+    "menstrual_hygiene_pct": 60.6,
+    "antenatal_4visit_pct": 35.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.9
+  },
+  "Tinsukia": {
+    "clean_fuel_pct": 40.9,
+    "health_insurance_pct": 60.0,
+    "child_marriage_pct": 19.8,
+    "menstrual_hygiene_pct": 74.6,
+    "antenatal_4visit_pct": 63.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.0
+  },
+  "Udalguri": {
+    "clean_fuel_pct": 34.0,
+    "health_insurance_pct": 70.6,
+    "child_marriage_pct": 32.0,
+    "menstrual_hygiene_pct": 61.8,
+    "antenatal_4visit_pct": 49.8,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.3
+  },
+  "West Karbi Anglong": {
+    "clean_fuel_pct": 17.7,
+    "health_insurance_pct": 63.1,
+    "child_marriage_pct": 21.3,
+    "menstrual_hygiene_pct": 77.3,
+    "antenatal_4visit_pct": 46.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.9
+  },
+  "Araria": {
+    "clean_fuel_pct": 15.2,
+    "health_insurance_pct": 19.5,
+    "child_marriage_pct": 52.0,
+    "menstrual_hygiene_pct": 36.4,
+    "antenatal_4visit_pct": 25.8,
+    "ors_diarrhoea_pct": 50.5,
+    "ari_prevalence_pct": 6.0
+  },
+  "Arwal": {
+    "clean_fuel_pct": 29.3,
+    "health_insurance_pct": 15.6,
+    "child_marriage_pct": 37.5,
+    "menstrual_hygiene_pct": 54.5,
+    "antenatal_4visit_pct": 34.5,
+    "ors_diarrhoea_pct": 57.5,
+    "ari_prevalence_pct": 5.0
+  },
+  "Aurangabad": {
+    "clean_fuel_pct": 78.4,
+    "health_insurance_pct": 12.4,
+    "child_marriage_pct": 35.8,
+    "menstrual_hygiene_pct": 77.3,
+    "antenatal_4visit_pct": 57.2,
+    "ors_diarrhoea_pct": 55.1,
+    "ari_prevalence_pct": 4.1
+  },
+  "Banka": {
+    "clean_fuel_pct": 32.3,
+    "health_insurance_pct": 13.6,
+    "child_marriage_pct": 49.4,
+    "menstrual_hygiene_pct": 62.8,
+    "antenatal_4visit_pct": 31.7,
+    "ors_diarrhoea_pct": 63.8,
+    "ari_prevalence_pct": 2.3
+  },
+  "Begusarai": {
+    "clean_fuel_pct": 45.2,
+    "health_insurance_pct": 13.2,
+    "child_marriage_pct": 49.5,
+    "menstrual_hygiene_pct": 70.7,
+    "antenatal_4visit_pct": 21.6,
+    "ors_diarrhoea_pct": 61.8,
+    "ari_prevalence_pct": 3.1
+  },
+  "Bhagalpur": {
+    "clean_fuel_pct": 49.2,
+    "health_insurance_pct": 16.3,
+    "child_marriage_pct": 42.4,
+    "menstrual_hygiene_pct": 75.6,
+    "antenatal_4visit_pct": 27.6,
+    "ors_diarrhoea_pct": 73.7,
+    "ari_prevalence_pct": 1.1
+  },
+  "Bhojpur": {
+    "clean_fuel_pct": 42.9,
+    "health_insurance_pct": 9.6,
+    "child_marriage_pct": 31.2,
+    "menstrual_hygiene_pct": 60.8,
+    "antenatal_4visit_pct": 33.5,
+    "ors_diarrhoea_pct": 49.2,
+    "ari_prevalence_pct": 1.4
+  },
+  "Buxar": {
+    "clean_fuel_pct": 44.7,
+    "health_insurance_pct": 11.4,
+    "child_marriage_pct": 30.8,
+    "menstrual_hygiene_pct": 56.6,
+    "antenatal_4visit_pct": 27.4,
+    "ors_diarrhoea_pct": 49.2,
+    "ari_prevalence_pct": 3.7
+  },
+  "Darbhanga": {
+    "clean_fuel_pct": 41.6,
+    "health_insurance_pct": 25.3,
+    "child_marriage_pct": 45.1,
+    "menstrual_hygiene_pct": 57.5,
+    "antenatal_4visit_pct": 24.9,
+    "ors_diarrhoea_pct": 61.9,
+    "ari_prevalence_pct": 3.8
+  },
+  "Gaya": {
+    "clean_fuel_pct": 34.7,
+    "health_insurance_pct": 9.7,
+    "child_marriage_pct": 42.8,
+    "menstrual_hygiene_pct": 72.8,
+    "antenatal_4visit_pct": 25.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 4.1
+  },
+  "Gopalganj": {
+    "clean_fuel_pct": 39.4,
+    "health_insurance_pct": 12.7,
+    "child_marriage_pct": 28.0,
+    "menstrual_hygiene_pct": 63.8,
+    "antenatal_4visit_pct": 27.9,
+    "ors_diarrhoea_pct": 69.2,
+    "ari_prevalence_pct": 5.9
+  },
+  "Jamui": {
+    "clean_fuel_pct": 40.2,
+    "health_insurance_pct": 14.3,
+    "child_marriage_pct": 51.9,
+    "menstrual_hygiene_pct": 63.1,
+    "antenatal_4visit_pct": 37.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.9
+  },
+  "Jehanabad": {
+    "clean_fuel_pct": 34.3,
+    "health_insurance_pct": 13.2,
+    "child_marriage_pct": 41.6,
+    "menstrual_hygiene_pct": 53.2,
+    "antenatal_4visit_pct": 17.4,
+    "ors_diarrhoea_pct": 49.6,
+    "ari_prevalence_pct": 3.4
+  },
+  "Kaimur (Bhabua)": {
+    "clean_fuel_pct": 29.0,
+    "health_insurance_pct": 18.1,
+    "child_marriage_pct": 27.1,
+    "menstrual_hygiene_pct": 58.9,
+    "antenatal_4visit_pct": 25.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 4.2
+  },
+  "Katihar": {
+    "clean_fuel_pct": 16.9,
+    "health_insurance_pct": 8.4,
+    "child_marriage_pct": 49.4,
+    "menstrual_hygiene_pct": 49.5,
+    "antenatal_4visit_pct": 15.3,
+    "ors_diarrhoea_pct": 60.4,
+    "ari_prevalence_pct": 2.1
+  },
+  "Khagaria": {
+    "clean_fuel_pct": 33.2,
+    "health_insurance_pct": 15.6,
+    "child_marriage_pct": 44.9,
+    "menstrual_hygiene_pct": 50.5,
+    "antenatal_4visit_pct": 17.4,
+    "ors_diarrhoea_pct": 55.6,
+    "ari_prevalence_pct": 1.6
+  },
+  "Kishanganj": {
+    "clean_fuel_pct": 15.3,
+    "health_insurance_pct": 8.1,
+    "child_marriage_pct": 36.6,
+    "menstrual_hygiene_pct": 39.8,
+    "antenatal_4visit_pct": 17.1,
+    "ors_diarrhoea_pct": 64.5,
+    "ari_prevalence_pct": 1.8
+  },
+  "Lakhisarai": {
+    "clean_fuel_pct": 42.6,
+    "health_insurance_pct": 15.1,
+    "child_marriage_pct": 56.1,
+    "menstrual_hygiene_pct": 64.9,
+    "antenatal_4visit_pct": 28.0,
+    "ors_diarrhoea_pct": 44.3,
+    "ari_prevalence_pct": 1.3
+  },
+  "Madhepura": {
+    "clean_fuel_pct": 13.4,
+    "health_insurance_pct": 9.5,
+    "child_marriage_pct": 52.0,
+    "menstrual_hygiene_pct": 49.6,
+    "antenatal_4visit_pct": 20.9,
+    "ors_diarrhoea_pct": 52.1,
+    "ari_prevalence_pct": 1.6
+  },
+  "Madhubani": {
+    "clean_fuel_pct": 40.0,
+    "health_insurance_pct": 19.2,
+    "child_marriage_pct": 39.2,
+    "menstrual_hygiene_pct": 57.4,
+    "antenatal_4visit_pct": 34.9,
+    "ors_diarrhoea_pct": 64.6,
+    "ari_prevalence_pct": 4.4
+  },
+  "Munger": {
+    "clean_fuel_pct": 59.4,
+    "health_insurance_pct": 15.2,
+    "child_marriage_pct": 34.7,
+    "menstrual_hygiene_pct": 80.2,
+    "antenatal_4visit_pct": 36.8,
+    "ors_diarrhoea_pct": 58.7,
+    "ari_prevalence_pct": 2.6
+  },
+  "Muzaffarpur": {
+    "clean_fuel_pct": 41.5,
+    "health_insurance_pct": 13.2,
+    "child_marriage_pct": 32.9,
+    "menstrual_hygiene_pct": 67.8,
+    "antenatal_4visit_pct": 28.2,
+    "ors_diarrhoea_pct": 66.3,
+    "ari_prevalence_pct": 4.3
+  },
+  "Nalanda": {
+    "clean_fuel_pct": 41.0,
+    "health_insurance_pct": 12.8,
+    "child_marriage_pct": 42.0,
+    "menstrual_hygiene_pct": 64.4,
+    "antenatal_4visit_pct": 29.3,
+    "ors_diarrhoea_pct": 72.6,
+    "ari_prevalence_pct": 5.3
+  },
+  "Nawada": {
+    "clean_fuel_pct": 40.7,
+    "health_insurance_pct": 8.1,
+    "child_marriage_pct": 43.3,
+    "menstrual_hygiene_pct": 65.7,
+    "antenatal_4visit_pct": 31.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.8
+  },
+  "Pashchim Champaran": {
+    "clean_fuel_pct": 31.4,
+    "health_insurance_pct": 20.0,
+    "child_marriage_pct": 39.1,
+    "menstrual_hygiene_pct": 42.9,
+    "antenatal_4visit_pct": 25.4,
+    "ors_diarrhoea_pct": 56.8,
+    "ari_prevalence_pct": 6.6
+  },
+  "Patna": {
+    "clean_fuel_pct": 64.6,
+    "health_insurance_pct": 10.2,
+    "child_marriage_pct": 26.6,
+    "menstrual_hygiene_pct": 74.3,
+    "antenatal_4visit_pct": 17.9,
+    "ors_diarrhoea_pct": 43.8,
+    "ari_prevalence_pct": 0.7
+  },
+  "Purba Champaran": {
+    "clean_fuel_pct": 44.2,
+    "health_insurance_pct": 19.4,
+    "child_marriage_pct": 49.2,
+    "menstrual_hygiene_pct": 41.5,
+    "antenatal_4visit_pct": 21.7,
+    "ors_diarrhoea_pct": 40.7,
+    "ari_prevalence_pct": 4.7
+  },
+  "Purnia": {
+    "clean_fuel_pct": 19.3,
+    "health_insurance_pct": 10.2,
+    "child_marriage_pct": 51.2,
+    "menstrual_hygiene_pct": 51.5,
+    "antenatal_4visit_pct": 11.1,
+    "ors_diarrhoea_pct": 41.2,
+    "ari_prevalence_pct": 2.7
+  },
+  "Rohtas": {
+    "clean_fuel_pct": 47.4,
+    "health_insurance_pct": 17.2,
+    "child_marriage_pct": 30.3,
+    "menstrual_hygiene_pct": 72.3,
+    "antenatal_4visit_pct": 34.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.1
+  },
+  "Saharsa": {
+    "clean_fuel_pct": 25.2,
+    "health_insurance_pct": 12.8,
+    "child_marriage_pct": 51.0,
+    "menstrual_hygiene_pct": 43.5,
+    "antenatal_4visit_pct": 11.7,
+    "ors_diarrhoea_pct": 50.3,
+    "ari_prevalence_pct": 2.0
+  },
+  "Samastipur": {
+    "clean_fuel_pct": 36.1,
+    "health_insurance_pct": 19.0,
+    "child_marriage_pct": 49.8,
+    "menstrual_hygiene_pct": 58.7,
+    "antenatal_4visit_pct": 23.5,
+    "ors_diarrhoea_pct": 60.2,
+    "ari_prevalence_pct": 4.5
+  },
+  "Saran": {
+    "clean_fuel_pct": 36.8,
+    "health_insurance_pct": 9.4,
+    "child_marriage_pct": 26.2,
+    "menstrual_hygiene_pct": 59.0,
+    "antenatal_4visit_pct": 30.7,
+    "ors_diarrhoea_pct": 51.5,
+    "ari_prevalence_pct": 1.6
+  },
+  "Sheikhpura": {
+    "clean_fuel_pct": 40.3,
+    "health_insurance_pct": 9.7,
+    "child_marriage_pct": 46.1,
+    "menstrual_hygiene_pct": 68.1,
+    "antenatal_4visit_pct": 28.4,
+    "ors_diarrhoea_pct": 59.3,
+    "ari_prevalence_pct": 6.8
+  },
+  "Sheohar": {
+    "clean_fuel_pct": 31.3,
+    "health_insurance_pct": 18.1,
+    "child_marriage_pct": 34.6,
+    "menstrual_hygiene_pct": 57.3,
+    "antenatal_4visit_pct": 25.3,
+    "ors_diarrhoea_pct": 49.8,
+    "ari_prevalence_pct": 5.2
+  },
+  "Sitamarhi": {
+    "clean_fuel_pct": 40.5,
+    "health_insurance_pct": 20.7,
+    "child_marriage_pct": 46.8,
+    "menstrual_hygiene_pct": 47.6,
+    "antenatal_4visit_pct": 20.3,
+    "ors_diarrhoea_pct": 69.6,
+    "ari_prevalence_pct": 3.4
+  },
+  "Siwan": {
+    "clean_fuel_pct": 48.0,
+    "health_insurance_pct": 8.2,
+    "child_marriage_pct": 21.3,
+    "menstrual_hygiene_pct": 55.8,
+    "antenatal_4visit_pct": 30.3,
+    "ors_diarrhoea_pct": 56.7,
+    "ari_prevalence_pct": 7.4
+  },
+  "Supaul": {
+    "clean_fuel_pct": 15.0,
+    "health_insurance_pct": 14.2,
+    "child_marriage_pct": 55.9,
+    "menstrual_hygiene_pct": 55.4,
+    "antenatal_4visit_pct": 30.9,
+    "ors_diarrhoea_pct": 59.5,
+    "ari_prevalence_pct": 5.0
+  },
+  "Vaishali": {
+    "clean_fuel_pct": 40.9,
+    "health_insurance_pct": 13.5,
+    "child_marriage_pct": 44.9,
+    "menstrual_hygiene_pct": 68.2,
+    "antenatal_4visit_pct": 24.5,
+    "ors_diarrhoea_pct": 54.9,
+    "ari_prevalence_pct": 3.9
+  },
+  "Chandigarh": {
+    "clean_fuel_pct": 95.8,
+    "health_insurance_pct": 32.2,
+    "child_marriage_pct": 64.5,
+    "menstrual_hygiene_pct": 9.7,
+    "antenatal_4visit_pct": 78.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.3
+  },
+  "Balod": {
+    "clean_fuel_pct": 33.3,
+    "health_insurance_pct": 79.5,
+    "child_marriage_pct": 3.3,
+    "menstrual_hygiene_pct": 84.8,
+    "antenatal_4visit_pct": 81.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.2
+  },
+  "Baloda Bazar": {
+    "clean_fuel_pct": 24.9,
+    "health_insurance_pct": 66.1,
+    "child_marriage_pct": 11.4,
+    "menstrual_hygiene_pct": 59.8,
+    "antenatal_4visit_pct": 49.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.0
+  },
+  "Balrampur": {
+    "clean_fuel_pct": 39.6,
+    "health_insurance_pct": 13.0,
+    "child_marriage_pct": 35.0,
+    "menstrual_hygiene_pct": 53.0,
+    "antenatal_4visit_pct": 41.0,
+    "ors_diarrhoea_pct": 70.3,
+    "ari_prevalence_pct": 5.4
+  },
+  "Bastar": {
+    "clean_fuel_pct": 31.6,
+    "health_insurance_pct": 69.3,
+    "child_marriage_pct": 17.3,
+    "menstrual_hygiene_pct": 53.1,
+    "antenatal_4visit_pct": 55.1,
+    "ors_diarrhoea_pct": 73.9,
+    "ari_prevalence_pct": 5.3
+  },
+  "Bemetara": {
+    "clean_fuel_pct": 18.9,
+    "health_insurance_pct": 63.4,
+    "child_marriage_pct": 15.1,
+    "menstrual_hygiene_pct": 63.9,
+    "antenatal_4visit_pct": 54.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Bijapur": {
+    "clean_fuel_pct": 60.6,
+    "health_insurance_pct": 21.2,
+    "child_marriage_pct": 39.2,
+    "menstrual_hygiene_pct": 71.9,
+    "antenatal_4visit_pct": 56.4,
+    "ors_diarrhoea_pct": 54.8,
+    "ari_prevalence_pct": 1.6
+  },
+  "Bilaspur": {
+    "clean_fuel_pct": 35.8,
+    "health_insurance_pct": 35.4,
+    "child_marriage_pct": 10.0,
+    "menstrual_hygiene_pct": 94.4,
+    "antenatal_4visit_pct": 81.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Dantewada": {
+    "clean_fuel_pct": 34.6,
+    "health_insurance_pct": 82.2,
+    "child_marriage_pct": 16.3,
+    "menstrual_hygiene_pct": 56.7,
+    "antenatal_4visit_pct": 68.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.0
+  },
+  "Dhamtari": {
+    "clean_fuel_pct": 30.9,
+    "health_insurance_pct": 86.8,
+    "child_marriage_pct": 5.8,
+    "menstrual_hygiene_pct": 82.9,
+    "antenatal_4visit_pct": 70.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.1
+  },
+  "Durg": {
+    "clean_fuel_pct": 76.3,
+    "health_insurance_pct": 67.0,
+    "child_marriage_pct": 4.3,
+    "menstrual_hygiene_pct": 87.7,
+    "antenatal_4visit_pct": 69.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Gariyaband": {
+    "clean_fuel_pct": 17.1,
+    "health_insurance_pct": 79.8,
+    "child_marriage_pct": 9.7,
+    "menstrual_hygiene_pct": 58.2,
+    "antenatal_4visit_pct": 57.8,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 4.8
+  },
+  "Janjgir - Champa": {
+    "clean_fuel_pct": 24.8,
+    "health_insurance_pct": 74.0,
+    "child_marriage_pct": 10.2,
+    "menstrual_hygiene_pct": 78.4,
+    "antenatal_4visit_pct": 62.8,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.1
+  },
+  "Jashpur": {
+    "clean_fuel_pct": 14.8,
+    "health_insurance_pct": 80.6,
+    "child_marriage_pct": 21.9,
+    "menstrual_hygiene_pct": 68.2,
+    "antenatal_4visit_pct": 48.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Kabeerdham": {
+    "clean_fuel_pct": 25.0,
+    "health_insurance_pct": 72.1,
+    "child_marriage_pct": 15.3,
+    "menstrual_hygiene_pct": 63.5,
+    "antenatal_4visit_pct": 58.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Kodagaon": {
+    "clean_fuel_pct": 12.4,
+    "health_insurance_pct": 80.6,
+    "child_marriage_pct": 11.8,
+    "menstrual_hygiene_pct": 57.8,
+    "antenatal_4visit_pct": 64.1,
+    "ors_diarrhoea_pct": 88.8,
+    "ari_prevalence_pct": 4.4
+  },
+  "Korba": {
+    "clean_fuel_pct": 35.5,
+    "health_insurance_pct": 60.6,
+    "child_marriage_pct": 7.2,
+    "menstrual_hygiene_pct": 65.2,
+    "antenatal_4visit_pct": 49.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.3
+  },
+  "Koriya": {
+    "clean_fuel_pct": 30.2,
+    "health_insurance_pct": 62.8,
+    "child_marriage_pct": 22.9,
+    "menstrual_hygiene_pct": 65.7,
+    "antenatal_4visit_pct": 70.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.4
+  },
+  "Mahasamund": {
+    "clean_fuel_pct": 30.4,
+    "health_insurance_pct": 76.2,
+    "child_marriage_pct": 9.5,
+    "menstrual_hygiene_pct": 61.4,
+    "antenatal_4visit_pct": 65.8,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.4
+  },
+  "Mungeli": {
+    "clean_fuel_pct": 22.9,
+    "health_insurance_pct": 68.0,
+    "child_marriage_pct": 20.5,
+    "menstrual_hygiene_pct": 68.2,
+    "antenatal_4visit_pct": 67.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Narayanpur": {
+    "clean_fuel_pct": 19.5,
+    "health_insurance_pct": 83.1,
+    "child_marriage_pct": 11.1,
+    "menstrual_hygiene_pct": 55.6,
+    "antenatal_4visit_pct": 59.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.6
+  },
+  "Raigarh": {
+    "clean_fuel_pct": 83.3,
+    "health_insurance_pct": 26.3,
+    "child_marriage_pct": 16.0,
+    "menstrual_hygiene_pct": 89.6,
+    "antenatal_4visit_pct": 83.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.6
+  },
+  "Raipur": {
+    "clean_fuel_pct": 60.5,
+    "health_insurance_pct": 76.9,
+    "child_marriage_pct": 8.8,
+    "menstrual_hygiene_pct": 72.0,
+    "antenatal_4visit_pct": 65.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.8
+  },
+  "Rajnandgaon": {
+    "clean_fuel_pct": 27.4,
+    "health_insurance_pct": 80.8,
+    "child_marriage_pct": 3.8,
+    "menstrual_hygiene_pct": 73.6,
+    "antenatal_4visit_pct": 76.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Sukma": {
+    "clean_fuel_pct": 14.4,
+    "health_insurance_pct": 78.1,
+    "child_marriage_pct": 18.9,
+    "menstrual_hygiene_pct": 48.3,
+    "antenatal_4visit_pct": 74.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.8
+  },
+  "Surajpur": {
+    "clean_fuel_pct": 24.0,
+    "health_insurance_pct": 75.7,
+    "child_marriage_pct": 34.3,
+    "menstrual_hygiene_pct": 62.4,
+    "antenatal_4visit_pct": 48.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Surguja": {
+    "clean_fuel_pct": 24.5,
+    "health_insurance_pct": 65.1,
+    "child_marriage_pct": 18.1,
+    "menstrual_hygiene_pct": 63.0,
+    "antenatal_4visit_pct": 57.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.3
+  },
+  "Uttar Bastar Kanker": {
+    "clean_fuel_pct": 25.9,
+    "health_insurance_pct": 84.8,
+    "child_marriage_pct": 5.4,
+    "menstrual_hygiene_pct": 80.6,
+    "antenatal_4visit_pct": 77.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.8
+  },
+  "Dadra & Nagar Haveli": {
+    "clean_fuel_pct": 74.3,
+    "health_insurance_pct": 58.8,
+    "child_marriage_pct": 30.0,
+    "menstrual_hygiene_pct": 96.3,
+    "antenatal_4visit_pct": 90.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.3
+  },
+  "Daman": {
+    "clean_fuel_pct": 92.1,
+    "health_insurance_pct": 32.9,
+    "child_marriage_pct": 22.8,
+    "menstrual_hygiene_pct": 86.3,
+    "antenatal_4visit_pct": 70.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.5
+  },
+  "Diu": {
+    "clean_fuel_pct": 85.3,
+    "health_insurance_pct": 64.0,
+    "child_marriage_pct": 2.3,
+    "menstrual_hygiene_pct": 89.0,
+    "antenatal_4visit_pct": 90.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.5
+  },
+  "North Goa": {
+    "clean_fuel_pct": 96.7,
+    "health_insurance_pct": 64.8,
+    "child_marriage_pct": 7.5,
+    "menstrual_hygiene_pct": 97.3,
+    "antenatal_4visit_pct": 91.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.5
+  },
+  "South Goa": {
+    "clean_fuel_pct": 96.2,
+    "health_insurance_pct": 67.7,
+    "child_marriage_pct": 3.9,
+    "menstrual_hygiene_pct": 96.2,
+    "antenatal_4visit_pct": 96.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Ahmedabad": {
+    "clean_fuel_pct": 89.7,
+    "health_insurance_pct": 36.2,
+    "child_marriage_pct": 17.5,
+    "menstrual_hygiene_pct": 66.4,
+    "antenatal_4visit_pct": 77.8,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.0
+  },
+  "Amreli": {
+    "clean_fuel_pct": 65.6,
+    "health_insurance_pct": 47.7,
+    "child_marriage_pct": 10.5,
+    "menstrual_hygiene_pct": 73.8,
+    "antenatal_4visit_pct": 92.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.3
+  },
+  "Anand": {
+    "clean_fuel_pct": 65.1,
+    "health_insurance_pct": 36.2,
+    "child_marriage_pct": 28.0,
+    "menstrual_hygiene_pct": 69.1,
+    "antenatal_4visit_pct": 64.2,
+    "ors_diarrhoea_pct": 76.4,
+    "ari_prevalence_pct": 0.0
+  },
+  "Aravali": {
+    "clean_fuel_pct": 47.9,
+    "health_insurance_pct": 43.9,
+    "child_marriage_pct": 27.0,
+    "menstrual_hygiene_pct": 52.5,
+    "antenatal_4visit_pct": 73.8,
+    "ors_diarrhoea_pct": 56.7,
+    "ari_prevalence_pct": 1.8
+  },
+  "Banaskantha": {
+    "clean_fuel_pct": 45.6,
+    "health_insurance_pct": 41.0,
+    "child_marriage_pct": 37.3,
+    "menstrual_hygiene_pct": 52.7,
+    "antenatal_4visit_pct": 56.1,
+    "ors_diarrhoea_pct": 70.2,
+    "ari_prevalence_pct": 0.0
+  },
+  "Bharuch": {
+    "clean_fuel_pct": 60.2,
+    "health_insurance_pct": 37.4,
+    "child_marriage_pct": 16.8,
+    "menstrual_hygiene_pct": 63.6,
+    "antenatal_4visit_pct": 65.7,
+    "ors_diarrhoea_pct": 57.1,
+    "ari_prevalence_pct": 0.4
+  },
+  "Bhavnagar": {
+    "clean_fuel_pct": 59.8,
+    "health_insurance_pct": 32.2,
+    "child_marriage_pct": 18.0,
+    "menstrual_hygiene_pct": 64.5,
+    "antenatal_4visit_pct": 70.9,
+    "ors_diarrhoea_pct": 65.4,
+    "ari_prevalence_pct": 1.8
+  },
+  "Botad": {
+    "clean_fuel_pct": 63.0,
+    "health_insurance_pct": 38.0,
+    "child_marriage_pct": 13.0,
+    "menstrual_hygiene_pct": 72.1,
+    "antenatal_4visit_pct": 82.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.6
+  },
+  "Chhota Udaipur": {
+    "clean_fuel_pct": 25.7,
+    "health_insurance_pct": 40.0,
+    "child_marriage_pct": 27.5,
+    "menstrual_hygiene_pct": 44.0,
+    "antenatal_4visit_pct": 81.2,
+    "ors_diarrhoea_pct": 67.8,
+    "ari_prevalence_pct": 2.7
+  },
+  "Dahod": {
+    "clean_fuel_pct": 26.8,
+    "health_insurance_pct": 40.3,
+    "child_marriage_pct": 29.9,
+    "menstrual_hygiene_pct": 45.1,
+    "antenatal_4visit_pct": 70.9,
+    "ors_diarrhoea_pct": 76.4,
+    "ari_prevalence_pct": 3.7
+  },
+  "Devbhumi Dwarka": {
+    "clean_fuel_pct": 61.2,
+    "health_insurance_pct": 33.5,
+    "child_marriage_pct": 11.6,
+    "menstrual_hygiene_pct": 65.9,
+    "antenatal_4visit_pct": 76.6,
+    "ors_diarrhoea_pct": 69.4,
+    "ari_prevalence_pct": 0.0
+  },
+  "Gandhinagar": {
+    "clean_fuel_pct": 76.9,
+    "health_insurance_pct": 29.7,
+    "child_marriage_pct": 32.6,
+    "menstrual_hygiene_pct": 69.3,
+    "antenatal_4visit_pct": 71.0,
+    "ors_diarrhoea_pct": 73.4,
+    "ari_prevalence_pct": 0.4
+  },
+  "Gir Somnath": {
+    "clean_fuel_pct": 46.8,
+    "health_insurance_pct": 46.6,
+    "child_marriage_pct": 9.9,
+    "menstrual_hygiene_pct": 74.1,
+    "antenatal_4visit_pct": 80.7,
+    "ors_diarrhoea_pct": 58.0,
+    "ari_prevalence_pct": 0.7
+  },
+  "Jamnagar": {
+    "clean_fuel_pct": 81.6,
+    "health_insurance_pct": 38.6,
+    "child_marriage_pct": 6.8,
+    "menstrual_hygiene_pct": 75.0,
+    "antenatal_4visit_pct": 73.8,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.1
+  },
+  "Junagadh": {
+    "clean_fuel_pct": 67.2,
+    "health_insurance_pct": 47.3,
+    "child_marriage_pct": 11.2,
+    "menstrual_hygiene_pct": 75.2,
+    "antenatal_4visit_pct": 72.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.5
+  },
+  "Kachchh": {
+    "clean_fuel_pct": 67.2,
+    "health_insurance_pct": 34.3,
+    "child_marriage_pct": 19.0,
+    "menstrual_hygiene_pct": 59.1,
+    "antenatal_4visit_pct": 84.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.5
+  },
+  "Kheda": {
+    "clean_fuel_pct": 48.0,
+    "health_insurance_pct": 32.2,
+    "child_marriage_pct": 49.2,
+    "menstrual_hygiene_pct": 65.3,
+    "antenatal_4visit_pct": 61.2,
+    "ors_diarrhoea_pct": 40.9,
+    "ari_prevalence_pct": 1.5
+  },
+  "Mahesana": {
+    "clean_fuel_pct": 63.1,
+    "health_insurance_pct": 40.7,
+    "child_marriage_pct": 32.3,
+    "menstrual_hygiene_pct": 44.5,
+    "antenatal_4visit_pct": 56.6,
+    "ors_diarrhoea_pct": 69.6,
+    "ari_prevalence_pct": 0.5
+  },
+  "Mahisagar": {
+    "clean_fuel_pct": 47.4,
+    "health_insurance_pct": 46.0,
+    "child_marriage_pct": 30.7,
+    "menstrual_hygiene_pct": 59.4,
+    "antenatal_4visit_pct": 76.6,
+    "ors_diarrhoea_pct": 87.6,
+    "ari_prevalence_pct": 0.9
+  },
+  "Morbi": {
+    "clean_fuel_pct": 73.6,
+    "health_insurance_pct": 34.4,
+    "child_marriage_pct": 8.9,
+    "menstrual_hygiene_pct": 66.2,
+    "antenatal_4visit_pct": 75.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.9
+  },
+  "Narmada": {
+    "clean_fuel_pct": 31.3,
+    "health_insurance_pct": 51.1,
+    "child_marriage_pct": 29.5,
+    "menstrual_hygiene_pct": 52.5,
+    "antenatal_4visit_pct": 83.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.0
+  },
+  "Navsari": {
+    "clean_fuel_pct": 70.2,
+    "health_insurance_pct": 42.0,
+    "child_marriage_pct": 15.7,
+    "menstrual_hygiene_pct": 77.2,
+    "antenatal_4visit_pct": 94.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.9
+  },
+  "Panchmahal": {
+    "clean_fuel_pct": 43.6,
+    "health_insurance_pct": 34.0,
+    "child_marriage_pct": 34.1,
+    "menstrual_hygiene_pct": 61.8,
+    "antenatal_4visit_pct": 88.7,
+    "ors_diarrhoea_pct": 67.9,
+    "ari_prevalence_pct": 0.9
+  },
+  "Patan": {
+    "clean_fuel_pct": 62.6,
+    "health_insurance_pct": 50.2,
+    "child_marriage_pct": 35.4,
+    "menstrual_hygiene_pct": 56.9,
+    "antenatal_4visit_pct": 79.8,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.5
+  },
+  "Porbandar": {
+    "clean_fuel_pct": 76.9,
+    "health_insurance_pct": 42.1,
+    "child_marriage_pct": 10.0,
+    "menstrual_hygiene_pct": 71.7,
+    "antenatal_4visit_pct": 92.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.8
+  },
+  "Rajkot": {
+    "clean_fuel_pct": 83.6,
+    "health_insurance_pct": 45.1,
+    "child_marriage_pct": 12.1,
+    "menstrual_hygiene_pct": 84.5,
+    "antenatal_4visit_pct": 93.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.2
+  },
+  "Sabarkantha": {
+    "clean_fuel_pct": 58.7,
+    "health_insurance_pct": 49.3,
+    "child_marriage_pct": 27.0,
+    "menstrual_hygiene_pct": 68.4,
+    "antenatal_4visit_pct": 73.2,
+    "ors_diarrhoea_pct": 66.3,
+    "ari_prevalence_pct": 0.5
+  },
+  "Surat": {
+    "clean_fuel_pct": 88.6,
+    "health_insurance_pct": 31.6,
+    "child_marriage_pct": 13.1,
+    "menstrual_hygiene_pct": 78.2,
+    "antenatal_4visit_pct": 93.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Surendranagar": {
+    "clean_fuel_pct": 56.9,
+    "health_insurance_pct": 50.4,
+    "child_marriage_pct": 19.5,
+    "menstrual_hygiene_pct": 52.8,
+    "antenatal_4visit_pct": 57.5,
+    "ors_diarrhoea_pct": 63.5,
+    "ari_prevalence_pct": 2.9
+  },
+  "Tapi": {
+    "clean_fuel_pct": 45.5,
+    "health_insurance_pct": 42.3,
+    "child_marriage_pct": 25.3,
+    "menstrual_hygiene_pct": 63.7,
+    "antenatal_4visit_pct": 91.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.6
+  },
+  "The Dangs": {
+    "clean_fuel_pct": 23.4,
+    "health_insurance_pct": 44.3,
+    "child_marriage_pct": 30.2,
+    "menstrual_hygiene_pct": 57.4,
+    "antenatal_4visit_pct": 90.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.7
+  },
+  "Vadodara": {
+    "clean_fuel_pct": 78.1,
+    "health_insurance_pct": 41.7,
+    "child_marriage_pct": 22.8,
+    "menstrual_hygiene_pct": 72.4,
+    "antenatal_4visit_pct": 65.9,
+    "ors_diarrhoea_pct": 52.5,
+    "ari_prevalence_pct": 0.7
+  },
+  "Valsad": {
+    "clean_fuel_pct": 73.1,
+    "health_insurance_pct": 40.6,
+    "child_marriage_pct": 19.4,
+    "menstrual_hygiene_pct": 84.9,
+    "antenatal_4visit_pct": 92.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.6
+  },
+  "Ambala": {
+    "clean_fuel_pct": 81.6,
+    "health_insurance_pct": 19.0,
+    "child_marriage_pct": 6.4,
+    "menstrual_hygiene_pct": 93.3,
+    "antenatal_4visit_pct": 57.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 5.8
+  },
+  "Bhiwani": {
+    "clean_fuel_pct": 36.6,
+    "health_insurance_pct": 28.2,
+    "child_marriage_pct": 15.0,
+    "menstrual_hygiene_pct": 95.5,
+    "antenatal_4visit_pct": 60.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.3
+  },
+  "Dadri": {
+    "clean_fuel_pct": 36.2,
+    "health_insurance_pct": 29.7,
+    "child_marriage_pct": 11.8,
+    "menstrual_hygiene_pct": 96.3,
+    "antenatal_4visit_pct": 53.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.3
+  },
+  "Faridabad": {
+    "clean_fuel_pct": 89.3,
+    "health_insurance_pct": 32.8,
+    "child_marriage_pct": 15.3,
+    "menstrual_hygiene_pct": 95.5,
+    "antenatal_4visit_pct": 51.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.2
+  },
+  "Fatehabad": {
+    "clean_fuel_pct": 43.7,
+    "health_insurance_pct": 29.4,
+    "child_marriage_pct": 11.7,
+    "menstrual_hygiene_pct": 96.7,
+    "antenatal_4visit_pct": 60.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.6
+  },
+  "Gurgaon": {
+    "clean_fuel_pct": 81.0,
+    "health_insurance_pct": 34.6,
+    "child_marriage_pct": 20.7,
+    "menstrual_hygiene_pct": 96.0,
+    "antenatal_4visit_pct": 48.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Hisar": {
+    "clean_fuel_pct": 44.8,
+    "health_insurance_pct": 27.9,
+    "child_marriage_pct": 8.9,
+    "menstrual_hygiene_pct": 96.4,
+    "antenatal_4visit_pct": 69.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.2
+  },
+  "Jhajjar": {
+    "clean_fuel_pct": 55.9,
+    "health_insurance_pct": 27.0,
+    "child_marriage_pct": 7.7,
+    "menstrual_hygiene_pct": 97.4,
+    "antenatal_4visit_pct": 60.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.3
+  },
+  "Jind": {
+    "clean_fuel_pct": 42.1,
+    "health_insurance_pct": 23.7,
+    "child_marriage_pct": 8.7,
+    "menstrual_hygiene_pct": 96.2,
+    "antenatal_4visit_pct": 49.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.7
+  },
+  "Kaithal": {
+    "clean_fuel_pct": 55.9,
+    "health_insurance_pct": 29.1,
+    "child_marriage_pct": 11.0,
+    "menstrual_hygiene_pct": 92.1,
+    "antenatal_4visit_pct": 68.8,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.6
+  },
+  "Karnal": {
+    "clean_fuel_pct": 74.1,
+    "health_insurance_pct": 24.6,
+    "child_marriage_pct": 6.6,
+    "menstrual_hygiene_pct": 92.9,
+    "antenatal_4visit_pct": 84.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 5.1
+  },
+  "Kurukshetra": {
+    "clean_fuel_pct": 77.6,
+    "health_insurance_pct": 19.2,
+    "child_marriage_pct": 11.7,
+    "menstrual_hygiene_pct": 92.3,
+    "antenatal_4visit_pct": 59.8,
+    "ors_diarrhoea_pct": 69.1,
+    "ari_prevalence_pct": 7.7
+  },
+  "Mahendragarh": {
+    "clean_fuel_pct": 34.2,
+    "health_insurance_pct": 25.6,
+    "child_marriage_pct": 13.4,
+    "menstrual_hygiene_pct": 95.7,
+    "antenatal_4visit_pct": 55.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.8
+  },
+  "Mewat": {
+    "clean_fuel_pct": 22.0,
+    "health_insurance_pct": 11.5,
+    "child_marriage_pct": 28.7,
+    "menstrual_hygiene_pct": 58.1,
+    "antenatal_4visit_pct": 45.9,
+    "ors_diarrhoea_pct": 61.2,
+    "ari_prevalence_pct": 0.7
+  },
+  "Palwal": {
+    "clean_fuel_pct": 34.6,
+    "health_insurance_pct": 23.5,
+    "child_marriage_pct": 23.8,
+    "menstrual_hygiene_pct": 91.4,
+    "antenatal_4visit_pct": 53.4,
+    "ors_diarrhoea_pct": 49.1,
+    "ari_prevalence_pct": 2.1
+  },
+  "Panchkula": {
+    "clean_fuel_pct": 81.1,
+    "health_insurance_pct": 19.9,
+    "child_marriage_pct": 7.4,
+    "menstrual_hygiene_pct": 96.2,
+    "antenatal_4visit_pct": 76.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.8
+  },
+  "Panipat": {
+    "clean_fuel_pct": 73.0,
+    "health_insurance_pct": 26.5,
+    "child_marriage_pct": 11.9,
+    "menstrual_hygiene_pct": 94.0,
+    "antenatal_4visit_pct": 49.2,
+    "ors_diarrhoea_pct": 45.8,
+    "ari_prevalence_pct": 4.7
+  },
+  "Rewari": {
+    "clean_fuel_pct": 54.9,
+    "health_insurance_pct": 25.3,
+    "child_marriage_pct": 5.8,
+    "menstrual_hygiene_pct": 94.8,
+    "antenatal_4visit_pct": 63.8,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Rohtak": {
+    "clean_fuel_pct": 67.3,
+    "health_insurance_pct": 24.8,
+    "child_marriage_pct": 12.4,
+    "menstrual_hygiene_pct": 98.3,
+    "antenatal_4visit_pct": 72.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.9
+  },
+  "Sirsa": {
+    "clean_fuel_pct": 38.8,
+    "health_insurance_pct": 26.6,
+    "child_marriage_pct": 8.9,
+    "menstrual_hygiene_pct": 95.3,
+    "antenatal_4visit_pct": 61.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.9
+  },
+  "Sonipat": {
+    "clean_fuel_pct": 69.9,
+    "health_insurance_pct": 22.4,
+    "child_marriage_pct": 15.5,
+    "menstrual_hygiene_pct": 97.5,
+    "antenatal_4visit_pct": 64.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 4.0
+  },
+  "Yamunanagar": {
+    "clean_fuel_pct": 77.7,
+    "health_insurance_pct": 20.6,
+    "child_marriage_pct": 6.9,
+    "menstrual_hygiene_pct": 91.6,
+    "antenatal_4visit_pct": 66.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 6.6
+  },
+  "Chamba": {
+    "clean_fuel_pct": 35.0,
+    "health_insurance_pct": 26.8,
+    "child_marriage_pct": 3.8,
+    "menstrual_hygiene_pct": 87.3,
+    "antenatal_4visit_pct": 62.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.6
+  },
+  "Hamirpur": {
+    "clean_fuel_pct": 29.0,
+    "health_insurance_pct": 21.9,
+    "child_marriage_pct": 10.5,
+    "menstrual_hygiene_pct": 77.4,
+    "antenatal_4visit_pct": 43.2,
+    "ors_diarrhoea_pct": 66.7,
+    "ari_prevalence_pct": 2.7
+  },
+  "Kangra": {
+    "clean_fuel_pct": 49.1,
+    "health_insurance_pct": 36.4,
+    "child_marriage_pct": 1.5,
+    "menstrual_hygiene_pct": 89.0,
+    "antenatal_4visit_pct": 56.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.4
+  },
+  "Kinnaur": {
+    "clean_fuel_pct": 70.4,
+    "health_insurance_pct": 35.9,
+    "child_marriage_pct": 27.9,
+    "menstrual_hygiene_pct": 95.9,
+    "antenatal_4visit_pct": 75.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.8
+  },
+  "Kullu": {
+    "clean_fuel_pct": 65.0,
+    "health_insurance_pct": 26.8,
+    "child_marriage_pct": 8.7,
+    "menstrual_hygiene_pct": 85.7,
+    "antenatal_4visit_pct": 60.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.5
+  },
+  "Lahul and Spiti": {
+    "clean_fuel_pct": 71.7,
+    "health_insurance_pct": 31.2,
+    "child_marriage_pct": 11.2,
+    "menstrual_hygiene_pct": 90.9,
+    "antenatal_4visit_pct": 65.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.3
+  },
+  "Mandi": {
+    "clean_fuel_pct": 38.6,
+    "health_insurance_pct": 41.3,
+    "child_marriage_pct": 6.3,
+    "menstrual_hygiene_pct": 92.4,
+    "antenatal_4visit_pct": 70.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.4
+  },
+  "Shimla": {
+    "clean_fuel_pct": 78.0,
+    "health_insurance_pct": 37.1,
+    "child_marriage_pct": 6.1,
+    "menstrual_hygiene_pct": 93.4,
+    "antenatal_4visit_pct": 85.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.8
+  },
+  "Sirmaur": {
+    "clean_fuel_pct": 46.8,
+    "health_insurance_pct": 26.2,
+    "child_marriage_pct": 5.0,
+    "menstrual_hygiene_pct": 92.9,
+    "antenatal_4visit_pct": 85.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.8
+  },
+  "Solan": {
+    "clean_fuel_pct": 62.5,
+    "health_insurance_pct": 41.9,
+    "child_marriage_pct": 13.3,
+    "menstrual_hygiene_pct": 94.4,
+    "antenatal_4visit_pct": 88.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 4.0
+  },
+  "Una": {
+    "clean_fuel_pct": 46.2,
+    "health_insurance_pct": 22.6,
+    "child_marriage_pct": 1.6,
+    "menstrual_hygiene_pct": 93.7,
+    "antenatal_4visit_pct": 71.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.4
+  },
+  "Anantnag": {
+    "clean_fuel_pct": 76.5,
+    "health_insurance_pct": 7.3,
+    "child_marriage_pct": 2.5,
+    "menstrual_hygiene_pct": 74.2,
+    "antenatal_4visit_pct": 80.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 7.7
+  },
+  "Badgam": {
+    "clean_fuel_pct": 71.1,
+    "health_insurance_pct": 5.2,
+    "child_marriage_pct": 1.5,
+    "menstrual_hygiene_pct": 75.3,
+    "antenatal_4visit_pct": 66.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 5.1
+  },
+  "Bandipore": {
+    "clean_fuel_pct": 77.9,
+    "health_insurance_pct": 9.1,
+    "child_marriage_pct": 1.8,
+    "menstrual_hygiene_pct": 64.4,
+    "antenatal_4visit_pct": 82.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 4.8
+  },
+  "Baramula": {
+    "clean_fuel_pct": 76.5,
+    "health_insurance_pct": 6.5,
+    "child_marriage_pct": 3.8,
+    "menstrual_hygiene_pct": 62.0,
+    "antenatal_4visit_pct": 75.2,
+    "ors_diarrhoea_pct": 57.0,
+    "ari_prevalence_pct": 3.8
+  },
+  "Doda": {
+    "clean_fuel_pct": 42.4,
+    "health_insurance_pct": 7.6,
+    "child_marriage_pct": 11.0,
+    "menstrual_hygiene_pct": 68.8,
+    "antenatal_4visit_pct": 74.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Ganderbal": {
+    "clean_fuel_pct": 84.4,
+    "health_insurance_pct": 8.3,
+    "child_marriage_pct": 5.3,
+    "menstrual_hygiene_pct": 69.8,
+    "antenatal_4visit_pct": 80.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.3
+  },
+  "Jammu": {
+    "clean_fuel_pct": 87.9,
+    "health_insurance_pct": 23.3,
+    "child_marriage_pct": 5.3,
+    "menstrual_hygiene_pct": 95.3,
+    "antenatal_4visit_pct": 95.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.6
+  },
+  "Kathua": {
+    "clean_fuel_pct": 68.5,
+    "health_insurance_pct": 7.0,
+    "child_marriage_pct": 1.4,
+    "menstrual_hygiene_pct": 85.4,
+    "antenatal_4visit_pct": 31.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.0
+  },
+  "Kishtwar": {
+    "clean_fuel_pct": 50.6,
+    "health_insurance_pct": 16.4,
+    "child_marriage_pct": 7.2,
+    "menstrual_hygiene_pct": 70.8,
+    "antenatal_4visit_pct": 76.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.2
+  },
+  "Kulgam": {
+    "clean_fuel_pct": 40.3,
+    "health_insurance_pct": 4.2,
+    "child_marriage_pct": 3.7,
+    "menstrual_hygiene_pct": 75.9,
+    "antenatal_4visit_pct": 92.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Kupwara": {
+    "clean_fuel_pct": 62.0,
+    "health_insurance_pct": 10.4,
+    "child_marriage_pct": 3.1,
+    "menstrual_hygiene_pct": 48.7,
+    "antenatal_4visit_pct": 89.2,
+    "ors_diarrhoea_pct": 95.9,
+    "ari_prevalence_pct": 8.9
+  },
+  "Pulwama": {
+    "clean_fuel_pct": 76.6,
+    "health_insurance_pct": 9.9,
+    "child_marriage_pct": 0.5,
+    "menstrual_hygiene_pct": 85.1,
+    "antenatal_4visit_pct": 96.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.6
+  },
+  "Punch": {
+    "clean_fuel_pct": 44.6,
+    "health_insurance_pct": 11.1,
+    "child_marriage_pct": 5.4,
+    "menstrual_hygiene_pct": 76.0,
+    "antenatal_4visit_pct": 86.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.8
+  },
+  "Rajouri": {
+    "clean_fuel_pct": 42.8,
+    "health_insurance_pct": 16.4,
+    "child_marriage_pct": 12.2,
+    "menstrual_hygiene_pct": 53.1,
+    "antenatal_4visit_pct": 71.9,
+    "ors_diarrhoea_pct": 76.7,
+    "ari_prevalence_pct": 6.1
+  },
+  "Ramban": {
+    "clean_fuel_pct": 35.8,
+    "health_insurance_pct": 9.2,
+    "child_marriage_pct": 5.5,
+    "menstrual_hygiene_pct": 58.5,
+    "antenatal_4visit_pct": 79.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.4
+  },
+  "Reasi": {
+    "clean_fuel_pct": 35.2,
+    "health_insurance_pct": 11.2,
+    "child_marriage_pct": 9.6,
+    "menstrual_hygiene_pct": 59.7,
+    "antenatal_4visit_pct": 75.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.9
+  },
+  "Samba": {
+    "clean_fuel_pct": 73.0,
+    "health_insurance_pct": 19.0,
+    "child_marriage_pct": 6.3,
+    "menstrual_hygiene_pct": 85.5,
+    "antenatal_4visit_pct": 96.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.2
+  },
+  "Shupiyan": {
+    "clean_fuel_pct": 66.1,
+    "health_insurance_pct": 8.4,
+    "child_marriage_pct": 2.1,
+    "menstrual_hygiene_pct": 69.8,
+    "antenatal_4visit_pct": 86.8,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.8
+  },
+  "Srinagar": {
+    "clean_fuel_pct": 98.4,
+    "health_insurance_pct": 17.9,
+    "child_marriage_pct": 1.7,
+    "menstrual_hygiene_pct": 84.8,
+    "antenatal_4visit_pct": 85.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.2
+  },
+  "Udhampur": {
+    "clean_fuel_pct": 55.1,
+    "health_insurance_pct": 16.8,
+    "child_marriage_pct": 6.1,
+    "menstrual_hygiene_pct": 74.7,
+    "antenatal_4visit_pct": 69.8,
+    "ors_diarrhoea_pct": 86.2,
+    "ari_prevalence_pct": 4.5
+  },
+  "Data Not Available": {
+    "clean_fuel_pct": 0.0,
+    "health_insurance_pct": 0.0,
+    "child_marriage_pct": 0.0,
+    "menstrual_hygiene_pct": 0.0,
+    "antenatal_4visit_pct": 0.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Bokaro": {
+    "clean_fuel_pct": 47.0,
+    "health_insurance_pct": 44.7,
+    "child_marriage_pct": 26.3,
+    "menstrual_hygiene_pct": 80.0,
+    "antenatal_4visit_pct": 48.7,
+    "ors_diarrhoea_pct": 67.4,
+    "ari_prevalence_pct": 2.2
+  },
+  "Chatra": {
+    "clean_fuel_pct": 20.4,
+    "health_insurance_pct": 46.5,
+    "child_marriage_pct": 31.7,
+    "menstrual_hygiene_pct": 66.9,
+    "antenatal_4visit_pct": 32.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.4
+  },
+  "Deoghar": {
+    "clean_fuel_pct": 23.5,
+    "health_insurance_pct": 53.8,
+    "child_marriage_pct": 49.2,
+    "menstrual_hygiene_pct": 68.0,
+    "antenatal_4visit_pct": 30.7,
+    "ors_diarrhoea_pct": 21.8,
+    "ari_prevalence_pct": 0.8
+  },
+  "Dhanbad": {
+    "clean_fuel_pct": 37.2,
+    "health_insurance_pct": 45.7,
+    "child_marriage_pct": 28.3,
+    "menstrual_hygiene_pct": 81.3,
+    "antenatal_4visit_pct": 44.6,
+    "ors_diarrhoea_pct": 29.5,
+    "ari_prevalence_pct": 1.8
+  },
+  "Dumka": {
+    "clean_fuel_pct": 18.1,
+    "health_insurance_pct": 45.4,
+    "child_marriage_pct": 43.1,
+    "menstrual_hygiene_pct": 63.6,
+    "antenatal_4visit_pct": 39.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.3
+  },
+  "Garhwa": {
+    "clean_fuel_pct": 24.7,
+    "health_insurance_pct": 55.3,
+    "child_marriage_pct": 31.3,
+    "menstrual_hygiene_pct": 59.3,
+    "antenatal_4visit_pct": 29.8,
+    "ors_diarrhoea_pct": 18.8,
+    "ari_prevalence_pct": 0.2
+  },
+  "Giridih": {
+    "clean_fuel_pct": 32.4,
+    "health_insurance_pct": 52.4,
+    "child_marriage_pct": 45.6,
+    "menstrual_hygiene_pct": 65.2,
+    "antenatal_4visit_pct": 42.1,
+    "ors_diarrhoea_pct": 72.5,
+    "ari_prevalence_pct": 3.1
+  },
+  "Godda": {
+    "clean_fuel_pct": 19.7,
+    "health_insurance_pct": 45.9,
+    "child_marriage_pct": 48.5,
+    "menstrual_hygiene_pct": 64.8,
+    "antenatal_4visit_pct": 39.2,
+    "ors_diarrhoea_pct": 59.9,
+    "ari_prevalence_pct": 4.2
+  },
+  "Gumla": {
+    "clean_fuel_pct": 19.1,
+    "health_insurance_pct": 51.7,
+    "child_marriage_pct": 20.9,
+    "menstrual_hygiene_pct": 75.6,
+    "antenatal_4visit_pct": 49.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.0
+  },
+  "Hazaribagh": {
+    "clean_fuel_pct": 36.8,
+    "health_insurance_pct": 55.0,
+    "child_marriage_pct": 38.6,
+    "menstrual_hygiene_pct": 74.6,
+    "antenatal_4visit_pct": 36.4,
+    "ors_diarrhoea_pct": 54.4,
+    "ari_prevalence_pct": 2.7
+  },
+  "Jamtara": {
+    "clean_fuel_pct": 20.3,
+    "health_insurance_pct": 62.9,
+    "child_marriage_pct": 50.5,
+    "menstrual_hygiene_pct": 73.1,
+    "antenatal_4visit_pct": 36.0,
+    "ors_diarrhoea_pct": 64.4,
+    "ari_prevalence_pct": 5.8
+  },
+  "Khunti": {
+    "clean_fuel_pct": 18.7,
+    "health_insurance_pct": 58.2,
+    "child_marriage_pct": 21.7,
+    "menstrual_hygiene_pct": 71.0,
+    "antenatal_4visit_pct": 37.4,
+    "ors_diarrhoea_pct": 53.6,
+    "ari_prevalence_pct": 1.9
+  },
+  "Kodarma": {
+    "clean_fuel_pct": 35.8,
+    "health_insurance_pct": 56.8,
+    "child_marriage_pct": 42.5,
+    "menstrual_hygiene_pct": 80.1,
+    "antenatal_4visit_pct": 47.6,
+    "ors_diarrhoea_pct": 61.1,
+    "ari_prevalence_pct": 2.4
+  },
+  "Latehar": {
+    "clean_fuel_pct": 14.2,
+    "health_insurance_pct": 52.2,
+    "child_marriage_pct": 32.2,
+    "menstrual_hygiene_pct": 72.1,
+    "antenatal_4visit_pct": 43.1,
+    "ors_diarrhoea_pct": 70.2,
+    "ari_prevalence_pct": 6.1
+  },
+  "Lohardaga": {
+    "clean_fuel_pct": 34.0,
+    "health_insurance_pct": 58.9,
+    "child_marriage_pct": 21.9,
+    "menstrual_hygiene_pct": 91.7,
+    "antenatal_4visit_pct": 37.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.6
+  },
+  "Pakur": {
+    "clean_fuel_pct": 16.9,
+    "health_insurance_pct": 52.5,
+    "child_marriage_pct": 43.4,
+    "menstrual_hygiene_pct": 66.4,
+    "antenatal_4visit_pct": 26.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.2
+  },
+  "Palamu": {
+    "clean_fuel_pct": 25.4,
+    "health_insurance_pct": 55.8,
+    "child_marriage_pct": 35.4,
+    "menstrual_hygiene_pct": 73.8,
+    "antenatal_4visit_pct": 33.8,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.6
+  },
+  "Pashchimi Singhbhum": {
+    "clean_fuel_pct": 15.5,
+    "health_insurance_pct": 46.7,
+    "child_marriage_pct": 24.4,
+    "menstrual_hygiene_pct": 80.4,
+    "antenatal_4visit_pct": 34.9,
+    "ors_diarrhoea_pct": 79.0,
+    "ari_prevalence_pct": 2.7
+  },
+  "Purbi Singhbhum": {
+    "clean_fuel_pct": 57.6,
+    "health_insurance_pct": 50.7,
+    "child_marriage_pct": 19.8,
+    "menstrual_hygiene_pct": 88.3,
+    "antenatal_4visit_pct": 40.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.7
+  },
+  "Ramgarh": {
+    "clean_fuel_pct": 33.2,
+    "health_insurance_pct": 49.7,
+    "child_marriage_pct": 25.1,
+    "menstrual_hygiene_pct": 88.4,
+    "antenatal_4visit_pct": 40.9,
+    "ors_diarrhoea_pct": 50.4,
+    "ari_prevalence_pct": 2.6
+  },
+  "Ranchi": {
+    "clean_fuel_pct": 57.7,
+    "health_insurance_pct": 43.9,
+    "child_marriage_pct": 20.9,
+    "menstrual_hygiene_pct": 85.0,
+    "antenatal_4visit_pct": 35.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.9
+  },
+  "Sahibganj": {
+    "clean_fuel_pct": 31.5,
+    "health_insurance_pct": 63.1,
+    "child_marriage_pct": 19.2,
+    "menstrual_hygiene_pct": 74.7,
+    "antenatal_4visit_pct": 54.4,
+    "ors_diarrhoea_pct": 71.3,
+    "ari_prevalence_pct": 3.2
+  },
+  "Simdega": {
+    "clean_fuel_pct": 15.9,
+    "health_insurance_pct": 60.6,
+    "child_marriage_pct": 15.9,
+    "menstrual_hygiene_pct": 92.6,
+    "antenatal_4visit_pct": 34.4,
+    "ors_diarrhoea_pct": 85.0,
+    "ari_prevalence_pct": 0.6
+  },
+  "Bagalkot": {
+    "clean_fuel_pct": 56.6,
+    "health_insurance_pct": 22.3,
+    "child_marriage_pct": 38.7,
+    "menstrual_hygiene_pct": 65.9,
+    "antenatal_4visit_pct": 76.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.1
+  },
+  "Bangalore Rural": {
+    "clean_fuel_pct": 93.6,
+    "health_insurance_pct": 34.9,
+    "child_marriage_pct": 14.1,
+    "menstrual_hygiene_pct": 97.6,
+    "antenatal_4visit_pct": 90.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.4
+  },
+  "Bangalore": {
+    "clean_fuel_pct": 97.2,
+    "health_insurance_pct": 28.8,
+    "child_marriage_pct": 14.5,
+    "menstrual_hygiene_pct": 98.5,
+    "antenatal_4visit_pct": 74.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Belgaum": {
+    "clean_fuel_pct": 74.8,
+    "health_insurance_pct": 20.7,
+    "child_marriage_pct": 32.8,
+    "menstrual_hygiene_pct": 75.3,
+    "antenatal_4visit_pct": 63.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.1
+  },
+  "Bellary": {
+    "clean_fuel_pct": 76.2,
+    "health_insurance_pct": 25.7,
+    "child_marriage_pct": 22.2,
+    "menstrual_hygiene_pct": 85.0,
+    "antenatal_4visit_pct": 56.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.6
+  },
+  "Bidar": {
+    "clean_fuel_pct": 65.2,
+    "health_insurance_pct": 21.4,
+    "child_marriage_pct": 19.2,
+    "menstrual_hygiene_pct": 81.6,
+    "antenatal_4visit_pct": 55.3,
+    "ors_diarrhoea_pct": 83.4,
+    "ari_prevalence_pct": 2.4
+  },
+  "Chamarajanagar": {
+    "clean_fuel_pct": 89.0,
+    "health_insurance_pct": 34.4,
+    "child_marriage_pct": 19.3,
+    "menstrual_hygiene_pct": 94.1,
+    "antenatal_4visit_pct": 84.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.6
+  },
+  "Chikkaballapura": {
+    "clean_fuel_pct": 89.4,
+    "health_insurance_pct": 26.1,
+    "child_marriage_pct": 27.1,
+    "menstrual_hygiene_pct": 96.2,
+    "antenatal_4visit_pct": 90.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.0
+  },
+  "Chikmagalur": {
+    "clean_fuel_pct": 79.0,
+    "health_insurance_pct": 30.0,
+    "child_marriage_pct": 19.5,
+    "menstrual_hygiene_pct": 93.1,
+    "antenatal_4visit_pct": 74.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.4
+  },
+  "Chitradurga": {
+    "clean_fuel_pct": 80.6,
+    "health_insurance_pct": 35.3,
+    "child_marriage_pct": 20.7,
+    "menstrual_hygiene_pct": 85.5,
+    "antenatal_4visit_pct": 79.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.5
+  },
+  "Dakshina Kannada": {
+    "clean_fuel_pct": 82.0,
+    "health_insurance_pct": 36.3,
+    "child_marriage_pct": 4.9,
+    "menstrual_hygiene_pct": 93.9,
+    "antenatal_4visit_pct": 82.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.9
+  },
+  "Davanagere": {
+    "clean_fuel_pct": 79.1,
+    "health_insurance_pct": 25.2,
+    "child_marriage_pct": 19.1,
+    "menstrual_hygiene_pct": 80.2,
+    "antenatal_4visit_pct": 63.1,
+    "ors_diarrhoea_pct": 54.5,
+    "ari_prevalence_pct": 3.4
+  },
+  "Dharwad": {
+    "clean_fuel_pct": 79.1,
+    "health_insurance_pct": 24.5,
+    "child_marriage_pct": 17.8,
+    "menstrual_hygiene_pct": 81.0,
+    "antenatal_4visit_pct": 85.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Gadag": {
+    "clean_fuel_pct": 56.3,
+    "health_insurance_pct": 28.3,
+    "child_marriage_pct": 27.7,
+    "menstrual_hygiene_pct": 68.3,
+    "antenatal_4visit_pct": 68.7,
+    "ors_diarrhoea_pct": 79.8,
+    "ari_prevalence_pct": 2.3
+  },
+  "Gulbarga": {
+    "clean_fuel_pct": 58.5,
+    "health_insurance_pct": 17.4,
+    "child_marriage_pct": 29.8,
+    "menstrual_hygiene_pct": 68.9,
+    "antenatal_4visit_pct": 53.6,
+    "ors_diarrhoea_pct": 68.9,
+    "ari_prevalence_pct": 0.8
+  },
+  "Hassan": {
+    "clean_fuel_pct": 86.1,
+    "health_insurance_pct": 36.9,
+    "child_marriage_pct": 16.2,
+    "menstrual_hygiene_pct": 92.0,
+    "antenatal_4visit_pct": 75.8,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.9
+  },
+  "Haveri": {
+    "clean_fuel_pct": 60.7,
+    "health_insurance_pct": 28.8,
+    "child_marriage_pct": 16.5,
+    "menstrual_hygiene_pct": 75.8,
+    "antenatal_4visit_pct": 58.7,
+    "ors_diarrhoea_pct": 53.8,
+    "ari_prevalence_pct": 1.7
+  },
+  "Kodagu": {
+    "clean_fuel_pct": 78.3,
+    "health_insurance_pct": 45.6,
+    "child_marriage_pct": 12.8,
+    "menstrual_hygiene_pct": 94.2,
+    "antenatal_4visit_pct": 74.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.5
+  },
+  "Kolar": {
+    "clean_fuel_pct": 89.9,
+    "health_insurance_pct": 33.9,
+    "child_marriage_pct": 26.7,
+    "menstrual_hygiene_pct": 93.7,
+    "antenatal_4visit_pct": 90.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.5
+  },
+  "Koppal": {
+    "clean_fuel_pct": 47.4,
+    "health_insurance_pct": 20.6,
+    "child_marriage_pct": 27.1,
+    "menstrual_hygiene_pct": 67.8,
+    "antenatal_4visit_pct": 50.7,
+    "ors_diarrhoea_pct": 55.9,
+    "ari_prevalence_pct": 0.0
+  },
+  "Mandya": {
+    "clean_fuel_pct": 90.5,
+    "health_insurance_pct": 39.9,
+    "child_marriage_pct": 13.1,
+    "menstrual_hygiene_pct": 87.3,
+    "antenatal_4visit_pct": 90.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.3
+  },
+  "Mysore": {
+    "clean_fuel_pct": 94.7,
+    "health_insurance_pct": 26.2,
+    "child_marriage_pct": 17.5,
+    "menstrual_hygiene_pct": 90.6,
+    "antenatal_4visit_pct": 85.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.6
+  },
+  "Raichur": {
+    "clean_fuel_pct": 64.9,
+    "health_insurance_pct": 17.8,
+    "child_marriage_pct": 21.9,
+    "menstrual_hygiene_pct": 68.8,
+    "antenatal_4visit_pct": 67.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.9
+  },
+  "Ramanagara": {
+    "clean_fuel_pct": 92.0,
+    "health_insurance_pct": 35.7,
+    "child_marriage_pct": 11.8,
+    "menstrual_hygiene_pct": 99.5,
+    "antenatal_4visit_pct": 88.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.5
+  },
+  "Shimoga": {
+    "clean_fuel_pct": 85.7,
+    "health_insurance_pct": 26.5,
+    "child_marriage_pct": 11.1,
+    "menstrual_hygiene_pct": 86.3,
+    "antenatal_4visit_pct": 79.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.3
+  },
+  "Tumkur": {
+    "clean_fuel_pct": 85.3,
+    "health_insurance_pct": 31.0,
+    "child_marriage_pct": 24.8,
+    "menstrual_hygiene_pct": 94.5,
+    "antenatal_4visit_pct": 80.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.6
+  },
+  "Udupi": {
+    "clean_fuel_pct": 67.8,
+    "health_insurance_pct": 50.9,
+    "child_marriage_pct": 4.4,
+    "menstrual_hygiene_pct": 95.5,
+    "antenatal_4visit_pct": 59.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.9
+  },
+  "Uttara Kannada": {
+    "clean_fuel_pct": 73.4,
+    "health_insurance_pct": 32.0,
+    "child_marriage_pct": 11.6,
+    "menstrual_hygiene_pct": 93.9,
+    "antenatal_4visit_pct": 57.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.0
+  },
+  "Yadgir": {
+    "clean_fuel_pct": 48.8,
+    "health_insurance_pct": 16.7,
+    "child_marriage_pct": 33.2,
+    "menstrual_hygiene_pct": 67.9,
+    "antenatal_4visit_pct": 63.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.6
+  },
+  "Alappuzha": {
+    "clean_fuel_pct": 79.2,
+    "health_insurance_pct": 60.4,
+    "child_marriage_pct": 3.8,
+    "menstrual_hygiene_pct": 93.1,
+    "antenatal_4visit_pct": 65.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.8
+  },
+  "Ernakulam": {
+    "clean_fuel_pct": 88.4,
+    "health_insurance_pct": 46.2,
+    "child_marriage_pct": 2.9,
+    "menstrual_hygiene_pct": 94.5,
+    "antenatal_4visit_pct": 82.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.4
+  },
+  "Idukki": {
+    "clean_fuel_pct": 54.3,
+    "health_insurance_pct": 58.1,
+    "child_marriage_pct": 7.1,
+    "menstrual_hygiene_pct": 92.6,
+    "antenatal_4visit_pct": 74.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 5.3
+  },
+  "Kannur": {
+    "clean_fuel_pct": 70.4,
+    "health_insurance_pct": 47.9,
+    "child_marriage_pct": 5.4,
+    "menstrual_hygiene_pct": 96.8,
+    "antenatal_4visit_pct": 78.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.3
+  },
+  "Kasaragod": {
+    "clean_fuel_pct": 73.5,
+    "health_insurance_pct": 44.0,
+    "child_marriage_pct": 4.7,
+    "menstrual_hygiene_pct": 93.9,
+    "antenatal_4visit_pct": 91.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.3
+  },
+  "Kollam": {
+    "clean_fuel_pct": 80.1,
+    "health_insurance_pct": 56.0,
+    "child_marriage_pct": 1.8,
+    "menstrual_hygiene_pct": 99.4,
+    "antenatal_4visit_pct": 79.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 5.4
+  },
+  "Kottayam": {
+    "clean_fuel_pct": 72.5,
+    "health_insurance_pct": 53.2,
+    "child_marriage_pct": 1.6,
+    "menstrual_hygiene_pct": 94.1,
+    "antenatal_4visit_pct": 55.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.2
+  },
+  "Kozhikode": {
+    "clean_fuel_pct": 73.8,
+    "health_insurance_pct": 61.1,
+    "child_marriage_pct": 4.2,
+    "menstrual_hygiene_pct": 96.5,
+    "antenatal_4visit_pct": 91.8,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.2
+  },
+  "Malappuram": {
+    "clean_fuel_pct": 59.0,
+    "health_insurance_pct": 42.8,
+    "child_marriage_pct": 15.3,
+    "menstrual_hygiene_pct": 88.7,
+    "antenatal_4visit_pct": 90.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.6
+  },
+  "Palakkad": {
+    "clean_fuel_pct": 67.5,
+    "health_insurance_pct": 53.8,
+    "child_marriage_pct": 14.1,
+    "menstrual_hygiene_pct": 87.5,
+    "antenatal_4visit_pct": 68.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.9
+  },
+  "Pathanamthitta": {
+    "clean_fuel_pct": 60.1,
+    "health_insurance_pct": 50.1,
+    "child_marriage_pct": 0.0,
+    "menstrual_hygiene_pct": 97.9,
+    "antenatal_4visit_pct": 83.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.5
+  },
+  "Thiruvananthapuram": {
+    "clean_fuel_pct": 72.2,
+    "health_insurance_pct": 48.7,
+    "child_marriage_pct": 6.2,
+    "menstrual_hygiene_pct": 98.1,
+    "antenatal_4visit_pct": 55.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 4.9
+  },
+  "Thrissur": {
+    "clean_fuel_pct": 76.3,
+    "health_insurance_pct": 48.7,
+    "child_marriage_pct": 1.0,
+    "menstrual_hygiene_pct": 87.5,
+    "antenatal_4visit_pct": 82.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.3
+  },
+  "Wayanad": {
+    "clean_fuel_pct": 55.7,
+    "health_insurance_pct": 64.8,
+    "child_marriage_pct": 8.4,
+    "menstrual_hygiene_pct": 84.9,
+    "antenatal_4visit_pct": 94.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.4
+  },
+  "Kargil": {
+    "clean_fuel_pct": 58.1,
+    "health_insurance_pct": 13.6,
+    "child_marriage_pct": 2.5,
+    "menstrual_hygiene_pct": 74.4,
+    "antenatal_4visit_pct": 88.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.8
+  },
+  "Leh (Ladakh)": {
+    "clean_fuel_pct": 93.5,
+    "health_insurance_pct": 16.2,
+    "child_marriage_pct": 2.5,
+    "menstrual_hygiene_pct": 83.0,
+    "antenatal_4visit_pct": 69.6,
+    "ors_diarrhoea_pct": 74.6,
+    "ari_prevalence_pct": 7.8
+  },
+  "Lakshadweep": {
+    "clean_fuel_pct": 59.4,
+    "health_insurance_pct": 60.1,
+    "child_marriage_pct": 80.9,
+    "menstrual_hygiene_pct": 1.3,
+    "antenatal_4visit_pct": 88.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.4
+  },
+  "Agar Malwa": {
+    "clean_fuel_pct": 39.5,
+    "health_insurance_pct": 58.9,
+    "child_marriage_pct": 35.6,
+    "menstrual_hygiene_pct": 67.6,
+    "antenatal_4visit_pct": 76.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Alirajpur": {
+    "clean_fuel_pct": 17.4,
+    "health_insurance_pct": 42.5,
+    "child_marriage_pct": 30.7,
+    "menstrual_hygiene_pct": 48.5,
+    "antenatal_4visit_pct": 54.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.7
+  },
+  "Anuppur": {
+    "clean_fuel_pct": 21.7,
+    "health_insurance_pct": 52.8,
+    "child_marriage_pct": 18.6,
+    "menstrual_hygiene_pct": 56.2,
+    "antenatal_4visit_pct": 63.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.7
+  },
+  "Ashoknagar": {
+    "clean_fuel_pct": 20.3,
+    "health_insurance_pct": 34.2,
+    "child_marriage_pct": 29.7,
+    "menstrual_hygiene_pct": 50.6,
+    "antenatal_4visit_pct": 57.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.4
+  },
+  "Balaghat": {
+    "clean_fuel_pct": 31.1,
+    "health_insurance_pct": 68.4,
+    "child_marriage_pct": 4.4,
+    "menstrual_hygiene_pct": 77.3,
+    "antenatal_4visit_pct": 69.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Barwani": {
+    "clean_fuel_pct": 40.5,
+    "health_insurance_pct": 29.2,
+    "child_marriage_pct": 29.6,
+    "menstrual_hygiene_pct": 51.0,
+    "antenatal_4visit_pct": 64.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.7
+  },
+  "Betul": {
+    "clean_fuel_pct": 36.0,
+    "health_insurance_pct": 51.3,
+    "child_marriage_pct": 11.2,
+    "menstrual_hygiene_pct": 62.5,
+    "antenatal_4visit_pct": 74.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.3
+  },
+  "Bhind": {
+    "clean_fuel_pct": 31.0,
+    "health_insurance_pct": 31.0,
+    "child_marriage_pct": 25.1,
+    "menstrual_hygiene_pct": 75.3,
+    "antenatal_4visit_pct": 63.1,
+    "ors_diarrhoea_pct": 49.1,
+    "ari_prevalence_pct": 0.2
+  },
+  "Bhopal": {
+    "clean_fuel_pct": 83.6,
+    "health_insurance_pct": 50.7,
+    "child_marriage_pct": 11.3,
+    "menstrual_hygiene_pct": 78.2,
+    "antenatal_4visit_pct": 64.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.6
+  },
+  "Burhanpur": {
+    "clean_fuel_pct": 68.2,
+    "health_insurance_pct": 42.2,
+    "child_marriage_pct": 17.8,
+    "menstrual_hygiene_pct": 66.1,
+    "antenatal_4visit_pct": 63.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.0
+  },
+  "Chhatarpur": {
+    "clean_fuel_pct": 30.1,
+    "health_insurance_pct": 17.1,
+    "child_marriage_pct": 39.2,
+    "menstrual_hygiene_pct": 63.0,
+    "antenatal_4visit_pct": 36.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 4.9
+  },
+  "Chhindwara": {
+    "clean_fuel_pct": 43.6,
+    "health_insurance_pct": 48.5,
+    "child_marriage_pct": 11.6,
+    "menstrual_hygiene_pct": 69.6,
+    "antenatal_4visit_pct": 67.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.9
+  },
+  "Damoh": {
+    "clean_fuel_pct": 28.1,
+    "health_insurance_pct": 21.6,
+    "child_marriage_pct": 28.6,
+    "menstrual_hygiene_pct": 40.9,
+    "antenatal_4visit_pct": 46.4,
+    "ors_diarrhoea_pct": 53.7,
+    "ari_prevalence_pct": 4.1
+  },
+  "Datia": {
+    "clean_fuel_pct": 31.2,
+    "health_insurance_pct": 30.9,
+    "child_marriage_pct": 27.7,
+    "menstrual_hygiene_pct": 72.9,
+    "antenatal_4visit_pct": 54.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.4
+  },
+  "Dewas": {
+    "clean_fuel_pct": 51.0,
+    "health_insurance_pct": 35.1,
+    "child_marriage_pct": 28.1,
+    "menstrual_hygiene_pct": 68.8,
+    "antenatal_4visit_pct": 49.1,
+    "ors_diarrhoea_pct": 72.4,
+    "ari_prevalence_pct": 4.7
+  },
+  "Dhar": {
+    "clean_fuel_pct": 44.8,
+    "health_insurance_pct": 30.3,
+    "child_marriage_pct": 26.5,
+    "menstrual_hygiene_pct": 57.9,
+    "antenatal_4visit_pct": 76.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.9
+  },
+  "Dindori": {
+    "clean_fuel_pct": 12.1,
+    "health_insurance_pct": 47.2,
+    "child_marriage_pct": 21.1,
+    "menstrual_hygiene_pct": 37.5,
+    "antenatal_4visit_pct": 56.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 4.8
+  },
+  "Guna": {
+    "clean_fuel_pct": 34.5,
+    "health_insurance_pct": 43.1,
+    "child_marriage_pct": 28.1,
+    "menstrual_hygiene_pct": 48.3,
+    "antenatal_4visit_pct": 68.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.1
+  },
+  "Gwalior": {
+    "clean_fuel_pct": 69.8,
+    "health_insurance_pct": 40.6,
+    "child_marriage_pct": 11.8,
+    "menstrual_hygiene_pct": 77.1,
+    "antenatal_4visit_pct": 68.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.6
+  },
+  "Harda": {
+    "clean_fuel_pct": 57.6,
+    "health_insurance_pct": 33.3,
+    "child_marriage_pct": 10.0,
+    "menstrual_hygiene_pct": 70.4,
+    "antenatal_4visit_pct": 71.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 9.2
+  },
+  "Hoshangabad": {
+    "clean_fuel_pct": 47.3,
+    "health_insurance_pct": 28.6,
+    "child_marriage_pct": 16.7,
+    "menstrual_hygiene_pct": 55.6,
+    "antenatal_4visit_pct": 31.5,
+    "ors_diarrhoea_pct": 51.2,
+    "ari_prevalence_pct": 7.3
+  },
+  "Indore": {
+    "clean_fuel_pct": 86.9,
+    "health_insurance_pct": 40.3,
+    "child_marriage_pct": 21.7,
+    "menstrual_hygiene_pct": 83.7,
+    "antenatal_4visit_pct": 74.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.9
+  },
+  "Jabalpur": {
+    "clean_fuel_pct": 28.5,
+    "health_insurance_pct": 61.2,
+    "child_marriage_pct": 7.2,
+    "menstrual_hygiene_pct": 56.2,
+    "antenatal_4visit_pct": 60.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Jhabua": {
+    "clean_fuel_pct": 17.5,
+    "health_insurance_pct": 43.7,
+    "child_marriage_pct": 36.5,
+    "menstrual_hygiene_pct": 50.4,
+    "antenatal_4visit_pct": 63.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.3
+  },
+  "Katni": {
+    "clean_fuel_pct": 29.5,
+    "health_insurance_pct": 18.1,
+    "child_marriage_pct": 17.2,
+    "menstrual_hygiene_pct": 55.5,
+    "antenatal_4visit_pct": 52.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 4.3
+  },
+  "Khandwa (East Nimar)": {
+    "clean_fuel_pct": 48.3,
+    "health_insurance_pct": 38.1,
+    "child_marriage_pct": 10.8,
+    "menstrual_hygiene_pct": 68.4,
+    "antenatal_4visit_pct": 62.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 9.3
+  },
+  "Khargone (West Nimar)": {
+    "clean_fuel_pct": 61.6,
+    "health_insurance_pct": 43.7,
+    "child_marriage_pct": 13.3,
+    "menstrual_hygiene_pct": 69.1,
+    "antenatal_4visit_pct": 61.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.9
+  },
+  "Mandla": {
+    "clean_fuel_pct": 22.3,
+    "health_insurance_pct": 42.6,
+    "child_marriage_pct": 15.0,
+    "menstrual_hygiene_pct": 53.4,
+    "antenatal_4visit_pct": 54.4,
+    "ors_diarrhoea_pct": 81.5,
+    "ari_prevalence_pct": 3.5
+  },
+  "Mandsaur": {
+    "clean_fuel_pct": 45.6,
+    "health_insurance_pct": 48.4,
+    "child_marriage_pct": 34.8,
+    "menstrual_hygiene_pct": 62.5,
+    "antenatal_4visit_pct": 60.8,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.4
+  },
+  "Morena": {
+    "clean_fuel_pct": 32.6,
+    "health_insurance_pct": 36.3,
+    "child_marriage_pct": 27.8,
+    "menstrual_hygiene_pct": 67.5,
+    "antenatal_4visit_pct": 64.9,
+    "ors_diarrhoea_pct": 81.0,
+    "ari_prevalence_pct": 1.4
+  },
+  "Narsimhapur": {
+    "clean_fuel_pct": 36.7,
+    "health_insurance_pct": 49.4,
+    "child_marriage_pct": 19.6,
+    "menstrual_hygiene_pct": 58.4,
+    "antenatal_4visit_pct": 74.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.4
+  },
+  "Neemuch": {
+    "clean_fuel_pct": 52.4,
+    "health_insurance_pct": 43.3,
+    "child_marriage_pct": 29.3,
+    "menstrual_hygiene_pct": 66.4,
+    "antenatal_4visit_pct": 60.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.9
+  },
+  "Panna": {
+    "clean_fuel_pct": 22.1,
+    "health_insurance_pct": 12.6,
+    "child_marriage_pct": 22.8,
+    "menstrual_hygiene_pct": 46.0,
+    "antenatal_4visit_pct": 30.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.1
+  },
+  "Raisen": {
+    "clean_fuel_pct": 38.9,
+    "health_insurance_pct": 41.0,
+    "child_marriage_pct": 12.6,
+    "menstrual_hygiene_pct": 59.3,
+    "antenatal_4visit_pct": 56.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.3
+  },
+  "Rajgarh": {
+    "clean_fuel_pct": 24.8,
+    "health_insurance_pct": 27.1,
+    "child_marriage_pct": 46.0,
+    "menstrual_hygiene_pct": 50.9,
+    "antenatal_4visit_pct": 55.2,
+    "ors_diarrhoea_pct": 46.0,
+    "ari_prevalence_pct": 2.5
+  },
+  "Ratlam": {
+    "clean_fuel_pct": 53.1,
+    "health_insurance_pct": 37.9,
+    "child_marriage_pct": 31.3,
+    "menstrual_hygiene_pct": 59.6,
+    "antenatal_4visit_pct": 65.1,
+    "ors_diarrhoea_pct": 92.5,
+    "ari_prevalence_pct": 3.3
+  },
+  "Rewa": {
+    "clean_fuel_pct": 21.4,
+    "health_insurance_pct": 29.4,
+    "child_marriage_pct": 28.2,
+    "menstrual_hygiene_pct": 40.3,
+    "antenatal_4visit_pct": 33.0,
+    "ors_diarrhoea_pct": 50.5,
+    "ari_prevalence_pct": 2.8
+  },
+  "Sagar": {
+    "clean_fuel_pct": 32.7,
+    "health_insurance_pct": 27.5,
+    "child_marriage_pct": 21.4,
+    "menstrual_hygiene_pct": 59.0,
+    "antenatal_4visit_pct": 35.9,
+    "ors_diarrhoea_pct": 60.0,
+    "ari_prevalence_pct": 7.3
+  },
+  "Satna": {
+    "clean_fuel_pct": 35.2,
+    "health_insurance_pct": 22.0,
+    "child_marriage_pct": 12.9,
+    "menstrual_hygiene_pct": 59.2,
+    "antenatal_4visit_pct": 51.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 5.2
+  },
+  "Sehore": {
+    "clean_fuel_pct": 33.7,
+    "health_insurance_pct": 33.2,
+    "child_marriage_pct": 21.7,
+    "menstrual_hygiene_pct": 49.8,
+    "antenatal_4visit_pct": 45.0,
+    "ors_diarrhoea_pct": 50.7,
+    "ari_prevalence_pct": 2.8
+  },
+  "Seoni": {
+    "clean_fuel_pct": 29.0,
+    "health_insurance_pct": 44.6,
+    "child_marriage_pct": 11.2,
+    "menstrual_hygiene_pct": 60.6,
+    "antenatal_4visit_pct": 64.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.6
+  },
+  "Shahdol": {
+    "clean_fuel_pct": 26.5,
+    "health_insurance_pct": 58.4,
+    "child_marriage_pct": 27.5,
+    "menstrual_hygiene_pct": 51.0,
+    "antenatal_4visit_pct": 57.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.1
+  },
+  "Shajapur": {
+    "clean_fuel_pct": 37.7,
+    "health_insurance_pct": 34.3,
+    "child_marriage_pct": 24.4,
+    "menstrual_hygiene_pct": 59.8,
+    "antenatal_4visit_pct": 64.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.8
+  },
+  "Sheopur": {
+    "clean_fuel_pct": 22.9,
+    "health_insurance_pct": 27.1,
+    "child_marriage_pct": 39.5,
+    "menstrual_hygiene_pct": 50.5,
+    "antenatal_4visit_pct": 41.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.2
+  },
+  "Shivpuri": {
+    "clean_fuel_pct": 32.7,
+    "health_insurance_pct": 38.9,
+    "child_marriage_pct": 32.5,
+    "menstrual_hygiene_pct": 58.7,
+    "antenatal_4visit_pct": 52.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.6
+  },
+  "Sidhi": {
+    "clean_fuel_pct": 20.9,
+    "health_insurance_pct": 26.1,
+    "child_marriage_pct": 23.0,
+    "menstrual_hygiene_pct": 37.9,
+    "antenatal_4visit_pct": 39.4,
+    "ors_diarrhoea_pct": 75.4,
+    "ari_prevalence_pct": 2.8
+  },
+  "Singrauli": {
+    "clean_fuel_pct": 31.7,
+    "health_insurance_pct": 58.5,
+    "child_marriage_pct": 24.7,
+    "menstrual_hygiene_pct": 54.7,
+    "antenatal_4visit_pct": 58.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Tikamgarh": {
+    "clean_fuel_pct": 32.1,
+    "health_insurance_pct": 40.5,
+    "child_marriage_pct": 32.6,
+    "menstrual_hygiene_pct": 71.3,
+    "antenatal_4visit_pct": 64.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.8
+  },
+  "Ujjain": {
+    "clean_fuel_pct": 60.7,
+    "health_insurance_pct": 35.7,
+    "child_marriage_pct": 33.4,
+    "menstrual_hygiene_pct": 74.4,
+    "antenatal_4visit_pct": 60.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 7.7
+  },
+  "Umaria": {
+    "clean_fuel_pct": 26.9,
+    "health_insurance_pct": 19.9,
+    "child_marriage_pct": 21.2,
+    "menstrual_hygiene_pct": 48.9,
+    "antenatal_4visit_pct": 48.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.2
+  },
+  "Vidisha": {
+    "clean_fuel_pct": 31.8,
+    "health_insurance_pct": 48.2,
+    "child_marriage_pct": 22.8,
+    "menstrual_hygiene_pct": 58.5,
+    "antenatal_4visit_pct": 54.4,
+    "ors_diarrhoea_pct": 54.9,
+    "ari_prevalence_pct": 1.1
+  },
+  "Ahmednagar": {
+    "clean_fuel_pct": 77.4,
+    "health_insurance_pct": 12.0,
+    "child_marriage_pct": 26.9,
+    "menstrual_hygiene_pct": 84.2,
+    "antenatal_4visit_pct": 76.6,
+    "ors_diarrhoea_pct": 66.0,
+    "ari_prevalence_pct": 2.7
+  },
+  "Akola": {
+    "clean_fuel_pct": 75.5,
+    "health_insurance_pct": 40.1,
+    "child_marriage_pct": 13.5,
+    "menstrual_hygiene_pct": 79.7,
+    "antenatal_4visit_pct": 76.3,
+    "ors_diarrhoea_pct": 70.6,
+    "ari_prevalence_pct": 6.5
+  },
+  "Amravati": {
+    "clean_fuel_pct": 71.7,
+    "health_insurance_pct": 31.9,
+    "child_marriage_pct": 9.8,
+    "menstrual_hygiene_pct": 83.0,
+    "antenatal_4visit_pct": 71.7,
+    "ors_diarrhoea_pct": 61.5,
+    "ari_prevalence_pct": 5.2
+  },
+  "Bhandara": {
+    "clean_fuel_pct": 71.4,
+    "health_insurance_pct": 30.0,
+    "child_marriage_pct": 1.5,
+    "menstrual_hygiene_pct": 93.1,
+    "antenatal_4visit_pct": 79.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.7
+  },
+  "Bid": {
+    "clean_fuel_pct": 54.4,
+    "health_insurance_pct": 9.3,
+    "child_marriage_pct": 43.7,
+    "menstrual_hygiene_pct": 70.7,
+    "antenatal_4visit_pct": 56.8,
+    "ors_diarrhoea_pct": 58.6,
+    "ari_prevalence_pct": 3.0
+  },
+  "Buldana": {
+    "clean_fuel_pct": 69.2,
+    "health_insurance_pct": 37.9,
+    "child_marriage_pct": 24.1,
+    "menstrual_hygiene_pct": 74.8,
+    "antenatal_4visit_pct": 72.7,
+    "ors_diarrhoea_pct": 56.1,
+    "ari_prevalence_pct": 6.3
+  },
+  "Chandrapur": {
+    "clean_fuel_pct": 85.1,
+    "health_insurance_pct": 28.9,
+    "child_marriage_pct": 9.0,
+    "menstrual_hygiene_pct": 84.1,
+    "antenatal_4visit_pct": 68.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 7.3
+  },
+  "Dhule": {
+    "clean_fuel_pct": 65.1,
+    "health_insurance_pct": 19.8,
+    "child_marriage_pct": 40.5,
+    "menstrual_hygiene_pct": 60.7,
+    "antenatal_4visit_pct": 63.2,
+    "ors_diarrhoea_pct": 55.6,
+    "ari_prevalence_pct": 2.1
+  },
+  "Gadchiroli": {
+    "clean_fuel_pct": 60.5,
+    "health_insurance_pct": 33.3,
+    "child_marriage_pct": 10.1,
+    "menstrual_hygiene_pct": 80.9,
+    "antenatal_4visit_pct": 86.8,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.2
+  },
+  "Gondiya": {
+    "clean_fuel_pct": 68.0,
+    "health_insurance_pct": 30.6,
+    "child_marriage_pct": 6.5,
+    "menstrual_hygiene_pct": 88.6,
+    "antenatal_4visit_pct": 66.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.6
+  },
+  "Hingoli": {
+    "clean_fuel_pct": 53.1,
+    "health_insurance_pct": 14.7,
+    "child_marriage_pct": 37.1,
+    "menstrual_hygiene_pct": 77.2,
+    "antenatal_4visit_pct": 66.6,
+    "ors_diarrhoea_pct": 37.5,
+    "ari_prevalence_pct": 3.2
+  },
+  "Jalgaon": {
+    "clean_fuel_pct": 79.5,
+    "health_insurance_pct": 11.9,
+    "child_marriage_pct": 28.0,
+    "menstrual_hygiene_pct": 70.1,
+    "antenatal_4visit_pct": 58.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 4.1
+  },
+  "Jalna": {
+    "clean_fuel_pct": 56.4,
+    "health_insurance_pct": 9.7,
+    "child_marriage_pct": 35.0,
+    "menstrual_hygiene_pct": 71.8,
+    "antenatal_4visit_pct": 58.4,
+    "ors_diarrhoea_pct": 48.1,
+    "ari_prevalence_pct": 7.0
+  },
+  "Kolhapur": {
+    "clean_fuel_pct": 84.7,
+    "health_insurance_pct": 16.5,
+    "child_marriage_pct": 21.0,
+    "menstrual_hygiene_pct": 91.9,
+    "antenatal_4visit_pct": 81.8,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.2
+  },
+  "Latur": {
+    "clean_fuel_pct": 78.5,
+    "health_insurance_pct": 33.6,
+    "child_marriage_pct": 31.0,
+    "menstrual_hygiene_pct": 81.0,
+    "antenatal_4visit_pct": 72.6,
+    "ors_diarrhoea_pct": 65.4,
+    "ari_prevalence_pct": 3.3
+  },
+  "Mumbai Suburban": {
+    "clean_fuel_pct": 98.7,
+    "health_insurance_pct": 20.2,
+    "child_marriage_pct": 10.0,
+    "menstrual_hygiene_pct": 96.2,
+    "antenatal_4visit_pct": 72.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.7
+  },
+  "Mumbai": {
+    "clean_fuel_pct": 98.3,
+    "health_insurance_pct": 30.7,
+    "child_marriage_pct": 4.5,
+    "menstrual_hygiene_pct": 99.1,
+    "antenatal_4visit_pct": 87.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.7
+  },
+  "Nagpur": {
+    "clean_fuel_pct": 96.0,
+    "health_insurance_pct": 25.6,
+    "child_marriage_pct": 7.1,
+    "menstrual_hygiene_pct": 88.5,
+    "antenatal_4visit_pct": 71.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.9
+  },
+  "Nanded": {
+    "clean_fuel_pct": 64.5,
+    "health_insurance_pct": 15.7,
+    "child_marriage_pct": 32.2,
+    "menstrual_hygiene_pct": 76.8,
+    "antenatal_4visit_pct": 53.5,
+    "ors_diarrhoea_pct": 60.4,
+    "ari_prevalence_pct": 1.0
+  },
+  "Nandurbar": {
+    "clean_fuel_pct": 40.3,
+    "health_insurance_pct": 15.3,
+    "child_marriage_pct": 24.0,
+    "menstrual_hygiene_pct": 47.5,
+    "antenatal_4visit_pct": 58.2,
+    "ors_diarrhoea_pct": 64.7,
+    "ari_prevalence_pct": 4.7
+  },
+  "Nashik": {
+    "clean_fuel_pct": 72.5,
+    "health_insurance_pct": 14.7,
+    "child_marriage_pct": 29.6,
+    "menstrual_hygiene_pct": 79.3,
+    "antenatal_4visit_pct": 66.4,
+    "ors_diarrhoea_pct": 62.2,
+    "ari_prevalence_pct": 4.7
+  },
+  "Osmanabad": {
+    "clean_fuel_pct": 69.7,
+    "health_insurance_pct": 14.8,
+    "child_marriage_pct": 36.6,
+    "menstrual_hygiene_pct": 86.5,
+    "antenatal_4visit_pct": 89.2,
+    "ors_diarrhoea_pct": 43.9,
+    "ari_prevalence_pct": 4.1
+  },
+  "Palghar": {
+    "clean_fuel_pct": 75.0,
+    "health_insurance_pct": 18.8,
+    "child_marriage_pct": 14.6,
+    "menstrual_hygiene_pct": 83.8,
+    "antenatal_4visit_pct": 86.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 4.7
+  },
+  "Parbhani": {
+    "clean_fuel_pct": 54.8,
+    "health_insurance_pct": 10.5,
+    "child_marriage_pct": 48.0,
+    "menstrual_hygiene_pct": 75.3,
+    "antenatal_4visit_pct": 47.4,
+    "ors_diarrhoea_pct": 49.8,
+    "ari_prevalence_pct": 1.4
+  },
+  "Pune": {
+    "clean_fuel_pct": 89.5,
+    "health_insurance_pct": 14.4,
+    "child_marriage_pct": 24.0,
+    "menstrual_hygiene_pct": 94.6,
+    "antenatal_4visit_pct": 68.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.3
+  },
+  "Ratnagiri": {
+    "clean_fuel_pct": 58.1,
+    "health_insurance_pct": 16.6,
+    "child_marriage_pct": 4.4,
+    "menstrual_hygiene_pct": 84.6,
+    "antenatal_4visit_pct": 78.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.4
+  },
+  "Sangli": {
+    "clean_fuel_pct": 87.3,
+    "health_insurance_pct": 12.3,
+    "child_marriage_pct": 27.0,
+    "menstrual_hygiene_pct": 87.4,
+    "antenatal_4visit_pct": 80.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.3
+  },
+  "Satara": {
+    "clean_fuel_pct": 82.1,
+    "health_insurance_pct": 11.4,
+    "child_marriage_pct": 18.1,
+    "menstrual_hygiene_pct": 87.2,
+    "antenatal_4visit_pct": 81.7,
+    "ors_diarrhoea_pct": 72.4,
+    "ari_prevalence_pct": 5.9
+  },
+  "Sindhudurg": {
+    "clean_fuel_pct": 66.0,
+    "health_insurance_pct": 13.2,
+    "child_marriage_pct": 5.0,
+    "menstrual_hygiene_pct": 89.4,
+    "antenatal_4visit_pct": 73.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.4
+  },
+  "Solapur": {
+    "clean_fuel_pct": 73.1,
+    "health_insurance_pct": 20.5,
+    "child_marriage_pct": 40.3,
+    "menstrual_hygiene_pct": 84.5,
+    "antenatal_4visit_pct": 81.9,
+    "ors_diarrhoea_pct": 51.3,
+    "ari_prevalence_pct": 2.4
+  },
+  "Thane": {
+    "clean_fuel_pct": 90.4,
+    "health_insurance_pct": 22.7,
+    "child_marriage_pct": 18.4,
+    "menstrual_hygiene_pct": 91.5,
+    "antenatal_4visit_pct": 70.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.4
+  },
+  "Wardha": {
+    "clean_fuel_pct": 83.9,
+    "health_insurance_pct": 27.1,
+    "child_marriage_pct": 9.0,
+    "menstrual_hygiene_pct": 94.0,
+    "antenatal_4visit_pct": 70.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.5
+  },
+  "Washim": {
+    "clean_fuel_pct": 61.4,
+    "health_insurance_pct": 24.1,
+    "child_marriage_pct": 27.7,
+    "menstrual_hygiene_pct": 72.5,
+    "antenatal_4visit_pct": 60.0,
+    "ors_diarrhoea_pct": 57.9,
+    "ari_prevalence_pct": 5.1
+  },
+  "Yavatmal": {
+    "clean_fuel_pct": 71.8,
+    "health_insurance_pct": 29.0,
+    "child_marriage_pct": 11.7,
+    "menstrual_hygiene_pct": 89.3,
+    "antenatal_4visit_pct": 66.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Bishnupur": {
+    "clean_fuel_pct": 71.3,
+    "health_insurance_pct": 9.3,
+    "child_marriage_pct": 20.9,
+    "menstrual_hygiene_pct": 80.1,
+    "antenatal_4visit_pct": 77.4,
+    "ors_diarrhoea_pct": 51.0,
+    "ari_prevalence_pct": 2.1
+  },
+  "Chandel": {
+    "clean_fuel_pct": 52.0,
+    "health_insurance_pct": 16.1,
+    "child_marriage_pct": 22.3,
+    "menstrual_hygiene_pct": 79.7,
+    "antenatal_4visit_pct": 66.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.2
+  },
+  "Churachandpur": {
+    "clean_fuel_pct": 62.3,
+    "health_insurance_pct": 18.2,
+    "child_marriage_pct": 10.5,
+    "menstrual_hygiene_pct": 87.4,
+    "antenatal_4visit_pct": 61.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.3
+  },
+  "Imphal East": {
+    "clean_fuel_pct": 79.0,
+    "health_insurance_pct": 7.0,
+    "child_marriage_pct": 15.2,
+    "menstrual_hygiene_pct": 76.4,
+    "antenatal_4visit_pct": 87.1,
+    "ors_diarrhoea_pct": 82.9,
+    "ari_prevalence_pct": 1.9
+  },
+  "Imphal West": {
+    "clean_fuel_pct": 88.6,
+    "health_insurance_pct": 15.7,
+    "child_marriage_pct": 15.3,
+    "menstrual_hygiene_pct": 94.6,
+    "antenatal_4visit_pct": 93.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.4
+  },
+  "Senapati": {
+    "clean_fuel_pct": 50.0,
+    "health_insurance_pct": 15.4,
+    "child_marriage_pct": 15.5,
+    "menstrual_hygiene_pct": 84.4,
+    "antenatal_4visit_pct": 64.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.3
+  },
+  "Tamenglong": {
+    "clean_fuel_pct": 30.5,
+    "health_insurance_pct": 16.8,
+    "child_marriage_pct": 19.9,
+    "menstrual_hygiene_pct": 71.0,
+    "antenatal_4visit_pct": 56.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.4
+  },
+  "Thoubal": {
+    "clean_fuel_pct": 74.7,
+    "health_insurance_pct": 19.1,
+    "child_marriage_pct": 17.5,
+    "menstrual_hygiene_pct": 81.6,
+    "antenatal_4visit_pct": 89.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.1
+  },
+  "Ukhrul": {
+    "clean_fuel_pct": 22.9,
+    "health_insurance_pct": 17.0,
+    "child_marriage_pct": 11.1,
+    "menstrual_hygiene_pct": 80.6,
+    "antenatal_4visit_pct": 38.8,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.9
+  },
+  "East Garo Hills": {
+    "clean_fuel_pct": 29.1,
+    "health_insurance_pct": 71.9,
+    "child_marriage_pct": 13.7,
+    "menstrual_hygiene_pct": 75.7,
+    "antenatal_4visit_pct": 25.5,
+    "ors_diarrhoea_pct": 79.1,
+    "ari_prevalence_pct": 1.6
+  },
+  "East Jaintia Hills": {
+    "clean_fuel_pct": 26.5,
+    "health_insurance_pct": 74.1,
+    "child_marriage_pct": 25.3,
+    "menstrual_hygiene_pct": 47.9,
+    "antenatal_4visit_pct": 58.6,
+    "ors_diarrhoea_pct": 72.8,
+    "ari_prevalence_pct": 4.8
+  },
+  "East Khasi Hills": {
+    "clean_fuel_pct": 47.4,
+    "health_insurance_pct": 47.1,
+    "child_marriage_pct": 14.6,
+    "menstrual_hygiene_pct": 70.7,
+    "antenatal_4visit_pct": 57.5,
+    "ors_diarrhoea_pct": 74.3,
+    "ari_prevalence_pct": 5.1
+  },
+  "North Garo Hills": {
+    "clean_fuel_pct": 24.4,
+    "health_insurance_pct": 60.8,
+    "child_marriage_pct": 13.2,
+    "menstrual_hygiene_pct": 74.9,
+    "antenatal_4visit_pct": 24.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.9
+  },
+  "Ribhoi": {
+    "clean_fuel_pct": 21.0,
+    "health_insurance_pct": 66.8,
+    "child_marriage_pct": 20.3,
+    "menstrual_hygiene_pct": 67.8,
+    "antenatal_4visit_pct": 61.0,
+    "ors_diarrhoea_pct": 69.6,
+    "ari_prevalence_pct": 3.6
+  },
+  "South Garo Hills": {
+    "clean_fuel_pct": 22.3,
+    "health_insurance_pct": 79.5,
+    "child_marriage_pct": 10.2,
+    "menstrual_hygiene_pct": 66.6,
+    "antenatal_4visit_pct": 33.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.1
+  },
+  "South West Garo Hills": {
+    "clean_fuel_pct": 33.9,
+    "health_insurance_pct": 75.1,
+    "child_marriage_pct": 15.3,
+    "menstrual_hygiene_pct": 66.8,
+    "antenatal_4visit_pct": 28.5,
+    "ors_diarrhoea_pct": 89.5,
+    "ari_prevalence_pct": 7.5
+  },
+  "South West Khasi Hills": {
+    "clean_fuel_pct": 11.6,
+    "health_insurance_pct": 72.3,
+    "child_marriage_pct": 21.6,
+    "menstrual_hygiene_pct": 57.3,
+    "antenatal_4visit_pct": 63.4,
+    "ors_diarrhoea_pct": 73.1,
+    "ari_prevalence_pct": 6.0
+  },
+  "West Garo Hills": {
+    "clean_fuel_pct": 47.6,
+    "health_insurance_pct": 77.9,
+    "child_marriage_pct": 10.4,
+    "menstrual_hygiene_pct": 79.6,
+    "antenatal_4visit_pct": 48.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.5
+  },
+  "West Jaintia Hills": {
+    "clean_fuel_pct": 20.7,
+    "health_insurance_pct": 65.6,
+    "child_marriage_pct": 19.9,
+    "menstrual_hygiene_pct": 32.6,
+    "antenatal_4visit_pct": 43.1,
+    "ors_diarrhoea_pct": 71.3,
+    "ari_prevalence_pct": 4.8
+  },
+  "West Khasi Hills": {
+    "clean_fuel_pct": 8.6,
+    "health_insurance_pct": 60.1,
+    "child_marriage_pct": 30.3,
+    "menstrual_hygiene_pct": 48.9,
+    "antenatal_4visit_pct": 64.0,
+    "ors_diarrhoea_pct": 75.1,
+    "ari_prevalence_pct": 6.5
+  },
+  "Aizawl": {
+    "clean_fuel_pct": 95.4,
+    "health_insurance_pct": 37.5,
+    "child_marriage_pct": 3.2,
+    "menstrual_hygiene_pct": 92.7,
+    "antenatal_4visit_pct": 68.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.8
+  },
+  "Champhai": {
+    "clean_fuel_pct": 79.4,
+    "health_insurance_pct": 64.9,
+    "child_marriage_pct": 11.0,
+    "menstrual_hygiene_pct": 95.0,
+    "antenatal_4visit_pct": 63.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Kolasib": {
+    "clean_fuel_pct": 87.5,
+    "health_insurance_pct": 61.1,
+    "child_marriage_pct": 13.7,
+    "menstrual_hygiene_pct": 94.3,
+    "antenatal_4visit_pct": 66.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.9
+  },
+  "Lawngtlai": {
+    "clean_fuel_pct": 56.3,
+    "health_insurance_pct": 31.3,
+    "child_marriage_pct": 16.0,
+    "menstrual_hygiene_pct": 71.0,
+    "antenatal_4visit_pct": 33.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.5
+  },
+  "Lunglei": {
+    "clean_fuel_pct": 79.9,
+    "health_insurance_pct": 46.5,
+    "child_marriage_pct": 4.8,
+    "menstrual_hygiene_pct": 91.4,
+    "antenatal_4visit_pct": 56.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.8
+  },
+  "Mamit": {
+    "clean_fuel_pct": 73.3,
+    "health_insurance_pct": 61.7,
+    "child_marriage_pct": 16.8,
+    "menstrual_hygiene_pct": 89.0,
+    "antenatal_4visit_pct": 52.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Saiha": {
+    "clean_fuel_pct": 83.7,
+    "health_insurance_pct": 44.2,
+    "child_marriage_pct": 11.8,
+    "menstrual_hygiene_pct": 83.0,
+    "antenatal_4visit_pct": 35.5,
+    "ors_diarrhoea_pct": 74.7,
+    "ari_prevalence_pct": 0.6
+  },
+  "Serchhip": {
+    "clean_fuel_pct": 81.8,
+    "health_insurance_pct": 58.8,
+    "child_marriage_pct": 7.2,
+    "menstrual_hygiene_pct": 93.2,
+    "antenatal_4visit_pct": 60.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.3
+  },
+  "Dimapur": {
+    "clean_fuel_pct": 84.2,
+    "health_insurance_pct": 5.7,
+    "child_marriage_pct": 4.4,
+    "menstrual_hygiene_pct": 84.9,
+    "antenatal_4visit_pct": 50.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.6
+  },
+  "Kiphire": {
+    "clean_fuel_pct": 16.4,
+    "health_insurance_pct": 8.8,
+    "child_marriage_pct": 22.5,
+    "menstrual_hygiene_pct": 69.1,
+    "antenatal_4visit_pct": 5.8,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.6
+  },
+  "Kohima": {
+    "clean_fuel_pct": 61.7,
+    "health_insurance_pct": 26.7,
+    "child_marriage_pct": 1.0,
+    "menstrual_hygiene_pct": 92.6,
+    "antenatal_4visit_pct": 28.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.9
+  },
+  "Longleng": {
+    "clean_fuel_pct": 11.8,
+    "health_insurance_pct": 38.3,
+    "child_marriage_pct": 11.0,
+    "menstrual_hygiene_pct": 68.8,
+    "antenatal_4visit_pct": 15.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.2
+  },
+  "Mokokchung": {
+    "clean_fuel_pct": 46.2,
+    "health_insurance_pct": 22.3,
+    "child_marriage_pct": 6.0,
+    "menstrual_hygiene_pct": 90.2,
+    "antenatal_4visit_pct": 18.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.9
+  },
+  "Mon": {
+    "clean_fuel_pct": 13.0,
+    "health_insurance_pct": 39.3,
+    "child_marriage_pct": 3.0,
+    "menstrual_hygiene_pct": 66.5,
+    "antenatal_4visit_pct": 9.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.6
+  },
+  "Peren": {
+    "clean_fuel_pct": 31.4,
+    "health_insurance_pct": 5.4,
+    "child_marriage_pct": 9.1,
+    "menstrual_hygiene_pct": 68.1,
+    "antenatal_4visit_pct": 14.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.5
+  },
+  "Phek": {
+    "clean_fuel_pct": 24.2,
+    "health_insurance_pct": 24.9,
+    "child_marriage_pct": 6.5,
+    "menstrual_hygiene_pct": 71.1,
+    "antenatal_4visit_pct": 9.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.1
+  },
+  "Tuensang": {
+    "clean_fuel_pct": 19.7,
+    "health_insurance_pct": 22.0,
+    "child_marriage_pct": 10.4,
+    "menstrual_hygiene_pct": 72.8,
+    "antenatal_4visit_pct": 4.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.8
+  },
+  "Wokha": {
+    "clean_fuel_pct": 41.2,
+    "health_insurance_pct": 20.6,
+    "child_marriage_pct": 3.2,
+    "menstrual_hygiene_pct": 90.6,
+    "antenatal_4visit_pct": 34.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.6
+  },
+  "Zunheboto": {
+    "clean_fuel_pct": 18.6,
+    "health_insurance_pct": 18.1,
+    "child_marriage_pct": 4.0,
+    "menstrual_hygiene_pct": 86.8,
+    "antenatal_4visit_pct": 11.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Central": {
+    "clean_fuel_pct": 98.8,
+    "health_insurance_pct": 22.6,
+    "child_marriage_pct": 11.2,
+    "menstrual_hygiene_pct": 97.5,
+    "antenatal_4visit_pct": 73.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.1
+  },
+  "East": {
+    "clean_fuel_pct": 99.1,
+    "health_insurance_pct": 30.7,
+    "child_marriage_pct": 12.8,
+    "menstrual_hygiene_pct": 96.7,
+    "antenatal_4visit_pct": 89.7,
+    "ors_diarrhoea_pct": 85.7,
+    "ari_prevalence_pct": 4.5
+  },
+  "New Delhi": {
+    "clean_fuel_pct": 98.3,
+    "health_insurance_pct": 25.2,
+    "child_marriage_pct": 10.2,
+    "menstrual_hygiene_pct": 97.2,
+    "antenatal_4visit_pct": 80.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 5.2
+  },
+  "North": {
+    "clean_fuel_pct": 99.7,
+    "health_insurance_pct": 19.4,
+    "child_marriage_pct": 5.0,
+    "menstrual_hygiene_pct": 98.6,
+    "antenatal_4visit_pct": 86.2,
+    "ors_diarrhoea_pct": 61.2,
+    "ari_prevalence_pct": 2.3
+  },
+  "North East": {
+    "clean_fuel_pct": 99.1,
+    "health_insurance_pct": 28.2,
+    "child_marriage_pct": 10.1,
+    "menstrual_hygiene_pct": 95.6,
+    "antenatal_4visit_pct": 77.9,
+    "ors_diarrhoea_pct": 64.6,
+    "ari_prevalence_pct": 8.8
+  },
+  "North West": {
+    "clean_fuel_pct": 98.1,
+    "health_insurance_pct": 18.1,
+    "child_marriage_pct": 17.0,
+    "menstrual_hygiene_pct": 94.8,
+    "antenatal_4visit_pct": 50.6,
+    "ors_diarrhoea_pct": 52.9,
+    "ari_prevalence_pct": 5.7
+  },
+  "Shahdara": {
+    "clean_fuel_pct": 99.8,
+    "health_insurance_pct": 21.5,
+    "child_marriage_pct": 7.3,
+    "menstrual_hygiene_pct": 96.6,
+    "antenatal_4visit_pct": 88.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 4.5
+  },
+  "South": {
+    "clean_fuel_pct": 99.1,
+    "health_insurance_pct": 24.5,
+    "child_marriage_pct": 7.5,
+    "menstrual_hygiene_pct": 98.7,
+    "antenatal_4visit_pct": 83.2,
+    "ors_diarrhoea_pct": 89.8,
+    "ari_prevalence_pct": 4.9
+  },
+  "South East": {
+    "clean_fuel_pct": 99.3,
+    "health_insurance_pct": 37.7,
+    "child_marriage_pct": 7.5,
+    "menstrual_hygiene_pct": 98.6,
+    "antenatal_4visit_pct": 91.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 9.2
+  },
+  "South West": {
+    "clean_fuel_pct": 97.7,
+    "health_insurance_pct": 28.7,
+    "child_marriage_pct": 6.6,
+    "menstrual_hygiene_pct": 97.2,
+    "antenatal_4visit_pct": 85.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.9
+  },
+  "West": {
+    "clean_fuel_pct": 99.0,
+    "health_insurance_pct": 21.0,
+    "child_marriage_pct": 10.5,
+    "menstrual_hygiene_pct": 96.1,
+    "antenatal_4visit_pct": 67.1,
+    "ors_diarrhoea_pct": 62.8,
+    "ari_prevalence_pct": 7.3
+  },
+  "Anugul": {
+    "clean_fuel_pct": 23.8,
+    "health_insurance_pct": 63.1,
+    "child_marriage_pct": 25.0,
+    "menstrual_hygiene_pct": 86.5,
+    "antenatal_4visit_pct": 83.7,
+    "ors_diarrhoea_pct": 61.9,
+    "ari_prevalence_pct": 4.5
+  },
+  "Balangir": {
+    "clean_fuel_pct": 32.6,
+    "health_insurance_pct": 44.0,
+    "child_marriage_pct": 14.0,
+    "menstrual_hygiene_pct": 82.4,
+    "antenatal_4visit_pct": 95.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.7
+  },
+  "Baleshwar": {
+    "clean_fuel_pct": 28.4,
+    "health_insurance_pct": 40.6,
+    "child_marriage_pct": 26.4,
+    "menstrual_hygiene_pct": 85.1,
+    "antenatal_4visit_pct": 56.6,
+    "ors_diarrhoea_pct": 62.7,
+    "ari_prevalence_pct": 5.9
+  },
+  "Bargarh": {
+    "clean_fuel_pct": 31.9,
+    "health_insurance_pct": 45.5,
+    "child_marriage_pct": 8.6,
+    "menstrual_hygiene_pct": 84.6,
+    "antenatal_4visit_pct": 70.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.8
+  },
+  "Baudh": {
+    "clean_fuel_pct": 30.9,
+    "health_insurance_pct": 44.7,
+    "child_marriage_pct": 25.3,
+    "menstrual_hygiene_pct": 79.8,
+    "antenatal_4visit_pct": 79.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.3
+  },
+  "Bhadrak": {
+    "clean_fuel_pct": 22.9,
+    "health_insurance_pct": 44.9,
+    "child_marriage_pct": 10.4,
+    "menstrual_hygiene_pct": 86.9,
+    "antenatal_4visit_pct": 74.9,
+    "ors_diarrhoea_pct": 68.0,
+    "ari_prevalence_pct": 7.9
+  },
+  "Cuttack": {
+    "clean_fuel_pct": 45.1,
+    "health_insurance_pct": 42.3,
+    "child_marriage_pct": 14.2,
+    "menstrual_hygiene_pct": 88.7,
+    "antenatal_4visit_pct": 84.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 8.4
+  },
+  "Debagarh": {
+    "clean_fuel_pct": 18.4,
+    "health_insurance_pct": 57.5,
+    "child_marriage_pct": 19.2,
+    "menstrual_hygiene_pct": 79.4,
+    "antenatal_4visit_pct": 77.5,
+    "ors_diarrhoea_pct": 62.2,
+    "ari_prevalence_pct": 4.4
+  },
+  "Dhenkanal": {
+    "clean_fuel_pct": 28.8,
+    "health_insurance_pct": 55.2,
+    "child_marriage_pct": 23.7,
+    "menstrual_hygiene_pct": 84.9,
+    "antenatal_4visit_pct": 75.8,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 6.1
+  },
+  "Gajapati": {
+    "clean_fuel_pct": 28.9,
+    "health_insurance_pct": 39.6,
+    "child_marriage_pct": 28.1,
+    "menstrual_hygiene_pct": 75.8,
+    "antenatal_4visit_pct": 83.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.3
+  },
+  "Ganjam": {
+    "clean_fuel_pct": 63.7,
+    "health_insurance_pct": 51.9,
+    "child_marriage_pct": 22.3,
+    "menstrual_hygiene_pct": 83.1,
+    "antenatal_4visit_pct": 82.7,
+    "ors_diarrhoea_pct": 66.7,
+    "ari_prevalence_pct": 0.4
+  },
+  "Jagatsinghapur": {
+    "clean_fuel_pct": 30.5,
+    "health_insurance_pct": 56.8,
+    "child_marriage_pct": 12.0,
+    "menstrual_hygiene_pct": 92.8,
+    "antenatal_4visit_pct": 82.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 7.1
+  },
+  "Jajapur": {
+    "clean_fuel_pct": 28.4,
+    "health_insurance_pct": 53.9,
+    "child_marriage_pct": 11.4,
+    "menstrual_hygiene_pct": 83.4,
+    "antenatal_4visit_pct": 73.8,
+    "ors_diarrhoea_pct": 57.4,
+    "ari_prevalence_pct": 9.1
+  },
+  "Jharsuguda": {
+    "clean_fuel_pct": 41.8,
+    "health_insurance_pct": 37.7,
+    "child_marriage_pct": 8.5,
+    "menstrual_hygiene_pct": 89.1,
+    "antenatal_4visit_pct": 94.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.0
+  },
+  "Kalahandi": {
+    "clean_fuel_pct": 28.9,
+    "health_insurance_pct": 48.6,
+    "child_marriage_pct": 16.3,
+    "menstrual_hygiene_pct": 70.5,
+    "antenatal_4visit_pct": 82.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.7
+  },
+  "Kandhamal": {
+    "clean_fuel_pct": 24.1,
+    "health_insurance_pct": 54.5,
+    "child_marriage_pct": 20.0,
+    "menstrual_hygiene_pct": 75.3,
+    "antenatal_4visit_pct": 81.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.4
+  },
+  "Kendrapara": {
+    "clean_fuel_pct": 27.9,
+    "health_insurance_pct": 50.0,
+    "child_marriage_pct": 9.4,
+    "menstrual_hygiene_pct": 85.6,
+    "antenatal_4visit_pct": 77.1,
+    "ors_diarrhoea_pct": 80.6,
+    "ari_prevalence_pct": 6.5
+  },
+  "Kendujhar": {
+    "clean_fuel_pct": 27.9,
+    "health_insurance_pct": 43.3,
+    "child_marriage_pct": 29.0,
+    "menstrual_hygiene_pct": 79.6,
+    "antenatal_4visit_pct": 57.1,
+    "ors_diarrhoea_pct": 50.6,
+    "ari_prevalence_pct": 2.4
+  },
+  "Khordha": {
+    "clean_fuel_pct": 63.3,
+    "health_insurance_pct": 43.2,
+    "child_marriage_pct": 17.1,
+    "menstrual_hygiene_pct": 93.5,
+    "antenatal_4visit_pct": 91.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.1
+  },
+  "Koraput": {
+    "clean_fuel_pct": 31.5,
+    "health_insurance_pct": 54.6,
+    "child_marriage_pct": 35.5,
+    "menstrual_hygiene_pct": 67.2,
+    "antenatal_4visit_pct": 79.2,
+    "ors_diarrhoea_pct": 57.6,
+    "ari_prevalence_pct": 0.4
+  },
+  "Malkangiri": {
+    "clean_fuel_pct": 20.9,
+    "health_insurance_pct": 47.0,
+    "child_marriage_pct": 32.4,
+    "menstrual_hygiene_pct": 64.7,
+    "antenatal_4visit_pct": 82.8,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.1
+  },
+  "Mayurbhanj": {
+    "clean_fuel_pct": 16.1,
+    "health_insurance_pct": 46.5,
+    "child_marriage_pct": 31.3,
+    "menstrual_hygiene_pct": 76.2,
+    "antenatal_4visit_pct": 52.9,
+    "ors_diarrhoea_pct": 59.5,
+    "ari_prevalence_pct": 3.2
+  },
+  "Nabarangapur": {
+    "clean_fuel_pct": 19.0,
+    "health_insurance_pct": 48.4,
+    "child_marriage_pct": 39.4,
+    "menstrual_hygiene_pct": 60.1,
+    "antenatal_4visit_pct": 87.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.5
+  },
+  "Nayagarh": {
+    "clean_fuel_pct": 42.3,
+    "health_insurance_pct": 49.3,
+    "child_marriage_pct": 35.7,
+    "menstrual_hygiene_pct": 89.6,
+    "antenatal_4visit_pct": 90.3,
+    "ors_diarrhoea_pct": 52.8,
+    "ari_prevalence_pct": 1.9
+  },
+  "Nuapada": {
+    "clean_fuel_pct": 23.2,
+    "health_insurance_pct": 45.3,
+    "child_marriage_pct": 15.6,
+    "menstrual_hygiene_pct": 65.0,
+    "antenatal_4visit_pct": 71.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.8
+  },
+  "Puri": {
+    "clean_fuel_pct": 34.4,
+    "health_insurance_pct": 61.5,
+    "child_marriage_pct": 10.2,
+    "menstrual_hygiene_pct": 92.7,
+    "antenatal_4visit_pct": 94.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Rayagada": {
+    "clean_fuel_pct": 30.2,
+    "health_insurance_pct": 45.5,
+    "child_marriage_pct": 33.2,
+    "menstrual_hygiene_pct": 63.5,
+    "antenatal_4visit_pct": 85.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.1
+  },
+  "Sambalpur": {
+    "clean_fuel_pct": 42.6,
+    "health_insurance_pct": 49.3,
+    "child_marriage_pct": 7.4,
+    "menstrual_hygiene_pct": 86.1,
+    "antenatal_4visit_pct": 89.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.7
+  },
+  "Subarnapur": {
+    "clean_fuel_pct": 41.6,
+    "health_insurance_pct": 45.8,
+    "child_marriage_pct": 16.9,
+    "menstrual_hygiene_pct": 79.1,
+    "antenatal_4visit_pct": 87.8,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.3
+  },
+  "Sundargarh": {
+    "clean_fuel_pct": 40.2,
+    "health_insurance_pct": 39.3,
+    "child_marriage_pct": 12.9,
+    "menstrual_hygiene_pct": 87.7,
+    "antenatal_4visit_pct": 73.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.9
+  },
+  "Karaikal": {
+    "clean_fuel_pct": 81.2,
+    "health_insurance_pct": 26.9,
+    "child_marriage_pct": 7.2,
+    "menstrual_hygiene_pct": 100.0,
+    "antenatal_4visit_pct": 88.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 4.1
+  },
+  "Mahe": {
+    "clean_fuel_pct": 90.9,
+    "health_insurance_pct": 23.6,
+    "child_marriage_pct": 2.8,
+    "menstrual_hygiene_pct": 98.5,
+    "antenatal_4visit_pct": 85.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Puducherry": {
+    "clean_fuel_pct": 95.0,
+    "health_insurance_pct": 31.3,
+    "child_marriage_pct": 5.7,
+    "menstrual_hygiene_pct": 99.2,
+    "antenatal_4visit_pct": 87.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 5.6
+  },
+  "Yanam": {
+    "clean_fuel_pct": 98.6,
+    "health_insurance_pct": 29.2,
+    "child_marriage_pct": 15.9,
+    "menstrual_hygiene_pct": 93.1,
+    "antenatal_4visit_pct": 79.8,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Amritsar": {
+    "clean_fuel_pct": 82.9,
+    "health_insurance_pct": 26.2,
+    "child_marriage_pct": 9.2,
+    "menstrual_hygiene_pct": 96.0,
+    "antenatal_4visit_pct": 56.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.6
+  },
+  "Barnala": {
+    "clean_fuel_pct": 73.5,
+    "health_insurance_pct": 20.7,
+    "child_marriage_pct": 12.8,
+    "menstrual_hygiene_pct": 90.8,
+    "antenatal_4visit_pct": 63.8,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 6.0
+  },
+  "Bathinda": {
+    "clean_fuel_pct": 78.1,
+    "health_insurance_pct": 20.1,
+    "child_marriage_pct": 14.2,
+    "menstrual_hygiene_pct": 84.6,
+    "antenatal_4visit_pct": 48.2,
+    "ors_diarrhoea_pct": 70.6,
+    "ari_prevalence_pct": 9.0
+  },
+  "Faridkot": {
+    "clean_fuel_pct": 79.1,
+    "health_insurance_pct": 20.4,
+    "child_marriage_pct": 11.9,
+    "menstrual_hygiene_pct": 91.5,
+    "antenatal_4visit_pct": 53.4,
+    "ors_diarrhoea_pct": 67.9,
+    "ari_prevalence_pct": 3.7
+  },
+  "Fatehgarh Sahib": {
+    "clean_fuel_pct": 74.3,
+    "health_insurance_pct": 35.1,
+    "child_marriage_pct": 7.3,
+    "menstrual_hygiene_pct": 98.0,
+    "antenatal_4visit_pct": 76.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.9
+  },
+  "Fazilka": {
+    "clean_fuel_pct": 57.1,
+    "health_insurance_pct": 20.6,
+    "child_marriage_pct": 12.4,
+    "menstrual_hygiene_pct": 85.3,
+    "antenatal_4visit_pct": 36.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.8
+  },
+  "Firozpur": {
+    "clean_fuel_pct": 68.6,
+    "health_insurance_pct": 21.0,
+    "child_marriage_pct": 10.5,
+    "menstrual_hygiene_pct": 93.7,
+    "antenatal_4visit_pct": 48.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 4.4
+  },
+  "Gurudaspur": {
+    "clean_fuel_pct": 81.3,
+    "health_insurance_pct": 23.5,
+    "child_marriage_pct": 6.5,
+    "menstrual_hygiene_pct": 91.8,
+    "antenatal_4visit_pct": 61.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.3
+  },
+  "Hoshiarpur": {
+    "clean_fuel_pct": 77.3,
+    "health_insurance_pct": 27.7,
+    "child_marriage_pct": 4.7,
+    "menstrual_hygiene_pct": 97.4,
+    "antenatal_4visit_pct": 59.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.3
+  },
+  "Jalandhar": {
+    "clean_fuel_pct": 82.3,
+    "health_insurance_pct": 25.9,
+    "child_marriage_pct": 7.4,
+    "menstrual_hygiene_pct": 96.8,
+    "antenatal_4visit_pct": 72.8,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.9
+  },
+  "Kapurthala": {
+    "clean_fuel_pct": 84.2,
+    "health_insurance_pct": 20.7,
+    "child_marriage_pct": 6.9,
+    "menstrual_hygiene_pct": 95.6,
+    "antenatal_4visit_pct": 51.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.0
+  },
+  "Ludhiana": {
+    "clean_fuel_pct": 83.2,
+    "health_insurance_pct": 25.2,
+    "child_marriage_pct": 6.5,
+    "menstrual_hygiene_pct": 95.7,
+    "antenatal_4visit_pct": 65.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Mansa": {
+    "clean_fuel_pct": 52.3,
+    "health_insurance_pct": 18.4,
+    "child_marriage_pct": 11.5,
+    "menstrual_hygiene_pct": 88.0,
+    "antenatal_4visit_pct": 49.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 5.8
+  },
+  "Moga": {
+    "clean_fuel_pct": 71.5,
+    "health_insurance_pct": 23.7,
+    "child_marriage_pct": 13.1,
+    "menstrual_hygiene_pct": 90.5,
+    "antenatal_4visit_pct": 58.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 6.0
+  },
+  "Muktsar": {
+    "clean_fuel_pct": 72.9,
+    "health_insurance_pct": 23.9,
+    "child_marriage_pct": 8.6,
+    "menstrual_hygiene_pct": 90.5,
+    "antenatal_4visit_pct": 57.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 4.0
+  },
+  "Pathankot": {
+    "clean_fuel_pct": 79.8,
+    "health_insurance_pct": 27.0,
+    "child_marriage_pct": 4.6,
+    "menstrual_hygiene_pct": 96.8,
+    "antenatal_4visit_pct": 52.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.4
+  },
+  "Patiala": {
+    "clean_fuel_pct": 80.4,
+    "health_insurance_pct": 33.8,
+    "child_marriage_pct": 7.8,
+    "menstrual_hygiene_pct": 95.7,
+    "antenatal_4visit_pct": 72.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.6
+  },
+  "Rupnagar": {
+    "clean_fuel_pct": 63.9,
+    "health_insurance_pct": 37.8,
+    "child_marriage_pct": 2.4,
+    "menstrual_hygiene_pct": 95.8,
+    "antenatal_4visit_pct": 65.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.9
+  },
+  "Sahibzada Ajit Singh Nagar": {
+    "clean_fuel_pct": 88.9,
+    "health_insurance_pct": 31.0,
+    "child_marriage_pct": 10.6,
+    "menstrual_hygiene_pct": 95.9,
+    "antenatal_4visit_pct": 69.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.5
+  },
+  "Sangrur": {
+    "clean_fuel_pct": 69.8,
+    "health_insurance_pct": 18.7,
+    "child_marriage_pct": 8.0,
+    "menstrual_hygiene_pct": 89.8,
+    "antenatal_4visit_pct": 47.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 6.6
+  },
+  "Shahid Bhagat Singh Nagar": {
+    "clean_fuel_pct": 76.4,
+    "health_insurance_pct": 23.3,
+    "child_marriage_pct": 6.4,
+    "menstrual_hygiene_pct": 97.3,
+    "antenatal_4visit_pct": 60.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Tarn Taran": {
+    "clean_fuel_pct": 66.2,
+    "health_insurance_pct": 25.0,
+    "child_marriage_pct": 10.7,
+    "menstrual_hygiene_pct": 92.0,
+    "antenatal_4visit_pct": 60.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.3
+  },
+  "Ajmer": {
+    "clean_fuel_pct": 52.9,
+    "health_insurance_pct": 88.7,
+    "child_marriage_pct": 20.2,
+    "menstrual_hygiene_pct": 84.3,
+    "antenatal_4visit_pct": 52.8,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.9
+  },
+  "Alwar": {
+    "clean_fuel_pct": 34.9,
+    "health_insurance_pct": 80.8,
+    "child_marriage_pct": 32.2,
+    "menstrual_hygiene_pct": 84.9,
+    "antenatal_4visit_pct": 30.0,
+    "ors_diarrhoea_pct": 39.9,
+    "ari_prevalence_pct": 4.0
+  },
+  "Banswara": {
+    "clean_fuel_pct": 21.1,
+    "health_insurance_pct": 84.2,
+    "child_marriage_pct": 25.0,
+    "menstrual_hygiene_pct": 61.3,
+    "antenatal_4visit_pct": 69.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.5
+  },
+  "Baran": {
+    "clean_fuel_pct": 39.6,
+    "health_insurance_pct": 89.5,
+    "child_marriage_pct": 26.8,
+    "menstrual_hygiene_pct": 74.7,
+    "antenatal_4visit_pct": 79.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 8.1
+  },
+  "Barmer": {
+    "clean_fuel_pct": 26.8,
+    "health_insurance_pct": 97.8,
+    "child_marriage_pct": 20.2,
+    "menstrual_hygiene_pct": 86.3,
+    "antenatal_4visit_pct": 64.9,
+    "ors_diarrhoea_pct": 91.4,
+    "ari_prevalence_pct": 1.3
+  },
+  "Bharatpur": {
+    "clean_fuel_pct": 24.3,
+    "health_insurance_pct": 84.8,
+    "child_marriage_pct": 33.5,
+    "menstrual_hygiene_pct": 77.7,
+    "antenatal_4visit_pct": 33.2,
+    "ors_diarrhoea_pct": 47.3,
+    "ari_prevalence_pct": 3.8
+  },
+  "Bhilwara": {
+    "clean_fuel_pct": 26.5,
+    "health_insurance_pct": 89.1,
+    "child_marriage_pct": 41.8,
+    "menstrual_hygiene_pct": 76.0,
+    "antenatal_4visit_pct": 64.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.0
+  },
+  "Bikaner": {
+    "clean_fuel_pct": 51.4,
+    "health_insurance_pct": 87.4,
+    "child_marriage_pct": 33.3,
+    "menstrual_hygiene_pct": 90.2,
+    "antenatal_4visit_pct": 50.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.2
+  },
+  "Bundi": {
+    "clean_fuel_pct": 26.5,
+    "health_insurance_pct": 87.7,
+    "child_marriage_pct": 34.1,
+    "menstrual_hygiene_pct": 77.6,
+    "antenatal_4visit_pct": 74.0,
+    "ors_diarrhoea_pct": 56.3,
+    "ari_prevalence_pct": 9.5
+  },
+  "Chittaurgarh": {
+    "clean_fuel_pct": 31.3,
+    "health_insurance_pct": 90.6,
+    "child_marriage_pct": 42.6,
+    "menstrual_hygiene_pct": 67.5,
+    "antenatal_4visit_pct": 75.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.3
+  },
+  "Churu": {
+    "clean_fuel_pct": 40.6,
+    "health_insurance_pct": 81.9,
+    "child_marriage_pct": 27.9,
+    "menstrual_hygiene_pct": 87.9,
+    "antenatal_4visit_pct": 45.0,
+    "ors_diarrhoea_pct": 61.9,
+    "ari_prevalence_pct": 5.2
+  },
+  "Dausa": {
+    "clean_fuel_pct": 22.6,
+    "health_insurance_pct": 91.2,
+    "child_marriage_pct": 26.3,
+    "menstrual_hygiene_pct": 86.9,
+    "antenatal_4visit_pct": 53.6,
+    "ors_diarrhoea_pct": 45.0,
+    "ari_prevalence_pct": 4.4
+  },
+  "Dhaulpur": {
+    "clean_fuel_pct": 36.5,
+    "health_insurance_pct": 89.0,
+    "child_marriage_pct": 29.6,
+    "menstrual_hygiene_pct": 76.0,
+    "antenatal_4visit_pct": 42.4,
+    "ors_diarrhoea_pct": 40.3,
+    "ari_prevalence_pct": 6.0
+  },
+  "Dungarpur": {
+    "clean_fuel_pct": 27.3,
+    "health_insurance_pct": 97.5,
+    "child_marriage_pct": 16.9,
+    "menstrual_hygiene_pct": 85.5,
+    "antenatal_4visit_pct": 50.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Ganganagar": {
+    "clean_fuel_pct": 45.5,
+    "health_insurance_pct": 85.3,
+    "child_marriage_pct": 13.6,
+    "menstrual_hygiene_pct": 92.3,
+    "antenatal_4visit_pct": 58.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 4.2
+  },
+  "Hanumangarh": {
+    "clean_fuel_pct": 36.2,
+    "health_insurance_pct": 89.0,
+    "child_marriage_pct": 18.6,
+    "menstrual_hygiene_pct": 92.0,
+    "antenatal_4visit_pct": 53.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.6
+  },
+  "Jaipur": {
+    "clean_fuel_pct": 60.1,
+    "health_insurance_pct": 81.5,
+    "child_marriage_pct": 23.1,
+    "menstrual_hygiene_pct": 91.8,
+    "antenatal_4visit_pct": 53.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.6
+  },
+  "Jaisalmer": {
+    "clean_fuel_pct": 30.9,
+    "health_insurance_pct": 93.7,
+    "child_marriage_pct": 28.9,
+    "menstrual_hygiene_pct": 82.8,
+    "antenatal_4visit_pct": 47.6,
+    "ors_diarrhoea_pct": 61.7,
+    "ari_prevalence_pct": 3.1
+  },
+  "Jalor": {
+    "clean_fuel_pct": 36.5,
+    "health_insurance_pct": 96.6,
+    "child_marriage_pct": 23.3,
+    "menstrual_hygiene_pct": 79.8,
+    "antenatal_4visit_pct": 71.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.7
+  },
+  "Jhalawar": {
+    "clean_fuel_pct": 33.8,
+    "health_insurance_pct": 93.6,
+    "child_marriage_pct": 37.8,
+    "menstrual_hygiene_pct": 62.1,
+    "antenatal_4visit_pct": 72.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 5.1
+  },
+  "Jhunjhunu": {
+    "clean_fuel_pct": 55.5,
+    "health_insurance_pct": 86.1,
+    "child_marriage_pct": 18.1,
+    "menstrual_hygiene_pct": 93.6,
+    "antenatal_4visit_pct": 49.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.1
+  },
+  "Jodhpur": {
+    "clean_fuel_pct": 56.1,
+    "health_insurance_pct": 87.5,
+    "child_marriage_pct": 28.1,
+    "menstrual_hygiene_pct": 89.5,
+    "antenatal_4visit_pct": 56.7,
+    "ors_diarrhoea_pct": 88.6,
+    "ari_prevalence_pct": 2.4
+  },
+  "Karauli": {
+    "clean_fuel_pct": 24.2,
+    "health_insurance_pct": 86.4,
+    "child_marriage_pct": 33.5,
+    "menstrual_hygiene_pct": 73.8,
+    "antenatal_4visit_pct": 42.0,
+    "ors_diarrhoea_pct": 67.0,
+    "ari_prevalence_pct": 2.4
+  },
+  "Kota": {
+    "clean_fuel_pct": 72.3,
+    "health_insurance_pct": 80.9,
+    "child_marriage_pct": 13.2,
+    "menstrual_hygiene_pct": 83.3,
+    "antenatal_4visit_pct": 81.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 7.4
+  },
+  "Nagaur": {
+    "clean_fuel_pct": 45.7,
+    "health_insurance_pct": 90.0,
+    "child_marriage_pct": 28.2,
+    "menstrual_hygiene_pct": 86.6,
+    "antenatal_4visit_pct": 46.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.3
+  },
+  "Pali": {
+    "clean_fuel_pct": 53.1,
+    "health_insurance_pct": 96.2,
+    "child_marriage_pct": 11.8,
+    "menstrual_hygiene_pct": 94.1,
+    "antenatal_4visit_pct": 45.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.3
+  },
+  "Pratapgarh": {
+    "clean_fuel_pct": 37.1,
+    "health_insurance_pct": 14.9,
+    "child_marriage_pct": 11.0,
+    "menstrual_hygiene_pct": 69.1,
+    "antenatal_4visit_pct": 30.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.6
+  },
+  "Rajsamand": {
+    "clean_fuel_pct": 37.1,
+    "health_insurance_pct": 93.2,
+    "child_marriage_pct": 27.5,
+    "menstrual_hygiene_pct": 77.9,
+    "antenatal_4visit_pct": 60.7,
+    "ors_diarrhoea_pct": 89.2,
+    "ari_prevalence_pct": 3.2
+  },
+  "Sawai Madhopur": {
+    "clean_fuel_pct": 29.1,
+    "health_insurance_pct": 80.5,
+    "child_marriage_pct": 35.4,
+    "menstrual_hygiene_pct": 78.2,
+    "antenatal_4visit_pct": 47.3,
+    "ors_diarrhoea_pct": 53.0,
+    "ari_prevalence_pct": 7.0
+  },
+  "Sikar": {
+    "clean_fuel_pct": 58.4,
+    "health_insurance_pct": 82.4,
+    "child_marriage_pct": 18.0,
+    "menstrual_hygiene_pct": 94.0,
+    "antenatal_4visit_pct": 50.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.2
+  },
+  "Sirohi": {
+    "clean_fuel_pct": 46.0,
+    "health_insurance_pct": 92.0,
+    "child_marriage_pct": 18.0,
+    "menstrual_hygiene_pct": 74.2,
+    "antenatal_4visit_pct": 69.5,
+    "ors_diarrhoea_pct": 57.9,
+    "ari_prevalence_pct": 2.9
+  },
+  "Tonk": {
+    "clean_fuel_pct": 24.1,
+    "health_insurance_pct": 84.5,
+    "child_marriage_pct": 37.2,
+    "menstrual_hygiene_pct": 82.2,
+    "antenatal_4visit_pct": 66.2,
+    "ors_diarrhoea_pct": 52.6,
+    "ari_prevalence_pct": 5.7
+  },
+  "Udaipur": {
+    "clean_fuel_pct": 34.3,
+    "health_insurance_pct": 94.3,
+    "child_marriage_pct": 18.2,
+    "menstrual_hygiene_pct": 85.7,
+    "antenatal_4visit_pct": 62.3,
+    "ors_diarrhoea_pct": 78.1,
+    "ari_prevalence_pct": 1.8
+  },
+  "East District": {
+    "clean_fuel_pct": 87.6,
+    "health_insurance_pct": 29.9,
+    "child_marriage_pct": 9.4,
+    "menstrual_hygiene_pct": 84.8,
+    "antenatal_4visit_pct": 43.8,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.5
+  },
+  "North District": {
+    "clean_fuel_pct": 65.9,
+    "health_insurance_pct": 24.5,
+    "child_marriage_pct": 16.0,
+    "menstrual_hygiene_pct": 75.3,
+    "antenatal_4visit_pct": 59.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.7
+  },
+  "South District": {
+    "clean_fuel_pct": 66.5,
+    "health_insurance_pct": 20.8,
+    "child_marriage_pct": 9.9,
+    "menstrual_hygiene_pct": 85.3,
+    "antenatal_4visit_pct": 84.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "West District": {
+    "clean_fuel_pct": 69.8,
+    "health_insurance_pct": 19.9,
+    "child_marriage_pct": 14.1,
+    "menstrual_hygiene_pct": 92.4,
+    "antenatal_4visit_pct": 70.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.1
+  },
+  "Ariyalur": {
+    "clean_fuel_pct": 46.7,
+    "health_insurance_pct": 71.1,
+    "child_marriage_pct": 12.4,
+    "menstrual_hygiene_pct": 98.0,
+    "antenatal_4visit_pct": 91.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Chennai": {
+    "clean_fuel_pct": 97.7,
+    "health_insurance_pct": 58.2,
+    "child_marriage_pct": 1.9,
+    "menstrual_hygiene_pct": 100.0,
+    "antenatal_4visit_pct": 89.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.0
+  },
+  "Coimbatore": {
+    "clean_fuel_pct": 95.5,
+    "health_insurance_pct": 61.0,
+    "child_marriage_pct": 19.8,
+    "menstrual_hygiene_pct": 99.7,
+    "antenatal_4visit_pct": 90.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.2
+  },
+  "Cuddalore": {
+    "clean_fuel_pct": 75.6,
+    "health_insurance_pct": 64.4,
+    "child_marriage_pct": 12.6,
+    "menstrual_hygiene_pct": 99.1,
+    "antenatal_4visit_pct": 82.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.6
+  },
+  "Dharmapuri": {
+    "clean_fuel_pct": 82.5,
+    "health_insurance_pct": 75.5,
+    "child_marriage_pct": 16.7,
+    "menstrual_hygiene_pct": 97.5,
+    "antenatal_4visit_pct": 94.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Dindigul": {
+    "clean_fuel_pct": 76.3,
+    "health_insurance_pct": 71.9,
+    "child_marriage_pct": 20.5,
+    "menstrual_hygiene_pct": 98.9,
+    "antenatal_4visit_pct": 96.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.4
+  },
+  "Erode": {
+    "clean_fuel_pct": 95.9,
+    "health_insurance_pct": 77.7,
+    "child_marriage_pct": 13.7,
+    "menstrual_hygiene_pct": 98.7,
+    "antenatal_4visit_pct": 93.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Kancheepuram": {
+    "clean_fuel_pct": 88.1,
+    "health_insurance_pct": 59.7,
+    "child_marriage_pct": 10.0,
+    "menstrual_hygiene_pct": 97.8,
+    "antenatal_4visit_pct": 76.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.3
+  },
+  "Kanniyakumari": {
+    "clean_fuel_pct": 74.4,
+    "health_insurance_pct": 64.1,
+    "child_marriage_pct": 4.3,
+    "menstrual_hygiene_pct": 98.6,
+    "antenatal_4visit_pct": 84.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Karur": {
+    "clean_fuel_pct": 72.5,
+    "health_insurance_pct": 74.6,
+    "child_marriage_pct": 13.3,
+    "menstrual_hygiene_pct": 97.9,
+    "antenatal_4visit_pct": 95.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.7
+  },
+  "Krishnagiri": {
+    "clean_fuel_pct": 86.0,
+    "health_insurance_pct": 73.6,
+    "child_marriage_pct": 20.3,
+    "menstrual_hygiene_pct": 98.1,
+    "antenatal_4visit_pct": 93.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.4
+  },
+  "Madurai": {
+    "clean_fuel_pct": 91.2,
+    "health_insurance_pct": 66.3,
+    "child_marriage_pct": 11.5,
+    "menstrual_hygiene_pct": 98.2,
+    "antenatal_4visit_pct": 89.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.6
+  },
+  "Nagapattinam": {
+    "clean_fuel_pct": 59.0,
+    "health_insurance_pct": 70.9,
+    "child_marriage_pct": 6.3,
+    "menstrual_hygiene_pct": 96.2,
+    "antenatal_4visit_pct": 93.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.5
+  },
+  "Namakkal": {
+    "clean_fuel_pct": 89.7,
+    "health_insurance_pct": 68.8,
+    "child_marriage_pct": 14.2,
+    "menstrual_hygiene_pct": 97.8,
+    "antenatal_4visit_pct": 97.8,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Perambalur": {
+    "clean_fuel_pct": 75.1,
+    "health_insurance_pct": 75.5,
+    "child_marriage_pct": 21.4,
+    "menstrual_hygiene_pct": 97.8,
+    "antenatal_4visit_pct": 92.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Pudukkottai": {
+    "clean_fuel_pct": 42.0,
+    "health_insurance_pct": 72.9,
+    "child_marriage_pct": 11.6,
+    "menstrual_hygiene_pct": 95.1,
+    "antenatal_4visit_pct": 91.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.3
+  },
+  "Ramanathapuram": {
+    "clean_fuel_pct": 82.7,
+    "health_insurance_pct": 69.7,
+    "child_marriage_pct": 14.7,
+    "menstrual_hygiene_pct": 98.3,
+    "antenatal_4visit_pct": 88.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Salem": {
+    "clean_fuel_pct": 84.5,
+    "health_insurance_pct": 67.5,
+    "child_marriage_pct": 23.7,
+    "menstrual_hygiene_pct": 98.6,
+    "antenatal_4visit_pct": 85.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.6
+  },
+  "Sivaganga": {
+    "clean_fuel_pct": 75.2,
+    "health_insurance_pct": 67.7,
+    "child_marriage_pct": 4.5,
+    "menstrual_hygiene_pct": 99.9,
+    "antenatal_4visit_pct": 90.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Thanjavur": {
+    "clean_fuel_pct": 69.4,
+    "health_insurance_pct": 70.6,
+    "child_marriage_pct": 4.1,
+    "menstrual_hygiene_pct": 98.2,
+    "antenatal_4visit_pct": 93.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.6
+  },
+  "The Nilgiris": {
+    "clean_fuel_pct": 81.5,
+    "health_insurance_pct": 74.5,
+    "child_marriage_pct": 11.1,
+    "menstrual_hygiene_pct": 96.7,
+    "antenatal_4visit_pct": 92.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Theni": {
+    "clean_fuel_pct": 89.9,
+    "health_insurance_pct": 67.4,
+    "child_marriage_pct": 16.0,
+    "menstrual_hygiene_pct": 99.7,
+    "antenatal_4visit_pct": 98.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.2
+  },
+  "Thiruvallur": {
+    "clean_fuel_pct": 93.4,
+    "health_insurance_pct": 57.4,
+    "child_marriage_pct": 13.4,
+    "menstrual_hygiene_pct": 98.8,
+    "antenatal_4visit_pct": 85.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.9
+  },
+  "Thiruvarur": {
+    "clean_fuel_pct": 58.9,
+    "health_insurance_pct": 75.2,
+    "child_marriage_pct": 9.1,
+    "menstrual_hygiene_pct": 98.4,
+    "antenatal_4visit_pct": 92.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.7
+  },
+  "Thoothukkudi": {
+    "clean_fuel_pct": 90.7,
+    "health_insurance_pct": 57.8,
+    "child_marriage_pct": 8.9,
+    "menstrual_hygiene_pct": 99.4,
+    "antenatal_4visit_pct": 80.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.7
+  },
+  "Tiruchirappalli": {
+    "clean_fuel_pct": 71.2,
+    "health_insurance_pct": 67.8,
+    "child_marriage_pct": 13.5,
+    "menstrual_hygiene_pct": 96.5,
+    "antenatal_4visit_pct": 90.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.4
+  },
+  "Tirunelveli": {
+    "clean_fuel_pct": 87.9,
+    "health_insurance_pct": 61.3,
+    "child_marriage_pct": 10.7,
+    "menstrual_hygiene_pct": 97.2,
+    "antenatal_4visit_pct": 85.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Tiruppur": {
+    "clean_fuel_pct": 95.4,
+    "health_insurance_pct": 59.9,
+    "child_marriage_pct": 10.5,
+    "menstrual_hygiene_pct": 98.5,
+    "antenatal_4visit_pct": 93.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.7
+  },
+  "Tiruvannamalai": {
+    "clean_fuel_pct": 70.7,
+    "health_insurance_pct": 69.6,
+    "child_marriage_pct": 11.6,
+    "menstrual_hygiene_pct": 98.7,
+    "antenatal_4visit_pct": 97.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.6
+  },
+  "Vellore": {
+    "clean_fuel_pct": 85.3,
+    "health_insurance_pct": 71.4,
+    "child_marriage_pct": 14.9,
+    "menstrual_hygiene_pct": 98.5,
+    "antenatal_4visit_pct": 95.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.3
+  },
+  "Viluppuram": {
+    "clean_fuel_pct": 68.6,
+    "health_insurance_pct": 77.6,
+    "child_marriage_pct": 19.0,
+    "menstrual_hygiene_pct": 98.3,
+    "antenatal_4visit_pct": 94.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.4
+  },
+  "Virudhunagar": {
+    "clean_fuel_pct": 90.5,
+    "health_insurance_pct": 51.3,
+    "child_marriage_pct": 15.5,
+    "menstrual_hygiene_pct": 97.3,
+    "antenatal_4visit_pct": 83.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Adilabad": {
+    "clean_fuel_pct": 81.6,
+    "health_insurance_pct": 63.6,
+    "child_marriage_pct": 21.4,
+    "menstrual_hygiene_pct": 77.9,
+    "antenatal_4visit_pct": 74.8,
+    "ors_diarrhoea_pct": 65.0,
+    "ari_prevalence_pct": 1.7
+  },
+  "Bhadradri Kothagudem": {
+    "clean_fuel_pct": 89.2,
+    "health_insurance_pct": 59.4,
+    "child_marriage_pct": 20.8,
+    "menstrual_hygiene_pct": 92.9,
+    "antenatal_4visit_pct": 70.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.0
+  },
+  "Hyderabad": {
+    "clean_fuel_pct": 99.5,
+    "health_insurance_pct": 48.9,
+    "child_marriage_pct": 10.6,
+    "menstrual_hygiene_pct": 94.2,
+    "antenatal_4visit_pct": 69.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.8
+  },
+  "Jagitial": {
+    "clean_fuel_pct": 94.7,
+    "health_insurance_pct": 59.2,
+    "child_marriage_pct": 28.4,
+    "menstrual_hygiene_pct": 90.2,
+    "antenatal_4visit_pct": 81.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.4
+  },
+  "Jangoan": {
+    "clean_fuel_pct": 91.1,
+    "health_insurance_pct": 71.7,
+    "child_marriage_pct": 20.3,
+    "menstrual_hygiene_pct": 93.6,
+    "antenatal_4visit_pct": 65.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.7
+  },
+  "Jayashankar Bhupalapally": {
+    "clean_fuel_pct": 90.3,
+    "health_insurance_pct": 71.5,
+    "child_marriage_pct": 24.9,
+    "menstrual_hygiene_pct": 90.8,
+    "antenatal_4visit_pct": 72.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.9
+  },
+  "Jogulamba Gadwal": {
+    "clean_fuel_pct": 86.1,
+    "health_insurance_pct": 61.8,
+    "child_marriage_pct": 34.6,
+    "menstrual_hygiene_pct": 77.3,
+    "antenatal_4visit_pct": 72.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.7
+  },
+  "Kamareddy": {
+    "clean_fuel_pct": 82.3,
+    "health_insurance_pct": 66.5,
+    "child_marriage_pct": 30.8,
+    "menstrual_hygiene_pct": 88.3,
+    "antenatal_4visit_pct": 79.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.4
+  },
+  "Karimnagar": {
+    "clean_fuel_pct": 94.9,
+    "health_insurance_pct": 58.6,
+    "child_marriage_pct": 11.9,
+    "menstrual_hygiene_pct": 94.1,
+    "antenatal_4visit_pct": 69.6,
+    "ors_diarrhoea_pct": 59.2,
+    "ari_prevalence_pct": 2.1
+  },
+  "Khammam": {
+    "clean_fuel_pct": 97.1,
+    "health_insurance_pct": 60.4,
+    "child_marriage_pct": 35.0,
+    "menstrual_hygiene_pct": 95.4,
+    "antenatal_4visit_pct": 76.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 9.3
+  },
+  "Komaram Bheem Asifabad": {
+    "clean_fuel_pct": 85.8,
+    "health_insurance_pct": 63.6,
+    "child_marriage_pct": 25.0,
+    "menstrual_hygiene_pct": 79.6,
+    "antenatal_4visit_pct": 68.8,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.2
+  },
+  "Mahabubabad": {
+    "clean_fuel_pct": 86.6,
+    "health_insurance_pct": 69.3,
+    "child_marriage_pct": 28.3,
+    "menstrual_hygiene_pct": 92.8,
+    "antenatal_4visit_pct": 67.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.5
+  },
+  "Mahabubnagar": {
+    "clean_fuel_pct": 85.9,
+    "health_insurance_pct": 70.3,
+    "child_marriage_pct": 23.4,
+    "menstrual_hygiene_pct": 95.6,
+    "antenatal_4visit_pct": 62.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.4
+  },
+  "Mancherial": {
+    "clean_fuel_pct": 93.1,
+    "health_insurance_pct": 64.4,
+    "child_marriage_pct": 14.0,
+    "menstrual_hygiene_pct": 88.1,
+    "antenatal_4visit_pct": 64.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.1
+  },
+  "Medak": {
+    "clean_fuel_pct": 80.1,
+    "health_insurance_pct": 61.2,
+    "child_marriage_pct": 31.8,
+    "menstrual_hygiene_pct": 89.3,
+    "antenatal_4visit_pct": 68.5,
+    "ors_diarrhoea_pct": 41.6,
+    "ari_prevalence_pct": 1.2
+  },
+  "MedchalMalkajgiri": {
+    "clean_fuel_pct": 99.0,
+    "health_insurance_pct": 53.8,
+    "child_marriage_pct": 10.2,
+    "menstrual_hygiene_pct": 97.1,
+    "antenatal_4visit_pct": 69.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 4.1
+  },
+  "Nagarkurnool": {
+    "clean_fuel_pct": 87.3,
+    "health_insurance_pct": 68.6,
+    "child_marriage_pct": 32.1,
+    "menstrual_hygiene_pct": 96.6,
+    "antenatal_4visit_pct": 75.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.9
+  },
+  "Nalgonda": {
+    "clean_fuel_pct": 94.6,
+    "health_insurance_pct": 64.8,
+    "child_marriage_pct": 28.2,
+    "menstrual_hygiene_pct": 96.9,
+    "antenatal_4visit_pct": 65.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 5.2
+  },
+  "Nirmal": {
+    "clean_fuel_pct": 88.8,
+    "health_insurance_pct": 49.9,
+    "child_marriage_pct": 23.3,
+    "menstrual_hygiene_pct": 78.7,
+    "antenatal_4visit_pct": 69.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Nizamabad": {
+    "clean_fuel_pct": 92.4,
+    "health_insurance_pct": 52.3,
+    "child_marriage_pct": 23.7,
+    "menstrual_hygiene_pct": 88.8,
+    "antenatal_4visit_pct": 78.5,
+    "ors_diarrhoea_pct": 56.6,
+    "ari_prevalence_pct": 1.1
+  },
+  "Peddapalli": {
+    "clean_fuel_pct": 96.6,
+    "health_insurance_pct": 59.1,
+    "child_marriage_pct": 13.6,
+    "menstrual_hygiene_pct": 93.2,
+    "antenatal_4visit_pct": 77.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.0
+  },
+  "Rajanna Sircilla": {
+    "clean_fuel_pct": 96.6,
+    "health_insurance_pct": 62.8,
+    "child_marriage_pct": 13.2,
+    "menstrual_hygiene_pct": 92.2,
+    "antenatal_4visit_pct": 67.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.1
+  },
+  "Ranga Reddy": {
+    "clean_fuel_pct": 97.0,
+    "health_insurance_pct": 58.3,
+    "child_marriage_pct": 29.0,
+    "menstrual_hygiene_pct": 95.3,
+    "antenatal_4visit_pct": 75.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.1
+  },
+  "Sangareddy": {
+    "clean_fuel_pct": 81.1,
+    "health_insurance_pct": 58.1,
+    "child_marriage_pct": 30.6,
+    "menstrual_hygiene_pct": 92.2,
+    "antenatal_4visit_pct": 66.4,
+    "ors_diarrhoea_pct": 53.1,
+    "ari_prevalence_pct": 0.8
+  },
+  "Siddipet": {
+    "clean_fuel_pct": 93.2,
+    "health_insurance_pct": 60.9,
+    "child_marriage_pct": 19.0,
+    "menstrual_hygiene_pct": 88.4,
+    "antenatal_4visit_pct": 62.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.1
+  },
+  "Suryapet": {
+    "clean_fuel_pct": 94.5,
+    "health_insurance_pct": 63.1,
+    "child_marriage_pct": 29.5,
+    "menstrual_hygiene_pct": 95.5,
+    "antenatal_4visit_pct": 70.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 4.3
+  },
+  "Vikarabad": {
+    "clean_fuel_pct": 76.0,
+    "health_insurance_pct": 59.6,
+    "child_marriage_pct": 39.8,
+    "menstrual_hygiene_pct": 93.3,
+    "antenatal_4visit_pct": 54.8,
+    "ors_diarrhoea_pct": 44.5,
+    "ari_prevalence_pct": 2.5
+  },
+  "Wanaparthy": {
+    "clean_fuel_pct": 88.9,
+    "health_insurance_pct": 70.1,
+    "child_marriage_pct": 32.6,
+    "menstrual_hygiene_pct": 95.5,
+    "antenatal_4visit_pct": 62.8,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.7
+  },
+  "Warangal Rural": {
+    "clean_fuel_pct": 87.8,
+    "health_insurance_pct": 72.0,
+    "child_marriage_pct": 22.9,
+    "menstrual_hygiene_pct": 93.5,
+    "antenatal_4visit_pct": 70.4,
+    "ors_diarrhoea_pct": 25.8,
+    "ari_prevalence_pct": 4.6
+  },
+  "Warangal Urban": {
+    "clean_fuel_pct": 94.6,
+    "health_insurance_pct": 62.0,
+    "child_marriage_pct": 22.7,
+    "menstrual_hygiene_pct": 96.4,
+    "antenatal_4visit_pct": 71.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 4.3
+  },
+  "Yadadri Bhuvanagiri": {
+    "clean_fuel_pct": 94.9,
+    "health_insurance_pct": 65.3,
+    "child_marriage_pct": 21.6,
+    "menstrual_hygiene_pct": 94.8,
+    "antenatal_4visit_pct": 67.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.1
+  },
+  "Dhalai": {
+    "clean_fuel_pct": 34.0,
+    "health_insurance_pct": 44.2,
+    "child_marriage_pct": 38.9,
+    "menstrual_hygiene_pct": 63.2,
+    "antenatal_4visit_pct": 52.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.5
+  },
+  "Gomati": {
+    "clean_fuel_pct": 47.7,
+    "health_insurance_pct": 29.9,
+    "child_marriage_pct": 42.8,
+    "menstrual_hygiene_pct": 71.5,
+    "antenatal_4visit_pct": 40.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.6
+  },
+  "Khowai": {
+    "clean_fuel_pct": 41.5,
+    "health_insurance_pct": 44.1,
+    "child_marriage_pct": 28.3,
+    "menstrual_hygiene_pct": 69.2,
+    "antenatal_4visit_pct": 41.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.0
+  },
+  "North Tripura": {
+    "clean_fuel_pct": 41.6,
+    "health_insurance_pct": 28.7,
+    "child_marriage_pct": 34.2,
+    "menstrual_hygiene_pct": 74.2,
+    "antenatal_4visit_pct": 67.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.7
+  },
+  "Sepahijala": {
+    "clean_fuel_pct": 37.1,
+    "health_insurance_pct": 31.6,
+    "child_marriage_pct": 51.9,
+    "menstrual_hygiene_pct": 68.3,
+    "antenatal_4visit_pct": 52.8,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.4
+  },
+  "South Tripura": {
+    "clean_fuel_pct": 29.4,
+    "health_insurance_pct": 37.3,
+    "child_marriage_pct": 46.2,
+    "menstrual_hygiene_pct": 49.6,
+    "antenatal_4visit_pct": 58.4,
+    "ors_diarrhoea_pct": 69.2,
+    "ari_prevalence_pct": 3.2
+  },
+  "Unakoti": {
+    "clean_fuel_pct": 29.2,
+    "health_insurance_pct": 28.0,
+    "child_marriage_pct": 38.0,
+    "menstrual_hygiene_pct": 56.8,
+    "antenatal_4visit_pct": 24.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.6
+  },
+  "West Tripura": {
+    "clean_fuel_pct": 65.2,
+    "health_insurance_pct": 28.1,
+    "child_marriage_pct": 37.1,
+    "menstrual_hygiene_pct": 81.5,
+    "antenatal_4visit_pct": 61.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.5
+  },
+  "Agra": {
+    "clean_fuel_pct": 67.5,
+    "health_insurance_pct": 9.4,
+    "child_marriage_pct": 17.9,
+    "menstrual_hygiene_pct": 76.5,
+    "antenatal_4visit_pct": 42.7,
+    "ors_diarrhoea_pct": 38.5,
+    "ari_prevalence_pct": 4.5
+  },
+  "Aligarh": {
+    "clean_fuel_pct": 51.4,
+    "health_insurance_pct": 17.6,
+    "child_marriage_pct": 15.8,
+    "menstrual_hygiene_pct": 79.6,
+    "antenatal_4visit_pct": 44.7,
+    "ors_diarrhoea_pct": 39.8,
+    "ari_prevalence_pct": 3.2
+  },
+  "Ambedkar Nagar": {
+    "clean_fuel_pct": 32.2,
+    "health_insurance_pct": 23.0,
+    "child_marriage_pct": 5.5,
+    "menstrual_hygiene_pct": 77.5,
+    "antenatal_4visit_pct": 44.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.6
+  },
+  "Amethi": {
+    "clean_fuel_pct": 26.4,
+    "health_insurance_pct": 20.9,
+    "child_marriage_pct": 14.9,
+    "menstrual_hygiene_pct": 71.8,
+    "antenatal_4visit_pct": 31.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.7
+  },
+  "Auraiya": {
+    "clean_fuel_pct": 33.7,
+    "health_insurance_pct": 18.4,
+    "child_marriage_pct": 18.1,
+    "menstrual_hygiene_pct": 77.1,
+    "antenatal_4visit_pct": 50.4,
+    "ors_diarrhoea_pct": 62.0,
+    "ari_prevalence_pct": 3.2
+  },
+  "Azamgarh": {
+    "clean_fuel_pct": 37.6,
+    "health_insurance_pct": 9.0,
+    "child_marriage_pct": 12.0,
+    "menstrual_hygiene_pct": 79.3,
+    "antenatal_4visit_pct": 38.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.8
+  },
+  "Baghpat": {
+    "clean_fuel_pct": 51.5,
+    "health_insurance_pct": 12.5,
+    "child_marriage_pct": 8.1,
+    "menstrual_hygiene_pct": 81.4,
+    "antenatal_4visit_pct": 42.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.6
+  },
+  "Bahraich": {
+    "clean_fuel_pct": 38.2,
+    "health_insurance_pct": 10.1,
+    "child_marriage_pct": 37.5,
+    "menstrual_hygiene_pct": 48.4,
+    "antenatal_4visit_pct": 34.3,
+    "ors_diarrhoea_pct": 58.8,
+    "ari_prevalence_pct": 6.6
+  },
+  "Ballia": {
+    "clean_fuel_pct": 53.8,
+    "health_insurance_pct": 10.6,
+    "child_marriage_pct": 9.9,
+    "menstrual_hygiene_pct": 71.6,
+    "antenatal_4visit_pct": 30.5,
+    "ors_diarrhoea_pct": 78.6,
+    "ari_prevalence_pct": 7.1
+  },
+  "Banda": {
+    "clean_fuel_pct": 26.8,
+    "health_insurance_pct": 13.3,
+    "child_marriage_pct": 19.0,
+    "menstrual_hygiene_pct": 52.6,
+    "antenatal_4visit_pct": 39.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.5
+  },
+  "Bara Banki": {
+    "clean_fuel_pct": 47.8,
+    "health_insurance_pct": 14.6,
+    "child_marriage_pct": 20.4,
+    "menstrual_hygiene_pct": 58.1,
+    "antenatal_4visit_pct": 22.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 4.8
+  },
+  "Bareilly": {
+    "clean_fuel_pct": 54.6,
+    "health_insurance_pct": 18.7,
+    "child_marriage_pct": 11.4,
+    "menstrual_hygiene_pct": 71.9,
+    "antenatal_4visit_pct": 43.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.5
+  },
+  "Basti": {
+    "clean_fuel_pct": 57.0,
+    "health_insurance_pct": 15.8,
+    "child_marriage_pct": 15.9,
+    "menstrual_hygiene_pct": 73.3,
+    "antenatal_4visit_pct": 31.5,
+    "ors_diarrhoea_pct": 65.3,
+    "ari_prevalence_pct": 7.7
+  },
+  "Bijnor": {
+    "clean_fuel_pct": 45.8,
+    "health_insurance_pct": 18.8,
+    "child_marriage_pct": 5.2,
+    "menstrual_hygiene_pct": 77.0,
+    "antenatal_4visit_pct": 48.8,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.7
+  },
+  "Budaun": {
+    "clean_fuel_pct": 39.8,
+    "health_insurance_pct": 13.6,
+    "child_marriage_pct": 22.9,
+    "menstrual_hygiene_pct": 58.8,
+    "antenatal_4visit_pct": 40.6,
+    "ors_diarrhoea_pct": 48.9,
+    "ari_prevalence_pct": 4.2
+  },
+  "Bulandshahr": {
+    "clean_fuel_pct": 48.4,
+    "health_insurance_pct": 20.5,
+    "child_marriage_pct": 12.8,
+    "menstrual_hygiene_pct": 79.0,
+    "antenatal_4visit_pct": 47.6,
+    "ors_diarrhoea_pct": 38.9,
+    "ari_prevalence_pct": 1.8
+  },
+  "Chandauli": {
+    "clean_fuel_pct": 42.3,
+    "health_insurance_pct": 28.1,
+    "child_marriage_pct": 17.2,
+    "menstrual_hygiene_pct": 80.6,
+    "antenatal_4visit_pct": 32.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.2
+  },
+  "Chitrakoot": {
+    "clean_fuel_pct": 31.2,
+    "health_insurance_pct": 17.4,
+    "child_marriage_pct": 21.8,
+    "menstrual_hygiene_pct": 55.8,
+    "antenatal_4visit_pct": 30.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.9
+  },
+  "Deoria": {
+    "clean_fuel_pct": 67.2,
+    "health_insurance_pct": 10.5,
+    "child_marriage_pct": 13.7,
+    "menstrual_hygiene_pct": 76.9,
+    "antenatal_4visit_pct": 42.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.6
+  },
+  "Etah": {
+    "clean_fuel_pct": 39.6,
+    "health_insurance_pct": 12.8,
+    "child_marriage_pct": 20.1,
+    "menstrual_hygiene_pct": 64.5,
+    "antenatal_4visit_pct": 33.6,
+    "ors_diarrhoea_pct": 48.2,
+    "ari_prevalence_pct": 9.1
+  },
+  "Etawah": {
+    "clean_fuel_pct": 48.6,
+    "health_insurance_pct": 17.9,
+    "child_marriage_pct": 16.3,
+    "menstrual_hygiene_pct": 76.5,
+    "antenatal_4visit_pct": 43.7,
+    "ors_diarrhoea_pct": 39.6,
+    "ari_prevalence_pct": 4.8
+  },
+  "Faizabad": {
+    "clean_fuel_pct": 41.3,
+    "health_insurance_pct": 19.8,
+    "child_marriage_pct": 7.6,
+    "menstrual_hygiene_pct": 71.0,
+    "antenatal_4visit_pct": 33.8,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.7
+  },
+  "Farrukhabad": {
+    "clean_fuel_pct": 45.5,
+    "health_insurance_pct": 13.5,
+    "child_marriage_pct": 18.8,
+    "menstrual_hygiene_pct": 61.0,
+    "antenatal_4visit_pct": 41.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 4.1
+  },
+  "Fatehpur": {
+    "clean_fuel_pct": 38.9,
+    "health_insurance_pct": 16.8,
+    "child_marriage_pct": 10.4,
+    "menstrual_hygiene_pct": 70.4,
+    "antenatal_4visit_pct": 38.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.9
+  },
+  "Firozabad": {
+    "clean_fuel_pct": 53.5,
+    "health_insurance_pct": 13.4,
+    "child_marriage_pct": 24.8,
+    "menstrual_hygiene_pct": 70.0,
+    "antenatal_4visit_pct": 39.3,
+    "ors_diarrhoea_pct": 44.4,
+    "ari_prevalence_pct": 3.9
+  },
+  "Gautam Buddha Nagar": {
+    "clean_fuel_pct": 75.0,
+    "health_insurance_pct": 23.8,
+    "child_marriage_pct": 13.5,
+    "menstrual_hygiene_pct": 89.6,
+    "antenatal_4visit_pct": 52.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 5.2
+  },
+  "Ghaziabad": {
+    "clean_fuel_pct": 92.4,
+    "health_insurance_pct": 20.0,
+    "child_marriage_pct": 8.0,
+    "menstrual_hygiene_pct": 91.7,
+    "antenatal_4visit_pct": 62.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.8
+  },
+  "Ghazipur": {
+    "clean_fuel_pct": 39.3,
+    "health_insurance_pct": 10.6,
+    "child_marriage_pct": 13.5,
+    "menstrual_hygiene_pct": 77.6,
+    "antenatal_4visit_pct": 29.2,
+    "ors_diarrhoea_pct": 47.2,
+    "ari_prevalence_pct": 5.3
+  },
+  "Gonda": {
+    "clean_fuel_pct": 56.2,
+    "health_insurance_pct": 13.4,
+    "child_marriage_pct": 25.4,
+    "menstrual_hygiene_pct": 61.4,
+    "antenatal_4visit_pct": 41.7,
+    "ors_diarrhoea_pct": 48.4,
+    "ari_prevalence_pct": 11.2
+  },
+  "Gorakhpur": {
+    "clean_fuel_pct": 66.8,
+    "health_insurance_pct": 17.9,
+    "child_marriage_pct": 14.6,
+    "menstrual_hygiene_pct": 78.3,
+    "antenatal_4visit_pct": 56.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.9
+  },
+  "Hapur": {
+    "clean_fuel_pct": 68.0,
+    "health_insurance_pct": 14.9,
+    "child_marriage_pct": 7.1,
+    "menstrual_hygiene_pct": 88.6,
+    "antenatal_4visit_pct": 53.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.0
+  },
+  "Hardoi": {
+    "clean_fuel_pct": 29.0,
+    "health_insurance_pct": 16.0,
+    "child_marriage_pct": 19.3,
+    "menstrual_hygiene_pct": 63.8,
+    "antenatal_4visit_pct": 39.7,
+    "ors_diarrhoea_pct": 56.2,
+    "ari_prevalence_pct": 3.4
+  },
+  "Jalaun": {
+    "clean_fuel_pct": 36.5,
+    "health_insurance_pct": 17.6,
+    "child_marriage_pct": 16.9,
+    "menstrual_hygiene_pct": 80.1,
+    "antenatal_4visit_pct": 62.8,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.8
+  },
+  "Jaunpur": {
+    "clean_fuel_pct": 55.2,
+    "health_insurance_pct": 12.0,
+    "child_marriage_pct": 11.8,
+    "menstrual_hygiene_pct": 83.5,
+    "antenatal_4visit_pct": 47.6,
+    "ors_diarrhoea_pct": 48.1,
+    "ari_prevalence_pct": 4.8
+  },
+  "Jhansi": {
+    "clean_fuel_pct": 51.9,
+    "health_insurance_pct": 11.4,
+    "child_marriage_pct": 25.1,
+    "menstrual_hygiene_pct": 82.1,
+    "antenatal_4visit_pct": 36.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.4
+  },
+  "Jyotiba Phule Nagar": {
+    "clean_fuel_pct": 45.4,
+    "health_insurance_pct": 8.3,
+    "child_marriage_pct": 11.6,
+    "menstrual_hygiene_pct": 74.0,
+    "antenatal_4visit_pct": 43.9,
+    "ors_diarrhoea_pct": 57.8,
+    "ari_prevalence_pct": 0.4
+  },
+  "Kannauj": {
+    "clean_fuel_pct": 35.5,
+    "health_insurance_pct": 15.3,
+    "child_marriage_pct": 10.4,
+    "menstrual_hygiene_pct": 66.5,
+    "antenatal_4visit_pct": 46.4,
+    "ors_diarrhoea_pct": 64.5,
+    "ari_prevalence_pct": 3.5
+  },
+  "Kanpur Dehat": {
+    "clean_fuel_pct": 39.3,
+    "health_insurance_pct": 17.9,
+    "child_marriage_pct": 12.7,
+    "menstrual_hygiene_pct": 76.2,
+    "antenatal_4visit_pct": 54.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.5
+  },
+  "Kanpur Nagar": {
+    "clean_fuel_pct": 76.9,
+    "health_insurance_pct": 16.1,
+    "child_marriage_pct": 10.9,
+    "menstrual_hygiene_pct": 87.6,
+    "antenatal_4visit_pct": 69.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.9
+  },
+  "Kanshiram Nagar": {
+    "clean_fuel_pct": 36.6,
+    "health_insurance_pct": 15.1,
+    "child_marriage_pct": 23.2,
+    "menstrual_hygiene_pct": 55.4,
+    "antenatal_4visit_pct": 38.1,
+    "ors_diarrhoea_pct": 49.5,
+    "ari_prevalence_pct": 6.1
+  },
+  "Kaushambi": {
+    "clean_fuel_pct": 37.0,
+    "health_insurance_pct": 20.2,
+    "child_marriage_pct": 17.6,
+    "menstrual_hygiene_pct": 67.1,
+    "antenatal_4visit_pct": 34.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.8
+  },
+  "Kheri": {
+    "clean_fuel_pct": 35.9,
+    "health_insurance_pct": 22.0,
+    "child_marriage_pct": 19.7,
+    "menstrual_hygiene_pct": 58.1,
+    "antenatal_4visit_pct": 48.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.3
+  },
+  "Kushinagar": {
+    "clean_fuel_pct": 55.2,
+    "health_insurance_pct": 15.6,
+    "child_marriage_pct": 17.7,
+    "menstrual_hygiene_pct": 77.3,
+    "antenatal_4visit_pct": 35.8,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 5.9
+  },
+  "Lalitpur": {
+    "clean_fuel_pct": 20.3,
+    "health_insurance_pct": 11.7,
+    "child_marriage_pct": 42.5,
+    "menstrual_hygiene_pct": 63.8,
+    "antenatal_4visit_pct": 45.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.8
+  },
+  "Lucknow": {
+    "clean_fuel_pct": 78.3,
+    "health_insurance_pct": 15.8,
+    "child_marriage_pct": 9.9,
+    "menstrual_hygiene_pct": 84.8,
+    "antenatal_4visit_pct": 53.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.4
+  },
+  "Mahamaya Nagar": {
+    "clean_fuel_pct": 46.5,
+    "health_insurance_pct": 10.9,
+    "child_marriage_pct": 28.1,
+    "menstrual_hygiene_pct": 66.9,
+    "antenatal_4visit_pct": 27.8,
+    "ors_diarrhoea_pct": 52.7,
+    "ari_prevalence_pct": 7.6
+  },
+  "Mahoba": {
+    "clean_fuel_pct": 65.1,
+    "health_insurance_pct": 18.2,
+    "child_marriage_pct": 24.1,
+    "menstrual_hygiene_pct": 80.6,
+    "antenatal_4visit_pct": 52.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 4.2
+  },
+  "Mahrajganj": {
+    "clean_fuel_pct": 28.2,
+    "health_insurance_pct": 16.2,
+    "child_marriage_pct": 20.8,
+    "menstrual_hygiene_pct": 77.9,
+    "antenatal_4visit_pct": 46.2,
+    "ors_diarrhoea_pct": 57.7,
+    "ari_prevalence_pct": 4.0
+  },
+  "Mainpuri": {
+    "clean_fuel_pct": 39.8,
+    "health_insurance_pct": 16.1,
+    "child_marriage_pct": 16.0,
+    "menstrual_hygiene_pct": 71.3,
+    "antenatal_4visit_pct": 38.1,
+    "ors_diarrhoea_pct": 43.2,
+    "ari_prevalence_pct": 4.9
+  },
+  "Mathura": {
+    "clean_fuel_pct": 47.3,
+    "health_insurance_pct": 10.8,
+    "child_marriage_pct": 21.3,
+    "menstrual_hygiene_pct": 74.7,
+    "antenatal_4visit_pct": 39.3,
+    "ors_diarrhoea_pct": 32.3,
+    "ari_prevalence_pct": 6.4
+  },
+  "Mau": {
+    "clean_fuel_pct": 54.2,
+    "health_insurance_pct": 16.0,
+    "child_marriage_pct": 11.0,
+    "menstrual_hygiene_pct": 76.6,
+    "antenatal_4visit_pct": 43.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.6
+  },
+  "Meerut": {
+    "clean_fuel_pct": 68.5,
+    "health_insurance_pct": 18.4,
+    "child_marriage_pct": 7.6,
+    "menstrual_hygiene_pct": 83.6,
+    "antenatal_4visit_pct": 49.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.0
+  },
+  "Mirzapur": {
+    "clean_fuel_pct": 42.5,
+    "health_insurance_pct": 15.0,
+    "child_marriage_pct": 16.6,
+    "menstrual_hygiene_pct": 75.4,
+    "antenatal_4visit_pct": 36.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.6
+  },
+  "Moradabad": {
+    "clean_fuel_pct": 58.3,
+    "health_insurance_pct": 17.1,
+    "child_marriage_pct": 9.6,
+    "menstrual_hygiene_pct": 78.5,
+    "antenatal_4visit_pct": 33.2,
+    "ors_diarrhoea_pct": 60.3,
+    "ari_prevalence_pct": 2.2
+  },
+  "Muzaffarnagar": {
+    "clean_fuel_pct": 59.8,
+    "health_insurance_pct": 8.2,
+    "child_marriage_pct": 7.3,
+    "menstrual_hygiene_pct": 78.1,
+    "antenatal_4visit_pct": 44.0,
+    "ors_diarrhoea_pct": 29.0,
+    "ari_prevalence_pct": 0.5
+  },
+  "Pilibhit": {
+    "clean_fuel_pct": 48.1,
+    "health_insurance_pct": 21.4,
+    "child_marriage_pct": 16.2,
+    "menstrual_hygiene_pct": 71.1,
+    "antenatal_4visit_pct": 43.6,
+    "ors_diarrhoea_pct": 53.4,
+    "ari_prevalence_pct": 3.7
+  },
+  "Prayagraj": {
+    "clean_fuel_pct": 45.1,
+    "health_insurance_pct": 20.6,
+    "child_marriage_pct": 13.8,
+    "menstrual_hygiene_pct": 79.9,
+    "antenatal_4visit_pct": 45.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.7
+  },
+  "Rae Bareli": {
+    "clean_fuel_pct": 39.4,
+    "health_insurance_pct": 16.8,
+    "child_marriage_pct": 14.3,
+    "menstrual_hygiene_pct": 70.9,
+    "antenatal_4visit_pct": 43.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 4.0
+  },
+  "Rampur": {
+    "clean_fuel_pct": 46.2,
+    "health_insurance_pct": 13.1,
+    "child_marriage_pct": 10.5,
+    "menstrual_hygiene_pct": 74.3,
+    "antenatal_4visit_pct": 50.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 5.3
+  },
+  "Saharanpur": {
+    "clean_fuel_pct": 56.6,
+    "health_insurance_pct": 11.8,
+    "child_marriage_pct": 7.0,
+    "menstrual_hygiene_pct": 76.7,
+    "antenatal_4visit_pct": 52.4,
+    "ors_diarrhoea_pct": 67.1,
+    "ari_prevalence_pct": 3.9
+  },
+  "Sambhal": {
+    "clean_fuel_pct": 38.2,
+    "health_insurance_pct": 13.7,
+    "child_marriage_pct": 21.1,
+    "menstrual_hygiene_pct": 60.2,
+    "antenatal_4visit_pct": 32.9,
+    "ors_diarrhoea_pct": 57.4,
+    "ari_prevalence_pct": 2.1
+  },
+  "Sant Kabir Nagar": {
+    "clean_fuel_pct": 58.1,
+    "health_insurance_pct": 20.4,
+    "child_marriage_pct": 16.8,
+    "menstrual_hygiene_pct": 63.4,
+    "antenatal_4visit_pct": 43.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 4.9
+  },
+  "Sant Ravidas Nagar (Bhadohi)": {
+    "clean_fuel_pct": 39.9,
+    "health_insurance_pct": 18.8,
+    "child_marriage_pct": 19.6,
+    "menstrual_hygiene_pct": 74.8,
+    "antenatal_4visit_pct": 25.8,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.6
+  },
+  "Shahjahanpur": {
+    "clean_fuel_pct": 40.4,
+    "health_insurance_pct": 14.2,
+    "child_marriage_pct": 20.9,
+    "menstrual_hygiene_pct": 59.6,
+    "antenatal_4visit_pct": 35.3,
+    "ors_diarrhoea_pct": 42.0,
+    "ari_prevalence_pct": 7.3
+  },
+  "Shamli": {
+    "clean_fuel_pct": 53.6,
+    "health_insurance_pct": 14.8,
+    "child_marriage_pct": 10.8,
+    "menstrual_hygiene_pct": 74.1,
+    "antenatal_4visit_pct": 41.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.3
+  },
+  "Shrawasti": {
+    "clean_fuel_pct": 36.9,
+    "health_insurance_pct": 13.5,
+    "child_marriage_pct": 51.9,
+    "menstrual_hygiene_pct": 47.4,
+    "antenatal_4visit_pct": 42.4,
+    "ors_diarrhoea_pct": 47.3,
+    "ari_prevalence_pct": 6.7
+  },
+  "Siddharthnagar": {
+    "clean_fuel_pct": 50.6,
+    "health_insurance_pct": 12.2,
+    "child_marriage_pct": 33.9,
+    "menstrual_hygiene_pct": 63.0,
+    "antenatal_4visit_pct": 60.9,
+    "ors_diarrhoea_pct": 43.2,
+    "ari_prevalence_pct": 4.3
+  },
+  "Sitapur": {
+    "clean_fuel_pct": 31.5,
+    "health_insurance_pct": 23.2,
+    "child_marriage_pct": 20.8,
+    "menstrual_hygiene_pct": 55.5,
+    "antenatal_4visit_pct": 35.4,
+    "ors_diarrhoea_pct": 52.5,
+    "ari_prevalence_pct": 5.4
+  },
+  "Sonbhadra": {
+    "clean_fuel_pct": 30.4,
+    "health_insurance_pct": 19.7,
+    "child_marriage_pct": 17.7,
+    "menstrual_hygiene_pct": 68.9,
+    "antenatal_4visit_pct": 36.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.9
+  },
+  "Sultanpur": {
+    "clean_fuel_pct": 33.7,
+    "health_insurance_pct": 20.7,
+    "child_marriage_pct": 7.9,
+    "menstrual_hygiene_pct": 74.8,
+    "antenatal_4visit_pct": 47.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.3
+  },
+  "Unnao": {
+    "clean_fuel_pct": 43.4,
+    "health_insurance_pct": 15.3,
+    "child_marriage_pct": 18.9,
+    "menstrual_hygiene_pct": 65.4,
+    "antenatal_4visit_pct": 19.8,
+    "ors_diarrhoea_pct": 65.5,
+    "ari_prevalence_pct": 2.3
+  },
+  "Varanasi": {
+    "clean_fuel_pct": 71.5,
+    "health_insurance_pct": 12.8,
+    "child_marriage_pct": 10.4,
+    "menstrual_hygiene_pct": 85.6,
+    "antenatal_4visit_pct": 51.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.1
+  },
+  "Almora": {
+    "clean_fuel_pct": 35.9,
+    "health_insurance_pct": 66.0,
+    "child_marriage_pct": 1.5,
+    "menstrual_hygiene_pct": 88.6,
+    "antenatal_4visit_pct": 44.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 4.0
+  },
+  "Bageshwar": {
+    "clean_fuel_pct": 34.6,
+    "health_insurance_pct": 71.9,
+    "child_marriage_pct": 12.9,
+    "menstrual_hygiene_pct": 91.2,
+    "antenatal_4visit_pct": 67.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.8
+  },
+  "Chamoli": {
+    "clean_fuel_pct": 37.4,
+    "health_insurance_pct": 71.1,
+    "child_marriage_pct": 3.4,
+    "menstrual_hygiene_pct": 96.8,
+    "antenatal_4visit_pct": 52.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.5
+  },
+  "Champawat": {
+    "clean_fuel_pct": 39.8,
+    "health_insurance_pct": 65.7,
+    "child_marriage_pct": 11.7,
+    "menstrual_hygiene_pct": 94.4,
+    "antenatal_4visit_pct": 62.0,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.0
+  },
+  "Dehradun": {
+    "clean_fuel_pct": 88.8,
+    "health_insurance_pct": 67.3,
+    "child_marriage_pct": 6.6,
+    "menstrual_hygiene_pct": 94.1,
+    "antenatal_4visit_pct": 75.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.4
+  },
+  "Haridwar": {
+    "clean_fuel_pct": 61.5,
+    "health_insurance_pct": 46.6,
+    "child_marriage_pct": 9.9,
+    "menstrual_hygiene_pct": 85.4,
+    "antenatal_4visit_pct": 48.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.9
+  },
+  "Nainital": {
+    "clean_fuel_pct": 71.6,
+    "health_insurance_pct": 60.8,
+    "child_marriage_pct": 11.3,
+    "menstrual_hygiene_pct": 90.7,
+    "antenatal_4visit_pct": 59.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.4
+  },
+  "Pauri Garhwal": {
+    "clean_fuel_pct": 48.1,
+    "health_insurance_pct": 62.7,
+    "child_marriage_pct": 8.6,
+    "menstrual_hygiene_pct": 86.5,
+    "antenatal_4visit_pct": 39.6,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.6
+  },
+  "Pithoragarh": {
+    "clean_fuel_pct": 45.9,
+    "health_insurance_pct": 72.8,
+    "child_marriage_pct": 16.2,
+    "menstrual_hygiene_pct": 94.6,
+    "antenatal_4visit_pct": 58.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.5
+  },
+  "Rudraprayag": {
+    "clean_fuel_pct": 35.1,
+    "health_insurance_pct": 76.6,
+    "child_marriage_pct": 8.6,
+    "menstrual_hygiene_pct": 96.8,
+    "antenatal_4visit_pct": 76.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.9
+  },
+  "Tehri Garhwal": {
+    "clean_fuel_pct": 34.9,
+    "health_insurance_pct": 71.2,
+    "child_marriage_pct": 6.3,
+    "menstrual_hygiene_pct": 93.7,
+    "antenatal_4visit_pct": 48.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.5
+  },
+  "Udham Singh Nagar": {
+    "clean_fuel_pct": 64.0,
+    "health_insurance_pct": 59.0,
+    "child_marriage_pct": 14.6,
+    "menstrual_hygiene_pct": 93.6,
+    "antenatal_4visit_pct": 75.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.9
+  },
+  "Uttarkashi": {
+    "clean_fuel_pct": 32.6,
+    "health_insurance_pct": 80.3,
+    "child_marriage_pct": 5.7,
+    "menstrual_hygiene_pct": 90.2,
+    "antenatal_4visit_pct": 66.8,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.7
+  },
+  "Bankura": {
+    "clean_fuel_pct": 20.8,
+    "health_insurance_pct": 43.4,
+    "child_marriage_pct": 45.7,
+    "menstrual_hygiene_pct": 79.0,
+    "antenatal_4visit_pct": 75.7,
+    "ors_diarrhoea_pct": 87.3,
+    "ari_prevalence_pct": 4.3
+  },
+  "Birbhum": {
+    "clean_fuel_pct": 28.1,
+    "health_insurance_pct": 37.7,
+    "child_marriage_pct": 49.9,
+    "menstrual_hygiene_pct": 79.3,
+    "antenatal_4visit_pct": 78.4,
+    "ors_diarrhoea_pct": 68.1,
+    "ari_prevalence_pct": 4.7
+  },
+  "Dakshin Dinajpur": {
+    "clean_fuel_pct": 28.7,
+    "health_insurance_pct": 28.3,
+    "child_marriage_pct": 45.6,
+    "menstrual_hygiene_pct": 76.6,
+    "antenatal_4visit_pct": 76.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.1
+  },
+  "Darjeeling": {
+    "clean_fuel_pct": 68.8,
+    "health_insurance_pct": 26.3,
+    "child_marriage_pct": 21.2,
+    "menstrual_hygiene_pct": 92.7,
+    "antenatal_4visit_pct": 79.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.1
+  },
+  "Haora": {
+    "clean_fuel_pct": 61.9,
+    "health_insurance_pct": 20.1,
+    "child_marriage_pct": 30.4,
+    "menstrual_hygiene_pct": 94.1,
+    "antenatal_4visit_pct": 82.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 5.6
+  },
+  "Hugli": {
+    "clean_fuel_pct": 54.6,
+    "health_insurance_pct": 26.5,
+    "child_marriage_pct": 40.8,
+    "menstrual_hygiene_pct": 86.5,
+    "antenatal_4visit_pct": 72.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 0.8
+  },
+  "Jalpaiguri": {
+    "clean_fuel_pct": 42.7,
+    "health_insurance_pct": 35.8,
+    "child_marriage_pct": 18.7,
+    "menstrual_hygiene_pct": 82.3,
+    "antenatal_4visit_pct": 88.4,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.1
+  },
+  "Koch Bihar": {
+    "clean_fuel_pct": 25.7,
+    "health_insurance_pct": 36.0,
+    "child_marriage_pct": 46.7,
+    "menstrual_hygiene_pct": 83.5,
+    "antenatal_4visit_pct": 77.3,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.5
+  },
+  "Kolkata": {
+    "clean_fuel_pct": 91.7,
+    "health_insurance_pct": 21.1,
+    "child_marriage_pct": 16.7,
+    "menstrual_hygiene_pct": 97.5,
+    "antenatal_4visit_pct": 71.7,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.6
+  },
+  "Maldah": {
+    "clean_fuel_pct": 29.6,
+    "health_insurance_pct": 29.0,
+    "child_marriage_pct": 49.1,
+    "menstrual_hygiene_pct": 83.6,
+    "antenatal_4visit_pct": 82.8,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.3
+  },
+  "Murshidabad": {
+    "clean_fuel_pct": 30.7,
+    "health_insurance_pct": 28.4,
+    "child_marriage_pct": 55.4,
+    "menstrual_hygiene_pct": 85.7,
+    "antenatal_4visit_pct": 66.9,
+    "ors_diarrhoea_pct": 71.5,
+    "ari_prevalence_pct": 2.4
+  },
+  "Nadia": {
+    "clean_fuel_pct": 34.2,
+    "health_insurance_pct": 23.0,
+    "child_marriage_pct": 39.9,
+    "menstrual_hygiene_pct": 83.4,
+    "antenatal_4visit_pct": 71.2,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.3
+  },
+  "North Twenty Four Parganas": {
+    "clean_fuel_pct": 58.9,
+    "health_insurance_pct": 30.7,
+    "child_marriage_pct": 33.6,
+    "menstrual_hygiene_pct": 89.6,
+    "antenatal_4visit_pct": 89.9,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 2.0
+  },
+  "Paschim Barddhaman": {
+    "clean_fuel_pct": 56.3,
+    "health_insurance_pct": 21.8,
+    "child_marriage_pct": 31.8,
+    "menstrual_hygiene_pct": 84.4,
+    "antenatal_4visit_pct": 70.4,
+    "ors_diarrhoea_pct": 81.2,
+    "ari_prevalence_pct": 2.0
+  },
+  "Paschim Medinipur": {
+    "clean_fuel_pct": 17.5,
+    "health_insurance_pct": 25.8,
+    "child_marriage_pct": 55.7,
+    "menstrual_hygiene_pct": 67.3,
+    "antenatal_4visit_pct": 63.1,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.4
+  },
+  "Purba Barddhaman": {
+    "clean_fuel_pct": 32.1,
+    "health_insurance_pct": 37.2,
+    "child_marriage_pct": 50.4,
+    "menstrual_hygiene_pct": 80.4,
+    "antenatal_4visit_pct": 80.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 5.0
+  },
+  "Purba Medinipur": {
+    "clean_fuel_pct": 17.0,
+    "health_insurance_pct": 21.5,
+    "child_marriage_pct": 57.6,
+    "menstrual_hygiene_pct": 78.4,
+    "antenatal_4visit_pct": 56.8,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 3.8
+  },
+  "Puruliya": {
+    "clean_fuel_pct": 23.2,
+    "health_insurance_pct": 35.6,
+    "child_marriage_pct": 37.0,
+    "menstrual_hygiene_pct": 72.7,
+    "antenatal_4visit_pct": 57.8,
+    "ors_diarrhoea_pct": 72.8,
+    "ari_prevalence_pct": 4.0
+  },
+  "South Twenty Four Parganas": {
+    "clean_fuel_pct": 36.2,
+    "health_insurance_pct": 36.7,
+    "child_marriage_pct": 41.9,
+    "menstrual_hygiene_pct": 80.3,
+    "antenatal_4visit_pct": 87.5,
+    "ors_diarrhoea_pct": 0.0,
+    "ari_prevalence_pct": 1.6
+  },
+  "Uttar Dinajpur": {
+    "clean_fuel_pct": 27.2,
+    "health_insurance_pct": 21.0,
+    "child_marriage_pct": 30.3,
+    "menstrual_hygiene_pct": 79.6,
+    "antenatal_4visit_pct": 70.1,
+    "ors_diarrhoea_pct": 64.9,
+    "ari_prevalence_pct": 4.3
+  }
+}

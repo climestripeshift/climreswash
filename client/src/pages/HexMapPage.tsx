@@ -76,9 +76,20 @@ const ATTRIBUTES: AttrDef[] = [
   { key: "wash_sanitation_pct",    label: "Sanitation %",            icon: "🚽", category: "wash", desc: "Improved sanitation coverage (NFHS-5 district)" },
   { key: "wash_water_pct",         label: "Water Access %",         icon: "💧", category: "wash", desc: "Improved water source coverage (NFHS-5 district)" },
   { key: "wash_health_pct",        label: "Health Access %",        icon: "🏥", category: "wash", desc: "Institutional births as health access proxy (NFHS-5)" },
-  { key: "wash_stunting_pct",      label: "Child Stunting %",       icon: "📉", category: "wash", desc: "Children under 5 stunted (NFHS-5 district)" },
-  { key: "wash_diarrhoea_pct",     label: "Diarrhoea Prevalence",   icon: "🦠", category: "wash", desc: "Diarrhoea prevalence in children (NFHS-5 district)" },
-  { key: "wash_anaemia_pct",       label: "Child Anaemia %",        icon: "🩸", category: "wash", desc: "Children with anaemia (NFHS-5 district)" },
+  { key: "wash_stunting_pct",        label: "Child Stunting %",        icon: "📉", category: "wash", desc: "Children under 5 stunted (NFHS-5 district)" },
+  { key: "wash_diarrhoea_pct",      label: "Diarrhoea Prevalence",    icon: "🦠", category: "wash", desc: "Diarrhoea prevalence in children (NFHS-5 district)" },
+  { key: "wash_anaemia_pct",        label: "Child Anaemia %",         icon: "🩸", category: "wash", desc: "Children with anaemia (NFHS-5 district)" },
+  // NFHS-5 extra indicators (nfhs5_extra.json — joined by district)
+  { key: "menstrual_hygiene_pct",   label: "Menstrual Hygiene %",     icon: "🩺", category: "wash", desc: "Women 15-24 using hygienic menstrual protection (NFHS-5)" },
+  { key: "clean_fuel_pct",          label: "Clean Cooking Fuel %",    icon: "🔥", category: "wash", desc: "Households using clean fuel for cooking (NFHS-5)" },
+  { key: "ors_diarrhoea_pct",       label: "ORS for Diarrhoea %",    icon: "💊", category: "wash", desc: "Children with diarrhoea who received ORS (NFHS-5)" },
+  { key: "child_marriage_pct",      label: "Child Marriage %",        icon: "⚠️", category: "wash", desc: "Women 20-24 married before age 18 (NFHS-5 vulnerability indicator)" },
+  { key: "antenatal_4visit_pct",    label: "Antenatal 4+ Visits %",  icon: "🏥", category: "wash", desc: "Mothers with 4+ antenatal care visits (NFHS-5)" },
+  // SBM Phase 2 toilet types (sbm_toilet_types.json — joined by district)
+  { key: "sbm_twin_pit_pct",        label: "SBM Twin-Pit Toilet %",  icon: "🚽", category: "wash", desc: "% IHHL with twin-pit design (flood-safe, recommended) — SBM Phase 2 IMIS" },
+  { key: "sbm_single_pit_pct",      label: "SBM Single-Pit Toilet %",icon: "🚽", category: "wash", desc: "% IHHL with single-pit design (flood-vulnerable) — SBM Phase 2 IMIS" },
+  { key: "sbm_septic_soak_pct",     label: "SBM Septic+Soak %",      icon: "🚽", category: "wash", desc: "% IHHL with septic tank + soak pit — SBM Phase 2 IMIS" },
+  { key: "sbm_total_ihhl",          label: "SBM Total IHHL",         icon: "🏠", category: "wash", desc: "Total Individual Household Latrines registered — SBM Phase 2 IMIS" },
 
   // Future projections (CMIP6 NEX-GDDP — merged from india_hex_future.json)
   { key: "risk_ssp245_2050",             label: "Risk 2050 (SSP2-4.5)",     icon: "🔮", category: "future", desc: "Projected risk score 2050 under SSP2-4.5 moderate emissions" },
@@ -112,6 +123,12 @@ const ATTR_RAMP: Record<string, [number,number,number][]> = {
   jjm_fhtc_pct: BLUES,
   wash_sanitation_pct: GREENS, wash_water_pct: BLUES, wash_health_pct: GREENS,
   wash_stunting_pct: RISK, wash_diarrhoea_pct: RISK, wash_anaemia_pct: RISK,
+  // NFHS extra
+  menstrual_hygiene_pct: GREENS, clean_fuel_pct: GREENS, ors_diarrhoea_pct: GREENS,
+  antenatal_4visit_pct: GREENS, child_marriage_pct: RISK,
+  // SBM
+  sbm_twin_pit_pct: GREENS, sbm_single_pit_pct: RISK,
+  sbm_septic_soak_pct: BLUES, sbm_total_ihhl: ORANGES,
   // Future
   risk_ssp245_2050: RISK, risk_ssp585_2030: RISK, risk_ssp585_2050: RISK,
   heat_days_ssp585_2050: ORANGES, severe_heat_days_ssp585_2050: RISK,
@@ -140,6 +157,12 @@ const FIXED_DOMAIN: Record<string, [number, number]> = {
   pollution_risk: [0, 10], pm25_annual: [0, 100],
   total_burden_days: [0, 365], multi_hazard_days: [0, 100],
   wash_stunting_pct: [0, 60], wash_diarrhoea_pct: [0, 20], wash_anaemia_pct: [0, 80],
+  // NFHS extra
+  menstrual_hygiene_pct: [0, 100], clean_fuel_pct: [0, 100], ors_diarrhoea_pct: [0, 100],
+  antenatal_4visit_pct: [0, 100], child_marriage_pct: [0, 60],
+  // SBM
+  sbm_twin_pit_pct: [0, 100], sbm_single_pit_pct: [0, 100],
+  sbm_septic_soak_pct: [0, 100], sbm_total_ihhl: [0, 500000],
   // Future projections
   risk_ssp245_2050: [0, 6], risk_ssp585_2030: [0, 6], risk_ssp585_2050: [0, 6],
   heat_days_ssp585_2050: [0, 45], severe_heat_days_ssp585_2050: [0, 21],
@@ -1453,19 +1476,43 @@ export default function HexMapPage() {
     staleTime: Infinity,
   });
 
-  // Merge future projection fields into hex feature properties
+  const nfhs5ExtraQ = useQuery<Record<string, any>>({
+    queryKey: ["nfhs5-extra"],
+    queryFn: () => fetch("/data/nfhs5_extra.json").then((r) => r.json()),
+    staleTime: Infinity,
+  });
+
+  const sbmQ = useQuery<Record<string, any>>({
+    queryKey: ["sbm-toilet-types"],
+    queryFn: () => fetch("/data/sbm_toilet_types.json").then((r) => r.json()),
+    staleTime: Infinity,
+  });
+
+  // Merge future (by h3_id), NFHS5 extra (by district_name), and SBM (by STATE|DISTRICT)
   const mergedGeoData = useMemo(() => {
-    if (!hexQ.data || !futureQ.data) return hexQ.data;
+    if (!hexQ.data) return hexQ.data;
     const futMap: Record<string, any> = {};
-    for (const f of futureQ.data) futMap[f.h3_id] = f;
+    for (const f of futureQ.data ?? []) futMap[f.h3_id] = f;
+    const nfhsMap: Record<string, any> = nfhs5ExtraQ.data ?? {};
+    const sbmMap: Record<string, any> = sbmQ.data ?? {};
     return {
       ...hexQ.data,
-      features: hexQ.data.features.map((f: any) => ({
-        ...f,
-        properties: { ...f.properties, ...(futMap[f.properties.h3_id] ?? {}) },
-      })),
+      features: hexQ.data.features.map((f: any) => {
+        const p = f.properties;
+        const fut  = futMap[p.h3_id] ?? {};
+        const nfhs = nfhsMap[p.district_name] ?? {};
+        const sbmKey = `${(p.state ?? "").toUpperCase()}|${(p.district_name ?? "").toUpperCase()}`;
+        const sbm  = sbmMap[sbmKey] ?? {};
+        const sbmPrefixed = sbm.twin_pit_pct != null ? {
+          sbm_twin_pit_pct:    sbm.twin_pit_pct,
+          sbm_single_pit_pct:  sbm.single_pit_pct,
+          sbm_septic_soak_pct: sbm.septic_soak_pct,
+          sbm_total_ihhl:      sbm.total_ihhl,
+        } : {};
+        return { ...f, properties: { ...p, ...fut, ...nfhs, ...sbmPrefixed } };
+      }),
     };
-  }, [hexQ.data, futureQ.data]);
+  }, [hexQ.data, futureQ.data, nfhs5ExtraQ.data, sbmQ.data]);
 
   const features: any[] = (mergedGeoData ?? hexQ.data)?.features ?? [];
 

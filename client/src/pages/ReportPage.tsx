@@ -132,6 +132,12 @@ export default function ReportPage() {
     staleTime: Infinity,
   });
 
+  const nfhs5ExtraQ = useQuery<Record<string, any>>({
+    queryKey: ["nfhs5-extra"],
+    queryFn: () => fetch("/data/nfhs5_extra.json").then((r) => r.json()),
+    staleTime: Infinity,
+  });
+
   const jjmQ = useQuery<Record<string, any>>({
     queryKey: ["jjm-district-fhtc"],
     queryFn: () => fetch("/data/jjm_district_fhtc.json").then((r) => r.json()),
@@ -216,6 +222,10 @@ export default function ReportPage() {
 
   const ranking = useMemo(() => rankQ.data?.find((r: any) => r.district === districtName) ?? null, [rankQ.data, districtName]);
   const gap     = useMemo(() => gapQ.data?.find((r: any) => r.district === districtName) ?? null,  [gapQ.data, districtName]);
+
+  const nfhsExtra = useMemo(() =>
+    nfhs5ExtraQ.data?.[districtName] ?? null,
+  [nfhs5ExtraQ.data, districtName]);
 
   const jjmData = useMemo(() => {
     if (!jjmQ.data) return null;
@@ -328,6 +338,14 @@ export default function ReportPage() {
               { label: "Diarrhoea prevalence", value: report.wash.diarrhoea, good: false, unit: "%" },
               { label: "Anaemia (women)", value: report.wash.anaemia, good: false, unit: "%" },
               { label: "Adaptive Capacity", value: report.avgAC * 100, good: true, unit: "%" },
+              ...(nfhsExtra ? [
+                { label: "Menstrual hygiene", value: nfhsExtra.menstrual_hygiene_pct, good: true,  unit: "%" },
+                { label: "Clean cooking fuel", value: nfhsExtra.clean_fuel_pct,        good: true,  unit: "%" },
+                { label: "ORS use (diarrhoea)", value: nfhsExtra.ors_diarrhoea_pct,   good: true,  unit: "%" },
+                { label: "Child marriage",      value: nfhsExtra.child_marriage_pct,   good: false, unit: "%" },
+                { label: "Antenatal 4+ visits", value: nfhsExtra.antenatal_4visit_pct, good: true,  unit: "%" },
+                { label: "Health insurance",    value: nfhsExtra.health_insurance_pct, good: true,  unit: "%" },
+              ] : []),
             ].map(({ label, value, good, unit }) => {
               if (!value) return null;
               const bad = good ? value < 50 : value > 30;

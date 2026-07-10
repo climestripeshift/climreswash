@@ -484,6 +484,12 @@ export default function WashAssessPage() {
     staleTime: Infinity,
   });
 
+  const { data: nfhs5Extra } = useQuery<Record<string, any>>({
+    queryKey: ["nfhs5-extra"],
+    queryFn: () => fetch("/data/nfhs5_extra.json").then(r => r.json()),
+    staleTime: Infinity,
+  });
+
   // ─── Derived district data ────────────────────────────────────────────────
 
   const rank = useMemo(() =>
@@ -493,6 +499,10 @@ export default function WashAssessPage() {
   const gap = useMemo(() =>
     gapData?.find(d => d.district === selectedDistrict) ?? null,
   [gapData, selectedDistrict]);
+
+  const nfhsExtra = useMemo(() =>
+    (selectedDistrict && nfhs5Extra) ? (nfhs5Extra[selectedDistrict] ?? null) : null,
+  [nfhs5Extra, selectedDistrict]);
 
   const districtHexes = useMemo(() =>
     hexProps?.filter(h => h.district_name === selectedDistrict) ?? [],
@@ -969,9 +979,13 @@ export default function WashAssessPage() {
               }
             >
               <StatRow label="HWWS coverage" value={hwwsPct?.toString()} unit="%" source={manual.hwws_pct ? "manual" : undefined} />
+              <StatRow label="Menstrual hygiene" value={nfhsExtra?.menstrual_hygiene_pct?.toFixed(1)} unit="%" source="auto" />
+              <StatRow label="ORS use (diarrhoea)" value={nfhsExtra?.ors_diarrhoea_pct?.toFixed(1)} unit="%" source="auto" />
               <StatRow label="Diarrhoea prevalence" value={hexAgg?.diarrhoea_pct?.toFixed(1)} unit="%" source="auto" />
+              <StatRow label="ARI prevalence" value={nfhsExtra?.ari_prevalence_pct?.toFixed(1)} unit="%" source="auto" />
               <StatRow label="Vaccination coverage" value={hexAgg?.vaccination_pct?.toFixed(1)} unit="%" source="auto" />
               <StatRow label="Electricity access" value={hexAgg?.electricity_pct?.toFixed(1)} unit="%" source="auto" />
+              <StatRow label="Clean cooking fuel" value={nfhsExtra?.clean_fuel_pct?.toFixed(1)} unit="%" source="auto" />
               <StatRow label="Literacy rate" value={hexAgg?.literacy_pct?.toFixed(1)} unit="%" source="auto" />
               {!manual.hwws_pct && (
                 <p className="text-[11px] text-muted-foreground mt-1 italic">
@@ -1074,6 +1088,9 @@ export default function WashAssessPage() {
                     <BookOpen className="w-3 h-3" /> Social
                   </div>
                   <StatRow label="Literacy" value={hexAgg.literacy_pct?.toFixed(1)} unit="%" source="auto" />
+                  <StatRow label="Child marriage" value={nfhsExtra?.child_marriage_pct?.toFixed(1)} unit="%" source="auto" />
+                  <StatRow label="Antenatal 4+ visits" value={nfhsExtra?.antenatal_4visit_pct?.toFixed(1)} unit="%" source="auto" />
+                  <StatRow label="Health insurance" value={nfhsExtra?.health_insurance_pct?.toFixed(1)} unit="%" source="auto" />
                   <StatRow label="Adaptive capacity" value={hexAgg.adaptive_capacity?.toFixed(3)} source="derived" />
                 </div>
                 <div>
