@@ -8,5 +8,8 @@ cd "$(dirname "$0")/.."
 
 echo "$(date): Starting forecast refresh..."
 python scripts/compute_forecast.py
-echo "$(date): Forecast refresh complete."
-echo "$(date): File size: $(du -h client/public/data/forecast_risk.json | cut -f1)"
+echo "$(date): Forecast refresh complete. $(du -h client/public/data/forecast_risk.json | cut -f1)"
+
+echo "$(date): Starting river discharge refresh..."
+python scripts/fetch_river_forecast.py
+echo "$(date): River refresh complete. $(du -h client/public/data/river_forecast.json | cut -f1)"

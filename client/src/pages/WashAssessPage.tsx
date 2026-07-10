@@ -4,7 +4,7 @@ import { Link } from "wouter";
 import { MapContainer, TileLayer, GeoJSON, useMap } from "react-leaflet";
 import type { Map as LeafletMap } from "leaflet";
 import L from "leaflet";
-import { cellToBoundary } from "h3-js";
+import { cellToBoundary, cellToLatLng } from "h3-js";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,17 @@ import {
 } from "lucide-react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
+
+interface RiverDay { date: string; discharge: number; p25: number|null; p75: number|null; severity: string; }
+interface RiverPoint { lat: number; lon: number; river: string; location: string; current_discharge: number; current_severity: string; max_severity_7d: string; days: RiverDay[]; }
+interface RiverForecast { generated: string; points: RiverPoint[]; summary: Record<string,number>; }
+
+const RIVER_SEV_COLOR: Record<string,string> = {
+  extreme:"#7f1d1d", danger:"#dc2626", warning:"#f97316", elevated:"#eab308", normal:"#22c55e", unknown:"#6b7280",
+};
+const RIVER_SEV_LABEL: Record<string,string> = {
+  extreme:"EXTREME", danger:"DANGER", warning:"WARNING", elevated:"ELEVATED", normal:"Normal", unknown:"Unknown",
+};
 
 interface ManualData {
   // Groundwater
@@ -545,6 +556,12 @@ export default function WashAssessPage() {
     staleTime: Infinity,
   });
 
+  const { data: riverForecast } = useQuery<RiverForecast>({
+    queryKey: ["river-forecast"],
+    queryFn: () => fetch("/data/river_forecast.json").then(r => r.json()),
+    staleTime: 30 * 60 * 1000,
+  });
+
   // ─── Derived district data ────────────────────────────────────────────────
 
   const rank = useMemo(() =>
@@ -643,6 +660,21 @@ export default function WashAssessPage() {
   [districtClimate, rank]);
 
   const nationalAvg = useMemo(() => districtClimate?.national ?? null, [districtClimate]);
+
+  // Nearest river discharge point to this district
+  const riverPoint = useMemo((): RiverPoint | null => {
+    if (!riverForecast || !districtHexes.length) return null;
+    // Compute district centroid from first hex
+    const [cLat, cLon] = cellToLatLng(districtHexes[0].h3_id);
+    let best: RiverPoint | null = null;
+    let bestDist = Infinity;
+    for (const pt of riverForecast.points) {
+      const d = Math.hypot(pt.lat - cLat, pt.lon - cLon);
+      if (d < bestDist) { bestDist = d; best = pt; }
+    }
+    // Only return if within ~300km (~2.7° at India lat)
+    return bestDist < 2.7 ? best : null;
+  }, [riverForecast, districtHexes]);
 
   // ─── District selection ───────────────────────────────────────────────────
 
@@ -950,6 +982,49 @@ export default function WashAssessPage() {
               <StatRow label="Burden days/yr" value={hexAgg?.burden_days?.toFixed(0)} source="derived" />
               <StatRow label="PM2.5 (µg/m³)" value={hexAgg?.pm25?.toFixed(1)} source="derived" />
               <StatRow label="Air quality risk" value={hexAgg?.pollution_risk?.toFixed(2)} unit="/10" source="derived" />
+              {/* River discharge — live GloFAS */}
+              {riverPoint && (
+                <div className="mt-2 pt-2 border-t border-border/30">
+                  <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+                    Nearest River — Live Discharge (GloFAS)
+                  </div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Waves className="h-3 w-3 shrink-0" style={{ color: RIVER_SEV_COLOR[riverPoint.max_severity_7d] }} />
+                    <span className="text-[11px] font-semibold">{riverPoint.river} @ {riverPoint.location}</span>
+                    <span className="text-[10px] font-bold ml-auto" style={{ color: RIVER_SEV_COLOR[riverPoint.max_severity_7d] }}>
+                      {RIVER_SEV_LABEL[riverPoint.max_severity_7d]}
+                    </span>
+                  </div>
+                  <div className="flex items-baseline gap-3 mb-1.5">
+                    <span className="text-[10px] text-muted-foreground">Now:</span>
+                    <span className="text-[11px] font-mono font-semibold">{riverPoint.current_discharge.toLocaleString()} m³/s</span>
+                    {riverPoint.days[0]?.p75 && (
+                      <span className="text-[9px] text-muted-foreground">p75: {riverPoint.days[0].p75.toLocaleString()} m³/s</span>
+                    )}
+                  </div>
+                  {/* 7-day bar */}
+                  <div className="flex gap-0.5 mb-0.5">
+                    {riverPoint.days.map((d, j) => (
+                      <div key={j} className="flex-1 h-2.5 rounded-sm"
+                        style={{ backgroundColor: RIVER_SEV_COLOR[d.severity] + "99" }}
+                        title={`${d.date}: ${d.discharge} m³/s`}
+                      />
+                    ))}
+                  </div>
+                  <div className="flex justify-between text-[8px] text-muted-foreground">
+                    <span>Today</span><span>+6d</span>
+                  </div>
+                  {riverPoint.max_severity_7d === "danger" || riverPoint.max_severity_7d === "extreme" ? (
+                    <p className="text-[10px] text-red-400 leading-snug mt-1">
+                      ⚠ River at {RIVER_SEV_LABEL[riverPoint.max_severity_7d]} — check toilet siting, water source contamination risk.
+                    </p>
+                  ) : riverPoint.max_severity_7d === "warning" ? (
+                    <p className="text-[10px] text-orange-400 leading-snug mt-1">
+                      ⚠ River above normal — monitor open defecation sites and hand-pump contamination.
+                    </p>
+                  ) : null}
+                </div>
+              )}
               {/* Climate-social callouts */}
               {hexAgg && (
                 <div className="mt-2 pt-2 border-t border-border/30 space-y-1">

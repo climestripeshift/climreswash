@@ -1,14 +1,14 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { MapContainer, TileLayer, GeoJSON, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, GeoJSON, CircleMarker, Tooltip, useMap } from "react-leaflet";
 import type { Map as LeafletMap, GeoJSON as LeafletGeoJSONLayer } from "leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { cellToBoundary } from "h3-js";
 import {
   ArrowLeft, AlertTriangle, Loader2, Radio, ChevronDown, ChevronRight,
-  PanelLeftClose, PanelLeft,
+  PanelLeftClose, PanelLeft, Waves,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +28,27 @@ interface Alert {
   h3_id: string; district: string; state: string; hazard: string;
   risk: number; day: number; date: string;
   rain_mm?: number; temp_c?: number; rh_pct?: number; wind_kmh?: number;
+}
+
+interface RiverDay {
+  date: string; discharge: number;
+  p25: number | null; p75: number | null;
+  severity: string;
+}
+
+interface RiverPoint {
+  lat: number; lon: number;
+  river: string; location: string;
+  current_discharge: number;
+  current_severity: string;
+  max_severity_7d: string;
+  days: RiverDay[];
+}
+
+interface RiverForecast {
+  generated: string;
+  points: RiverPoint[];
+  summary: Record<string, number>;
 }
 
 // ── Color ─────────────────────────────────────────────────────────────────────
@@ -51,6 +72,24 @@ const HAZARD_ICONS: Record<string, string> = {
 
 const HAZARD_TYPES = ["all","flood","heat","wetbulb","flashflood","coldwave","landslide","fire"] as const;
 
+// ── River severity styles ─────────────────────────────────────────────────────
+
+const SEV_COLOR: Record<string, string> = {
+  extreme: "#7f1d1d",
+  danger:  "#dc2626",
+  warning: "#f97316",
+  elevated:"#eab308",
+  normal:  "#22c55e",
+  unknown: "#6b7280",
+};
+
+const SEV_LABEL: Record<string, string> = {
+  extreme: "EXTREME", danger: "DANGER", warning: "WARNING",
+  elevated: "ELEVATED", normal: "Normal", unknown: "Unknown",
+};
+
+const SEV_ORDER = ["unknown","normal","elevated","warning","danger","extreme"];
+
 // ── Canvas ────────────────────────────────────────────────────────────────────
 
 const canvasRenderer = L.canvas({ padding: 0.5 });
@@ -58,6 +97,40 @@ function SetupCanvas() {
   const map = useMap();
   useEffect(() => { (map as any).options.renderer = canvasRenderer; }, [map]);
   return null;
+}
+
+// ── River layer on map ────────────────────────────────────────────────────────
+
+function RiverLayer({ points, showRivers }: { points: RiverPoint[]; showRivers: boolean }) {
+  if (!showRivers) return null;
+  return (
+    <>
+      {points.map((pt, i) => {
+        const sev = pt.max_severity_7d;
+        const color = SEV_COLOR[sev] || "#6b7280";
+        const radius = sev === "extreme" ? 12 : sev === "danger" ? 10 : sev === "warning" ? 8 : 6;
+        const today = pt.days.find(d => d.discharge === pt.current_discharge) ?? pt.days[0];
+        return (
+          <CircleMarker
+            key={i}
+            center={[pt.lat, pt.lon]}
+            radius={radius}
+            pathOptions={{ fillColor: color, color: "#fff", weight: 1.5, fillOpacity: 0.9 }}
+          >
+            <Tooltip sticky>
+              <div className="text-xs">
+                <div className="font-bold">{pt.river} @ {pt.location}</div>
+                <div style={{ color }} className="font-bold">{SEV_LABEL[sev]}</div>
+                <div>Now: {pt.current_discharge.toLocaleString()} m³/s</div>
+                {today?.p75 && <div>p75: {today.p75.toLocaleString()} m³/s</div>}
+                <div className="text-gray-400 mt-0.5 text-[10px]">GloFAS · 7-day max severity</div>
+              </div>
+            </Tooltip>
+          </CircleMarker>
+        );
+      })}
+    </>
+  );
 }
 
 // ── Sidebar ───────────────────────────────────────────────────────────────────
@@ -68,6 +141,7 @@ function ForecastSidebar({
   hazardFilter, onHazardChange,
   selectedState, states, onStateChange,
   minRisk, onMinRiskChange,
+  riverForecast, showRivers, onToggleRivers,
 }: {
   collapsed: boolean; onToggle: () => void;
   forecast: ForecastData | undefined; alerts: Alert[];
@@ -75,13 +149,23 @@ function ForecastSidebar({
   hazardFilter: string; onHazardChange: (h: string) => void;
   selectedState: string; states: string[]; onStateChange: (s: string) => void;
   minRisk: number; onMinRiskChange: (v: number) => void;
+  riverForecast: RiverForecast | undefined;
+  showRivers: boolean; onToggleRivers: () => void;
 }) {
   const [alertsOpen, setAlertsOpen] = useState(true);
+  const [riverOpen, setRiverOpen]   = useState(true);
   const dayLabels = ["Today", "+1d", "+2d", "+3d", "+4d", "+5d", "+6d"];
 
   const dayAlerts = alerts.filter((a) => a.day === selectedDay);
   const base = dayAlerts.length > 0 ? dayAlerts : alerts.filter((a) => a.day <= 2);
   const display = hazardFilter === "all" ? base : base.filter((a) => a.hazard === hazardFilter);
+
+  const riverAlerts = useMemo(() => {
+    if (!riverForecast) return [];
+    return [...riverForecast.points]
+      .filter(p => SEV_ORDER.indexOf(p.max_severity_7d) >= SEV_ORDER.indexOf("warning"))
+      .sort((a,b) => SEV_ORDER.indexOf(b.max_severity_7d) - SEV_ORDER.indexOf(a.max_severity_7d));
+  }, [riverForecast]);
 
   if (collapsed) {
     return (
@@ -161,37 +245,109 @@ function ForecastSidebar({
         </div>
       </div>
 
-      {/* Alerts */}
-      <div className="flex-1 overflow-hidden flex flex-col">
-        <button onClick={() => setAlertsOpen((v) => !v)}
-          className="px-3 py-2 flex items-center gap-2 border-b border-border/20 hover:bg-muted/30">
-          {alertsOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-          <AlertTriangle className="h-3 w-3 text-red-400" />
-          <span className="text-[11px] font-semibold flex-1 text-left">Alerts</span>
-          <Badge variant="outline" className="text-[9px] h-4 border-red-500/30 text-red-400">{display.length}</Badge>
-        </button>
-        {alertsOpen && (
-          <div className="overflow-y-auto flex-1">
-            {display.length === 0 ? (
-              <div className="px-3 py-4 text-center text-[10px] text-muted-foreground">No alerts above threshold</div>
-            ) : display.slice(0, 30).map((a) => (
-              <div key={`${a.h3_id}-${a.hazard}-${a.day}`} className="px-3 py-2 border-b border-border/20 last:border-0">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-sm">{HAZARD_ICONS[a.hazard] || "⚠️"}</span>
-                  <span className="text-[11px] font-semibold flex-1 truncate">{a.district}</span>
-                  <span className="text-[11px] font-mono font-bold" style={{ color: riskColor(a.risk / 10) }}>{a.risk}</span>
+      {/* Scrollable sections */}
+      <div className="flex-1 overflow-y-auto flex flex-col">
+
+        {/* River Discharge section */}
+        <div className="border-b border-border/20">
+          <button onClick={() => setRiverOpen((v) => !v)}
+            className="w-full px-3 py-2 flex items-center gap-2 hover:bg-muted/30">
+            {riverOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+            <Waves className="h-3 w-3 text-blue-400" />
+            <span className="text-[11px] font-semibold flex-1 text-left">River Discharge</span>
+            <button
+              onClick={(e) => { e.stopPropagation(); onToggleRivers(); }}
+              className={`px-1.5 py-0.5 rounded text-[9px] font-bold transition-colors ${
+                showRivers ? "bg-blue-600 text-white" : "bg-muted text-muted-foreground"
+              }`}
+            >
+              {showRivers ? "ON" : "OFF"}
+            </button>
+            {riverForecast && (
+              <Badge variant="outline" className="text-[9px] h-4 border-blue-500/30 text-blue-400 ml-1">
+                {riverAlerts.length} alerts
+              </Badge>
+            )}
+          </button>
+
+          {riverOpen && (
+            <div className="pb-1">
+              {!riverForecast ? (
+                <div className="px-3 py-3 text-center text-[10px] text-muted-foreground">Loading river data…</div>
+              ) : riverAlerts.length === 0 ? (
+                <div className="px-3 py-3 text-center text-[10px] text-muted-foreground">All rivers normal</div>
+              ) : (
+                riverAlerts.map((pt, i) => (
+                  <div key={i} className="px-3 py-2 border-b border-border/10 last:border-0">
+                    <div className="flex items-center gap-1.5">
+                      <Waves className="h-3 w-3 shrink-0" style={{ color: SEV_COLOR[pt.max_severity_7d] }} />
+                      <span className="text-[11px] font-semibold flex-1 truncate">{pt.river}</span>
+                      <span className="text-[10px] font-bold" style={{ color: SEV_COLOR[pt.max_severity_7d] }}>
+                        {SEV_LABEL[pt.max_severity_7d]}
+                      </span>
+                    </div>
+                    <div className="text-[9px] text-muted-foreground mt-0.5 flex items-center gap-1">
+                      <span>@ {pt.location}</span>
+                      <span>·</span>
+                      <span className="font-mono">{pt.current_discharge.toLocaleString()} m³/s</span>
+                    </div>
+                    {/* Mini discharge bar */}
+                    <div className="mt-1.5 flex gap-0.5">
+                      {pt.days.map((d, j) => (
+                        <div key={j} className="flex-1 h-3 rounded-sm relative group cursor-default"
+                          style={{ backgroundColor: SEV_COLOR[d.severity] + "99" }}
+                          title={`${d.date}: ${d.discharge} m³/s (${d.severity})`}
+                        />
+                      ))}
+                    </div>
+                    <div className="flex justify-between text-[8px] text-muted-foreground mt-0.5">
+                      <span>Today</span><span>+6d</span>
+                    </div>
+                  </div>
+                ))
+              )}
+              {riverForecast && (
+                <div className="px-3 py-1.5 text-[9px] text-muted-foreground flex items-center justify-between">
+                  <span>GloFAS (Open-Meteo) · {riverForecast.points.length} rivers</span>
+                  <span>{new Date(riverForecast.generated).toLocaleDateString("en-IN", { day:"numeric", month:"short"})}</span>
                 </div>
-                <div className="text-[9px] text-muted-foreground mt-0.5">
-                  {a.state} · {a.hazard}
-                  {a.rain_mm ? ` · ${a.rain_mm}mm` : ""}
-                  {a.temp_c ? ` · ${a.temp_c}°C` : ""}
-                  {a.rh_pct ? ` · ${a.rh_pct}%RH` : ""}
-                  {" · "}{a.date}
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Hazard Alerts section */}
+        <div className="flex flex-col flex-1">
+          <button onClick={() => setAlertsOpen((v) => !v)}
+            className="px-3 py-2 flex items-center gap-2 border-b border-border/20 hover:bg-muted/30">
+            {alertsOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+            <AlertTriangle className="h-3 w-3 text-red-400" />
+            <span className="text-[11px] font-semibold flex-1 text-left">Weather Hazard Alerts</span>
+            <Badge variant="outline" className="text-[9px] h-4 border-red-500/30 text-red-400">{display.length}</Badge>
+          </button>
+          {alertsOpen && (
+            <div className="overflow-y-auto">
+              {display.length === 0 ? (
+                <div className="px-3 py-4 text-center text-[10px] text-muted-foreground">No alerts above threshold</div>
+              ) : display.slice(0, 30).map((a) => (
+                <div key={`${a.h3_id}-${a.hazard}-${a.day}`} className="px-3 py-2 border-b border-border/20 last:border-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm">{HAZARD_ICONS[a.hazard] || "⚠️"}</span>
+                    <span className="text-[11px] font-semibold flex-1 truncate">{a.district}</span>
+                    <span className="text-[11px] font-mono font-bold" style={{ color: riskColor(a.risk / 10) }}>{a.risk}</span>
+                  </div>
+                  <div className="text-[9px] text-muted-foreground mt-0.5">
+                    {a.state} · {a.hazard}
+                    {a.rain_mm ? ` · ${a.rain_mm}mm` : ""}
+                    {a.temp_c ? ` · ${a.temp_c}°C` : ""}
+                    {a.rh_pct ? ` · ${a.rh_pct}%RH` : ""}
+                    {" · "}{a.date}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Footer */}
@@ -210,10 +366,12 @@ function ForecastSidebar({
 
 function ForecastMap({
   geoData, forecast, selectedDay, selectedState, hazardFilter, minRisk, mapRef,
+  riverForecast, showRivers,
 }: {
   geoData: any; forecast: ForecastData; selectedDay: number;
   selectedState: string; hazardFilter: string; minRisk: number;
   mapRef: React.MutableRefObject<LeafletMap | null>;
+  riverForecast: RiverForecast | undefined; showRivers: boolean;
 }) {
   const geoJsonRef = useRef<LeafletGeoJSONLayer | null>(null);
 
@@ -265,7 +423,28 @@ function ForecastMap({
         attribution='&copy; OSM &copy; CARTO' />
       <GeoJSON ref={geoJsonRef} key={`${selectedState}-${hazardFilter}-${minRisk}-${selectedDay}`}
         data={filtered} style={styleFeature} onEachFeature={onEachFeature} />
+      {riverForecast && (
+        <RiverLayer points={riverForecast.points} showRivers={showRivers} />
+      )}
     </MapContainer>
+  );
+}
+
+// ── River legend ──────────────────────────────────────────────────────────────
+
+function RiverLegend({ show }: { show: boolean }) {
+  if (!show) return null;
+  return (
+    <div className="bg-background/90 backdrop-blur border border-border/40 rounded-lg p-2.5 shadow-lg">
+      <p className="text-[10px] font-semibold mb-1.5 flex items-center gap-1"><Waves className="h-3 w-3 text-blue-400" /> River Discharge</p>
+      {[["extreme","Extreme"],["danger","Danger"],["warning","Warning"],["elevated","Elevated"],["normal","Normal"]].map(([k,l]) => (
+        <div key={k} className="flex items-center gap-1.5 mb-0.5">
+          <div className="w-3 h-3 rounded-full border border-white/30" style={{ backgroundColor: SEV_COLOR[k] }} />
+          <span className="text-[9px] text-muted-foreground">{l}</span>
+        </div>
+      ))}
+      <p className="text-[8px] text-muted-foreground mt-1">GloFAS · 7-day max</p>
+    </div>
   );
 }
 
@@ -277,6 +456,7 @@ export default function ForecastPage() {
   const [hazardFilter, setHazardFilter]   = useState("all");
   const [minRisk, setMinRisk]             = useState(0);
   const [sidebarOpen, setSidebarOpen]     = useState(window.innerWidth > 768);
+  const [showRivers, setShowRivers]       = useState(true);
   const mapRef = useRef<LeafletMap | null>(null);
 
   const hexQ = useQuery<any>({
@@ -306,6 +486,12 @@ export default function ForecastPage() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const riverQ = useQuery<RiverForecast>({
+    queryKey: ["river-forecast"],
+    queryFn: () => fetch("/data/river_forecast.json").then((r) => r.json()),
+    staleTime: 30 * 60 * 1000,
+  });
+
   const features: any[] = hexQ.data?.features ?? [];
   const stateList = useMemo(
     () => Array.from(new Set(features.map((f: any) => f.properties.state).filter(Boolean))).sort() as string[],
@@ -325,6 +511,7 @@ export default function ForecastPage() {
         hazardFilter={hazardFilter} onHazardChange={setHazardFilter}
         selectedState={selectedState} states={stateList} onStateChange={setSelectedState}
         minRisk={minRisk} onMinRiskChange={setMinRisk}
+        riverForecast={riverQ.data} showRivers={showRivers} onToggleRivers={() => setShowRivers(v => !v)}
       />
 
       {/* Main area */}
@@ -352,11 +539,12 @@ export default function ForecastPage() {
               geoData={hexQ.data} forecast={forecastQ.data}
               selectedDay={selectedDay} selectedState={selectedState}
               hazardFilter={hazardFilter} minRisk={minRisk} mapRef={mapRef}
+              riverForecast={riverQ.data} showRivers={showRivers}
             />
           ) : null}
 
-          {/* Legend */}
-          <div className="absolute bottom-8 left-3 z-[800]">
+          {/* Legends */}
+          <div className="absolute bottom-8 left-3 z-[800] flex flex-col gap-2">
             <div className="bg-background/90 backdrop-blur border border-border/40 rounded-lg p-2.5 shadow-lg w-40">
               <p className="text-[10px] font-semibold mb-1">Forecast Risk (0–10)</p>
               <div className="h-2.5 w-full rounded-sm mb-1"
@@ -365,6 +553,7 @@ export default function ForecastPage() {
                 <span>0 Safe</span><span>10 Extreme</span>
               </div>
             </div>
+            <RiverLegend show={showRivers} />
           </div>
         </div>
       </div>
