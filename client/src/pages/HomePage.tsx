@@ -78,6 +78,7 @@ const FEATURES = [
   { icon: <FlaskConical className="w-5 h-5 text-primary" />, title: "What-If Simulator", desc: "Adjust rainfall, temperature, or drought index and watch the risk map respond live. Presets: 2022 Heatwave, El Niño, +2°C.", tag: "New", link: "/simulator", highlight: true },
   { icon: <Wrench className="w-5 h-5 text-primary" />, title: "WASH Technologies", desc: "Filter sanitation, water, and adaptation technologies by climate hazard and landscape typology — with per-district suitability matrix.", tag: "New", link: "/technology", highlight: true },
   { icon: <Droplets className="w-5 h-5 text-primary" />, title: "WASH Assessment", desc: "District-level assessment linking climate hazards to groundwater, JJM water supply, sanitation, handwashing, and waste management — with manual field data entry.", tag: "New", link: "/wash-assess", highlight: true },
+  { icon: <AlertTriangle className="w-5 h-5 text-primary" />, title: "District Action Screener", desc: "Cross-filter 713 districts by hazard type, WASH gaps (JJM, SBM, MHM, clean fuel), and priority tier. Download targeted district lists as CSV for field planning.", tag: "New", link: "/screener", highlight: true },
 ];
 
 const METHODOLOGY = [
@@ -140,6 +141,9 @@ export default function HomePage() {
               </Link>
               <Link href="/wash-assess" className="text-sm font-semibold flex items-center gap-1.5 text-[#00AEEF] hover:text-[#00AEEF]/80 transition-colors">
                 <Droplets className="w-3.5 h-3.5" /> WASH Assess
+              </Link>
+              <Link href="/screener" className="text-sm font-semibold flex items-center gap-1.5 text-emerald-500 hover:text-emerald-400 transition-colors">
+                Screener
               </Link>
             </div>
 
