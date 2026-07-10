@@ -30,6 +30,7 @@ const CATEGORIES = [
   { id: "climate",      label: "Climate Hazards",     icon: "🌀" },
   { id: "geographic",   label: "Geographic Hazards",  icon: "🏔️" },
   { id: "wash",         label: "WASH & Capacity",     icon: "🚰" },
+  { id: "future",       label: "Future Projections",  icon: "🔮" },
 ];
 
 const ATTRIBUTES: AttrDef[] = [
@@ -78,6 +79,15 @@ const ATTRIBUTES: AttrDef[] = [
   { key: "wash_stunting_pct",      label: "Child Stunting %",       icon: "📉", category: "wash", desc: "Children under 5 stunted (NFHS-5 district)" },
   { key: "wash_diarrhoea_pct",     label: "Diarrhoea Prevalence",   icon: "🦠", category: "wash", desc: "Diarrhoea prevalence in children (NFHS-5 district)" },
   { key: "wash_anaemia_pct",       label: "Child Anaemia %",        icon: "🩸", category: "wash", desc: "Children with anaemia (NFHS-5 district)" },
+
+  // Future projections (CMIP6 NEX-GDDP — merged from india_hex_future.json)
+  { key: "risk_ssp245_2050",             label: "Risk 2050 (SSP2-4.5)",     icon: "🔮", category: "future", desc: "Projected risk score 2050 under SSP2-4.5 moderate emissions" },
+  { key: "risk_ssp585_2030",             label: "Risk 2030 (SSP5-8.5)",     icon: "🔮", category: "future", desc: "Near-term 2030 risk under SSP5-8.5 high emissions" },
+  { key: "risk_ssp585_2050",             label: "Risk 2050 (SSP5-8.5)",     icon: "🔴", category: "future", desc: "Worst-case projected risk score 2050 under SSP5-8.5" },
+  { key: "heat_days_ssp585_2050",        label: "Heat Days 2050 (SSP5)",     icon: "🔥", category: "future", desc: "Additional days/yr above heat threshold by 2050 (SSP5-8.5)" },
+  { key: "severe_heat_days_ssp585_2050", label: "Severe Heat Days 2050",     icon: "🌡️", category: "future", desc: "Days/yr above severe heat threshold by 2050 (SSP5-8.5)" },
+  { key: "wet_bulb_days_ssp585_2050",    label: "Wet-Bulb Days 2050 (SSP5)", icon: "💧", category: "future", desc: "Days/yr above dangerous wet-bulb threshold by 2050 (SSP5-8.5)" },
+  { key: "flood_days_ssp585_2050",       label: "Flood Days 2050 (SSP5)",    icon: "🌊", category: "future", desc: "Additional extreme-rain/flood days by 2050 (SSP5-8.5)" },
 ];
 
 // ── Color scales ──────────────────────────────────────────────────────────────
@@ -102,6 +112,10 @@ const ATTR_RAMP: Record<string, [number,number,number][]> = {
   jjm_fhtc_pct: BLUES,
   wash_sanitation_pct: GREENS, wash_water_pct: BLUES, wash_health_pct: GREENS,
   wash_stunting_pct: RISK, wash_diarrhoea_pct: RISK, wash_anaemia_pct: RISK,
+  // Future
+  risk_ssp245_2050: RISK, risk_ssp585_2030: RISK, risk_ssp585_2050: RISK,
+  heat_days_ssp585_2050: ORANGES, severe_heat_days_ssp585_2050: RISK,
+  wet_bulb_days_ssp585_2050: BLUES, flood_days_ssp585_2050: BLUES,
 };
 
 const LAND_USE_COLORS: Record<string, string> = {
@@ -126,6 +140,10 @@ const FIXED_DOMAIN: Record<string, [number, number]> = {
   pollution_risk: [0, 10], pm25_annual: [0, 100],
   total_burden_days: [0, 365], multi_hazard_days: [0, 100],
   wash_stunting_pct: [0, 60], wash_diarrhoea_pct: [0, 20], wash_anaemia_pct: [0, 80],
+  // Future projections
+  risk_ssp245_2050: [0, 6], risk_ssp585_2030: [0, 6], risk_ssp585_2050: [0, 6],
+  heat_days_ssp585_2050: [0, 45], severe_heat_days_ssp585_2050: [0, 21],
+  wet_bulb_days_ssp585_2050: [0, 185], flood_days_ssp585_2050: [0, 4],
 };
 
 function lerp3(a: [number,number,number], b: [number,number,number], t: number) {
@@ -1429,7 +1447,27 @@ export default function HexMapPage() {
     retry: 1,
   });
 
-  const features: any[] = hexQ.data?.features ?? [];
+  const futureQ = useQuery<any[]>({
+    queryKey: ["india-hex-future"],
+    queryFn: () => fetch("/data/india_hex_future.json").then((r) => r.json()),
+    staleTime: Infinity,
+  });
+
+  // Merge future projection fields into hex feature properties
+  const mergedGeoData = useMemo(() => {
+    if (!hexQ.data || !futureQ.data) return hexQ.data;
+    const futMap: Record<string, any> = {};
+    for (const f of futureQ.data) futMap[f.h3_id] = f;
+    return {
+      ...hexQ.data,
+      features: hexQ.data.features.map((f: any) => ({
+        ...f,
+        properties: { ...f.properties, ...(futMap[f.properties.h3_id] ?? {}) },
+      })),
+    };
+  }, [hexQ.data, futureQ.data]);
+
+  const features: any[] = (mergedGeoData ?? hexQ.data)?.features ?? [];
 
   const stateList = useMemo(
     () => Array.from(new Set(features.map((f: any) => f.properties.state).filter(Boolean))).sort() as string[],
@@ -1529,7 +1567,7 @@ export default function HexMapPage() {
               <AlertTriangle className="h-5 w-5" /> Failed to load data
             </div>
           ) : (
-            <HexMap geoData={hexQ.data} attr={effectiveAttr} selectedState={selectedState}
+            <HexMap geoData={mergedGeoData ?? hexQ.data} attr={effectiveAttr} selectedState={selectedState}
               selectedDistrict={selectedDistrict} crossFilters={crossFilters}
               mapRef={mapRef} onHexClick={(p) => { setClickedHex(p); setClickedBoundary(null); }}
               showDistricts={showDistricts} showStates={showStates}

@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import {
   ArrowLeft, Search, Droplets, Trash2, Wind, Thermometer,
   AlertTriangle, CheckCircle, Edit3, Save, X, Info,
-  Waves, Sprout, FlaskConical, Activity,
+  Waves, Sprout, FlaskConical, Activity, Printer, Heart, Zap, BookOpen,
 } from "lucide-react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -153,6 +153,39 @@ function StatRow({ label, value, unit = "", source, note }: {
         }
         {source && <SourceBadge source={source} />}
       </div>
+    </div>
+  );
+}
+
+// ─── Toilet type bar chart ────────────────────────────────────────────────────
+
+const TOILET_TYPE_DEFS = [
+  { label: "Twin pit",    key: "twin_pit_pct",    color: "#22c55e" },
+  { label: "Single pit",  key: "single_pit_pct",  color: "#f97316" },
+  { label: "Septic+Soak", key: "septic_soak_pct", color: "#3b82f6" },
+  { label: "Septic",      key: "septic_nosoak_pct", color: "#a855f7" },
+  { label: "Others",      key: "others_pct",      color: "#94a3b8" },
+] as const;
+
+function ToiletTypeBar({ sbmData }: { sbmData: Record<string, any> }) {
+  return (
+    <div className="space-y-1.5 mt-2 mb-1">
+      {TOILET_TYPE_DEFS.map(({ label, key, color }) => {
+        const val: number | null = sbmData[key] ?? null;
+        return (
+          <div key={key} className="flex items-center gap-2">
+            <span className="text-[10px] text-muted-foreground w-[70px] shrink-0">{label}</span>
+            <div className="flex-1 bg-muted rounded-full h-1.5 overflow-hidden">
+              {val != null && (
+                <div className="h-full rounded-full" style={{ width: `${Math.min(Math.max(val, 0), 100)}%`, background: color }} />
+              )}
+            </div>
+            <span className="text-[10px] font-mono font-semibold w-9 text-right shrink-0">
+              {val != null ? `${val.toFixed(1)}%` : "—"}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -445,11 +478,21 @@ export default function WashAssessPage() {
     staleTime: Infinity,
   });
 
+  const { data: gapData } = useQuery<any[]>({
+    queryKey: ["gap-rankings"],
+    queryFn: () => fetch("/data/gap_rankings.json").then(r => r.json()),
+    staleTime: Infinity,
+  });
+
   // ─── Derived district data ────────────────────────────────────────────────
 
   const rank = useMemo(() =>
     rankings?.find(d => d.district === selectedDistrict) ?? null,
   [rankings, selectedDistrict]);
+
+  const gap = useMemo(() =>
+    gapData?.find(d => d.district === selectedDistrict) ?? null,
+  [gapData, selectedDistrict]);
 
   const districtHexes = useMemo(() =>
     hexProps?.filter(h => h.district_name === selectedDistrict) ?? [],
@@ -459,6 +502,12 @@ export default function WashAssessPage() {
     if (!districtHexes.length) return null;
     const avg = (field: string) =>
       districtHexes.reduce((s, h) => s + (h[field] || 0), 0) / districtHexes.length;
+    const mode = (field: string): number | null => {
+      const counts: Record<number, number> = {};
+      districtHexes.forEach(h => { if (h[field] != null) counts[h[field]] = (counts[h[field]] || 0) + 1; });
+      const entries = Object.entries(counts);
+      return entries.length ? Number(entries.sort((a, b) => Number(b[1]) - Number(a[1]))[0][0]) : null;
+    };
     return {
       gw_stress: avg("gw_stress_score"),
       water_pct: avg("wash_water_pct"),
@@ -469,16 +518,42 @@ export default function WashAssessPage() {
       flood_risk: avg("flood_risk"),
       drought_risk: avg("drought_risk"),
       heat_risk: avg("heat_risk"),
+      // Extended fields
+      pm25: avg("pm25_annual"),
+      pollution_risk: avg("pollution_risk"),
+      cascade_count: avg("cascade_count"),
+      burden_days: avg("total_burden_days"),
+      stunting_pct: avg("wash_stunting_pct"),
+      anaemia_pct: avg("wash_anaemia_pct"),
+      electricity_pct: avg("wash_electricity_pct"),
+      literacy_pct: avg("wash_literacy_pct"),
+      vaccination_pct: avg("wash_vaccination_pct"),
+      adaptive_capacity: avg("adaptive_capacity"),
+      jjm_fhtc_hex: avg("jjm_fhtc_pct"),
+      flood_peak_month: mode("flood_peak_month"),
+      heat_peak_month: mode("heat_peak_month"),
+      drought_peak_month: mode("drought_peak_month"),
+      wetbulb_peak_month: mode("wetbulb_peak_month"),
     };
   }, [districtHexes]);
 
   const season = rank ? HAZARD_SEASONS[rank.dominant_hazard] ?? null : null;
 
-  // SBM toilet type data (Rajasthan districts only for now)
+  // SBM toilet type data — national dataset keyed STATE|DISTRICT
   const sbmData = useMemo(() => {
     if (!sbmToilets || !selectedDistrict) return null;
-    return sbmToilets[selectedDistrict.toUpperCase()] ?? null;
-  }, [sbmToilets, selectedDistrict]);
+    // Primary: state|district composite key
+    if (rank?.state) {
+      const key = `${rank.state.toUpperCase()}|${selectedDistrict.toUpperCase()}`;
+      if (sbmToilets[key]) return sbmToilets[key];
+    }
+    // Fallback: scan by district name only (handles state name mismatches)
+    const distUpper = selectedDistrict.toUpperCase();
+    const fallback = Object.values(sbmToilets).find(
+      (v: any) => v.district === distUpper
+    );
+    return fallback ?? null;
+  }, [sbmToilets, selectedDistrict, rank]);
 
   // JJM IMIS district FHTC data (Rajasthan districts for now)
   const jjmData = useMemo(() => {
@@ -573,6 +648,13 @@ export default function WashAssessPage() {
 
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden">
+      <style>{`
+        @media print {
+          .print-hide { display: none !important; }
+          .print-full { width: 100% !important; max-width: none !important; overflow: visible !important; height: auto !important; }
+          body { overflow: visible; }
+        }
+      `}</style>
       {/* Top bar */}
       <div className="shrink-0 z-20 border-b border-border bg-card/95 backdrop-blur-sm">
         <div className="px-4 py-2 flex items-center gap-3">
@@ -603,6 +685,13 @@ export default function WashAssessPage() {
               </div>
             )}
           </div>
+          {selectedDistrict && (
+            <Button variant="ghost" size="sm"
+              className="h-7 gap-1.5 text-xs print:hidden"
+              onClick={() => window.print()}>
+              <Printer className="w-3.5 h-3.5" /> Print
+            </Button>
+          )}
           <ThemeToggle />
         </div>
       </div>
@@ -611,7 +700,7 @@ export default function WashAssessPage() {
       <div className="flex-1 min-h-0 flex">
 
         {/* ── Map pane ───────────────────────────────────────────────────── */}
-        <div className="flex-1 min-w-0 border-r border-border flex flex-col">
+        <div className="print-hide flex-1 min-w-0 border-r border-border flex flex-col">
           {hexProps ? (
             <WashHexMap
               hexProps={hexProps}
@@ -626,7 +715,7 @@ export default function WashAssessPage() {
         </div>
 
         {/* ── Assessment pane ────────────────────────────────────────────── */}
-        <div className="w-[420px] shrink-0 overflow-y-auto">
+        <div className="print-full w-[420px] shrink-0 overflow-y-auto">
           {!selectedDistrict ? (
             <div className="flex flex-col items-center justify-center h-full text-center px-6 py-12">
               <Droplets className="w-10 h-10 text-[#00AEEF]/40 mb-3" />
@@ -676,6 +765,44 @@ export default function WashAssessPage() {
             </div>
           )}
 
+          {/* 2050 Climate Outlook */}
+          {gap && (
+            <div className="mb-4 bg-card border border-border rounded-xl p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-foreground">2050 Climate Outlook</span>
+                  <SourceBadge source="derived" />
+                </div>
+                {gap.priority_tier && (
+                  <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
+                    gap.priority_tier === "critical" ? "bg-red-500/15 text-red-600 border-red-500/30" :
+                    gap.priority_tier === "high"     ? "bg-orange-500/15 text-orange-600 border-orange-500/30" :
+                    gap.priority_tier === "moderate" ? "bg-amber-500/15 text-amber-600 border-amber-500/30" :
+                                                       "bg-green-500/15 text-green-600 border-green-500/30"
+                  }`}>{gap.priority_tier.toUpperCase()} PRIORITY</span>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-x-6">
+                <div>
+                  <StatRow label="Present risk" value={gap.present_risk?.toFixed(1)} unit="/10" source="auto" />
+                  <StatRow label="2050 risk (SSP2-4.5)" value={gap.future_risk_ssp245_2050?.toFixed(1)} unit="/10" source="derived" />
+                  <StatRow label="2050 risk (SSP5-8.5)" value={gap.future_risk_ssp585_2050?.toFixed(1)} unit="/10" source="derived" />
+                  <StatRow label="Risk escalation" value={gap.risk_escalation != null ? `${gap.risk_escalation >= 0 ? "+" : ""}${gap.risk_escalation.toFixed(2)}` : null} source="derived" />
+                  <StatRow label="Capacity gap" value={gap.capacity_gap?.toFixed(2)} source="derived" />
+                  {gap.hazard_shifted && <StatRow label="Hazard shift by 2050" value={gap.future_dominant_hazard} source="derived" />}
+                </div>
+                <div>
+                  <StatRow label="People at risk (now)" value={gap.people_at_risk_present != null ? (gap.people_at_risk_present / 1e5).toFixed(1) : null} unit=" L" source="auto" />
+                  <StatRow label="People at risk (2050)" value={gap.people_at_risk_2050 != null ? (gap.people_at_risk_2050 / 1e5).toFixed(1) : null} unit=" L" source="derived" />
+                  <StatRow label="Children <5 at risk (2050)" value={gap.children_u5_at_risk_2050 != null ? gap.children_u5_at_risk_2050.toLocaleString("en-IN") : null} source="derived" />
+                  {gap.gap_explanation && (
+                    <p className="text-[10px] text-muted-foreground mt-2 italic leading-relaxed">{gap.gap_explanation}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* 8-card grid */}
           <div className="grid grid-cols-2 gap-3">
 
@@ -690,27 +817,39 @@ export default function WashAssessPage() {
               <StatRow label="Flood risk" value={hexAgg?.flood_risk?.toFixed(2)} source="derived" />
               <StatRow label="Drought risk" value={hexAgg?.drought_risk?.toFixed(2)} source="derived" />
               <StatRow label="Heat risk" value={hexAgg?.heat_risk?.toFixed(2)} source="derived" />
+              <StatRow label="Active hazards" value={hexAgg?.cascade_count != null ? Math.round(hexAgg.cascade_count).toString() : null} source="derived" />
+              <StatRow label="Burden days/yr" value={hexAgg?.burden_days?.toFixed(0)} source="derived" />
+              <StatRow label="PM2.5 (µg/m³)" value={hexAgg?.pm25?.toFixed(1)} source="derived" />
+              <StatRow label="Air quality risk" value={hexAgg?.pollution_risk?.toFixed(2)} unit="/10" source="derived" />
             </AssessCard>
 
             {/* 2. Seasonality */}
             <AssessCard
               icon={<Activity className="w-4 h-4" />}
-              title="Hazard Duration & Month"
+              title="Hazard Seasonality"
               status={rank ? "good" : "missing"}
             >
               {season ? (
                 <>
-                  <div className="text-xs text-muted-foreground mb-1">Active months</div>
+                  <div className="text-[10px] text-muted-foreground mb-1">Active months — {rank?.dominant_hazard}</div>
                   <MonthBar activeMonths={season.months} color={season.color} />
-                  <div className="mt-2 space-y-0">
-                    <StatRow label="Peak" value={season.peak} source="derived" />
-                    <StatRow label="Duration" value={season.duration} source="derived" />
-                    <StatRow label="Disruption days/yr" value={rank?.wash_disruption_days?.toFixed(0)} source="auto" />
-                  </div>
                 </>
-              ) : (
-                <p className="text-xs text-muted-foreground">Select a district with hazard data to view seasonality.</p>
-              )}
+              ) : null}
+              <div className="mt-2 space-y-0">
+                <StatRow label="Disruption days/yr" value={rank?.wash_disruption_days?.toFixed(0)} source="auto" />
+                {hexAgg?.flood_peak_month != null && (
+                  <StatRow label="🌊 Flood peak" value={MONTHS[(hexAgg.flood_peak_month as number) - 1]} source="derived" />
+                )}
+                {hexAgg?.heat_peak_month != null && (
+                  <StatRow label="🌡️ Heat peak" value={MONTHS[(hexAgg.heat_peak_month as number) - 1]} source="derived" />
+                )}
+                {hexAgg?.drought_peak_month != null && (
+                  <StatRow label="☀️ Drought peak" value={MONTHS[(hexAgg.drought_peak_month as number) - 1]} source="derived" />
+                )}
+                {hexAgg?.wetbulb_peak_month != null && (
+                  <StatRow label="💦 Wet-bulb peak" value={MONTHS[(hexAgg.wetbulb_peak_month as number) - 1]} source="derived" />
+                )}
+              </div>
             </AssessCard>
 
             {/* 3. Groundwater */}
@@ -799,19 +938,17 @@ export default function WashAssessPage() {
               <StatRow label="Sanitation coverage" value={hexAgg?.sanitation_pct?.toFixed(1)} unit="%" source="auto" />
               {sbmData ? (
                 <>
-                  <StatRow label="Twin pit" value={sbmData.toilet_twin_pit_pct?.toFixed(1)} unit="%" source="auto" />
-                  <StatRow label="Single pit" value={sbmData.toilet_single_pit_pct?.toFixed(1)} unit="%" source="auto" />
-                  <StatRow label="Septic w/ soak" value={sbmData.toilet_septic_with_soak_pct?.toFixed(1)} unit="%" source="auto" />
-                  <StatRow label="Septic w/o soak" value={sbmData.toilet_septic_without_soak_pct?.toFixed(1)} unit="%" source="auto" />
-                  <StatRow label="Others (Ecosan)" value={sbmData.toilet_others_pct?.toFixed(1)} unit="%" source="auto" />
+                  <div className="text-[10px] text-muted-foreground mt-1 mb-0.5">Toilet type breakdown (SBM)</div>
+                  <ToiletTypeBar sbmData={sbmData} />
                   <StatRow label="Total IHHL" value={sbmData.total_ihhl?.toLocaleString("en-IN")} source="auto" />
-                  <p className="text-[10px] text-blue-500/80 mt-1">Source: SBM Phase 2 portal</p>
+                  <p className="text-[10px] text-blue-500/80 mt-1">Source: SBM Phase 2 IMIS · {sbmData.date}</p>
                 </>
               ) : (
                 <>
                   <StatRow label="Twin pit toilet" value={manual.toilet_twin_pit_pct} unit="%" source={manual.toilet_twin_pit_pct ? "manual" : undefined} />
                   <StatRow label="Septic tank" value={manual.toilet_septic_pct} unit="%" source={manual.toilet_septic_pct ? "manual" : undefined} />
                   <StatRow label="Open defecation" value={manual.toilet_od_pct} unit="%" source={manual.toilet_od_pct ? "manual" : undefined} />
+                  <p className="text-[11px] text-muted-foreground italic mt-1">SBM data not available for this state.</p>
                 </>
               )}
             </AssessCard>
@@ -832,10 +969,15 @@ export default function WashAssessPage() {
               }
             >
               <StatRow label="HWWS coverage" value={hwwsPct?.toString()} unit="%" source={manual.hwws_pct ? "manual" : undefined} />
-              <StatRow label="Diarrhoea prevalence" value={hexAgg?.diarrhoea_pct?.toFixed(1)} unit="%" source="auto" note="Proxy for hygiene gap" />
-              <p className="text-[11px] text-muted-foreground mt-1 italic">
-                HWWS data typically unavailable from NFHS-5 at district level — enter manually.
-              </p>
+              <StatRow label="Diarrhoea prevalence" value={hexAgg?.diarrhoea_pct?.toFixed(1)} unit="%" source="auto" />
+              <StatRow label="Vaccination coverage" value={hexAgg?.vaccination_pct?.toFixed(1)} unit="%" source="auto" />
+              <StatRow label="Electricity access" value={hexAgg?.electricity_pct?.toFixed(1)} unit="%" source="auto" />
+              <StatRow label="Literacy rate" value={hexAgg?.literacy_pct?.toFixed(1)} unit="%" source="auto" />
+              {!manual.hwws_pct && (
+                <p className="text-[11px] text-muted-foreground mt-1 italic">
+                  HWWS not in NFHS-5 at district level — enter manually.
+                </p>
+              )}
             </AssessCard>
 
             {/* 7. Solid Waste Management */}
@@ -901,6 +1043,50 @@ export default function WashAssessPage() {
               )}
             </AssessCard>
           </div>
+
+          {/* Health & Adaptive Capacity — full-width */}
+          {hexAgg && (
+            <div className="mt-3 bg-card border border-border rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Heart className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm font-semibold text-foreground">Health & Adaptive Capacity</span>
+                <SourceBadge source="auto" />
+              </div>
+              <div className="grid grid-cols-4 gap-x-6 gap-y-0">
+                <div>
+                  <div className="text-[10px] text-muted-foreground mb-0.5 flex items-center gap-1">
+                    <Heart className="w-3 h-3" /> Child Health
+                  </div>
+                  <StatRow label="Stunting" value={hexAgg.stunting_pct?.toFixed(1)} unit="%" source="auto" />
+                  <StatRow label="Anaemia (women)" value={hexAgg.anaemia_pct?.toFixed(1)} unit="%" source="auto" />
+                  <StatRow label="Vaccination" value={hexAgg.vaccination_pct?.toFixed(1)} unit="%" source="auto" />
+                </div>
+                <div>
+                  <div className="text-[10px] text-muted-foreground mb-0.5 flex items-center gap-1">
+                    <Zap className="w-3 h-3" /> Infrastructure
+                  </div>
+                  <StatRow label="Electricity" value={hexAgg.electricity_pct?.toFixed(1)} unit="%" source="auto" />
+                  <StatRow label="JJM FHTC (hex)" value={hexAgg.jjm_fhtc_hex?.toFixed(1)} unit="%" source="derived" />
+                  <StatRow label="Diarrhoea" value={hexAgg.diarrhoea_pct?.toFixed(1)} unit="%" source="auto" />
+                </div>
+                <div>
+                  <div className="text-[10px] text-muted-foreground mb-0.5 flex items-center gap-1">
+                    <BookOpen className="w-3 h-3" /> Social
+                  </div>
+                  <StatRow label="Literacy" value={hexAgg.literacy_pct?.toFixed(1)} unit="%" source="auto" />
+                  <StatRow label="Adaptive capacity" value={hexAgg.adaptive_capacity?.toFixed(3)} source="derived" />
+                </div>
+                <div>
+                  <div className="text-[10px] text-muted-foreground mb-0.5 flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3" /> Burden
+                  </div>
+                  <StatRow label="Burden days/yr" value={hexAgg.burden_days?.toFixed(0)} source="derived" />
+                  <StatRow label="Active hazards" value={hexAgg.cascade_count != null ? Math.round(hexAgg.cascade_count).toString() : null} source="derived" />
+                  <StatRow label="Air quality" value={hexAgg.pollution_risk?.toFixed(2)} unit="/10" source="derived" />
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Recommendations */}
           {rank?.recommendations?.length > 0 && (

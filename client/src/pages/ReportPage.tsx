@@ -132,6 +132,18 @@ export default function ReportPage() {
     staleTime: Infinity,
   });
 
+  const jjmQ = useQuery<Record<string, any>>({
+    queryKey: ["jjm-district-fhtc"],
+    queryFn: () => fetch("/data/jjm_district_fhtc.json").then((r) => r.json()),
+    staleTime: Infinity,
+  });
+
+  const sbmQ = useQuery<Record<string, any>>({
+    queryKey: ["sbm-toilet-types"],
+    queryFn: () => fetch("/data/sbm_toilet_types.json").then((r) => r.json()),
+    staleTime: Infinity,
+  });
+
   const report = useMemo(() => {
     if (!hexQ.data || !districtName) return null;
     const hexes = hexQ.data.filter((p: any) => p.district_name === districtName);
@@ -204,6 +216,18 @@ export default function ReportPage() {
 
   const ranking = useMemo(() => rankQ.data?.find((r: any) => r.district === districtName) ?? null, [rankQ.data, districtName]);
   const gap     = useMemo(() => gapQ.data?.find((r: any) => r.district === districtName) ?? null,  [gapQ.data, districtName]);
+
+  const jjmData = useMemo(() => {
+    if (!jjmQ.data) return null;
+    return jjmQ.data[districtName.toUpperCase()] ?? null;
+  }, [jjmQ.data, districtName]);
+
+  const sbmData = useMemo(() => {
+    if (!sbmQ.data || !report) return null;
+    const stateKey = `${report.state.toUpperCase()}|${districtName.toUpperCase()}`;
+    if (sbmQ.data[stateKey]) return sbmQ.data[stateKey];
+    return Object.values(sbmQ.data).find((v: any) => v.district === districtName.toUpperCase()) ?? null;
+  }, [sbmQ.data, districtName, report]);
 
   const isLoading = hexQ.isLoading || rankQ.isLoading || gapQ.isLoading;
   if (isLoading) return <div style={{ padding: 40, textAlign: "center", color: "#6b7280" }}>Loading report…</div>;
@@ -316,6 +340,57 @@ export default function ReportPage() {
             })}
           </div>
         </Section>
+
+        {/* ── JJM & SBM FIELD DATA ────────────────────────────────────── */}
+        {(jjmData || sbmData) && (
+          <Section title="Water Supply & Sanitation — Field Data">
+            <div style={{ display: "grid", gridTemplateColumns: sbmData ? "1fr 1fr" : "1fr", gap: 16 }}>
+              {jjmData && (
+                <div>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: "#2563eb", marginBottom: 8 }}>🚰 JJM IMIS — Tap Water Coverage</div>
+                  <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                    <div style={{ flex: 1, border: "1px solid #bfdbfe", borderRadius: 8, padding: "8px 10px", textAlign: "center", background: "#eff6ff" }}>
+                      <div style={{ fontSize: 20, fontWeight: 900, color: jjmData.fhtc_pct >= 80 ? "#16a34a" : jjmData.fhtc_pct >= 50 ? "#d97706" : "#dc2626" }}>{jjmData.fhtc_pct?.toFixed(1)}%</div>
+                      <div style={{ fontSize: 9, color: "#6b7280" }}>FHTC Coverage</div>
+                    </div>
+                    <div style={{ flex: 1, border: "1px solid #e5e7eb", borderRadius: 8, padding: "8px 10px", textAlign: "center" }}>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: "#111827" }}>{jjmData.hh_with_tap?.toLocaleString("en-IN")}</div>
+                      <div style={{ fontSize: 9, color: "#6b7280" }}>HH with tap</div>
+                    </div>
+                    <div style={{ flex: 1, border: "1px solid #e5e7eb", borderRadius: 8, padding: "8px 10px", textAlign: "center" }}>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: "#111827" }}>{jjmData.total_hh?.toLocaleString("en-IN")}</div>
+                      <div style={{ fontSize: 9, color: "#6b7280" }}>Total HH</div>
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 9, color: "#9ca3af" }}>Source: JJM IMIS (ejalshakti.gov.in) · {jjmData.date}</div>
+                </div>
+              )}
+              {sbmData && (
+                <div>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: "#16a34a", marginBottom: 8 }}>🚽 SBM Phase 2 — Toilet Type Breakdown</div>
+                  {[
+                    { label: "Twin pit", pct: sbmData.twin_pit_pct, color: "#22c55e" },
+                    { label: "Single pit", pct: sbmData.single_pit_pct, color: "#f97316" },
+                    { label: "Septic + soak", pct: sbmData.septic_soak_pct, color: "#3b82f6" },
+                    { label: "Septic (no soak)", pct: sbmData.septic_nosoak_pct, color: "#a855f7" },
+                    { label: "Others", pct: sbmData.others_pct, color: "#94a3b8" },
+                  ].map(({ label, pct, color }) => pct != null && (
+                    <div key={label} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                      <span style={{ fontSize: 9, color: "#6b7280", width: 90, flexShrink: 0 }}>{label}</span>
+                      <div style={{ flex: 1, height: 5, background: "#f3f4f6", borderRadius: 9999, overflow: "hidden" }}>
+                        <div style={{ height: "100%", borderRadius: 9999, background: color, width: `${Math.min(pct, 100)}%` }} />
+                      </div>
+                      <span style={{ fontSize: 9, fontWeight: 700, width: 36, textAlign: "right" }}>{pct.toFixed(1)}%</span>
+                    </div>
+                  ))}
+                  <div style={{ marginTop: 6, fontSize: 9, color: "#6b7280" }}>
+                    Total IHHL: <b>{sbmData.total_ihhl?.toLocaleString("en-IN")}</b> · Source: SBM Phase 2 IMIS · {sbmData.date}
+                  </div>
+                </div>
+              )}
+            </div>
+          </Section>
+        )}
 
         {/* ── CASCADE INTERVENTIONS ───────────────────────────────────── */}
         {report.activeCascades.length > 0 && (
