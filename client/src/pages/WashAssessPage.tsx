@@ -55,6 +55,20 @@ interface ManualData {
   lwm_type?: string;
   lwm_coverage_pct?: string;
   lwm_notes?: string;
+  // School / AWC WASH
+  school_toilet_pct?: string;
+  school_girls_toilet_pct?: string;
+  school_drinking_water_pct?: string;
+  awc_safe_water_pct?: string;
+  awc_toilet_pct?: string;
+  // Water quality manual
+  wq_bacterio_status?: string;
+  wq_tds_status?: string;
+  // ODF override
+  odf_status?: string;
+  odf_date?: string;
+  // Water source
+  water_source_type?: string;
   // Meta
   last_updated?: string;
 }
@@ -556,6 +570,12 @@ export default function WashAssessPage() {
     staleTime: Infinity,
   });
 
+  const { data: washQuality } = useQuery<Record<string, any>>({
+    queryKey: ["wash-quality"],
+    queryFn: () => fetch("/data/wash_quality.json").then(r => r.json()),
+    staleTime: Infinity,
+  });
+
   const { data: riverForecast } = useQuery<RiverForecast>({
     queryKey: ["river-forecast"],
     queryFn: () => fetch("/data/river_forecast.json").then(r => r.json()),
@@ -660,6 +680,11 @@ export default function WashAssessPage() {
   [districtClimate, rank]);
 
   const nationalAvg = useMemo(() => districtClimate?.national ?? null, [districtClimate]);
+
+  // Water quality for district
+  const wqEntry = useMemo(() =>
+    (selectedDistrict && washQuality) ? washQuality[selectedDistrict] ?? null : null,
+  [washQuality, selectedDistrict]);
 
   // Nearest river discharge point to this district
   const riverPoint = useMemo((): RiverPoint | null => {
@@ -1105,6 +1130,83 @@ export default function WashAssessPage() {
               {manual.gw_notes && <p className="text-[11px] text-muted-foreground mt-1 italic">{manual.gw_notes}</p>}
             </AssessCard>
 
+            {/* 3b. Water Quality */}
+            <AssessCard
+              icon={<FlaskConical className="w-4 h-4" />}
+              title="Water Quality"
+              status={
+                wqEntry?.contaminants?.length >= 2 ? "critical" :
+                wqEntry?.contaminants?.length === 1 ? "at-risk" :
+                (wqEntry?.improved_water_pct ?? 100) < 60 ? "at-risk" :
+                wqEntry ? "good" : "missing"
+              }
+              cardKey="wq"
+              editingCard={editingCard}
+              setEditingCard={setEditingCard}
+              editContent={
+                <div className="space-y-2.5">
+                  <SelectField label="Bacteriological safety" value={draft.wq_bacterio_status ?? ""} onChange={v => updateDraft("wq_bacterio_status", v)}
+                    options={["safe","unsafe","not_tested"]} />
+                  <SelectField label="TDS/salinity" value={draft.wq_tds_status ?? ""} onChange={v => updateDraft("wq_tds_status", v)}
+                    options={["acceptable","high","very_high"]} />
+                  <SelectField label="Primary water source" value={draft.water_source_type ?? ""} onChange={v => updateDraft("water_source_type", v)}
+                    options={["piped_treated","handpump","open_well","surface","tanker","rainwater"]} />
+                  <SaveBtn onSave={() => saveCard("wq")} />
+                </div>
+              }
+            >
+              {/* CGWB contamination flags */}
+              {wqEntry?.contaminants?.length > 0 ? (
+                <div className="mb-2">
+                  <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+                    CGWB Contamination Risk
+                  </div>
+                  <div className="flex flex-wrap gap-1 mb-1">
+                    {(wqEntry.contaminants as string[]).map(c => {
+                      const cfg: Record<string,{label:string;color:string}> = {
+                        fluoride: {label:"⚗ Fluoride",color:"bg-amber-500/15 text-amber-600 border-amber-500/30"},
+                        arsenic:  {label:"☠ Arsenic",color:"bg-red-500/15 text-red-600 border-red-500/30"},
+                        nitrate:  {label:"🌿 Nitrate",color:"bg-green-500/15 text-green-700 border-green-500/30"},
+                        iron:     {label:"🔶 Iron",color:"bg-orange-500/15 text-orange-600 border-orange-500/30"},
+                        salinity: {label:"🧂 Salinity",color:"bg-blue-500/15 text-blue-600 border-blue-500/30"},
+                      };
+                      const style = cfg[c] || {label:c,color:"bg-muted text-muted-foreground border-border"};
+                      return (
+                        <span key={c} className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold ${style.color}`}>
+                          {style.label}
+                        </span>
+                      );
+                    })}
+                  </div>
+                  <p className="text-[9px] text-muted-foreground">Source: CGWB Annual Report 2023-24</p>
+                  {wqEntry.contaminants.includes("fluoride") && (
+                    <p className="text-[10px] text-amber-500 mt-1 leading-snug">
+                      ⚗ Fluoride &gt;1.5 mg/L → dental/skeletal fluorosis risk. JJM source water quality testing critical.
+                    </p>
+                  )}
+                  {wqEntry.contaminants.includes("arsenic") && (
+                    <p className="text-[10px] text-red-500 mt-1 leading-snug">
+                      ☠ Arsenic &gt;0.05 mg/L → carcinogenic. Handpumps in Ganga/Brahmaputra plains are primary source.
+                    </p>
+                  )}
+                  {wqEntry.contaminants.includes("nitrate") && (
+                    <p className="text-[10px] text-green-700 mt-1 leading-snug">
+                      🌿 Nitrate &gt;45 mg/L → blue baby syndrome risk in infants. Likely from agriculture/fertilizer runoff.
+                    </p>
+                  )}
+                </div>
+              ) : wqEntry ? (
+                <p className="text-[10px] text-green-600 mb-1">✓ No major CGWB contamination flags for this district</p>
+              ) : null}
+              <StatRow label="Improved water source" value={wqEntry?.improved_water_pct?.toFixed(1)} unit="%" source="auto" />
+              <StatRow label="Bacteriological safety" value={manual.wq_bacterio_status?.replace("_"," ")} source={manual.wq_bacterio_status ? "manual" : undefined} />
+              <StatRow label="TDS/salinity" value={manual.wq_tds_status?.replace("_"," ")} source={manual.wq_tds_status ? "manual" : undefined} />
+              <StatRow label="Primary source" value={manual.water_source_type?.replace(/_/g," ")} source={manual.water_source_type ? "manual" : undefined} />
+              {!wqEntry && !manual.wq_bacterio_status && (
+                <p className="text-[11px] text-muted-foreground italic mt-1">Enter field-observed water quality data.</p>
+              )}
+            </AssessCard>
+
             {/* 4. Water Supply (JJM) */}
             <AssessCard
               icon={<Droplets className="w-4 h-4" />}
@@ -1153,6 +1255,9 @@ export default function WashAssessPage() {
               setEditingCard={setEditingCard}
               editContent={
                 <div className="space-y-2.5">
+                  <SelectField label="ODF status" value={draft.odf_status ?? ""} onChange={v => updateDraft("odf_status", v)}
+                    options={["odf_plus_plus","odf_plus","odf_certified","in_progress","not_declared","relapsed"]} />
+                  <Field label="ODF declaration date" value={draft.odf_date ?? ""} onChange={v => updateDraft("odf_date", v)} type="date" />
                   <Field label="Twin pit toilet (%)" value={draft.toilet_twin_pit_pct ?? ""} onChange={v => updateDraft("toilet_twin_pit_pct", v)} type="number" />
                   <Field label="Septic tank (%)" value={draft.toilet_septic_pct ?? ""} onChange={v => updateDraft("toilet_septic_pct", v)} type="number" />
                   <Field label="Soak pit / leach pit (%)" value={draft.toilet_soak_pit_pct ?? ""} onChange={v => updateDraft("toilet_soak_pit_pct", v)} type="number" />
@@ -1161,7 +1266,38 @@ export default function WashAssessPage() {
                 </div>
               }
             >
+              {/* ODF Status */}
+              {(manual.odf_status || wqEntry?.odf_estimated) && (
+                <div className="mb-1.5">
+                  {manual.odf_status ? (
+                    <div className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                      manual.odf_status === "odf_plus_plus" ? "bg-green-500/15 text-green-700 border-green-500/30" :
+                      manual.odf_status === "odf_plus"     ? "bg-emerald-500/15 text-emerald-700 border-emerald-500/30" :
+                      manual.odf_status === "odf_certified"? "bg-blue-500/15 text-blue-700 border-blue-500/30" :
+                      manual.odf_status === "relapsed"     ? "bg-red-500/15 text-red-600 border-red-500/30" :
+                      "bg-amber-500/15 text-amber-700 border-amber-500/30"
+                    }`}>
+                      {manual.odf_status === "odf_plus_plus" ? "✓ ODF++" :
+                       manual.odf_status === "odf_plus"      ? "✓ ODF+" :
+                       manual.odf_status === "odf_certified" ? "✓ ODF Certified" :
+                       manual.odf_status === "relapsed"      ? "⚠ ODF Relapsed" :
+                       manual.odf_status === "in_progress"   ? "→ ODF In Progress" : "✗ Not Declared"}
+                      {manual.odf_date ? ` · ${manual.odf_date}` : ""}
+                    </div>
+                  ) : wqEntry?.odf_estimated ? (
+                    <div className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border ${
+                      wqEntry.odf_estimated === "likely_odf" ? "bg-green-500/10 text-green-700 border-green-500/20" :
+                      "bg-amber-500/10 text-amber-700 border-amber-500/20"
+                    }`}>
+                      {wqEntry.odf_estimated === "likely_odf" ? "~ Likely ODF (from SBM coverage)" :
+                       wqEntry.odf_estimated === "progressing" ? "~ ODF in progress (70–90% coverage)" :
+                       "~ Below ODF threshold — enter actual status"}
+                    </div>
+                  ) : null}
+                </div>
+              )}
               <StatRow label="Sanitation coverage" value={hexAgg?.sanitation_pct?.toFixed(1)} unit="%" source="auto" />
+              <StatRow label="NFHS-5 improved sanit." value={wqEntry?.improved_sanit_pct?.toFixed(1)} unit="%" source="auto" />
               <CmpRow label="Sanitation" value={dcDistrict?.wash_sanitation_pct} stateVal={stateAvg?.wash_sanitation_pct} natVal={nationalAvg?.wash_sanitation_pct} />
               {sbmData ? (
                 <>
@@ -1289,7 +1425,52 @@ export default function WashAssessPage() {
               )}
             </AssessCard>
 
-            {/* 8. Liquid Waste Management */}
+            {/* 8a. School & AWC WASH */}
+            <AssessCard
+              icon={<BookOpen className="w-4 h-4" />}
+              title="School & AWC WASH"
+              status={
+                manual.school_girls_toilet_pct ? statusFromPct(parseFloat(manual.school_girls_toilet_pct)) :
+                manual.school_toilet_pct ? statusFromPct(parseFloat(manual.school_toilet_pct)) :
+                "missing"
+              }
+              cardKey="school"
+              editingCard={editingCard}
+              setEditingCard={setEditingCard}
+              editContent={
+                <div className="space-y-2.5">
+                  <Field label="Schools with any toilet (%)" value={draft.school_toilet_pct ?? ""} onChange={v => updateDraft("school_toilet_pct", v)} type="number" />
+                  <Field label="Schools with girls' toilet (%)" value={draft.school_girls_toilet_pct ?? ""} onChange={v => updateDraft("school_girls_toilet_pct", v)} type="number" />
+                  <Field label="Schools with drinking water (%)" value={draft.school_drinking_water_pct ?? ""} onChange={v => updateDraft("school_drinking_water_pct", v)} type="number" />
+                  <Field label="AWCs with safe water (%)" value={draft.awc_safe_water_pct ?? ""} onChange={v => updateDraft("awc_safe_water_pct", v)} type="number" />
+                  <Field label="AWCs with toilet (%)" value={draft.awc_toilet_pct ?? ""} onChange={v => updateDraft("awc_toilet_pct", v)} type="number" />
+                  <SaveBtn onSave={() => saveCard("school")} />
+                </div>
+              }
+            >
+              <StatRow label="Schools with toilet" value={manual.school_toilet_pct} unit="%" source={manual.school_toilet_pct ? "manual" : undefined} />
+              <StatRow label="Schools — girls' toilet" value={manual.school_girls_toilet_pct} unit="%" source={manual.school_girls_toilet_pct ? "manual" : undefined} />
+              <StatRow label="Schools — drinking water" value={manual.school_drinking_water_pct} unit="%" source={manual.school_drinking_water_pct ? "manual" : undefined} />
+              <StatRow label="AWC — safe water" value={manual.awc_safe_water_pct} unit="%" source={manual.awc_safe_water_pct ? "manual" : undefined} />
+              <StatRow label="AWC — toilet" value={manual.awc_toilet_pct} unit="%" source={manual.awc_toilet_pct ? "manual" : undefined} />
+              {!manual.school_toilet_pct && !manual.awc_safe_water_pct && (
+                <div>
+                  <p className="text-[11px] text-muted-foreground italic">Enter data from UDISE+ or block health office.</p>
+                  {nfhsExtra?.menstrual_hygiene_pct != null && nfhsExtra.menstrual_hygiene_pct < 55 && (
+                    <p className="text-[10px] text-amber-500 mt-1 leading-snug">
+                      🏫 Low MHM ({nfhsExtra.menstrual_hygiene_pct.toFixed(0)}%) often linked to missing girls' toilets in schools — check UDISE+.
+                    </p>
+                  )}
+                </div>
+              )}
+              {manual.school_girls_toilet_pct != null && parseFloat(manual.school_girls_toilet_pct) < 50 && (
+                <p className="text-[10px] text-red-400 mt-1 leading-snug">
+                  ⚠ Low girls' school toilet coverage → major MHM barrier. Girls drop out at menarche without facility.
+                </p>
+              )}
+            </AssessCard>
+
+            {/* 8b. Liquid Waste Management */}
             <AssessCard
               icon={<Wind className="w-4 h-4" />}
               title="Liquid Waste Management"
@@ -1335,9 +1516,16 @@ export default function WashAssessPage() {
                   </div>
                   <StatRow label="Stunting" value={hexAgg.stunting_pct?.toFixed(1)} unit="%" source="auto" />
                   <CmpRow label="Stunting" value={dcDistrict?.wash_stunting_pct} stateVal={stateAvg?.wash_stunting_pct} natVal={nationalAvg?.wash_stunting_pct} higherIsBetter={false} />
+                  <StatRow label="Wasting (acute)" value={wqEntry?.wasting_pct?.toFixed(1)} unit="%" source="auto" />
+                  <StatRow label="Severe wasting" value={wqEntry?.severe_wasting_pct?.toFixed(1)} unit="%" source="auto" />
                   <StatRow label="Anaemia (women)" value={hexAgg.anaemia_pct?.toFixed(1)} unit="%" source="auto" />
                   <CmpRow label="Anaemia" value={dcDistrict?.wash_anaemia_pct} stateVal={stateAvg?.wash_anaemia_pct} natVal={nationalAvg?.wash_anaemia_pct} higherIsBetter={false} />
                   <StatRow label="Vaccination" value={hexAgg.vaccination_pct?.toFixed(1)} unit="%" source="auto" />
+                  {wqEntry?.wasting_pct != null && wqEntry.wasting_pct > 20 && (
+                    <p className="text-[10px] text-red-400 mt-1 leading-snug">
+                      ⚠ Wasting &gt;20% — acute malnutrition. Spikes during droughts/floods. Prioritise nutrition+WASH convergence.
+                    </p>
+                  )}
                 </div>
                 <div>
                   <div className="text-[10px] text-muted-foreground mb-0.5 flex items-center gap-1">
