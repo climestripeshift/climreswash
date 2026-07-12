@@ -576,6 +576,20 @@ export default function WashAssessPage() {
     staleTime: Infinity,
   });
 
+  const { data: peerDistricts } = useQuery<Record<string, any[]>>({
+    queryKey: ["peer-districts"],
+    queryFn: () => fetch("/data/peer_districts.json").then(r => r.json()),
+    staleTime: Infinity,
+    enabled: !!selectedDistrict,
+  });
+
+  const { data: schemeCoverage } = useQuery<Record<string, any[]>>({
+    queryKey: ["scheme-coverage"],
+    queryFn: () => fetch("/data/scheme_coverage.json").then(r => r.json()),
+    staleTime: Infinity,
+    enabled: !!selectedDistrict,
+  });
+
   const { data: riverForecast } = useQuery<RiverForecast>({
     queryKey: ["river-forecast"],
     queryFn: () => fetch("/data/river_forecast.json").then(r => r.json()),
@@ -685,6 +699,16 @@ export default function WashAssessPage() {
   const wqEntry = useMemo(() =>
     (selectedDistrict && washQuality) ? washQuality[selectedDistrict] ?? null : null,
   [washQuality, selectedDistrict]);
+
+  // Peer districts
+  const peers = useMemo(() =>
+    (selectedDistrict && peerDistricts) ? peerDistricts[selectedDistrict] ?? [] : [],
+  [peerDistricts, selectedDistrict]);
+
+  // Scheme coverage
+  const schemes = useMemo(() =>
+    (selectedDistrict && schemeCoverage) ? schemeCoverage[selectedDistrict] ?? [] : [],
+  [schemeCoverage, selectedDistrict]);
 
   // Nearest river discharge point to this district
   const riverPoint = useMemo((): RiverPoint | null => {
@@ -1618,6 +1642,115 @@ export default function WashAssessPage() {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Peer Districts */}
+          {peers.length > 0 && (
+            <div className="mt-4 bg-card border border-border rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <TrendingUp className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm font-semibold">Similar Districts (Peer Benchmarks)</span>
+                <SourceBadge source="derived" />
+                <span className="ml-auto text-[9px] text-muted-foreground">Same hazard · cross-state · closest profile</span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-[10px]">
+                  <thead>
+                    <tr className="border-b border-border/40 text-muted-foreground text-[9px] uppercase tracking-wide">
+                      <th className="text-left pb-1.5 font-semibold">District / State</th>
+                      <th className="text-right pb-1.5 font-semibold">Risk</th>
+                      <th className="text-right pb-1.5 font-semibold">Sanit %</th>
+                      <th className="text-right pb-1.5 font-semibold">JJM %</th>
+                      <th className="text-right pb-1.5 font-semibold">MHM %</th>
+                      <th className="text-right pb-1.5 font-semibold">Stunting</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {/* Current district row */}
+                    <tr className="bg-muted/30 font-semibold">
+                      <td className="py-1.5 pr-2">{selectedDistrict} <span className="text-[8px] text-muted-foreground font-normal">(you)</span></td>
+                      <td className="text-right">{rank?.risk_score?.toFixed(1) ?? "—"}</td>
+                      <td className="text-right">{hexAgg?.sanitation_pct?.toFixed(0) ?? "—"}</td>
+                      <td className="text-right">{dmEntry?.jjm_fhtc_pct?.toFixed(0) ?? "—"}</td>
+                      <td className="text-right">{nfhsExtra?.menstrual_hygiene_pct?.toFixed(0) ?? "—"}</td>
+                      <td className="text-right">{hexAgg?.stunting_pct?.toFixed(0) ?? "—"}</td>
+                    </tr>
+                    {peers.map((p, i) => (
+                      <tr key={i} className={`border-t border-border/20 ${p.is_best_sanitation ? "bg-green-500/5" : ""}`}>
+                        <td className="py-1.5 pr-2">
+                          <div className="flex items-center gap-1">
+                            <span>{p.district}</span>
+                            {p.is_best_sanitation && <span className="text-[8px] px-1 py-0 rounded bg-green-500/15 text-green-600 border border-green-500/20">best sanit.</span>}
+                          </div>
+                          <div className="text-[8px] text-muted-foreground">{p.state}</div>
+                        </td>
+                        <td className="text-right">{p.risk?.toFixed(1) ?? "—"}</td>
+                        <td className={`text-right font-semibold ${
+                          p.wash_sanitation_pct != null && hexAgg?.sanitation_pct != null
+                            ? p.wash_sanitation_pct > hexAgg.sanitation_pct ? "text-green-600" : "text-red-500"
+                            : ""
+                        }`}>{p.wash_sanitation_pct?.toFixed(0) ?? "—"}</td>
+                        <td className="text-right">{p.jjm_fhtc_pct?.toFixed(0) ?? "—"}</td>
+                        <td className="text-right">{p.menstrual_hygiene_pct?.toFixed(0) ?? "—"}</td>
+                        <td className="text-right">{p.stunting_pct?.toFixed(0) ?? "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {peers.find(p => p.is_best_sanitation) && (() => {
+                const best = peers.find(p => p.is_best_sanitation)!;
+                const myS = hexAgg?.sanitation_pct ?? 0;
+                const gap = best.wash_sanitation_pct - myS;
+                return gap > 5 ? (
+                  <p className="text-[10px] text-green-700 mt-2 leading-snug">
+                    📊 {best.district} ({best.state}) — similar hazard profile, sanitation {best.wash_sanitation_pct?.toFixed(0)}% vs your {myS.toFixed(0)}%.
+                    {gap > 20 ? " Significant gap — review their SBM Phase 2 strategy." : " Modest gap — targeted twin-pit retrofit may close it."}
+                  </p>
+                ) : null;
+              })()}
+            </div>
+          )}
+
+          {/* Scheme Coverage */}
+          {schemes.length > 0 && (
+            <div className="mt-4 bg-card border border-[#00AEEF]/20 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <ListChecks className="w-4 h-4 text-[#00AEEF]" />
+                <span className="text-sm font-semibold">Government Schemes</span>
+                <SourceBadge source="derived" />
+                <span className="ml-auto text-[9px] text-muted-foreground">Based on district profile</span>
+              </div>
+              <div className="space-y-2">
+                {schemes.map((s, i) => (
+                  <div key={i} className={`rounded-lg p-2.5 border ${
+                    s.priority === "critical" ? "bg-red-500/5 border-red-500/20" :
+                    s.priority === "high"     ? "bg-amber-500/5 border-amber-500/20" :
+                                               "bg-muted/30 border-border/30"
+                  }`}>
+                    <div className="flex items-start gap-2">
+                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0 mt-0.5 ${
+                        s.priority === "critical" ? "bg-red-500/15 text-red-600" :
+                        s.priority === "high"     ? "bg-amber-500/15 text-amber-600" :
+                                                   "bg-muted text-muted-foreground"
+                      }`}>{s.priority.toUpperCase()}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[11px] font-semibold">{s.code}</span>
+                          <span className="text-[9px] text-muted-foreground">— {s.full_name}</span>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground mt-0.5 leading-snug">{s.rationale}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-[9px] text-muted-foreground">{s.ministry}</span>
+                          <a href={s.url} target="_blank" rel="noreferrer"
+                            className="text-[9px] text-[#00AEEF] hover:underline">{s.url.replace("https://","")}</a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 

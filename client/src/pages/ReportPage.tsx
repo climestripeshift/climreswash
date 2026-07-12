@@ -150,6 +150,24 @@ export default function ReportPage() {
     staleTime: Infinity,
   });
 
+  const wqQ = useQuery<Record<string, any>>({
+    queryKey: ["wash-quality"],
+    queryFn: () => fetch("/data/wash_quality.json").then((r) => r.json()),
+    staleTime: Infinity,
+  });
+
+  const peersQ = useQuery<Record<string, any[]>>({
+    queryKey: ["peer-districts"],
+    queryFn: () => fetch("/data/peer_districts.json").then((r) => r.json()),
+    staleTime: Infinity,
+  });
+
+  const schemesQ = useQuery<Record<string, any[]>>({
+    queryKey: ["scheme-coverage"],
+    queryFn: () => fetch("/data/scheme_coverage.json").then((r) => r.json()),
+    staleTime: Infinity,
+  });
+
   const report = useMemo(() => {
     if (!hexQ.data || !districtName) return null;
     const hexes = hexQ.data.filter((p: any) => p.district_name === districtName);
@@ -238,6 +256,10 @@ export default function ReportPage() {
     if (sbmQ.data[stateKey]) return sbmQ.data[stateKey];
     return Object.values(sbmQ.data).find((v: any) => v.district === districtName.toUpperCase()) ?? null;
   }, [sbmQ.data, districtName, report]);
+
+  const wqEntry  = useMemo(() => wqQ.data?.[districtName] ?? null, [wqQ.data, districtName]);
+  const peers    = useMemo(() => peersQ.data?.[districtName] ?? [], [peersQ.data, districtName]);
+  const schemes  = useMemo(() => schemesQ.data?.[districtName] ?? [], [schemesQ.data, districtName]);
 
   const isLoading = hexQ.isLoading || rankQ.isLoading || gapQ.isLoading;
   if (isLoading) return <div style={{ padding: 40, textAlign: "center", color: "#6b7280" }}>Loading report…</div>;
@@ -498,6 +520,112 @@ export default function ReportPage() {
                   </div>
                 );
               })}
+            </div>
+          </Section>
+        )}
+
+        {/* ── WATER QUALITY ───────────────────────────────────────────── */}
+        {wqEntry && (wqEntry.contaminants?.length > 0 || wqEntry.improved_water_pct != null) && (
+          <Section title="Water Quality">
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: "#6b7280", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>CGWB Contamination Flags</div>
+                {wqEntry.contaminants?.length > 0 ? (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+                    {wqEntry.contaminants.map((c: string) => {
+                      const colors: Record<string,string> = { fluoride:"#f59e0b", arsenic:"#dc2626", nitrate:"#16a34a", iron:"#ea580c", salinity:"#2563eb" };
+                      return (
+                        <span key={c} style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: colors[c]+"20", border: `1px solid ${colors[c]}50`, color: colors[c] }}>
+                          {c.toUpperCase()}
+                        </span>
+                      );
+                    })}
+                  </div>
+                ) : <div style={{ fontSize: 11, color: "#16a34a", marginBottom: 8 }}>✓ No major contamination flags</div>}
+                <div style={{ fontSize: 10, color: "#6b7280" }}>Source: CGWB Annual Report 2023-24</div>
+                {wqEntry.contaminants?.includes("arsenic") && (
+                  <div style={{ fontSize: 10, color: "#dc2626", marginTop: 6, lineHeight: 1.5 }}>⚠ Arsenic &gt;0.05 mg/L — carcinogenic. Priority: switch to treated piped supply or RO units.</div>
+                )}
+                {wqEntry.contaminants?.includes("fluoride") && (
+                  <div style={{ fontSize: 10, color: "#d97706", marginTop: 6, lineHeight: 1.5 }}>⚠ Fluoride &gt;1.5 mg/L — skeletal/dental fluorosis risk. Test all JJM sources.</div>
+                )}
+              </div>
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: "#6b7280", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>NFHS-5 Water Indicators</div>
+                {[
+                  { label: "Improved water source", val: wqEntry.improved_water_pct, unit: "%" },
+                  { label: "Wasting (acute malnutrition)", val: wqEntry.wasting_pct, unit: "%" },
+                  { label: "Severe wasting", val: wqEntry.severe_wasting_pct, unit: "%" },
+                ].map(({ label, val, unit }) => val != null && (
+                  <div key={label} style={{ display: "flex", justifyContent: "space-between", marginBottom: 4, fontSize: 11 }}>
+                    <span style={{ color: "#374151" }}>{label}</span>
+                    <span style={{ fontWeight: 700 }}>{val.toFixed(1)}{unit}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Section>
+        )}
+
+        {/* ── PEER DISTRICTS ──────────────────────────────────────────── */}
+        {peers.length > 0 && (
+          <Section title="Peer District Benchmarks">
+            <div style={{ fontSize: 10, color: "#6b7280", marginBottom: 10 }}>
+              Same dominant hazard · cross-state · closest risk + adaptive capacity profile
+            </div>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10 }}>
+              <thead>
+                <tr style={{ borderBottom: "2px solid #e5e7eb", color: "#6b7280", fontSize: 9, textTransform: "uppercase" }}>
+                  <th style={{ textAlign: "left", paddingBottom: 6, fontWeight: 700 }}>District / State</th>
+                  <th style={{ textAlign: "right", paddingBottom: 6, fontWeight: 700 }}>Risk</th>
+                  <th style={{ textAlign: "right", paddingBottom: 6, fontWeight: 700 }}>Sanit %</th>
+                  <th style={{ textAlign: "right", paddingBottom: 6, fontWeight: 700 }}>JJM %</th>
+                  <th style={{ textAlign: "right", paddingBottom: 6, fontWeight: 700 }}>MHM %</th>
+                  <th style={{ textAlign: "right", paddingBottom: 6, fontWeight: 700 }}>Stunting</th>
+                </tr>
+              </thead>
+              <tbody>
+                {peers.map((p: any, i: number) => (
+                  <tr key={i} style={{ borderBottom: "1px solid #f3f4f6", background: p.is_best_sanitation ? "#f0fdf4" : "transparent" }}>
+                    <td style={{ padding: "5px 0" }}>
+                      <span style={{ fontWeight: p.is_best_sanitation ? 700 : 400 }}>{p.district}</span>
+                      {p.is_best_sanitation && <span style={{ marginLeft: 6, fontSize: 8, color: "#16a34a", fontWeight: 700, padding: "1px 6px", borderRadius: 10, background: "#dcfce7", border: "1px solid #bbf7d0" }}>BEST SANIT.</span>}
+                      <br /><span style={{ color: "#9ca3af", fontSize: 9 }}>{p.state}</span>
+                    </td>
+                    <td style={{ textAlign: "right", padding: "5px 0" }}>{p.risk?.toFixed(1) ?? "—"}</td>
+                    <td style={{ textAlign: "right", padding: "5px 0", fontWeight: 600 }}>{p.wash_sanitation_pct?.toFixed(0) ?? "—"}</td>
+                    <td style={{ textAlign: "right", padding: "5px 0" }}>{p.jjm_fhtc_pct?.toFixed(0) ?? "—"}</td>
+                    <td style={{ textAlign: "right", padding: "5px 0" }}>{p.menstrual_hygiene_pct?.toFixed(0) ?? "—"}</td>
+                    <td style={{ textAlign: "right", padding: "5px 0" }}>{p.stunting_pct?.toFixed(0) ?? "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Section>
+        )}
+
+        {/* ── SCHEME COVERAGE ─────────────────────────────────────────── */}
+        {schemes.length > 0 && (
+          <Section title="Recommended Government Schemes">
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              {schemes.slice(0, 8).map((s: any, i: number) => (
+                <div key={i} style={{
+                  border: `1px solid ${s.priority === "critical" ? "#fca5a5" : s.priority === "high" ? "#fde68a" : "#e5e7eb"}`,
+                  borderRadius: 8, padding: "8px 10px",
+                  background: s.priority === "critical" ? "#fef2f2" : s.priority === "high" ? "#fffbeb" : "#fafafa",
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                    <span style={{
+                      fontSize: 8, fontWeight: 700, padding: "1px 6px", borderRadius: 10,
+                      background: s.priority === "critical" ? "#fee2e2" : s.priority === "high" ? "#fef3c7" : "#f3f4f6",
+                      color: s.priority === "critical" ? "#dc2626" : s.priority === "high" ? "#d97706" : "#6b7280",
+                    }}>{s.priority.toUpperCase()}</span>
+                    <span style={{ fontSize: 11, fontWeight: 700 }}>{s.code}</span>
+                  </div>
+                  <div style={{ fontSize: 9, color: "#374151", marginBottom: 3, lineHeight: 1.4 }}>{s.rationale}</div>
+                  <div style={{ fontSize: 9, color: "#6b7280" }}>{s.ministry}</div>
+                </div>
+              ))}
             </div>
           </Section>
         )}
