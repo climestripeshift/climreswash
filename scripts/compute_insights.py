@@ -165,6 +165,27 @@ rel("wetbulb","anaemia",
     "Wet-Bulb Risk Score","Women with Anaemia (%)",
     "Wet-bulb heat — the combined heat+humidity stress that limits human cooling — is associated with higher anaemia. Wet-bulb conditions in India primarily affect eastern plains (Bihar, Assam, coastal AP) where anaemia prevalence is also highest.")
 
+# WASH vs health
+rel("jjm","stunting",
+    "JJM Tap Water Coverage & Child Stunting",
+    "JJM FHTC Coverage (%)","Children Stunted (%)",
+    "Districts with higher Jal Jeevan Mission tap-water coverage have lower child stunting (expected negative correlation). Household tap connections reduce waterborne pathogen exposure, free women's time for childcare, and signal broader WASH investment — all stunting-protective factors.")
+
+rel("sanitation","anaemia",
+    "Sanitation Coverage & Anaemia in Women",
+    "Improved Sanitation (%)","Women with Anaemia (%)",
+    "Better sanitation reduces open-defecation-related soil-transmitted helminth infections that deplete iron stores. Districts with sanitation below 60% show systematically higher anaemia — validating the ODF-anaemia intervention pathway in SBM Phase 2.")
+
+rel("electricity","stunting",
+    "Household Electrification & Child Stunting",
+    "Electricity Access (%)","Children Stunted (%)",
+    "Electrification is the strongest single predictor of adaptive capacity (see Resilience tab). It enables cold-chain for vaccines, health facility operation, and household information access — all reducing stunting through better healthcare uptake and early warning.")
+
+rel("clean_fuel_pct","anaemia",
+    "Clean Cooking Fuel & Anaemia in Women",
+    "Clean Fuel Access (%)","Women with Anaemia (%)",
+    "Indoor air pollution from solid fuels (wood, dung, coal) causes chronic respiratory inflammation that suppresses haemoglobin synthesis. Districts still dependent on solid fuels show higher anaemia independent of diet — making PMUY LPG connections a direct anaemia-reduction lever.")
+
 # ── 4. Group comparisons ────────────────────────────────────────────────────
 def group_cmp(filter_fn, field):
     vals = [s[field] for s in district_stats.values()
@@ -225,6 +246,13 @@ top_heat_states = sorted(state_future_avg.items(),
 top_wetbulb_states = sorted(state_future_avg.items(),
     key=lambda x: x[1].get("wb_days_585_2050",0), reverse=True)[:12]
 
+# ── Helper ──────────────────────────────────────────────────────────────────
+def groupby_state(rows):
+    d = defaultdict(list)
+    for r in rows:
+        d[r["state"]].append(r)
+    return d
+
 # ── 6. Future escalation: districts where heat_days rising most ─────────────
 escalation_districts = []
 for s in district_stats.values():
@@ -244,6 +272,47 @@ for s in district_stats.values():
             "population": s.get("population"),
         })
 escalation_districts.sort(key=lambda x: -(x["wet_bulb_days_2050"] or 0))
+
+# ── 6b. ALL districts for full searchable table ──────────────────────────────
+def dom_hazard(s):
+    scores = {h: s.get(h, 0) or 0 for h in ["flood","heat","wetbulb","pollution","drought"]}
+    return max(scores, key=scores.get)
+
+all_districts_export = []
+for s in district_stats.values():
+    all_districts_export.append({
+        "d": s["district"],
+        "st": s["state"],
+        "hz": dom_hazard(s),
+        "risk": s.get("risk"),
+        "wb50": s.get("wb_days_585_2050"),
+        "ht50": s.get("heat_days_585_2050") or s.get("heat_days_585_2050"),
+        "ana": s.get("anaemia"),
+        "stun": s.get("stunting"),
+        "jjm": s.get("jjm"),
+        "san": s.get("sanitation"),
+        "pop": s.get("population"),
+        "gap": s.get("gap_count"),
+    })
+all_districts_export.sort(key=lambda x: -(x["wb50"] or 0))
+
+# ── 6c. State-level summaries ────────────────────────────────────────────────
+def avg(vals): return round(sum(vals)/len(vals), 1) if vals else None
+
+state_summaries = {}
+for st, rows in groupby_state(district_stats.values()).items():
+    state_summaries[st] = {
+        "n": len(rows),
+        "risk": avg([s.get("risk") for s in rows if s.get("risk") is not None]),
+        "anaemia": avg([s.get("anaemia") for s in rows if s.get("anaemia") is not None]),
+        "stunting": avg([s.get("stunting") for s in rows if s.get("stunting") is not None]),
+        "wb50": avg([s.get("wb_days_585_2050") for s in rows if s.get("wb_days_585_2050") is not None]),
+        "ht50": avg([s.get("heat_days_585_2050") for s in rows if s.get("heat_days_585_2050") is not None]),
+        "jjm": avg([s.get("jjm") for s in rows if s.get("jjm") is not None]),
+        "san": avg([s.get("sanitation") for s in rows if s.get("sanitation") is not None]),
+        "critical": sum(1 for s in rows if (s.get("risk") or 0) > 7),
+        "high": sum(1 for s in rows if 5 < (s.get("risk") or 0) <= 7),
+    }
 
 # ── 7. Adaptive capacity drivers ────────────────────────────────────────────
 ac_drivers = {}
@@ -278,8 +347,10 @@ out = {
     "future_national": future_national,
     "top_heat_states": [{"state": s, **v} for s,v in top_heat_states],
     "top_wetbulb_states": [{"state": s, **v} for s,v in top_wetbulb_states],
-    "escalation_districts": escalation_districts[:50],
+    "escalation_districts": escalation_districts[:200],
     "ac_drivers": ac_drivers,
+    "all_districts": all_districts_export,
+    "state_summaries": state_summaries,
 }
 
 out_path = ROOT / "client/public/data/insights.json"
