@@ -189,93 +189,83 @@ def classify(discharge, p25, p75):
 
 # ── Main ────────────────────────────────────────────────────────────────────
 
-print(f"Fetching {len(RIVER_POINTS)} river points…")
-results = []
-errors  = 0
+if __name__ == "__main__":
+    print(f"Fetching {len(RIVER_POINTS)} river points…")
+    results = []
+    errors  = 0
 
-for i, (lat, lon, river, district) in enumerate(RIVER_POINTS):
-    data = fetch_point(lat, lon)
-    if "error" in data:
-        print(f"  [{i+1}] ERROR {river}/{district}: {data['error']}")
-        errors += 1
-        time.sleep(0.5)
-        continue
+    for i, (lat, lon, river, district) in enumerate(RIVER_POINTS):
+        data = fetch_point(lat, lon)
+        if "error" in data:
+            print(f"  [{i+1}] ERROR {river}/{district}: {data['error']}")
+            errors += 1
+            time.sleep(0.5)
+            continue
 
-    daily = data.get("daily", {})
-    dates = daily.get("time", [])
-    disc  = daily.get("river_discharge", [])
-    p25s  = daily.get("river_discharge_p25", [])
-    p75s  = daily.get("river_discharge_p75", [])
+        daily = data.get("daily", {})
+        dates = daily.get("time", [])
+        disc  = daily.get("river_discharge", [])
+        p25s  = daily.get("river_discharge_p25", [])
+        p75s  = daily.get("river_discharge_p75", [])
 
-    if not disc or all(d is None for d in disc):
-        continue
+        if not disc or all(d is None for d in disc):
+            continue
 
-    today_idx = 1  # past_days=1, so index 1 is today
-    days_out = []
-    max_severity = "normal"
-    severity_order = ["normal","elevated","warning","danger","extreme","unknown"]
+        today_idx = 1  # past_days=1, so index 1 is today
+        days_out = []
+        max_severity = "normal"
+        severity_order = ["normal","elevated","warning","danger","extreme","unknown"]
 
-    for j, (dt, dv, p2, p7) in enumerate(zip(dates, disc, p25s, p75s)):
-        if dv is None: continue
-        sev = classify(dv, p2, p7)
-        days_out.append({
-            "date": dt,
-            "discharge": round(dv, 1),
-            "p25": round(p2, 1) if p2 else None,
-            "p75": round(p7, 1) if p7 else None,
-            "severity": sev,
+        for j, (dt, dv, p2, p7) in enumerate(zip(dates, disc, p25s, p75s)):
+            if dv is None: continue
+            sev = classify(dv, p2, p7)
+            days_out.append({
+                "date": dt,
+                "discharge": round(dv, 1),
+                "p25": round(p2, 1) if p2 else None,
+                "p75": round(p7, 1) if p7 else None,
+                "severity": sev,
+            })
+            if severity_order.index(sev) > severity_order.index(max_severity):
+                max_severity = sev
+
+        if not days_out: continue
+
+        results.append({
+            "lat": lat, "lon": lon,
+            "river": river, "location": district,
+            "current_discharge": days_out[today_idx]["discharge"] if len(days_out) > today_idx else days_out[0]["discharge"],
+            "current_severity": days_out[today_idx]["severity"] if len(days_out) > today_idx else days_out[0]["severity"],
+            "max_severity_7d": max_severity,
+            "days": days_out,
         })
-        if severity_order.index(sev) > severity_order.index(max_severity):
-            max_severity = sev
 
-    if not days_out: continue
+        if (i+1) % 20 == 0:
+            print(f"  {i+1}/{len(RIVER_POINTS)} done…")
+        time.sleep(0.12)
 
-    results.append({
-        "lat": lat, "lon": lon,
-        "river": river, "location": district,
-        "current_discharge": days_out[today_idx]["discharge"] if len(days_out) > today_idx else days_out[0]["discharge"],
-        "current_severity": days_out[today_idx]["severity"] if len(days_out) > today_idx else days_out[0]["severity"],
-        "max_severity_7d": max_severity,
-        "days": days_out,
-    })
+    sev_counts = defaultdict(int)
+    for r in results:
+        sev_counts[r["max_severity_7d"]] += 1
 
-    if (i+1) % 20 == 0:
-        print(f"  {i+1}/{len(RIVER_POINTS)} done…")
-    time.sleep(0.12)  # ~8 req/sec, well under limits
+    print(f"\nFetched {len(results)} points ({errors} errors)")
 
-# Summary
-sev_counts = defaultdict(int)
-for r in results:
-    sev_counts[r["max_severity_7d"]] += 1
+    alerts = [r for r in results if r["max_severity_7d"] in ("extreme","danger","warning")]
+    alerts.sort(key=lambda x: ["normal","elevated","warning","danger","extreme"].index(x["max_severity_7d"]), reverse=True)
+    print("\nTop alerts:")
+    for a in alerts[:10]:
+        print(f"  {a['river']} @ {a['location']}: {a['max_severity_7d'].upper()} ({a['current_discharge']:.0f} m³/s)")
 
-print(f"\nFetched {len(results)} points ({errors} errors)")
-print("7-day severity summary:")
-for sev in ["extreme","danger","warning","elevated","normal"]:
-    if sev_counts[sev]:
-        print(f"  {sev}: {sev_counts[sev]} points")
+    def max_p75(pt):
+        return max((d.get("p75") or 0) for d in pt["days"])
 
-# Top alerts
-alerts = [r for r in results if r["max_severity_7d"] in ("extreme","danger","warning")]
-alerts.sort(key=lambda x: ["normal","elevated","warning","danger","extreme"].index(x["max_severity_7d"]), reverse=True)
-print("\nTop alerts:")
-for a in alerts[:10]:
-    print(f"  {a['river']} @ {a['location']}: {a['max_severity_7d'].upper()} ({a['current_discharge']:.0f} m³/s)")
+    valid = [r for r in results if max_p75(r) >= 20]
+    print(f"\nValid river points (p75 ≥ 20 m³/s): {len(valid)} / {len(results)}")
 
-# Filter out points not on major rivers (p75 < 20 means we hit a small tributary)
-def max_p75(pt):
-    return max((d.get("p75") or 0) for d in pt["days"])
-
-valid = [r for r in results if max_p75(r) >= 20]
-print(f"\nValid river points (p75 ≥ 20 m³/s): {len(valid)} / {len(results)}")
-
-sev_counts2 = defaultdict(int)
-for r in valid:
-    sev_counts2[r["max_severity_7d"]] += 1
-
-out = {
-    "generated": datetime.utcnow().isoformat() + "Z",
-    "points": valid,
-    "summary": dict(sev_counts2),
-}
-OUT.write_text(json.dumps(out, separators=(",",":"), ensure_ascii=False))
-print(f"Wrote {OUT} ({OUT.stat().st_size//1024} KB)")
+    out = {
+        "generated": datetime.utcnow().isoformat() + "Z",
+        "points": valid,
+        "summary": dict(defaultdict(int, {r["max_severity_7d"]: 0 for r in valid})),
+    }
+    OUT.write_text(json.dumps(out, separators=(",",":"), ensure_ascii=False))
+    print(f"Wrote {OUT} ({OUT.stat().st_size//1024} KB)")

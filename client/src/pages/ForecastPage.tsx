@@ -8,7 +8,7 @@ import "leaflet/dist/leaflet.css";
 import { cellToBoundary } from "h3-js";
 import {
   ArrowLeft, AlertTriangle, Loader2, Radio, ChevronDown, ChevronRight,
-  PanelLeftClose, PanelLeft, Waves,
+  PanelLeftClose, PanelLeft, Waves, TrendingDown, TrendingUp, Minus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -49,6 +49,28 @@ interface RiverForecast {
   generated: string;
   points: RiverPoint[];
   summary: Record<string, number>;
+}
+
+interface RiverHistoryPoint {
+  lat: number; lon: number; river: string; location: string;
+  trend: "declining" | "stable" | "increasing";
+  pct_per_decade: number;
+  flow_regime: "perennial" | "seasonal" | "intermittent";
+  peak_month: number; dry_month: number;
+  seasonality_ratio: number;
+  enso_sensitivity: "high" | "medium" | "low";
+  en_drop_pct: number;
+  p10: number; p50: number; p90: number;
+  overall_mean: number; early_mean: number; recent_mean: number;
+  decadal_change_pct: number;
+  annual_means: Record<string, number>;
+  monthly_clim: Record<string, number>;
+}
+
+interface RiverHistory {
+  generated: string;
+  period: { start: string; end: string };
+  points: RiverHistoryPoint[];
 }
 
 // ── Color ─────────────────────────────────────────────────────────────────────
@@ -448,6 +470,183 @@ function RiverLegend({ show }: { show: boolean }) {
   );
 }
 
+// ── River Health Panel ────────────────────────────────────────────────────────
+
+const MONTH_NAMES = ["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+function RiverHealthPanel({ history }: { history: RiverHistory }) {
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [filterTrend, setFilterTrend] = useState<string>("all");
+
+  const declining = history.points.filter(p => p.trend === "declining").length;
+  const seasonal  = history.points.filter(p => p.flow_regime !== "perennial").length;
+  const hiEnso    = history.points.filter(p => p.enso_sensitivity === "high").length;
+
+  const displayed = filterTrend === "all"
+    ? history.points
+    : history.points.filter(p => p.trend === filterTrend);
+
+  // Sort: declining first, then by pct_per_decade ascending
+  const sorted = [...displayed].sort((a, b) => {
+    const order = { declining: 0, stable: 1, increasing: 2 };
+    if (order[a.trend] !== order[b.trend]) return order[a.trend] - order[b.trend];
+    return a.pct_per_decade - b.pct_per_decade;
+  });
+
+  const trendIcon = (t: string) =>
+    t === "declining" ? <TrendingDown className="h-3 w-3 text-red-400" />
+    : t === "increasing" ? <TrendingUp className="h-3 w-3 text-emerald-400" />
+    : <Minus className="h-3 w-3 text-gray-400" />;
+
+  const trendColor = (t: string) =>
+    t === "declining" ? "text-red-400" : t === "increasing" ? "text-emerald-400" : "text-gray-400";
+
+  const regimeColor = (r: string) =>
+    r === "perennial" ? "text-blue-400" : r === "seasonal" ? "text-amber-400" : "text-red-400";
+
+  const ensoColor = (s: string) =>
+    s === "high" ? "text-red-400" : s === "medium" ? "text-amber-400" : "text-emerald-400";
+
+  return (
+    <div className="flex flex-col gap-0">
+      {/* Summary chips */}
+      <div className="flex gap-1.5 px-3 py-2 flex-wrap border-b border-border/20">
+        <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-500/15 text-red-400 font-medium">
+          {declining} declining
+        </span>
+        <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 font-medium">
+          {seasonal} seasonal/intermittent
+        </span>
+        <span className="text-[9px] px-1.5 py-0.5 rounded bg-orange-500/15 text-orange-400 font-medium">
+          {hiEnso} El Niño sensitive
+        </span>
+      </div>
+
+      {/* Filter */}
+      <div className="flex gap-1 px-3 py-1.5 border-b border-border/20">
+        {["all","declining","stable","increasing"].map(t => (
+          <button key={t} onClick={() => setFilterTrend(t)}
+            className={`text-[9px] px-1.5 py-0.5 rounded capitalize transition-colors
+              ${filterTrend === t ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+            {t}
+          </button>
+        ))}
+      </div>
+
+      {/* River list */}
+      <div className="overflow-y-auto max-h-[420px]">
+        {sorted.map((pt) => {
+          const key = `${pt.river}|${pt.location}`;
+          const isOpen = expanded === key;
+          const maxClim = Math.max(...Object.values(pt.monthly_clim));
+
+          return (
+            <div key={key} className="border-b border-border/15">
+              <button
+                className="w-full px-3 py-2 text-left hover:bg-muted/30 transition-colors"
+                onClick={() => setExpanded(isOpen ? null : key)}
+              >
+                <div className="flex items-center justify-between mb-0.5">
+                  <span className="text-[10px] font-medium text-foreground truncate">
+                    {pt.river}
+                    <span className="text-muted-foreground font-normal ml-1">@ {pt.location}</span>
+                  </span>
+                  {isOpen ? <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
+                           : <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />}
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={`flex items-center gap-0.5 text-[9px] font-medium ${trendColor(pt.trend)}`}>
+                    {trendIcon(pt.trend)}
+                    {pt.pct_per_decade > 0 ? "+" : ""}{pt.pct_per_decade.toFixed(1)}%/dec
+                  </span>
+                  <span className={`text-[9px] ${regimeColor(pt.flow_regime)} capitalize`}>
+                    {pt.flow_regime}
+                  </span>
+                  <span className={`text-[9px] ${ensoColor(pt.enso_sensitivity)}`}>
+                    El Niño: {pt.enso_sensitivity}
+                  </span>
+                </div>
+              </button>
+
+              {isOpen && (
+                <div className="px-3 pb-3 bg-muted/10">
+                  {/* Key stats */}
+                  <div className="grid grid-cols-3 gap-1.5 mb-2 text-center">
+                    <div className="bg-muted/30 rounded p-1.5">
+                      <div className="text-[9px] text-muted-foreground">Median flow</div>
+                      <div className="text-[11px] font-semibold">{pt.p50 >= 1000 ? `${(pt.p50/1000).toFixed(1)}k` : pt.p50} m³/s</div>
+                    </div>
+                    <div className="bg-muted/30 rounded p-1.5">
+                      <div className="text-[9px] text-muted-foreground">El Niño drop</div>
+                      <div className={`text-[11px] font-semibold ${pt.en_drop_pct > 15 ? "text-red-400" : pt.en_drop_pct > 5 ? "text-amber-400" : "text-emerald-400"}`}>
+                        {pt.en_drop_pct > 0 ? "-" : "+"}{Math.abs(pt.en_drop_pct).toFixed(0)}%
+                      </div>
+                    </div>
+                    <div className="bg-muted/30 rounded p-1.5">
+                      <div className="text-[9px] text-muted-foreground">40yr change</div>
+                      <div className={`text-[11px] font-semibold ${pt.decadal_change_pct < -10 ? "text-red-400" : pt.decadal_change_pct > 10 ? "text-emerald-400" : "text-gray-400"}`}>
+                        {pt.decadal_change_pct > 0 ? "+" : ""}{pt.decadal_change_pct.toFixed(0)}%
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Monthly seasonality bar chart */}
+                  <div className="text-[9px] text-muted-foreground mb-1">
+                    Monthly flow profile · Peak: {MONTH_NAMES[pt.peak_month]} · Dry: {MONTH_NAMES[pt.dry_month]}
+                  </div>
+                  <div className="flex items-end gap-px h-8">
+                    {Array.from({ length: 12 }, (_, i) => {
+                      const m = i + 1;
+                      const val = pt.monthly_clim[String(m)] ?? 0;
+                      const h = maxClim > 0 ? Math.max(2, (val / maxClim) * 32) : 2;
+                      const isMonsoon = m >= 6 && m <= 9;
+                      const isDry = m === pt.dry_month;
+                      return (
+                        <div key={m} className="flex-1 flex flex-col items-center group relative">
+                          <div
+                            className={`w-full rounded-sm transition-colors ${isDry ? "bg-orange-400" : isMonsoon ? "bg-blue-400" : "bg-blue-600/50"}`}
+                            style={{ height: `${h}px` }}
+                          />
+                          <div className="absolute bottom-full mb-0.5 hidden group-hover:block bg-background border border-border/40 rounded px-1 py-0.5 text-[8px] whitespace-nowrap z-10">
+                            {MONTH_NAMES[m]}: {val >= 1000 ? `${(val/1000).toFixed(1)}k` : val.toFixed(0)} m³/s
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="flex justify-between text-[8px] text-muted-foreground mt-0.5">
+                    <span>Jan</span><span>Jun</span><span>Dec</span>
+                  </div>
+
+                  {/* WASH implication */}
+                  <div className="mt-2 text-[9px] leading-3.5 text-muted-foreground">
+                    {pt.flow_regime === "intermittent" && (
+                      <span className="text-orange-400">⚠ Intermittent — unreliable for surface WTP intakes</span>
+                    )}
+                    {pt.flow_regime === "seasonal" && pt.trend === "declining" && (
+                      <span className="text-red-400">⚠ Seasonal + declining — dry-season supply at risk</span>
+                    )}
+                    {pt.enso_sensitivity === "high" && (
+                      <span className="text-amber-400 block">El Niño → {pt.en_drop_pct.toFixed(0)}% less monsoon flow · plan buffer storage</span>
+                    )}
+                    {pt.trend === "stable" && pt.flow_regime === "perennial" && (
+                      <span className="text-emerald-400">✓ Reliable perennial source — suitable for intake schemes</span>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="px-3 py-1.5 text-[8px] text-muted-foreground border-t border-border/20">
+        GloFAS ERA5 · {history.period.start.slice(0,4)}–{history.period.end.slice(0,4)} · {history.points.length} monitoring points
+      </div>
+    </div>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function ForecastPage() {
@@ -492,12 +691,19 @@ export default function ForecastPage() {
     staleTime: 30 * 60 * 1000,
   });
 
+  const riverHistoryQ = useQuery<RiverHistory>({
+    queryKey: ["river-history"],
+    queryFn: () => fetch("/data/river_history.json").then((r) => r.json()),
+    staleTime: Infinity,
+  });
+
   const features: any[] = hexQ.data?.features ?? [];
   const stateList = useMemo(
     () => Array.from(new Set(features.map((f: any) => f.properties.state).filter(Boolean))).sort() as string[],
     [features]
   );
 
+  const [healthOpen, setHealthOpen] = useState(false);
   const loading = hexQ.isLoading || forecastQ.isLoading;
   const error = hexQ.isError || forecastQ.isError;
 
@@ -521,11 +727,22 @@ export default function ForecastPage() {
           <div className="h-3 w-px bg-border/50" />
           <span className="text-xs font-semibold">Forecast Early Warning</span>
           <div className="flex-1" />
+          {riverHistoryQ.data && (
+            <button
+              onClick={() => setHealthOpen(v => !v)}
+              className={`text-[11px] px-2.5 py-1 rounded-md border transition-colors font-medium flex items-center gap-1
+                ${healthOpen
+                  ? "bg-blue-500/20 border-blue-500/40 text-blue-400"
+                  : "border-border/40 text-muted-foreground hover:text-foreground"}`}
+            >
+              <Waves className="h-3 w-3" /> River Health
+            </button>
+          )}
           <Link href="/grid" className="text-[11px] text-emerald-400 hover:text-emerald-300 font-semibold">← Hex Grid</Link>
           <ThemeToggle />
         </header>
 
-        <div className="flex-1 relative">
+        <div className="flex-1 flex overflow-hidden relative">
           {loading ? (
             <div className="absolute inset-0 flex items-center justify-center text-muted-foreground gap-2 text-sm">
               <Loader2 className="h-5 w-5 animate-spin" /> Loading forecast…
@@ -556,6 +773,21 @@ export default function ForecastPage() {
             <RiverLegend show={showRivers} />
           </div>
         </div>
+
+        {/* River Health right panel */}
+        {healthOpen && riverHistoryQ.data && (
+          <div className="w-72 border-l border-border/40 bg-background flex flex-col overflow-hidden shrink-0">
+            <div className="px-3 py-2 border-b border-border/30 flex items-center justify-between shrink-0">
+              <span className="text-xs font-semibold flex items-center gap-1.5">
+                <Waves className="h-3.5 w-3.5 text-blue-400" /> River Health (40-year)
+              </span>
+              <button onClick={() => setHealthOpen(false)} className="text-muted-foreground hover:text-foreground text-xs">✕</button>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              <RiverHealthPanel history={riverHistoryQ.data} />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
