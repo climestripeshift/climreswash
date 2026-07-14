@@ -95,10 +95,10 @@ const ATTRIBUTES: AttrDef[] = [
   { key: "risk_ssp245_2050",             label: "Risk 2050 (SSP2-4.5)",     icon: "🔮", category: "future", desc: "Projected risk score 2050 under SSP2-4.5 moderate emissions" },
   { key: "risk_ssp585_2030",             label: "Risk 2030 (SSP5-8.5)",     icon: "🔮", category: "future", desc: "Near-term 2030 risk under SSP5-8.5 high emissions" },
   { key: "risk_ssp585_2050",             label: "Risk 2050 (SSP5-8.5)",     icon: "🔴", category: "future", desc: "Worst-case projected risk score 2050 under SSP5-8.5" },
-  { key: "heat_days_ssp585_2050",        label: "Heat Days 2050 (SSP5)",     icon: "🔥", category: "future", desc: "Additional days/yr above heat threshold by 2050 (SSP5-8.5)" },
-  { key: "severe_heat_days_ssp585_2050", label: "Severe Heat Days 2050",     icon: "🌡️", category: "future", desc: "Days/yr above severe heat threshold by 2050 (SSP5-8.5)" },
-  { key: "wet_bulb_days_ssp585_2050",    label: "Wet-Bulb Days 2050 (SSP5)", icon: "💧", category: "future", desc: "Days/yr above dangerous wet-bulb threshold by 2050 (SSP5-8.5)" },
-  { key: "flood_days_ssp585_2050",       label: "Flood Days 2050 (SSP5)",    icon: "🌊", category: "future", desc: "Additional extreme-rain/flood days by 2050 (SSP5-8.5)" },
+  { key: "heat_days_ssp585_2050",        label: "Heat Days 2050 (SSP5)",     icon: "🔥", category: "future", desc: "Total days/yr above heat threshold by 2050 (SSP5-8.5)" },
+  { key: "severe_heat_days_ssp585_2050", label: "Severe Heat Days 2050",     icon: "🌡️", category: "future", desc: "Total days/yr above severe heat threshold by 2050 (SSP5-8.5)" },
+  { key: "wet_bulb_days_ssp585_2050",    label: "Wet-Bulb Days 2050 (SSP5)", icon: "💧", category: "future", desc: "Total days/yr above dangerous wet-bulb threshold by 2050 (SSP5-8.5)" },
+  { key: "flood_days_ssp585_2050",       label: "Flood Days 2050 (SSP5)",    icon: "🌊", category: "future", desc: "Total extreme-rain/flood days/yr by 2050 (SSP5-8.5)" },
 ];
 
 // ── Color scales ──────────────────────────────────────────────────────────────
@@ -165,8 +165,8 @@ const FIXED_DOMAIN: Record<string, [number, number]> = {
   sbm_septic_soak_pct: [0, 100], sbm_total_ihhl: [0, 500000],
   // Future projections
   risk_ssp245_2050: [0, 10], risk_ssp585_2030: [0, 10], risk_ssp585_2050: [0, 10],
-  heat_days_ssp585_2050: [0, 45], severe_heat_days_ssp585_2050: [0, 21],
-  wet_bulb_days_ssp585_2050: [0, 185], flood_days_ssp585_2050: [0, 4],
+  heat_days_ssp585_2050: [0, 135], severe_heat_days_ssp585_2050: [0, 30],
+  wet_bulb_days_ssp585_2050: [0, 365], flood_days_ssp585_2050: [0, 35],
 };
 
 function lerp3(a: [number,number,number], b: [number,number,number], t: number) {

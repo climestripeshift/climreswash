@@ -112,11 +112,12 @@ def main():
 
                     with rasterio.open(str(hist_path)) as hist_src, rasterio.open(str(fut_path)) as fut_src:
                         for p in props:
-                            baseline = float(p.get(baseline_col, 0) or 0)
                             hist_val = read_hex_freq(hist_src, p["h3_id"])
                             fut_val = read_hex_freq(fut_src, p["h3_id"])
-                            delta = fut_val - hist_val
-                            p[out_col] = round(max(0, baseline + delta), 2)
+                            # Store total future value (not delta) so map shows real magnitudes.
+                            # Also cache hist for risk delta computation below.
+                            p[out_col] = round(max(0, fut_val), 2)
+                            p[f"{metric}_hist"] = round(hist_val, 2)
                     print(f"    {metric}: done")
     else:
         print("⚠️  MOCK MODE — CMIP6 rasters not found in data/raw/climatology_future/")
@@ -153,17 +154,19 @@ def main():
     # Scenario ordering guaranteed by construction:
     #   SSP585 > SSP245 for same horizon; 2050 > 2030 for same scenario.
 
-    # Max additional days expected at 99th pct under SSP5-8.5 2050
-    HEAT_REF  = 35.0   # days → full heat contribution
-    WB_REF    = 50.0   # days → full wet-bulb contribution
-    FLOOD_REF = 10.0   # days → full flood contribution
+    # Risk bonus = delta (future - historical) normalized to max expected intensification.
+    # Reference deltas from CMIP6 India 99th pct under SSP5-8.5 2050:
+    #   heat delta:     ~45 days  (hist ~25, future ~70 at 99th pct)
+    #   wet-bulb delta: ~80 days  (hist ~314, future ~361 max; delta ~50-80)
+    #   flood delta:    ~10 days  (hist max ~31, future max ~34)
+    HEAT_DELTA_REF  = 45.0
+    WB_DELTA_REF    = 80.0
+    FLOOD_DELTA_REF = 10.0
 
-    # Max bonus per hazard type (sum = 3.0 max total bonus)
     HEAT_W  = 1.2
     WB_W    = 1.2
     FLOOD_W = 0.6
 
-    # Scenario scaling so SSP2 < SSP5 and 2030 < 2050
     SCENARIO_SCALE = {
         "ssp245_2030": 0.35,
         "ssp245_2050": 0.60,
@@ -180,14 +183,15 @@ def main():
 
             for p in props:
                 present = float(p.get("hex_risk", 3.0) or 3.0)
-                heat_d  = float(p.get(f"heat_days_{tag}", 0) or 0)
-                wb_d    = float(p.get(f"wet_bulb_days_{tag}", 0) or 0)
-                flood_d = float(p.get(f"flood_days_{tag}", 0) or 0)
+                # Delta = future total - historical total (both cached in props)
+                heat_delta  = max(0.0, float(p.get(f"heat_days_{tag}", 0) or 0)     - float(p.get("heat_hist", 0) or 0))
+                wb_delta    = max(0.0, float(p.get(f"wet_bulb_days_{tag}", 0) or 0) - float(p.get("wet_bulb_hist", 0) or 0))
+                flood_delta = max(0.0, float(p.get(f"flood_days_{tag}", 0) or 0)    - float(p.get("flood_hist", 0) or 0))
 
                 bonus = (
-                    min(1.0, heat_d  / HEAT_REF)  * HEAT_W  +
-                    min(1.0, wb_d    / WB_REF)    * WB_W    +
-                    min(1.0, flood_d / FLOOD_REF) * FLOOD_W
+                    min(1.0, heat_delta  / HEAT_DELTA_REF)  * HEAT_W  +
+                    min(1.0, wb_delta    / WB_DELTA_REF)    * WB_W    +
+                    min(1.0, flood_delta / FLOOD_DELTA_REF) * FLOOD_W
                 ) * sc
 
                 p[f"risk_{tag}"] = round(min(10.0, present + bonus), 2)
