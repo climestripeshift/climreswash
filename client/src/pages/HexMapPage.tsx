@@ -48,9 +48,10 @@ const ATTRIBUTES: AttrDef[] = [
   { key: "pop_women_15_49",      label: "Women 15-49",       icon: "👩", category: "demographics", desc: "Women of reproductive age (WorldPop × Census age ratios)" },
 
   // Terrain
-  { key: "elevation_mean", label: "Elevation (SRTM)",  icon: "⛰️",  category: "terrain", desc: "Mean elevation per hex — real SRTM 90m data" },
-  { key: "ndvi_mean",      label: "Vegetation (NDVI)", icon: "🌿",  category: "terrain", desc: "Mean annual NDVI — real MODIS 2023 data" },
-  { key: "land_use",       label: "Land Use (ESA)",    icon: "🗺️",  category: "terrain", desc: "Dominant land cover — real ESA WorldCover 2021" },
+  { key: "elevation_mean",    label: "Elevation (SRTM)",    icon: "⛰️",  category: "terrain", desc: "Mean elevation per hex — real SRTM 90m data" },
+  { key: "ndvi_mean",         label: "Vegetation (NDVI)",   icon: "🌿",  category: "terrain", desc: "Mean annual NDVI — real MODIS 2023 data" },
+  { key: "land_use",          label: "Land Use (ESA)",      icon: "🗺️",  category: "terrain", desc: "Dominant land cover — real ESA WorldCover 2021" },
+  { key: "dist_to_river_km",  label: "Distance to River",   icon: "🏞️",  category: "terrain", desc: "Distance to nearest OSM major river channel (km) — closer = higher flood exposure & surface-water dependency" },
 
   // Climate hazards
   { key: "flood_risk",   label: "Pluvial Flood",    icon: "🌊", category: "climate", desc: "Flood risk from 50mm monsoon rainfall scenario" },
@@ -110,7 +111,7 @@ const ORANGES: [number,number,number][] = [[255,255,229],[254,217,142],[254,153,
 const RISK:    [number,number,number][] = [[34,197,94],[234,179,8],[249,115,22],[239,68,68],[153,27,27]];
 
 const ATTR_RAMP: Record<string, [number,number,number][]> = {
-  elevation_mean: VIRIDIS, ndvi_mean: GREENS, population: ORANGES,
+  elevation_mean: VIRIDIS, ndvi_mean: GREENS, population: ORANGES, dist_to_river_km: BLUES,
   hazard_count_5: RISK, hazard_count_3: RISK,
   pop_children_under_5: ORANGES, pop_elderly_60plus: ORANGES, pop_women_15_49: ORANGES,
   flood_risk: BLUES, heat_risk: ORANGES, heat_peak_score: ORANGES, cyclone_risk: RISK, drought_risk: ORANGES,
@@ -146,7 +147,7 @@ const FIXED_DOMAIN: Record<string, [number, number]> = {
   hex_risk: [0, 10], population: [0, 5000000], cascade_count: [0, 4], data_confidence: [0, 1],
   hazard_count_5: [0, 5], hazard_count_3: [0, 6],
   pop_children_under_5: [0, 500000], pop_elderly_60plus: [0, 500000], pop_women_15_49: [0, 1500000],
-  elevation_mean: [0, 5000], ndvi_mean: [0, 0.8], land_use: [0, 1],
+  elevation_mean: [0, 5000], ndvi_mean: [0, 0.8], land_use: [0, 1], dist_to_river_km: [0, 100],
   flood_risk: [0, 10], heat_risk: [0, 3], heat_peak_score: [0, 10], cyclone_risk: [0, 10],
   drought_risk: [0, 10], wetbulb_risk: [0, 10], landslide_risk: [0, 10],
   coldwave_risk: [0, 10], flashflood_risk: [0, 10], sealevel_risk: [0, 10],
@@ -497,6 +498,7 @@ function FilterSidebar({
   crossFilters, onCrossFiltersChange, matchCount, totalCount,
   features,
   showDistricts, onShowDistrictsChange, showStates, onShowStatesChange,
+  showRivers, onShowRiversChange,
   heatViewMode, onHeatViewModeChange,
 }: {
   collapsed: boolean; onToggle: () => void;
@@ -508,6 +510,7 @@ function FilterSidebar({
   features: any[];
   showDistricts: boolean; onShowDistrictsChange: (v: boolean) => void;
   showStates: boolean; onShowStatesChange: (v: boolean) => void;
+  showRivers: boolean; onShowRiversChange: (v: boolean) => void;
   heatViewMode: "annual" | "peak"; onHeatViewModeChange: (m: "annual" | "peak") => void;
 }) {
   const [openCats, setOpenCats] = useState<Record<string, boolean>>({ overview: true });
@@ -566,7 +569,7 @@ function FilterSidebar({
       </div>
 
       {/* Boundary overlays */}
-      <div className="px-3 py-2 border-b border-border/30 flex items-center gap-3">
+      <div className="px-3 py-2 border-b border-border/30 flex items-center gap-3 flex-wrap">
         <label className="flex items-center gap-1.5 text-[10px] cursor-pointer">
           <input type="checkbox" checked={showStates} onChange={(e) => onShowStatesChange(e.target.checked)}
             className="w-3 h-3 accent-amber-500" />
@@ -576,6 +579,11 @@ function FilterSidebar({
           <input type="checkbox" checked={showDistricts} onChange={(e) => onShowDistrictsChange(e.target.checked)}
             className="w-3 h-3 accent-gray-500" />
           <span className="text-muted-foreground">District lines</span>
+        </label>
+        <label className="flex items-center gap-1.5 text-[10px] cursor-pointer">
+          <input type="checkbox" checked={showRivers} onChange={(e) => onShowRiversChange(e.target.checked)}
+            className="w-3 h-3 accent-blue-500" />
+          <span className="text-blue-400">Rivers</span>
         </label>
       </div>
 
@@ -1344,15 +1352,35 @@ function BoundaryLayers({
   );
 }
 
+function RiverOverlay({ show }: { show: boolean }) {
+  const riverQ = useQuery<any>({
+    queryKey: ["india-rivers"],
+    queryFn: () => fetch("/data/india_rivers.geojson").then((r) => r.json()),
+    staleTime: Infinity,
+    enabled: show,
+  });
+  const riverStyle = useCallback(() => ({
+    fillOpacity: 0, color: "#3b82f6", weight: 1.2, opacity: 0.6,
+  }), []);
+  const onEachRiver = useCallback((feature: any, layer: any) => {
+    const name = feature.properties?.name || feature.properties?.name_en;
+    if (name) layer.bindTooltip(name, { sticky: true, className: "text-[10px]" });
+  }, []);
+  if (!show || !riverQ.data) return null;
+  return (
+    <GeoJSON key="river-overlay" data={riverQ.data} style={riverStyle} onEachFeature={onEachRiver} />
+  );
+}
+
 function HexMap({
   geoData, attr, selectedState, selectedDistrict, crossFilters, mapRef, onHexClick,
-  showDistricts, showStates, onBoundaryClick,
+  showDistricts, showStates, showRivers, onBoundaryClick,
 }: {
   geoData: any; attr: string; selectedState: string; selectedDistrict: string;
   crossFilters: CrossFilter[];
   mapRef: React.MutableRefObject<LeafletMap | null>;
   onHexClick: (p: any) => void;
-  showDistricts: boolean; showStates: boolean;
+  showDistricts: boolean; showStates: boolean; showRivers: boolean;
   onBoundaryClick: (type: "state" | "district", name: string, stateName: string) => void;
 }) {
   const geoJsonRef = useRef<LeafletGeoJSONLayer | null>(null);
@@ -1399,6 +1427,7 @@ function HexMap({
       <GeoJSON ref={geoJsonRef} key={`${selectedState}-${selectedDistrict}-${crossFilters.length}-${crossFilters.map(f=>f.key+f.op+f.value).join(',')}`}
         data={filtered} style={styleFeature} onEachFeature={onEachFeature} />
       <BoundaryLayers showDistricts={showDistricts} showStates={showStates} onBoundaryClick={onBoundaryClick} />
+      <RiverOverlay show={showRivers} />
     </MapContainer>
   );
 }
@@ -1428,6 +1457,7 @@ export default function HexMapPage() {
   const [crossFilters, setCrossFilters]       = useState<CrossFilter[]>([]);
   const [showDistricts, setShowDistricts]     = useState(false);
   const [showStates, setShowStates]           = useState(true);
+  const [showRivers, setShowRivers]           = useState(false);
   const mapRef = useRef<LeafletMap | null>(null);
 
   const rankQ = useQuery<any[]>({
@@ -1576,6 +1606,7 @@ export default function HexMapPage() {
         features={features}
         showDistricts={showDistricts} onShowDistrictsChange={setShowDistricts}
         showStates={showStates} onShowStatesChange={setShowStates}
+        showRivers={showRivers} onShowRiversChange={setShowRivers}
         heatViewMode={heatViewMode} onHeatViewModeChange={setHeatViewMode}
         matchCount={(() => {
           if (!crossFilters.length || !features.length) return features.length;
@@ -1617,7 +1648,7 @@ export default function HexMapPage() {
             <HexMap geoData={mergedGeoData ?? hexQ.data} attr={effectiveAttr} selectedState={selectedState}
               selectedDistrict={selectedDistrict} crossFilters={crossFilters}
               mapRef={mapRef} onHexClick={(p) => { setClickedHex(p); setClickedBoundary(null); }}
-              showDistricts={showDistricts} showStates={showStates}
+              showDistricts={showDistricts} showStates={showStates} showRivers={showRivers}
               onBoundaryClick={handleBoundaryClick} />
           )}
 
