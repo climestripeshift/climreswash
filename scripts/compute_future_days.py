@@ -8,9 +8,7 @@ This cancels model bias. Observed baseline comes from existing day-count columns
 Run: python scripts/compute_future_days.py
 """
 import json
-import math
 import random
-import sys
 from pathlib import Path
 
 import h3
@@ -139,74 +137,60 @@ def main():
                         delta = mock_delta(metric, scenario, horizon, lat, lon)
                         p[f"{metric}_days_{tag}"] = round(max(0, baseline + delta), 2)
 
-    # ── Run existing risk engine on future days ───────────────────────────
-    print("\nComputing future risk surfaces...")
-    sys.path.insert(0, str(ROOT / "scripts"))
-    from risk.formulas import (
-        pluvial_flood_score, heatwave_score, drought_score, wet_bulb_score, compute_risk,
-        flood_sensitivity, heat_sensitivity, exposure_score,
-    )
+    # ── Delta-add risk: future = present + intensification bonus ─────────────
+    # Root cause of previous bug: present hex_risk (mean 4.5) was computed by
+    # the full 5-hazard pipeline with real inputs. The old approach re-ran a
+    # simplified 3-hazard formula from day counts with a zero baseline
+    # (heat_days_per_year is missing from hex_props), producing mean ~1.4 —
+    # maps turned green under worse climate scenarios.
+    #
+    # Fix: treat present hex_risk as the authoritative baseline. Add a bonus
+    # proportional to how many additional hazard-days the SSP scenario brings.
+    # The stored future day counts are already the delta (baseline=0 so
+    # future_days ≈ mock_delta). Weights calibrated so SSP5-8.5 2050 adds
+    # ~+1 to +3 points in the most exposed areas.
+    #
+    # Scenario ordering guaranteed by construction:
+    #   SSP585 > SSP245 for same horizon; 2050 > 2030 for same scenario.
 
-    LAND_USE_PARAMS = {
-        "tree": {"tree_pct": 75, "built_pct": 2, "sand_pct": 20},
-        "shrub": {"tree_pct": 30, "built_pct": 3, "sand_pct": 35},
-        "grass": {"tree_pct": 10, "built_pct": 5, "sand_pct": 30},
-        "crop": {"tree_pct": 8, "built_pct": 10, "sand_pct": 25},
-        "built": {"tree_pct": 5, "built_pct": 70, "sand_pct": 15},
-        "barren": {"tree_pct": 1, "built_pct": 2, "sand_pct": 75},
-        "water": {"tree_pct": 0, "built_pct": 0, "sand_pct": 10},
-        "wetland": {"tree_pct": 15, "built_pct": 2, "sand_pct": 10},
-        "snow": {"tree_pct": 0, "built_pct": 0, "sand_pct": 5},
-        "mangrove": {"tree_pct": 60, "built_pct": 0, "sand_pct": 15},
+    # Max additional days expected at 99th pct under SSP5-8.5 2050
+    HEAT_REF  = 35.0   # days → full heat contribution
+    WB_REF    = 50.0   # days → full wet-bulb contribution
+    FLOOD_REF = 10.0   # days → full flood contribution
+
+    # Max bonus per hazard type (sum = 3.0 max total bonus)
+    HEAT_W  = 1.2
+    WB_W    = 1.2
+    FLOOD_W = 0.6
+
+    # Scenario scaling so SSP2 < SSP5 and 2030 < 2050
+    SCENARIO_SCALE = {
+        "ssp245_2030": 0.35,
+        "ssp245_2050": 0.60,
+        "ssp585_2030": 0.50,
+        "ssp585_2050": 1.00,
     }
 
-    OCC_REF = {"flood": 3.0, "heat": 10.0, "drought": 0.15, "wet_bulb": 5.0}
-    DUR_REF = {"heat": 90.0, "drought": 0.5, "wet_bulb": 60.0}
-    CHRONIC = {"heat", "drought", "wet_bulb"}
-
+    print("\nComputing future risk surfaces (delta-add from present hex_risk)...")
     for scenario in SCENARIOS:
         for horizon in HORIZONS:
             tag = f"{scenario}_{horizon}"
-            print(f"  Risk surface: {tag}")
+            sc  = SCENARIO_SCALE[tag]
+            print(f"  Risk surface: {tag}  (scale={sc})")
 
             for p in props:
-                elev = float(p.get("elevation_mean", 200) or 200)
-                lu = str(p.get("land_use", "crop") or "crop")
-                ndvi = float(p.get("ndvi_mean", 0.3) or 0.3)
-                params = LAND_USE_PARAMS.get(lu, LAND_USE_PARAMS["crop"])
-                tree_pct = max(params["tree_pct"], ndvi * 100 * 0.8)
-                built_pct = params["built_pct"]
-                sand_pct = params["sand_pct"]
-                slope = float(p.get("slope_deg", 1) or 1)
-                dist_w = float(p.get("dist_water_m", 5000) or 5000)
-
-                fs = flood_sensitivity(slope, sand_pct, built_pct, dist_w)
-                hs = heat_sensitivity(tree_pct, built_pct, dist_w)
-                pop = int(p.get("population", 1000) or 1000)
-                exp10 = exposure_score(max(1, pop), 9, 8, 25)
-                ac = max(0.1, float(p.get("adaptive_capacity", 0.7) or 0.7))
-
-                # Future day-counts
+                present = float(p.get("hex_risk", 3.0) or 3.0)
+                heat_d  = float(p.get(f"heat_days_{tag}", 0) or 0)
+                wb_d    = float(p.get(f"wet_bulb_days_{tag}", 0) or 0)
                 flood_d = float(p.get(f"flood_days_{tag}", 0) or 0)
-                heat_d = float(p.get(f"heat_days_{tag}", 0) or 0)
-                drought_d = float(p.get(f"drought_days_{tag}", 0) or 0) if "drought" in METRICS else 0
-                wb_d = float(p.get(f"wet_bulb_days_{tag}", 0) or 0)
 
-                risks = []
-                for hz, days, sev_fn, sens in [
-                    ("flood", flood_d, lambda: pluvial_flood_score(50, sand_pct, built_pct, slope), fs),
-                    ("heat", heat_d, lambda: heatwave_score(44, 40 if elev < 800 else 30, 3, built_pct, tree_pct, dist_w), hs),
-                    ("wet_bulb", wb_d, lambda: wet_bulb_score(38, 60), hs),
-                ]:
-                    sev = sev_fn()
-                    occ = min(1.0, days / OCC_REF.get(hz, 5))
-                    haz = sev * occ
-                    if hz in CHRONIC:
-                        cf = 1.0 + 0.5 * min(1.0, days / DUR_REF.get(hz, 60))
-                        haz *= cf
-                    risks.append(compute_risk(haz, exp10, sens, ac))
+                bonus = (
+                    min(1.0, heat_d  / HEAT_REF)  * HEAT_W  +
+                    min(1.0, wb_d    / WB_REF)    * WB_W    +
+                    min(1.0, flood_d / FLOOD_REF) * FLOOD_W
+                ) * sc
 
-                p[f"risk_{tag}"] = round(max(risks), 2)
+                p[f"risk_{tag}"] = round(min(10.0, present + bonus), 2)
 
     # ── Stats ─────────────────────────────────────────────────────────────
     print("\nResults:")

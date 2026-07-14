@@ -164,7 +164,7 @@ const FIXED_DOMAIN: Record<string, [number, number]> = {
   sbm_twin_pit_pct: [0, 100], sbm_single_pit_pct: [0, 100],
   sbm_septic_soak_pct: [0, 100], sbm_total_ihhl: [0, 500000],
   // Future projections
-  risk_ssp245_2050: [0, 6], risk_ssp585_2030: [0, 6], risk_ssp585_2050: [0, 6],
+  risk_ssp245_2050: [0, 10], risk_ssp585_2030: [0, 10], risk_ssp585_2050: [0, 10],
   heat_days_ssp585_2050: [0, 45], severe_heat_days_ssp585_2050: [0, 21],
   wet_bulb_days_ssp585_2050: [0, 185], flood_days_ssp585_2050: [0, 4],
 };
