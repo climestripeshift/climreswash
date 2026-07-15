@@ -470,8 +470,8 @@ export default function InsightsPage() {
                 <select value={hazardFilter} onChange={e => setHazardFilter(e.target.value)}
                   className="appearance-none pl-2 pr-6 py-1 text-xs rounded-md border border-border bg-muted/40 text-foreground outline-none cursor-pointer">
                   <option value="all">All hazards</option>
-                  {["flood","heat","wetbulb","pollution","drought"].map(h => (
-                    <option key={h} value={h}>{HZ_BADGE[h]} {h.charAt(0).toUpperCase()+h.slice(1)}</option>
+                  {(["flood","wetbulb","coldwave","drought","landslide"] as const).map(h => (
+                    <option key={h} value={h}>{HZ_BADGE[h]} {({flood:"Flood",wetbulb:"Wet-Bulb",coldwave:"Cold Wave",drought:"Drought",landslide:"Landslide"} as Record<string,string>)[h]}</option>
                   ))}
                 </select>
               </div>
@@ -723,7 +723,7 @@ export default function InsightsPage() {
             <div className="rounded-xl border border-pink-500/20 bg-pink-500/5 p-4 space-y-3">
               <h3 className="text-sm font-semibold">The MHM–Antenatal Chain</h3>
               <p className="text-xs text-muted-foreground">
-                Strongest social relationship: MHM coverage predicts antenatal care (r=+0.42). Districts with high child marriage (&gt;35%) AND low MHM (&lt;50%) show only <strong className="text-pink-400">27.6%</strong> antenatal coverage — vs <strong className="text-foreground">60.5%</strong> elsewhere.
+                Strongest social relationship: MHM coverage predicts antenatal care (r={rByTitle["Menstrual Hygiene & Antenatal Care"] != null ? `${rByTitle["Menstrual Hygiene & Antenatal Care"]>0?"+":""}${rByTitle["Menstrual Hygiene & Antenatal Care"].toFixed(2)}` : "+0.47"}). Districts with high child marriage (&gt;35%) AND low MHM (&lt;50%) show only <strong className="text-pink-400">27.6%</strong> antenatal coverage — vs <strong className="text-foreground">60.5%</strong> elsewhere.
               </p>
               <div className="grid grid-cols-2 gap-3 text-center">
                 {[
