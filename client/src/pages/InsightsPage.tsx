@@ -223,6 +223,28 @@ export default function InsightsPage() {
   const [sortDir, setSortDir]               = useState<"asc"|"desc">("desc");
   const [hazardFilter, setHazardFilter]     = useState("all");
 
+  // Hooks must be called unconditionally — before early return
+  const rByTitle = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const rel of (data?.relationships ?? [])) m[rel.title] = rel.r;
+    return m;
+  }, [data?.relationships]);
+
+  const filteredDistricts = useMemo(() => {
+    let rows = data?.all_districts ?? [];
+    if (filterState !== "All India") rows = rows.filter(r => r.st === filterState);
+    if (hazardFilter !== "all") rows = rows.filter(r => r.hz === hazardFilter);
+    if (tableSearch) rows = rows.filter(r =>
+      r.d.toLowerCase().includes(tableSearch.toLowerCase()) ||
+      r.st.toLowerCase().includes(tableSearch.toLowerCase())
+    );
+    return [...rows].sort((a, b) => {
+      const av = a[sortKey] ?? (sortDir === "desc" ? -Infinity : Infinity);
+      const bv = b[sortKey] ?? (sortDir === "desc" ? -Infinity : Infinity);
+      return sortDir === "desc" ? (bv as number) - (av as number) : (av as number) - (bv as number);
+    });
+  }, [data?.all_districts, filterState, hazardFilter, tableSearch, sortKey, sortDir]);
+
   if (isLoading || !data) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">
@@ -236,29 +258,6 @@ export default function InsightsPage() {
 
   const climateRelationships = relationships.slice(0, 8);
   const washRelationships    = relationships.slice(8);
-
-  // lookup r-value by title for dynamic Key Findings display
-  const rByTitle = useMemo(() => {
-    const m: Record<string, number> = {};
-    for (const rel of relationships) m[rel.title] = rel.r;
-    return m;
-  }, [relationships]);
-
-  // ── All-district table ─────────────────────────────────────────────────────
-  const filteredDistricts = useMemo(() => {
-    let rows = all_districts;
-    if (filterState !== "All India") rows = rows.filter(r => r.st === filterState);
-    if (hazardFilter !== "all") rows = rows.filter(r => r.hz === hazardFilter);
-    if (tableSearch) rows = rows.filter(r =>
-      r.d.toLowerCase().includes(tableSearch.toLowerCase()) ||
-      r.st.toLowerCase().includes(tableSearch.toLowerCase())
-    );
-    return [...rows].sort((a, b) => {
-      const av = a[sortKey] ?? (sortDir === "desc" ? -Infinity : Infinity);
-      const bv = b[sortKey] ?? (sortDir === "desc" ? -Infinity : Infinity);
-      return sortDir === "desc" ? (bv as number) - (av as number) : (av as number) - (bv as number);
-    });
-  }, [all_districts, filterState, hazardFilter, tableSearch, sortKey, sortDir]);
 
   function toggleSort(key: SortKey) {
     if (key === sortKey) setSortDir(d => d === "desc" ? "asc" : "desc");
