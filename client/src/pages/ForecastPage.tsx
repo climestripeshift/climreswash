@@ -92,7 +92,7 @@ const HAZARD_ICONS: Record<string, string> = {
   coldwave: "❄️", landslide: "🏔️", fire: "🔥", cyclone: "🌀", drought: "☀️",
 };
 
-const HAZARD_TYPES = ["all","flood","heat","wetbulb","flashflood","coldwave","landslide","fire"] as const;
+const HAZARD_TYPES = ["all","flood","heat","wetbulb","flashflood","coldwave","landslide","fire","cyclone","drought"] as const;
 
 // ── River severity styles ─────────────────────────────────────────────────────
 
@@ -163,7 +163,7 @@ function ForecastSidebar({
   hazardFilter, onHazardChange,
   selectedState, states, onStateChange,
   minRisk, onMinRiskChange,
-  riverForecast, showRivers, onToggleRivers,
+  riverForecast, riverForecastError, showRivers, onToggleRivers,
 }: {
   collapsed: boolean; onToggle: () => void;
   forecast: ForecastData | undefined; alerts: Alert[];
@@ -171,7 +171,7 @@ function ForecastSidebar({
   hazardFilter: string; onHazardChange: (h: string) => void;
   selectedState: string; states: string[]; onStateChange: (s: string) => void;
   minRisk: number; onMinRiskChange: (v: number) => void;
-  riverForecast: RiverForecast | undefined;
+  riverForecast: RiverForecast | undefined; riverForecastError: boolean;
   showRivers: boolean; onToggleRivers: () => void;
 }) {
   const [alertsOpen, setAlertsOpen] = useState(true);
@@ -179,8 +179,7 @@ function ForecastSidebar({
   const dayLabels = ["Today", "+1d", "+2d", "+3d", "+4d", "+5d", "+6d"];
 
   const dayAlerts = alerts.filter((a) => a.day === selectedDay);
-  const base = dayAlerts.length > 0 ? dayAlerts : alerts.filter((a) => a.day <= 2);
-  const display = hazardFilter === "all" ? base : base.filter((a) => a.hazard === hazardFilter);
+  const display = hazardFilter === "all" ? dayAlerts : dayAlerts.filter((a) => a.hazard === hazardFilter);
 
   const riverAlerts = useMemo(() => {
     if (!riverForecast) return [];
@@ -208,7 +207,13 @@ function ForecastSidebar({
         <div className="flex items-center gap-2">
           <Radio className="h-4 w-4 text-red-500 animate-pulse" />
           <span className="text-sm font-semibold">Forecast</span>
-          <Badge variant="outline" className="text-[9px] h-4 border-red-500/30 text-red-400 bg-red-500/10">LIVE</Badge>
+          {(() => {
+            if (!forecast?.generated_at) return null;
+            const ageHours = (Date.now() - new Date(forecast.generated_at).getTime()) / 3_600_000;
+            return ageHours < 36
+              ? <Badge variant="outline" className="text-[9px] h-4 border-red-500/30 text-red-400 bg-red-500/10">LIVE</Badge>
+              : <Badge variant="outline" className="text-[9px] h-4 border-amber-500/30 text-amber-400 bg-amber-500/10" title={`Updated ${Math.round(ageHours/24)}d ago`}>STALE</Badge>;
+          })()}
         </div>
         <button onClick={onToggle} className="text-muted-foreground hover:text-foreground">
           <PanelLeftClose className="h-4 w-4" />
@@ -294,7 +299,9 @@ function ForecastSidebar({
 
           {riverOpen && (
             <div className="pb-1">
-              {!riverForecast ? (
+              {riverForecastError ? (
+                <div className="px-3 py-3 text-center text-[10px] text-red-400">Failed to load river data</div>
+              ) : !riverForecast ? (
                 <div className="px-3 py-3 text-center text-[10px] text-muted-foreground">Loading river data…</div>
               ) : riverAlerts.length === 0 ? (
                 <div className="px-3 py-3 text-center text-[10px] text-muted-foreground">All rivers normal</div>
@@ -717,7 +724,7 @@ export default function ForecastPage() {
         hazardFilter={hazardFilter} onHazardChange={setHazardFilter}
         selectedState={selectedState} states={stateList} onStateChange={setSelectedState}
         minRisk={minRisk} onMinRiskChange={setMinRisk}
-        riverForecast={riverQ.data} showRivers={showRivers} onToggleRivers={() => setShowRivers(v => !v)}
+        riverForecast={riverQ.data} riverForecastError={riverQ.isError} showRivers={showRivers} onToggleRivers={() => setShowRivers(v => !v)}
       />
 
       {/* Main area */}
@@ -779,7 +786,7 @@ export default function ForecastPage() {
           <div className="w-72 border-l border-border/40 bg-background flex flex-col overflow-hidden shrink-0">
             <div className="px-3 py-2 border-b border-border/30 flex items-center justify-between shrink-0">
               <span className="text-xs font-semibold flex items-center gap-1.5">
-                <Waves className="h-3.5 w-3.5 text-blue-400" /> River Health (40-year)
+                <Waves className="h-3.5 w-3.5 text-blue-400" /> River Health ({riverHistoryQ.data.period.start.slice(0,4)}–{riverHistoryQ.data.period.end.slice(0,4)})
               </span>
               <button onClick={() => setHealthOpen(false)} className="text-muted-foreground hover:text-foreground text-xs">✕</button>
             </div>

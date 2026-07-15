@@ -22,6 +22,18 @@ interface RiverDay { date: string; discharge: number; p25: number|null; p75: num
 interface RiverPoint { lat: number; lon: number; river: string; location: string; current_discharge: number; current_severity: string; max_severity_7d: string; days: RiverDay[]; }
 interface RiverForecast { generated: string; points: RiverPoint[]; summary: Record<string,number>; }
 
+interface RiverHistoryPoint {
+  lat: number; lon: number; river: string; location: string;
+  trend: "declining" | "stable" | "increasing";
+  pct_per_decade: number;
+  flow_regime: "perennial" | "seasonal" | "intermittent";
+  peak_month: number; dry_month: number;
+  enso_sensitivity: "high" | "medium" | "low";
+  en_drop_pct: number;
+  p50: number; overall_mean: number;
+}
+interface RiverHistory { generated: string; period: { start: string; end: string }; points: RiverHistoryPoint[]; }
+
 const RIVER_SEV_COLOR: Record<string,string> = {
   extreme:"#7f1d1d", danger:"#dc2626", warning:"#f97316", elevated:"#eab308", normal:"#22c55e", unknown:"#6b7280",
 };
@@ -550,30 +562,35 @@ export default function WashAssessPage() {
     queryKey: ["gap-rankings"],
     queryFn: () => fetch("/data/gap_rankings.json").then(r => r.json()),
     staleTime: Infinity,
+    enabled: !!selectedDistrict,
   });
 
   const { data: nfhs5Extra } = useQuery<Record<string, any>>({
     queryKey: ["nfhs5-extra"],
     queryFn: () => fetch("/data/nfhs5_extra.json").then(r => r.json()),
     staleTime: Infinity,
+    enabled: !!selectedDistrict,
   });
 
   const { data: decisionMatrix } = useQuery<any[]>({
     queryKey: ["decision-matrix"],
     queryFn: () => fetch("/data/decision_matrix.json").then(r => r.json()),
     staleTime: Infinity,
+    enabled: !!selectedDistrict,
   });
 
   const { data: districtClimate } = useQuery<{districts: Record<string,any>; states: Record<string,any>; national: Record<string,any>}>({
     queryKey: ["district-climate"],
     queryFn: () => fetch("/data/district_climate.json").then(r => r.json()),
     staleTime: Infinity,
+    enabled: !!selectedDistrict,
   });
 
   const { data: washQuality } = useQuery<Record<string, any>>({
     queryKey: ["wash-quality"],
     queryFn: () => fetch("/data/wash_quality.json").then(r => r.json()),
     staleTime: Infinity,
+    enabled: !!selectedDistrict,
   });
 
   const { data: peerDistricts } = useQuery<Record<string, any[]>>({
@@ -594,6 +611,13 @@ export default function WashAssessPage() {
     queryKey: ["river-forecast"],
     queryFn: () => fetch("/data/river_forecast.json").then(r => r.json()),
     staleTime: 30 * 60 * 1000,
+  });
+
+  const { data: riverHistory } = useQuery<RiverHistory>({
+    queryKey: ["river-history"],
+    queryFn: () => fetch("/data/river_history.json").then(r => r.json()),
+    staleTime: Infinity,
+    enabled: !!selectedDistrict,
   });
 
   // ─── Derived district data ────────────────────────────────────────────────
@@ -651,6 +675,7 @@ export default function WashAssessPage() {
       drought_peak_month: mode("drought_peak_month"),
       wetbulb_peak_month: mode("wetbulb_peak_month"),
       wetbulb_risk: avg("wetbulb_risk"),
+      dist_to_river_km: avg("dist_to_river_km"),
     };
   }, [districtHexes]);
 
@@ -713,7 +738,6 @@ export default function WashAssessPage() {
   // Nearest river discharge point to this district
   const riverPoint = useMemo((): RiverPoint | null => {
     if (!riverForecast || !districtHexes.length) return null;
-    // Compute district centroid from first hex
     const [cLat, cLon] = cellToLatLng(districtHexes[0].h3_id);
     let best: RiverPoint | null = null;
     let bestDist = Infinity;
@@ -721,9 +745,20 @@ export default function WashAssessPage() {
       const d = Math.hypot(pt.lat - cLat, pt.lon - cLon);
       if (d < bestDist) { bestDist = d; best = pt; }
     }
-    // Only return if within ~300km (~2.7° at India lat)
     return bestDist < 2.7 ? best : null;
   }, [riverForecast, districtHexes]);
+
+  const nearestRiverHistory = useMemo((): RiverHistoryPoint | null => {
+    if (!riverHistory || !districtHexes.length) return null;
+    const [cLat, cLon] = cellToLatLng(districtHexes[0].h3_id);
+    let best: RiverHistoryPoint | null = null;
+    let bestDist = Infinity;
+    for (const pt of riverHistory.points) {
+      const d = Math.hypot(pt.lat - cLat, pt.lon - cLon);
+      if (d < bestDist) { bestDist = d; best = pt; }
+    }
+    return bestDist < 3.5 ? best : null;
+  }, [riverHistory, districtHexes]);
 
   // ─── District selection ───────────────────────────────────────────────────
 
@@ -780,14 +815,14 @@ export default function WashAssessPage() {
   const completeness = useMemo(() => {
     if (!selectedDistrict) return 0;
     const checks = [
-      rank != null,                                // hazard
-      season != null,                               // seasonality
-      hexAgg != null,                               // GW auto-data
-      pct("jjm_tap_pct", hexAgg?.water_pct) != null,
-      pct("toilet_od_pct", null) != null || (hexAgg?.sanitation_pct ?? 0) > 0,
-      manual.hwws_pct != null,
-      manual.swm_coverage_pct != null || manual.rrc_present != null,
-      manual.lwm_type != null,
+      rank != null,                                                               // hazard data
+      season != null,                                                              // seasonality
+      hexAgg != null,                                                              // hex auto-data
+      pct("jjm_tap_pct", jjmData?.fhtc_pct ?? null) != null,                    // water — JJM IMIS or manual only
+      pct("toilet_od_pct", null) != null || pct("toilet_twin_pit_pct", null) != null, // sanitation — manual only
+      manual.hwws_pct != null,                                                    // hygiene manual
+      manual.swm_coverage_pct != null || manual.rrc_present != null,             // waste management
+      manual.lwm_type != null,                                                    // LWM type
     ];
     return Math.round((checks.filter(Boolean).length / checks.length) * 100);
   }, [rank, season, hexAgg, manual, selectedDistrict, pct]);
@@ -1027,7 +1062,7 @@ export default function WashAssessPage() {
               <StatRow label="Flood risk" value={hexAgg?.flood_risk?.toFixed(2)} source="derived" />
               <StatRow label="Drought risk" value={hexAgg?.drought_risk?.toFixed(2)} source="derived" />
               <StatRow label="Heat risk" value={hexAgg?.heat_risk?.toFixed(2)} source="derived" />
-              <StatRow label="Active hazards" value={hexAgg?.cascade_count != null ? Math.round(hexAgg.cascade_count).toString() : null} source="derived" />
+              <StatRow label="WASH cascade rules" value={hexAgg?.cascade_count != null ? Math.round(hexAgg.cascade_count).toString() : null} source="derived" />
               <StatRow label="Burden days/yr" value={hexAgg?.burden_days?.toFixed(0)} source="derived" />
               <StatRow label="PM2.5 (µg/m³)" value={hexAgg?.pm25?.toFixed(1)} source="derived" />
               <StatRow label="Air quality risk" value={hexAgg?.pollution_risk?.toFixed(2)} unit="/10" source="derived" />
@@ -1252,6 +1287,26 @@ export default function WashAssessPage() {
             >
               <StatRow label="FHTC coverage" value={waterPct?.toFixed(1)} unit="%" source={manual.jjm_tap_pct ? "manual" : jjmData ? "auto" : "derived"} />
               <CmpRow label="Water access" value={dcDistrict?.wash_water_pct} stateVal={stateAvg?.wash_water_pct} natVal={nationalAvg?.wash_water_pct} />
+              {hexAgg?.dist_to_river_km != null && (
+                <StatRow label="Avg dist to river" value={hexAgg.dist_to_river_km.toFixed(1)} unit=" km" source="derived" />
+              )}
+              {nearestRiverHistory && (() => {
+                const rh = nearestRiverHistory;
+                const trendColor = rh.trend === "declining" ? "text-red-400" : rh.trend === "increasing" ? "text-emerald-400" : "text-muted-foreground";
+                const regimeColor = rh.flow_regime === "perennial" ? "text-blue-400" : rh.flow_regime === "seasonal" ? "text-amber-400" : "text-red-400";
+                return (
+                  <div className="mt-1.5 p-1.5 rounded bg-blue-500/10 border border-blue-500/20 space-y-0.5">
+                    <div className="text-[10px] font-semibold text-blue-300">🌊 Nearest river: {rh.river} @ {rh.location}</div>
+                    <div className="flex gap-2 text-[10px] flex-wrap">
+                      <span className={trendColor}>{rh.trend} ({rh.pct_per_decade > 0 ? "+" : ""}{rh.pct_per_decade.toFixed(1)}%/dec)</span>
+                      <span className={regimeColor}>{rh.flow_regime}</span>
+                      {rh.enso_sensitivity === "high" && <span className="text-orange-400">El Niño sensitive</span>}
+                    </div>
+                    {rh.trend === "declining" && <p className="text-[9px] text-red-300">⚠ Declining flow — surface WTP intake reliability at risk</p>}
+                    {rh.flow_regime === "intermittent" && <p className="text-[9px] text-amber-300">⚠ Intermittent — plan dry-season storage for WTP intake</p>}
+                  </div>
+                );
+              })()}
               {jjmData && !manual.jjm_tap_pct ? (
                 <>
                   <StatRow label="HH with tap" value={jjmData.hh_with_tap?.toLocaleString("en-IN")} source="auto" />
@@ -1373,7 +1428,13 @@ export default function WashAssessPage() {
               <StatRow label="HWWS coverage" value={hwwsPct?.toString()} unit="%" source={manual.hwws_pct ? "manual" : undefined} />
               {!manual.hwws_pct && <p className="text-[10px] text-muted-foreground italic">HWWS not in NFHS-5 — enter manually.</p>}
               <StatRow label="Menstrual hygiene (MHM)" value={nfhsExtra?.menstrual_hygiene_pct?.toFixed(1)} unit="%" source="auto" />
-              <CmpRow label="MHM" value={nfhsExtra?.menstrual_hygiene_pct} stateVal={stateAvg?.wash_sanitation_pct ? undefined : undefined} natVal={undefined} />
+              {/* MHM: no state/national benchmark in district_climate.json — show only district value */}
+              {nfhsExtra?.menstrual_hygiene_pct != null && (
+                <div className="text-[10px] text-muted-foreground">
+                  MHM coverage: <span className="text-foreground font-medium">{nfhsExtra.menstrual_hygiene_pct.toFixed(1)}%</span>
+                  {" "}<span className="text-[9px] italic">(district · NFHS-5; no national/state avg available)</span>
+                </div>
+              )}
               <StatRow label="ORS use (diarrhoea)" value={nfhsExtra?.ors_diarrhoea_pct?.toFixed(1)} unit="%" source="auto" />
               <StatRow label="Diarrhoea prevalence" value={hexAgg?.diarrhoea_pct?.toFixed(1)} unit="%" source="auto" />
               <StatRow label="ARI prevalence" value={nfhsExtra?.ari_prevalence_pct?.toFixed(1)} unit="%" source="auto" />
@@ -1542,7 +1603,7 @@ export default function WashAssessPage() {
                   <CmpRow label="Stunting" value={dcDistrict?.wash_stunting_pct} stateVal={stateAvg?.wash_stunting_pct} natVal={nationalAvg?.wash_stunting_pct} higherIsBetter={false} />
                   <StatRow label="Wasting (acute)" value={wqEntry?.wasting_pct?.toFixed(1)} unit="%" source="auto" />
                   <StatRow label="Severe wasting" value={wqEntry?.severe_wasting_pct?.toFixed(1)} unit="%" source="auto" />
-                  <StatRow label="Anaemia (women)" value={hexAgg.anaemia_pct?.toFixed(1)} unit="%" source="auto" />
+                  <StatRow label="Anaemia (children <5)" value={hexAgg.anaemia_pct?.toFixed(1)} unit="%" source="auto" />
                   <CmpRow label="Anaemia" value={dcDistrict?.wash_anaemia_pct} stateVal={stateAvg?.wash_anaemia_pct} natVal={nationalAvg?.wash_anaemia_pct} higherIsBetter={false} />
                   <StatRow label="Vaccination" value={hexAgg.vaccination_pct?.toFixed(1)} unit="%" source="auto" />
                   {wqEntry?.wasting_pct != null && wqEntry.wasting_pct > 20 && (

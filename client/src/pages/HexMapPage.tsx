@@ -71,7 +71,7 @@ const ATTRIBUTES: AttrDef[] = [
   { key: "pollution_risk",          label: "Air Pollution",           icon: "🏭", category: "climate", desc: "PM2.5 annual mean → WHO-anchored hazard score" },
   { key: "total_burden_days",      label: "Burden Days (total)",     icon: "📅", category: "overview", desc: "Total calendar days/yr under ANY hazard stress (no duplication)" },
   { key: "multi_hazard_days",      label: "Multi-Hazard Days",       icon: "⚡", category: "overview", desc: "Days/yr under 2+ hazards simultaneously (compounded stress)" },
-  { key: "pm25_annual",             label: "PM2.5 (ug/m3)",           icon: "💨", category: "climate", desc: "Annual mean PM2.5 concentration — mock data" },
+  { key: "pm25_annual",             label: "PM2.5 (ug/m3)",           icon: "💨", category: "climate", desc: "Annual mean PM2.5 concentration (CAMS satellite-derived estimate)" },
   { key: "adaptive_capacity",      label: "Adaptive Capacity",      icon: "🛡️", category: "wash", desc: "WASH-based coping capacity (NFHS-5 district-level)" },
   { key: "jjm_fhtc_pct",           label: "JJM Tap Water %",        icon: "🚰", category: "wash", desc: "Functional Household Tap Connections — JJM IMIS (ejalshakti.gov.in, Jul 2026)" },
   { key: "wash_sanitation_pct",    label: "Sanitation %",            icon: "🚽", category: "wash", desc: "Improved sanitation coverage (NFHS-5 district)" },
@@ -91,6 +91,11 @@ const ATTRIBUTES: AttrDef[] = [
   { key: "sbm_single_pit_pct",      label: "SBM Single-Pit Toilet %",icon: "🚽", category: "wash", desc: "% IHHL with single-pit design (flood-vulnerable) — SBM Phase 2 IMIS" },
   { key: "sbm_septic_soak_pct",     label: "SBM Septic+Soak %",      icon: "🚽", category: "wash", desc: "% IHHL with septic tank + soak pit — SBM Phase 2 IMIS" },
   { key: "sbm_total_ihhl",          label: "SBM Total IHHL",         icon: "🏠", category: "wash", desc: "Total Individual Household Latrines registered — SBM Phase 2 IMIS" },
+  // Population vulnerability layers
+  { key: "wash_wasting_pct",        label: "Child Wasting (acute)",   icon: "📉", category: "wash", desc: "Acute malnutrition — wasting in children under 5 (NFHS-5 district)" },
+  { key: "gw_stress_score",         label: "Groundwater Stress",      icon: "💧", category: "wash", desc: "Groundwater depletion risk score — GRACE satellite + extraction rates" },
+  { key: "weighted_burden_children",label: "Child Burden Days",       icon: "👶", category: "overview", desc: "Annual hazard burden days weighted by children-under-5 population" },
+  { key: "weighted_burden_elderly", label: "Elderly Burden Days",     icon: "👴", category: "overview", desc: "Annual hazard burden days weighted by elderly (60+) population" },
 
   // Future projections (CMIP6 NEX-GDDP — merged from india_hex_future.json)
   { key: "risk_ssp245_2050",             label: "Risk 2050 (SSP2-4.5)",     icon: "🔮", category: "future", desc: "Projected risk score 2050 under SSP2-4.5 moderate emissions" },
@@ -123,7 +128,8 @@ const ATTR_RAMP: Record<string, [number,number,number][]> = {
   total_burden_days: ORANGES, multi_hazard_days: RISK,
   jjm_fhtc_pct: BLUES,
   wash_sanitation_pct: GREENS, wash_water_pct: BLUES, wash_health_pct: GREENS,
-  wash_stunting_pct: RISK, wash_diarrhoea_pct: RISK, wash_anaemia_pct: RISK,
+  wash_stunting_pct: RISK, wash_diarrhoea_pct: RISK, wash_anaemia_pct: RISK, wash_wasting_pct: RISK,
+  gw_stress_score: ORANGES, weighted_burden_children: ORANGES, weighted_burden_elderly: ORANGES,
   // NFHS extra
   menstrual_hygiene_pct: GREENS, clean_fuel_pct: GREENS, ors_diarrhoea_pct: GREENS,
   antenatal_4visit_pct: GREENS, child_marriage_pct: RISK,
@@ -148,7 +154,7 @@ const FIXED_DOMAIN: Record<string, [number, number]> = {
   hazard_count_5: [0, 5], hazard_count_3: [0, 6],
   pop_children_under_5: [0, 500000], pop_elderly_60plus: [0, 500000], pop_women_15_49: [0, 1500000],
   elevation_mean: [0, 5000], ndvi_mean: [0, 0.8], land_use: [0, 1], dist_to_river_km: [0, 100],
-  flood_risk: [0, 10], heat_risk: [0, 3], heat_peak_score: [0, 10], cyclone_risk: [0, 10],
+  flood_risk: [0, 10], heat_risk: [0, 10], heat_peak_score: [0, 10], cyclone_risk: [0, 10],
   drought_risk: [0, 10], wetbulb_risk: [0, 10], landslide_risk: [0, 10],
   coldwave_risk: [0, 10], flashflood_risk: [0, 10], sealevel_risk: [0, 10],
   fire_risk: [0, 10],
@@ -157,7 +163,8 @@ const FIXED_DOMAIN: Record<string, [number, number]> = {
   wash_sanitation_pct: [0, 100], wash_water_pct: [0, 100], wash_health_pct: [0, 100],
   pollution_risk: [0, 10], pm25_annual: [0, 100],
   total_burden_days: [0, 365], multi_hazard_days: [0, 100],
-  wash_stunting_pct: [0, 60], wash_diarrhoea_pct: [0, 20], wash_anaemia_pct: [0, 80],
+  wash_stunting_pct: [0, 60], wash_diarrhoea_pct: [0, 20], wash_anaemia_pct: [0, 80], wash_wasting_pct: [0, 30],
+  gw_stress_score: [0, 10], weighted_burden_children: [0, 365], weighted_burden_elderly: [0, 365],
   // NFHS extra
   menstrual_hygiene_pct: [0, 100], clean_fuel_pct: [0, 100], ors_diarrhoea_pct: [0, 100],
   antenatal_4visit_pct: [0, 100], child_marriage_pct: [0, 60],
@@ -272,13 +279,19 @@ function RankingsPanel({ onDistrictSelect }: { onDistrictSelect: (state: string,
     retry: 1,
   });
 
+  // dominant_hazard values in data: "flood" | "drought" | "wet-bulb heat" | "cold wave" | "landslide"
+  const HAZARD_SORT_MAP: Record<string, string> = { flood: "flood", drought: "drought", heat: "wet-bulb heat", landslide: "landslide" };
+
   const sorted = useMemo(() => {
     if (!rankQ.data) return [];
     const data = [...rankQ.data];
     if (sortBy !== "risk_score") {
+      const target = HAZARD_SORT_MAP[sortBy];
       data.sort((a, b) => {
-        const key = sortBy + "_score";
-        return ((b as any)[key] ?? b.risk_score) - ((a as any)[key] ?? a.risk_score);
+        const aMatch = a.dominant_hazard === target ? 1 : 0;
+        const bMatch = b.dominant_hazard === target ? 1 : 0;
+        if (bMatch !== aMatch) return bMatch - aMatch;
+        return b.risk_score - a.risk_score;
       });
     }
     return showAll ? data : data.slice(0, 20);
@@ -289,10 +302,10 @@ function RankingsPanel({ onDistrictSelect }: { onDistrictSelect: (state: string,
   return (
     <div className="px-2 pb-2 space-y-1.5">
       <div className="flex gap-1 flex-wrap">
-        {["risk_score", "flood", "heat", "drought", "cyclone"].map((s) => (
+        {["risk_score", "flood", "drought", "heat", "landslide"].map((s) => (
           <button key={s} onClick={() => setSortBy(s)}
             className={`px-1.5 py-0.5 rounded text-[9px] font-medium ${sortBy === s ? "bg-red-600 text-white" : "bg-muted/60 text-muted-foreground"}`}>
-            {s === "risk_score" ? "Overall" : s}
+            {s === "risk_score" ? "Overall" : s === "heat" ? "Heat/WB" : s}
           </button>
         ))}
       </div>
@@ -715,7 +728,7 @@ function FilterSidebar({
       {/* Export */}
       <div className="px-3 py-2 border-t border-border/30">
         <button onClick={() => {
-          const csvKeys = ["h3_id","state","district_name","population","pop_children_under_5","pop_elderly_60plus","pop_women_15_49","hex_risk","hazard_count_5","hazard_count_3","flood_risk","heat_risk","cyclone_risk","drought_risk","wetbulb_risk","landslide_risk","coldwave_risk","flashflood_risk","sealevel_risk","fire_risk","cascade_count","adaptive_capacity","jjm_fhtc_pct","wash_sanitation_pct","wash_water_pct","wash_health_pct","wash_stunting_pct","wash_diarrhoea_pct","wash_anaemia_pct","elevation_mean","ndvi_mean","land_use","slope_deg","dist_water_m"];
+          const csvKeys = ["h3_id","state","district_name","population","pop_children_under_5","pop_elderly_60plus","pop_women_15_49","hex_risk","hazard_count_5","hazard_count_3","flood_risk","heat_risk","cyclone_risk","drought_risk","wetbulb_risk","landslide_risk","coldwave_risk","flashflood_risk","sealevel_risk","fire_risk","cascade_count","adaptive_capacity","jjm_fhtc_pct","wash_sanitation_pct","wash_water_pct","wash_health_pct","wash_stunting_pct","wash_diarrhoea_pct","wash_anaemia_pct","wash_wasting_pct","gw_stress_score","elevation_mean","ndvi_mean","land_use","dist_to_river_km","pm25_annual","pollution_risk","total_burden_days","weighted_burden_children","weighted_burden_elderly"];
           const header = csvKeys.join(",");
           const rows = features.map((f: any) => csvKeys.map((k) => {
             const v = f.properties[k]; return v == null ? "" : typeof v === "string" && v.includes(",") ? `"${v}"` : v;
@@ -747,7 +760,7 @@ function FilterSidebar({
             </button>
           </div>
           <div className="text-[9px] text-muted-foreground mt-1">
-            {heatViewMode === "annual" ? "Avg risk across the year (domain 0–3)" : "Risk in the hottest month (domain 0–10)"}
+            {heatViewMode === "annual" ? "Annual average risk (green=low, red=high)" : "Risk in the hottest month (domain 0–10)"}
           </div>
         </div>
       )}
@@ -964,11 +977,11 @@ function HexInfoPanel({ props, ranking, confidence, onClose }: {
             📄 Full Report
           </a>
           <a
-            href={`/action-plan?state=${encodeURIComponent(props.state)}`}
+            href="/wash-assess"
             target="_blank" rel="noreferrer"
             className="flex-1 flex items-center justify-center gap-1 text-[10px] font-medium text-primary border border-primary/30 rounded py-1 hover:bg-primary/10 transition-colors"
           >
-            🎯 Action Plan
+            🎯 Assess
           </a>
         </div>
       )}
@@ -1274,9 +1287,9 @@ function BoundaryAnalysisPanel({
             className="flex-1 px-2 py-1.5 rounded-md bg-red-600/20 text-[10px] text-red-400 hover:bg-red-600/30 text-center transition-colors">
             📡 Forecast
           </Link>
-          <Link href={`/action-plan?state=${encodeURIComponent(type === "state" ? name : stateName)}`}
+          <Link href="/wash-assess"
             className="flex-1 px-2 py-1.5 rounded-md bg-blue-600/20 text-[10px] text-blue-400 hover:bg-blue-600/30 text-center transition-colors">
-            📋 Actions
+            📋 Assess
           </Link>
         </div>
       </div>
@@ -1500,10 +1513,12 @@ export default function HexMapPage() {
     retry: 1,
   });
 
+  const FUTURE_KEYS = new Set(ATTRIBUTES.filter(a => a.category === "future").map(a => a.key));
   const futureQ = useQuery<any[]>({
     queryKey: ["india-hex-future"],
     queryFn: () => fetch("/data/india_hex_future.json").then((r) => r.json()),
     staleTime: Infinity,
+    enabled: FUTURE_KEYS.has(attr),
   });
 
   const nfhs5ExtraQ = useQuery<Record<string, any>>({
