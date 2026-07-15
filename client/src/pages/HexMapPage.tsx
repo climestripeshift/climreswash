@@ -164,7 +164,7 @@ const FIXED_DOMAIN: Record<string, [number, number]> = {
   pollution_risk: [0, 10], pm25_annual: [0, 100],
   total_burden_days: [0, 365], multi_hazard_days: [0, 100],
   wash_stunting_pct: [0, 60], wash_diarrhoea_pct: [0, 20], wash_anaemia_pct: [0, 80], wash_wasting_pct: [0, 30],
-  gw_stress_score: [0, 10], weighted_burden_children: [0, 365], weighted_burden_elderly: [0, 365],
+  gw_stress_score: [0, 10], weighted_burden_children: [0, 120], weighted_burden_elderly: [0, 120],
   // NFHS extra
   menstrual_hygiene_pct: [0, 100], clean_fuel_pct: [0, 100], ors_diarrhoea_pct: [0, 100],
   antenatal_4visit_pct: [0, 100], child_marriage_pct: [0, 60],
@@ -1519,7 +1519,6 @@ export default function HexMapPage() {
     queryKey: ["india-hex-future"],
     queryFn: () => fetch("/data/india_hex_future.json").then((r) => r.json()),
     staleTime: Infinity,
-    enabled: FUTURE_KEYS.has(attr),
   });
 
   const nfhs5ExtraQ = useQuery<Record<string, any>>({
