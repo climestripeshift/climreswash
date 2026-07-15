@@ -1387,7 +1387,7 @@ function RiverOverlay({ show }: { show: boolean }) {
 
 function HexMap({
   geoData, attr, selectedState, selectedDistrict, crossFilters, mapRef, onHexClick,
-  showDistricts, showStates, showRivers, onBoundaryClick,
+  showDistricts, showStates, showRivers, onBoundaryClick, hasFutureData,
 }: {
   geoData: any; attr: string; selectedState: string; selectedDistrict: string;
   crossFilters: CrossFilter[];
@@ -1395,6 +1395,7 @@ function HexMap({
   onHexClick: (p: any) => void;
   showDistricts: boolean; showStates: boolean; showRivers: boolean;
   onBoundaryClick: (type: "state" | "district", name: string, stateName: string) => void;
+  hasFutureData: boolean;
 }) {
   const geoJsonRef = useRef<LeafletGeoJSONLayer | null>(null);
 
@@ -1437,7 +1438,7 @@ function HexMap({
       <SetupCanvas />
       <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>' />
-      <GeoJSON ref={geoJsonRef} key={`${selectedState}-${selectedDistrict}-${crossFilters.length}-${crossFilters.map(f=>f.key+f.op+f.value).join(',')}`}
+      <GeoJSON ref={geoJsonRef} key={`${selectedState}-${selectedDistrict}-${crossFilters.length}-${crossFilters.map(f=>f.key+f.op+f.value).join(',')}-${hasFutureData}`}
         data={filtered} style={styleFeature} onEachFeature={onEachFeature} />
       <BoundaryLayers showDistricts={showDistricts} showStates={showStates} onBoundaryClick={onBoundaryClick} />
       <RiverOverlay show={showRivers} />
@@ -1660,11 +1661,18 @@ export default function HexMapPage() {
               <AlertTriangle className="h-5 w-5" /> Failed to load data
             </div>
           ) : (
-            <HexMap geoData={mergedGeoData ?? hexQ.data} attr={effectiveAttr} selectedState={selectedState}
-              selectedDistrict={selectedDistrict} crossFilters={crossFilters}
-              mapRef={mapRef} onHexClick={(p) => { setClickedHex(p); setClickedBoundary(null); }}
-              showDistricts={showDistricts} showStates={showStates} showRivers={showRivers}
-              onBoundaryClick={handleBoundaryClick} />
+            <>
+              <HexMap geoData={mergedGeoData ?? hexQ.data} attr={effectiveAttr} selectedState={selectedState}
+                selectedDistrict={selectedDistrict} crossFilters={crossFilters}
+                mapRef={mapRef} onHexClick={(p) => { setClickedHex(p); setClickedBoundary(null); }}
+                showDistricts={showDistricts} showStates={showStates} showRivers={showRivers}
+                onBoundaryClick={handleBoundaryClick} hasFutureData={!!futureQ.data} />
+              {futureQ.isFetching && (
+                <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-[900] flex items-center gap-2 bg-background/90 border border-border rounded-full px-4 py-1.5 text-xs text-muted-foreground shadow-lg">
+                  <Loader2 className="h-3 w-3 animate-spin" /> Loading future projections…
+                </div>
+              )}
+            </>
           )}
 
           {/* Clicked hex info */}

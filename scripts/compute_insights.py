@@ -14,6 +14,11 @@ hex_data   = load("client/public/data/india_hex_props.json")
 nfhs_extra = load("client/public/data/nfhs5_extra.json")
 gap_data   = load("client/public/data/gap_rankings.json")
 future     = {r["h3_id"]: r for r in load("client/public/data/india_hex_future.json")}
+rankings   = load("client/public/data/district_rankings.json")
+# dominant_hazard lookup: district name → hazard key used in insights
+_HZ_MAP = {"flood":"flood","wet-bulb heat":"wetbulb","drought":"drought",
+            "cold wave":"coldwave","landslide":"landslide"}
+dom_hz_lookup = {r["district"]: _HZ_MAP.get(r["dominant_hazard"], "flood") for r in rankings}
 
 # ── 1. Aggregate hex → district (population-weighted) ───────────────────────
 agg = defaultdict(lambda: defaultdict(float))
@@ -104,7 +109,8 @@ def pearson(xs, ys):
 def scatter_data(xk, yk, max_pts=300):
     rows = [(round(s[xk],2), round(s[yk],2), s["district"], s["state"])
             for s in district_stats.values()
-            if s.get(xk) is not None and s.get(yk) is not None]
+            if s.get(xk) is not None and s.get(yk) is not None
+            and s[xk] > 0 and s[yk] > 0]  # exclude missing-data zeros
     if not rows: return [], 0.0
     # subsample if too many
     if len(rows) > max_pts:
@@ -148,7 +154,7 @@ rel("heat","stunting",
 rel("menstrual_hygiene_pct","antenatal_4visit_pct",
     "Menstrual Hygiene & Antenatal Care",
     "Menstrual Hygiene Coverage (%)","4 Antenatal Visits (%)",
-    "The strongest social correlation in the dataset (r=+0.42). MHM coverage and antenatal care move together because they share the same root barrier: women's bodily autonomy and access to health services. Raising MHM is not just WASH — it is maternal health.")
+    "The strongest social correlation in the dataset. MHM coverage and antenatal care move together because they share the same root barrier: women's bodily autonomy and access to health services. Raising MHM is not just WASH — it is maternal health.")
 
 rel("heat","menstrual_hygiene_pct",
     "Heat Risk & Menstrual Hygiene Coverage",
@@ -193,12 +199,11 @@ def group_cmp(filter_fn, field):
     return round(sum(vals)/len(vals), 1) if vals else None, len(vals)
 
 hazard_groups = {}
-for hz in ["flood","heat","wetbulb","pollution","drought"]:
-    def mkhz(h): return lambda s: s.get(h,0) > sum(s.get(hh,0) for hh in ["flood","heat","wetbulb","pollution","drought"] if hh!=h)/4
-    hf = lambda s, h=hz: s.get(h,0) == max(s.get("flood",0), s.get("heat",0), s.get("wetbulb",0), s.get("pollution",0))
+for hz in ["flood","wetbulb","drought","coldwave","landslide"]:
+    hf = lambda s, h=hz: dom_hz_lookup.get(s["district"]) == h
     ana, n_a = group_cmp(hf, "anaemia")
-    stu, n_s = group_cmp(hf, "stunting")
-    was, n_w = group_cmp(hf, "wasting")
+    stu, _   = group_cmp(hf, "stunting")
+    was, _   = group_cmp(hf, "wasting")
     hazard_groups[hz] = {"anaemia": ana, "stunting": stu, "wasting": was, "n": n_a}
 
 # ── 5. Future projections (national averages from hex data) ─────────────────
@@ -275,8 +280,7 @@ escalation_districts.sort(key=lambda x: -(x["wet_bulb_days_2050"] or 0))
 
 # ── 6b. ALL districts for full searchable table ──────────────────────────────
 def dom_hazard(s):
-    scores = {h: s.get(h, 0) or 0 for h in ["flood","heat","wetbulb","pollution","drought"]}
-    return max(scores, key=scores.get)
+    return dom_hz_lookup.get(s["district"], "flood")
 
 all_districts_export = []
 for s in district_stats.values():

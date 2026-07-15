@@ -33,6 +33,14 @@ interface StateSummary {
   critical: number; high: number;
 }
 
+interface EscalationDistrict {
+  district: string; state: string;
+  heat_days_2050: number|null; wet_bulb_days_2050: number|null;
+  current_heat_risk: number|null;
+  anaemia_pct: number|null; stunting_pct: number|null;
+  population: number|null;
+}
+
 interface InsightsData {
   summary: Record<string, number>;
   relationships: RelationshipData[];
@@ -45,7 +53,7 @@ interface InsightsData {
   };
   top_heat_states: Array<{state:string;heat_days_585_2050:number;wb_days_585_2050:number}>;
   top_wetbulb_states: Array<{state:string;wb_days_585_2050:number;heat_days_585_2050:number}>;
-  escalation_districts: Array<{district:string;state:string;heat_days_2050:number;wet_bulb_days_2050:number;anaemia_pct:number|null;stunting_pct:number|null;population:number}>;
+  escalation_districts: EscalationDistrict[];
   ac_drivers: Record<string, {label:string;r:number}>;
   all_districts: DistrictRow[];
   state_summaries: Record<string, StateSummary>;
@@ -80,7 +88,8 @@ const STATE_COLOR: Record<string,string> = {};
 ALL_STATES.forEach((s,i) => { STATE_COLOR[s] = SCATTER_COLORS[i % SCATTER_COLORS.length]; });
 
 const HZ_BADGE: Record<string,string> = {
-  flood:"🌊", heat:"🔥", wetbulb:"🌡️", pollution:"🏭", drought:"🏜️",
+  flood:"🌊", wetbulb:"🌡️", drought:"🏜️", coldwave:"❄️", landslide:"⛰️",
+  heat:"🔥", pollution:"🏭",
 };
 
 const FMT_POP = (n: number) =>
@@ -228,6 +237,13 @@ export default function InsightsPage() {
   const climateRelationships = relationships.slice(0, 8);
   const washRelationships    = relationships.slice(8);
 
+  // lookup r-value by title for dynamic Key Findings display
+  const rByTitle = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const rel of relationships) m[rel.title] = rel.r;
+    return m;
+  }, [relationships]);
+
   // ── All-district table ─────────────────────────────────────────────────────
   const filteredDistricts = useMemo(() => {
     let rows = all_districts;
@@ -261,7 +277,7 @@ export default function InsightsPage() {
   const hazardBarData = Object.entries(hazard_groups)
     .filter(([,v]) => v.n > 10)
     .map(([hz, v]) => ({
-      name: {flood:"🌊 Flood",heat:"🔥 Heat",wetbulb:"🌡️ Wet-bulb",pollution:"🏭 Pollution",drought:"🏜️ Drought"}[hz] ?? hz,
+      name: ({flood:"🌊 Flood",wetbulb:"🌡️ Wet-bulb",drought:"🏜️ Drought",coldwave:"❄️ Cold Wave",landslide:"⛰️ Landslide",heat:"🔥 Heat",pollution:"🏭 Pollution"} as Record<string,string>)[hz] ?? hz,
       Anaemia: v.anaemia ?? 0, Stunting: v.stunting ?? 0, Wasting: v.wasting ?? 0, n: v.n,
     })).sort((a,b) => b.Anaemia - a.Anaemia);
 
@@ -381,10 +397,10 @@ export default function InsightsPage() {
               <h2 className="text-sm font-bold text-amber-400 mb-2">Key findings from {summary.districts_analyzed} districts</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2">
                 {[
-                  { icon:"🌡️", text:<><strong className="text-foreground">Heat → Anaemia (r=+0.30)</strong> — heat impairs iron absorption. Hotter districts show 6-8pp more anaemia.</> },
-                  { icon:"🏭", text:<><strong className="text-foreground">PM2.5 → Anaemia (r=+0.28)</strong> — chronic inflammation from air pollution suppresses haemoglobin synthesis.</> },
-                  { icon:"🩸", text:<><strong className="text-foreground">MHM → Antenatal (r=+0.42)</strong> — strongest link. Same access barrier underlies both.</> },
-                  { icon:"🌡️", text:<><strong className="text-foreground">Heat → MHM (r=−0.19)</strong> — hotter districts restrict women's mobility and access to washing spaces.</> },
+                  { icon:"🌡️", text:<><strong className="text-foreground">Heat → Anaemia (r={rByTitle["Heat Stress & Anaemia in Women"] != null ? `${rByTitle["Heat Stress & Anaemia in Women"]>0?"+":""}${rByTitle["Heat Stress & Anaemia in Women"].toFixed(2)}` : "+0.26"})</strong> — heat impairs iron absorption. Hotter districts show 6-8pp more anaemia.</> },
+                  { icon:"🏭", text:<><strong className="text-foreground">PM2.5 → Anaemia (r={rByTitle["Air Pollution & Anaemia"] != null ? `${rByTitle["Air Pollution & Anaemia"]>0?"+":""}${rByTitle["Air Pollution & Anaemia"].toFixed(2)}` : "+0.28"})</strong> — chronic inflammation from air pollution suppresses haemoglobin synthesis.</> },
+                  { icon:"🩸", text:<><strong className="text-foreground">MHM → Antenatal (r={rByTitle["Menstrual Hygiene & Antenatal Care"] != null ? `${rByTitle["Menstrual Hygiene & Antenatal Care"]>0?"+":""}${rByTitle["Menstrual Hygiene & Antenatal Care"].toFixed(2)}` : "+0.48"})</strong> — strongest link. Same access barrier underlies both.</> },
+                  { icon:"🌡️", text:<><strong className="text-foreground">Heat → MHM (r={rByTitle["Heat Risk & Menstrual Hygiene Coverage"] != null ? `${rByTitle["Heat Risk & Menstrual Hygiene Coverage"]>0?"+":""}${rByTitle["Heat Risk & Menstrual Hygiene Coverage"].toFixed(2)}` : "−0.13"})</strong> — hotter districts restrict women's mobility and access to washing spaces.</> },
                   { icon:"💧", text:<><strong className="text-foreground">Disruption → Stunting</strong> — repeated climate events compound into chronic child undernutrition.</> },
                   { icon:"💍", text:<><strong className="text-foreground">High child marriage + low MHM: 27.6% antenatal</strong> vs 60.5% elsewhere — 2.2× gap.</> },
                 ].map((f, i) => (
@@ -620,6 +636,46 @@ export default function InsightsPage() {
                 </ResponsiveContainer>
               </div>
             </div>
+
+            {data.escalation_districts && data.escalation_districts.length > 0 && (
+              <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-4">
+                <h3 className="text-sm font-semibold text-red-400 mb-1">
+                  ⚠️ High Escalation Districts — {data.escalation_districts.length} districts with &gt;20 heat days/yr by 2050
+                </h3>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Districts where SSP5-8.5 2050 heat exceeds 20 days/yr AND wet-bulb days are highest — sorted by wet-bulb severity.
+                </p>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead className="border-b border-border">
+                      <tr>
+                        {["District","State","Heat d/yr 2050","Wet-Bulb d/yr 2050","Anaemia %","Stunting %","Population"].map(h => (
+                          <th key={h} className="text-left px-2 py-1.5 font-semibold text-[10px] uppercase tracking-wide text-muted-foreground whitespace-nowrap">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.escalation_districts.slice(0,20).map((r, i) => (
+                        <tr key={i} className="border-b border-border/30 hover:bg-muted/20">
+                          <td className="px-2 py-1.5 font-medium whitespace-nowrap">{r.district}</td>
+                          <td className="px-2 py-1.5 text-muted-foreground text-[10px] whitespace-nowrap">{r.state}</td>
+                          <td className="px-2 py-1.5 font-mono text-red-400 font-semibold">{r.heat_days_2050?.toFixed(1) ?? "—"}</td>
+                          <td className={`px-2 py-1.5 font-mono font-semibold ${(r.wet_bulb_days_2050??0)>100?"text-orange-400":"text-yellow-500"}`}>{r.wet_bulb_days_2050?.toFixed(1) ?? "—"}</td>
+                          <td className={`px-2 py-1.5 font-mono ${(r.anaemia_pct??0)>65?"text-red-400":""}`}>{r.anaemia_pct != null ? `${r.anaemia_pct.toFixed(1)}%` : "—"}</td>
+                          <td className={`px-2 py-1.5 font-mono ${(r.stunting_pct??0)>35?"text-orange-400":""}`}>{r.stunting_pct != null ? `${r.stunting_pct.toFixed(1)}%` : "—"}</td>
+                          <td className="px-2 py-1.5 font-mono text-muted-foreground text-[10px]">{r.population ? FMT_POP(r.population) : "—"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {data.escalation_districts.length > 20 && (
+                    <div className="px-2 py-2 text-[10px] text-muted-foreground border-t border-border bg-muted/10">
+                      Showing 20 of {data.escalation_districts.length} escalation districts
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </section>
         )}
 
@@ -629,7 +685,7 @@ export default function InsightsPage() {
             <div className="rounded-xl border border-border bg-card p-4">
               <h3 className="text-sm font-semibold mb-1">Anaemia, Stunting & Wasting by Dominant Hazard</h3>
               <p className="text-xs text-muted-foreground mb-4">
-                Pollution-dominant districts show the worst anaemia. Flood districts have the worst stunting — repeated contamination events compound into chronic undernutrition.
+                Wet-bulb heat districts show the highest anaemia (66.4%) — heat+humidity impairs iron absorption. Flood districts have the highest stunting — repeated waterborne contamination compounds into chronic undernutrition.
               </p>
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
