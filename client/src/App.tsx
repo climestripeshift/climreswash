@@ -22,6 +22,7 @@ import SimulatorPage from "@/pages/SimulatorPage";
 import WashAssessPage from "@/pages/WashAssessPage";
 import ScreenerPage from "@/pages/ScreenerPage";
 import InsightsPage from "@/pages/InsightsPage";
+import ElNinoPage from "@/pages/ElNinoPage";
 
 function Router() {
   return (
@@ -39,6 +40,7 @@ function Router() {
       <Route path="/action-plan" component={ActionPlanPage} />
       <Route path="/screener" component={ScreenerPage} />
       <Route path="/insights" component={InsightsPage} />
+      <Route path="/el-nino" component={ElNinoPage} />
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/technology" component={TechnologyPage} />
