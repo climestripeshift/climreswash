@@ -41,6 +41,45 @@ interface EscalationDistrict {
   population: number|null;
 }
 
+interface TrendCell { nfhs6: number; nfhs5: number; delta: number; improved: boolean }
+
+interface TrendStateRow {
+  state: string; small_sample: boolean;
+  water: TrendCell; stunting: TrendCell; wasting: TrendCell;
+  severe_wasting: TrendCell; underweight: TrendCell;
+  diarrhoea: TrendCell; mhm: TrendCell;
+  climate?: Record<string, number>;
+}
+
+interface TrendCorrelation {
+  label: string; insight: string; x_label: string; y_label: string;
+  r: number; n: number;
+  points: Array<{state:string; x:number; y:number}>;
+}
+
+interface NfhsTrendsData {
+  meta: { source: string; note: string; indicators: Record<string,string>; small_sample_states: string[] };
+  national: Record<string, TrendCell>;
+  states: TrendStateRow[];
+  correlations: TrendCorrelation[];
+  highlights: Record<string, {
+    improvers: Array<{state:string; delta:number; nfhs6:number}>;
+    regressors: Array<{state:string; delta:number; nfhs6:number}>;
+  }>;
+}
+
+type TrendIndicator = "water"|"stunting"|"wasting"|"severe_wasting"|"underweight"|"diarrhoea"|"mhm";
+
+const TREND_LABELS: Record<TrendIndicator, string> = {
+  water: "Improved water", stunting: "Stunting", wasting: "Wasting",
+  severe_wasting: "Severe wasting", underweight: "Underweight",
+  diarrhoea: "Diarrhoea", mhm: "Menstrual hygiene",
+};
+const TREND_ICONS: Record<TrendIndicator, string> = {
+  water:"🚰", stunting:"📏", wasting:"⚠️", severe_wasting:"🚨",
+  underweight:"⚖️", diarrhoea:"🦠", mhm:"🩸",
+};
+
 interface InsightsData {
   summary: Record<string, number>;
   relationships: RelationshipData[];
@@ -215,6 +254,12 @@ export default function InsightsPage() {
     staleTime: Infinity,
   });
 
+  const { data: trends } = useQuery<NfhsTrendsData>({
+    queryKey: ["nfhs-trends"],
+    queryFn: () => fetch("/data/nfhs_trends.json").then(r => r.json()),
+    staleTime: Infinity,
+  });
+
   const [activeSection, setActiveSection]   = useState("relationships");
   const [filterState, setFilterState]       = useState("All India");
   const [districtSearch, setDistrictSearch] = useState("");
@@ -222,6 +267,7 @@ export default function InsightsPage() {
   const [sortKey, setSortKey]               = useState<SortKey>("wb50");
   const [sortDir, setSortDir]               = useState<"asc"|"desc">("desc");
   const [hazardFilter, setHazardFilter]     = useState("all");
+  const [trendIndicator, setTrendIndicator] = useState<TrendIndicator>("stunting");
 
   // Hooks must be called unconditionally — before early return
   const rByTitle = useMemo(() => {
@@ -229,6 +275,31 @@ export default function InsightsPage() {
     for (const rel of (data?.relationships ?? [])) m[rel.title] = rel.r;
     return m;
   }, [data?.relationships]);
+
+  const trendBarData = useMemo(() => {
+    if (!trends) return [];
+    return trends.states
+      .map(row => ({
+        state: row.state + (row.small_sample ? " †" : ""),
+        delta: row[trendIndicator].delta,
+        improved: row[trendIndicator].improved,
+        nfhs5: row[trendIndicator].nfhs5,
+        nfhs6: row[trendIndicator].nfhs6,
+      }))
+      .sort((a, b) => a.delta - b.delta);
+  }, [trends, trendIndicator]);
+
+  // Adapt trend correlations to the ScatterCard shape ({x,y,d,s} points)
+  const trendScatters = useMemo(() => {
+    if (!trends) return [];
+    return trends.correlations.map(c => ({
+      title: c.label, r: c.r, n: c.n,
+      x_key: "x", y_key: "y",
+      x_label: c.x_label, y_label: c.y_label,
+      interpretation: `${c.insight} (n=${c.n} states; small-sample states excluded)`,
+      points: c.points.map(p => ({ x: p.x, y: p.y, d: p.state, s: p.state })),
+    } as RelationshipData));
+  }, [trends]);
 
   const filteredDistricts = useMemo(() => {
     let rows = data?.all_districts ?? [];
@@ -288,6 +359,7 @@ export default function InsightsPage() {
 
   const sections = [
     { id:"relationships", label:"Climate-Health",    icon:"🔗" },
+    { id:"nfhs6",         label:"NFHS-6 Trends",      icon:"📈" },
     { id:"wash",          label:"WASH-Health",        icon:"💧" },
     { id:"districts",     label:"All Districts",      icon:"🗺️" },
     { id:"future",        label:"Future Projections", icon:"📅" },
@@ -429,6 +501,139 @@ export default function InsightsPage() {
                 <ScatterCard key={rel.title} rel={rel} filterState={filterState} highlightDistrict={districtSearch} />
               ))}
             </div>
+          </section>
+        )}
+
+        {/* ── TAB: NFHS-6 Trends ────────────────────────────────────── */}
+        {activeSection === "nfhs6" && (
+          <section className="space-y-5">
+            {!trends ? (
+              <div className="text-sm text-muted-foreground py-8 text-center">Loading NFHS-6 trend data…</div>
+            ) : (
+              <>
+                <div className="rounded-lg border border-violet-500/20 bg-violet-500/5 p-4 space-y-1.5">
+                  <h2 className="text-sm font-bold text-violet-400">NFHS-5 (2019-21) → NFHS-6 (2023-24): what changed</h2>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    State-level trends from the NFHS-6 fact sheets (provisional, released May 2026). The 2023-24 fieldwork
+                    spans the <strong className="text-foreground">2023-24 El Niño</strong> — making the wasting and diarrhoea
+                    shifts a real-world read on the climate-WASH cascades this platform models.
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    ⚠️ NFHS-6 fact sheets do not publish <strong>sanitation, anaemia, clean fuel or handwashing</strong> —
+                    those indicators elsewhere on this platform remain NFHS-5. Manipur was not surveyed.
+                    † = small-sample state/UT (wide confidence intervals).
+                  </p>
+                </div>
+
+                {/* National headline cards */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+                  {(Object.keys(TREND_LABELS) as TrendIndicator[]).map(ind => {
+                    const n = trends.national[ind];
+                    const color = n.delta === 0 ? "text-muted-foreground" : n.improved ? "text-green-400" : "text-red-400";
+                    return (
+                      <div key={ind} className="rounded-lg border border-border bg-card p-2.5 text-center">
+                        <div className="text-base leading-none mb-1">{TREND_ICONS[ind]}</div>
+                        <div className="text-sm font-bold font-mono">{n.nfhs5}% → {n.nfhs6}%</div>
+                        <div className={`text-xs font-semibold font-mono ${color}`}>
+                          {n.delta > 0 ? "▲" : n.delta < 0 ? "▼" : "—"} {Math.abs(n.delta).toFixed(1)}pp
+                        </div>
+                        <div className="text-[10px] text-muted-foreground leading-tight mt-0.5">{TREND_LABELS[ind]}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Indicator picker + movers */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs text-muted-foreground">Indicator:</span>
+                  {(Object.keys(TREND_LABELS) as TrendIndicator[]).map(ind => (
+                    <button key={ind} onClick={() => setTrendIndicator(ind)}
+                      className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                        trendIndicator === ind
+                          ? "border-violet-400 text-violet-400 bg-violet-500/10 font-semibold"
+                          : "border-border text-muted-foreground hover:text-foreground"
+                      }`}>
+                      {TREND_ICONS[ind]} {TREND_LABELS[ind]}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {[
+                    { title:"Fastest improvers", rows: trends.highlights[trendIndicator]?.improvers ?? [], cls:"border-green-500/20 bg-green-500/5", txt:"text-green-400" },
+                    { title:"Going backwards", rows: trends.highlights[trendIndicator]?.regressors ?? [], cls:"border-red-500/20 bg-red-500/5", txt:"text-red-400" },
+                  ].map(panel => (
+                    <div key={panel.title} className={`rounded-xl border p-4 ${panel.cls}`}>
+                      <h3 className={`text-sm font-semibold mb-2 ${panel.txt}`}>{panel.title} — {TREND_LABELS[trendIndicator]}</h3>
+                      <div className="space-y-1.5">
+                        {panel.rows.map(r => (
+                          <div key={r.state} className="flex items-center justify-between text-xs">
+                            <span>{r.state}</span>
+                            <span className="font-mono">
+                              <span className={`font-semibold ${panel.txt}`}>{r.delta > 0 ? "+" : ""}{r.delta.toFixed(1)}pp</span>
+                              <span className="text-muted-foreground ml-2">now {r.nfhs6}%</span>
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Per-state delta chart */}
+                <div className="rounded-xl border border-border bg-card p-4">
+                  <h3 className="text-sm font-semibold mb-1">
+                    Change in {TREND_LABELS[trendIndicator].toLowerCase()}, NFHS-5 → NFHS-6 (percentage points)
+                  </h3>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    {trendIndicator === "water" || trendIndicator === "mhm"
+                      ? "Positive (green) = coverage improved."
+                      : "Negative (green) = prevalence fell — improvement."} † = small sample, interpret with caution.
+                  </p>
+                  <div style={{ height: Math.max(300, trendBarData.length * 17) }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={trendBarData} layout="vertical" margin={{top:4,right:24,bottom:4,left:150}}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.08} />
+                        <XAxis type="number" tick={{fontSize:10,fill:"currentColor",opacity:0.5}} unit="pp" />
+                        <YAxis dataKey="state" type="category" tick={{fontSize:10,fill:"currentColor"}} width={145} interval={0} />
+                        <Tooltip content={({payload}) => {
+                          if (!payload?.length) return null;
+                          const p = payload[0].payload;
+                          return (
+                            <div className="bg-card border border-border rounded px-2.5 py-1.5 text-xs shadow-lg">
+                              <div className="font-semibold">{p.state}</div>
+                              <div className="font-mono">{p.nfhs5}% → {p.nfhs6}% ({p.delta > 0 ? "+" : ""}{p.delta}pp)</div>
+                            </div>
+                          );
+                        }} />
+                        <Bar dataKey="delta" radius={[0,3,3,0]}>
+                          {trendBarData.map(entry => (
+                            <Cell key={entry.state} fill={entry.improved ? "#4ade80" : "#f87171"} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Climate × NFHS-6 correlations */}
+                <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-4">
+                  <h3 className="text-sm font-bold text-amber-400 mb-1">Climate exposure × NFHS-6 outcomes</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Each point is a state ({trendScatters[0]?.n ?? 27} large-sample states). Climate axes come from this
+                    platform's hex grid aggregated to state level; health axes from NFHS-6. The strongest links:
+                    menstrual hygiene access vs stunting (r={trends.correlations[0]?.r.toFixed(2)}), humid-heat vs child
+                    underweight, and — the trend signal — hotter and groundwater-stressed states saw wasting <em>worsen</em> between surveys.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {trendScatters.map(rel => (
+                    <ScatterCard key={rel.title} rel={rel} filterState={filterState} highlightDistrict={districtSearch} />
+                  ))}
+                </div>
+              </>
+            )}
           </section>
         )}
 

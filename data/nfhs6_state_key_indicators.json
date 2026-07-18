@@ -1,0 +1,56 @@
+{
+  "_meta": {
+    "source": "NFHS-6 (2023-24) State/UT Fact Sheets, IIPS/MoHFW, released May 2026 (provisional)",
+    "note": "Total column values. NFHS-5 (2019-21) totals from same fact sheets. Manipur not surveyed in NFHS-6. Sanitation, anaemia, clean fuel and handwashing are NOT published in NFHS-6 fact sheets — platform retains NFHS-5 for those.",
+    "indicators": {
+      "water": "Population living in households with an improved drinking-water source (%)",
+      "stunting": "Children under 5 who are stunted (%)",
+      "wasting": "Children under 5 who are wasted (%)",
+      "severe_wasting": "Children under 5 who are severely wasted (%)",
+      "underweight": "Children under 5 who are underweight (%)",
+      "diarrhoea": "Prevalence of diarrhoea in children <5 in 2 weeks preceding survey (%)",
+      "mhm": "Women 15-24 using hygienic methods of menstrual protection (%)"
+    }
+  },
+  "india": {
+    "water": [96.5, 95.9], "stunting": [29.3, 35.5], "wasting": [19.0, 19.3],
+    "severe_wasting": [5.2, 7.7], "underweight": [31.8, 32.1], "diarrhoea": [7.9, 7.3], "mhm": [79.2, 77.6]
+  },
+  "states": {
+    "Andhra Pradesh":    {"water": [97.6, 96.7], "stunting": [24.6, 31.2], "wasting": [12.3, 16.1], "severe_wasting": [2.7, 6.0], "underweight": [23.2, 29.6], "diarrhoea": [4.8, 7.2], "mhm": [94.3, 85.2]},
+    "Arunachal Pradesh": {"water": [97.1, 93.7], "stunting": [24.1, 28.0], "wasting": [16.1, 13.1], "severe_wasting": [8.0, 6.5], "underweight": [18.2, 15.4], "diarrhoea": [3.8, 5.1], "mhm": [96.7, 92.0]},
+    "Assam":             {"water": [92.8, 86.0], "stunting": [30.3, 35.3], "wasting": [21.4, 21.7], "severe_wasting": [8.5, 9.0], "underweight": [30.7, 32.8], "diarrhoea": [1.9, 5.5], "mhm": [75.1, 67.0]},
+    "Bihar":             {"water": [99.8, 99.2], "stunting": [35.6, 42.9], "wasting": [19.0, 22.9], "severe_wasting": [4.7, 8.8], "underweight": [35.7, 41.0], "diarrhoea": [7.7, 13.7], "mhm": [63.0, 59.2]},
+    "Chhattisgarh":      {"water": [94.5, 95.5], "stunting": [27.5, 34.6], "wasting": [21.1, 18.9], "severe_wasting": [6.7, 7.5], "underweight": [34.7, 31.3], "diarrhoea": [7.4, 3.6], "mhm": [72.7, 69.0]},
+    "Goa":               {"water": [95.5, 98.5], "stunting": [19.4, 25.8], "wasting": [16.3, 19.1], "severe_wasting": [2.4, 7.5], "underweight": [19.9, 24.0], "diarrhoea": [0.7, 3.2], "mhm": [97.5, 96.8]},
+    "Gujarat":           {"water": [97.2, 97.2], "stunting": [35.3, 39.0], "wasting": [20.2, 25.1], "severe_wasting": [5.4, 10.6], "underweight": [35.5, 39.7], "diarrhoea": [5.7, 8.2], "mhm": [66.9, 66.9]},
+    "Haryana":           {"water": [99.1, 98.6], "stunting": [25.9, 27.5], "wasting": [16.6, 11.5], "severe_wasting": [3.6, 4.4], "underweight": [28.9, 21.5], "diarrhoea": [10.7, 4.9], "mhm": [94.3, 93.5]},
+    "Himachal Pradesh":  {"water": [89.5, 96.2], "stunting": [20.6, 30.8], "wasting": [10.4, 17.4], "severe_wasting": [2.4, 6.9], "underweight": [16.8, 25.5], "diarrhoea": [4.6, 4.7], "mhm": [94.9, 92.0]},
+    "Jharkhand":         {"water": [84.3, 86.6], "stunting": [35.0, 39.6], "wasting": [22.3, 22.4], "severe_wasting": [5.9, 9.1], "underweight": [41.1, 39.4], "diarrhoea": [10.3, 7.2], "mhm": [81.1, 75.1]},
+    "Karnataka":         {"water": [97.3, 95.3], "stunting": [26.5, 35.4], "wasting": [18.7, 19.5], "severe_wasting": [4.6, 8.4], "underweight": [27.8, 32.9], "diarrhoea": [6.2, 5.3], "mhm": [84.1, 84.6]},
+    "Kerala":            {"water": [96.5, 94.9], "stunting": [20.1, 23.4], "wasting": [10.9, 15.8], "severe_wasting": [2.6, 5.8], "underweight": [17.8, 19.7], "diarrhoea": [5.6, 4.3], "mhm": [92.5, 93.3]},
+    "Madhya Pradesh":    {"water": [89.0, 89.0], "stunting": [31.4, 35.7], "wasting": [23.8, 18.9], "severe_wasting": [6.8, 6.5], "underweight": [39.7, 33.0], "diarrhoea": [10.5, 6.4], "mhm": [65.4, 60.9]},
+    "Maharashtra":       {"water": [95.6, 93.5], "stunting": [29.5, 35.2], "wasting": [19.9, 25.6], "severe_wasting": [7.6, 10.9], "underweight": [31.4, 36.1], "diarrhoea": [5.9, 8.9], "mhm": [90.4, 85.3]},
+    "Meghalaya":         {"water": [84.3, 79.2], "stunting": [36.8, 46.5], "wasting": [13.2, 12.1], "severe_wasting": [6.2, 4.7], "underweight": [25.3, 26.6], "diarrhoea": [3.6, 10.4], "mhm": [68.7, 65.3]},
+    "Mizoram":           {"water": [98.3, 95.8], "stunting": [26.1, 28.9], "wasting": [8.1, 9.8], "severe_wasting": [3.6, 4.9], "underweight": [14.5, 12.7], "diarrhoea": [2.2, 4.3], "mhm": [98.8, 91.0]},
+    "Nagaland":          {"water": [82.7, 91.0], "stunting": [25.1, 32.7], "wasting": [8.9, 19.1], "severe_wasting": [4.1, 7.9], "underweight": [12.2, 26.9], "diarrhoea": [3.0, 3.4], "mhm": [89.6, 80.6]},
+    "Odisha":            {"water": [92.5, 91.1], "stunting": [26.8, 31.0], "wasting": [22.1, 18.1], "severe_wasting": [5.8, 6.1], "underweight": [31.6, 29.7], "diarrhoea": [11.2, 9.7], "mhm": [88.7, 81.7]},
+    "Punjab":            {"water": [99.4, 98.8], "stunting": [20.4, 24.5], "wasting": [18.0, 10.6], "severe_wasting": [4.4, 3.6], "underweight": [23.7, 16.9], "diarrhoea": [5.5, 4.9], "mhm": [94.6, 93.3]},
+    "Rajasthan":         {"water": [95.2, 96.5], "stunting": [29.6, 31.8], "wasting": [19.8, 16.8], "severe_wasting": [6.4, 7.6], "underweight": [33.3, 27.6], "diarrhoea": [5.8, 6.1], "mhm": [88.5, 84.3]},
+    "Sikkim":            {"water": [92.1, 92.8], "stunting": [20.1, 22.3], "wasting": [9.4, 13.6], "severe_wasting": [3.5, 6.6], "underweight": [11.2, 13.1], "diarrhoea": [2.5, 5.5], "mhm": [99.1, 86.3]},
+    "Tamil Nadu":        {"water": [98.5, 98.6], "stunting": [20.7, 25.0], "wasting": [17.4, 14.6], "severe_wasting": [4.9, 5.5], "underweight": [23.2, 22.0], "diarrhoea": [5.1, 3.7], "mhm": [97.7, 98.4]},
+    "Telangana":         {"water": [98.2, 98.7], "stunting": [27.0, 33.1], "wasting": [16.9, 21.7], "severe_wasting": [3.9, 8.5], "underweight": [27.8, 31.8], "diarrhoea": [4.5, 7.4], "mhm": [95.3, 93.4]},
+    "Tripura":           {"water": [92.3, 88.0], "stunting": [21.9, 32.3], "wasting": [18.4, 18.2], "severe_wasting": [5.0, 7.3], "underweight": [25.7, 25.6], "diarrhoea": [4.0, 6.2], "mhm": [83.0, 69.1]},
+    "Uttar Pradesh":     {"water": [99.3, 99.2], "stunting": [31.5, 39.7], "wasting": [19.2, 17.3], "severe_wasting": [4.8, 7.3], "underweight": [34.5, 32.1], "diarrhoea": [13.0, 5.6], "mhm": [69.2, 72.9]},
+    "Uttarakhand":       {"water": [97.3, 95.9], "stunting": [20.0, 27.0], "wasting": [11.0, 13.2], "severe_wasting": [2.0, 4.7], "underweight": [19.6, 21.0], "diarrhoea": [10.0, 4.4], "mhm": [89.8, 91.5]},
+    "West Bengal":       {"water": [98.4, 97.5], "stunting": [22.4, 33.8], "wasting": [20.3, 20.3], "severe_wasting": [4.8, 7.1], "underweight": [28.5, 32.2], "diarrhoea": [2.9, 6.5], "mhm": [88.8, 83.4]},
+    "Andaman & Nicobar Islands": {"water": [97.9, 96.3], "stunting": [26.7, 22.5], "wasting": [11.1, 16.0], "severe_wasting": [3.8, 4.8], "underweight": [19.3, 23.6], "diarrhoea": [1.5, 5.6], "mhm": [98.7, 98.8]},
+    "Chandigarh":        {"water": [99.9, 99.1], "stunting": [19.0, 25.3], "wasting": [19.5, 8.4], "severe_wasting": [3.3, 2.3], "underweight": [31.6, 20.6], "diarrhoea": [6.3, 4.3], "mhm": [98.8, 94.5]},
+    "Dadra & Nagar Haveli and Daman & Diu": {"water": [98.0, 95.4], "stunting": [37.1, 39.4], "wasting": [24.2, 21.6], "severe_wasting": [4.2, 4.3], "underweight": [41.3, 38.7], "diarrhoea": [3.0, 2.6], "mhm": [89.3, 94.3]},
+    "Jammu & Kashmir":   {"water": [93.9, 91.9], "stunting": [21.4, 26.9], "wasting": [10.6, 19.0], "severe_wasting": [4.1, 9.7], "underweight": [14.5, 21.0], "diarrhoea": [4.1, 5.6], "mhm": [82.5, 74.5]},
+    "Ladakh":            {"water": [95.2, 88.7], "stunting": [26.0, 30.5], "wasting": [10.6, 17.5], "severe_wasting": [5.1, 9.1], "underweight": [14.5, 20.4], "diarrhoea": [0.4, 8.5], "mhm": [87.8, 79.1]},
+    "Lakshadweep":       {"water": [88.4, 92.9], "stunting": [34.1, 32.0], "wasting": [12.4, 17.4], "severe_wasting": [5.2, 8.7], "underweight": [25.9, 25.8], "diarrhoea": [9.3, 2.3], "mhm": [99.7, 98.3]},
+    "NCT of Delhi":      {"water": [99.8, 99.4], "stunting": [26.4, 30.9], "wasting": [15.0, 11.2], "severe_wasting": [4.1, 4.9], "underweight": [27.4, 21.8], "diarrhoea": [8.8, 10.6], "mhm": [97.0, 97.1]},
+    "Puducherry":        {"water": [99.8, 99.9], "stunting": [16.6, 20.0], "wasting": [16.7, 12.4], "severe_wasting": [7.1, 3.7], "underweight": [22.6, 15.3], "diarrhoea": [6.0, 3.7], "mhm": [97.5, 99.1]}
+  }
+}
