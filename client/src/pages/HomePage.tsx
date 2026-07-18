@@ -22,6 +22,7 @@ import {
   FlaskConical,
   Wrench,
   TrendingUp,
+  Sun,
 } from "lucide-react";
 
 // --- Utility Components ---
@@ -81,6 +82,7 @@ const FEATURES = [
   { icon: <Droplets className="w-5 h-5 text-primary" />, title: "WASH Assessment", desc: "District-level assessment linking climate hazards to groundwater, JJM water supply, sanitation, handwashing, and waste management — with manual field data entry.", tag: "New", link: "/wash-assess", highlight: true },
   { icon: <AlertTriangle className="w-5 h-5 text-primary" />, title: "District Action Screener", desc: "Cross-filter 713 districts by hazard type, WASH gaps (JJM, SBM, MHM, clean fuel), and priority tier. Download targeted district lists as CSV for field planning.", tag: "New", link: "/screener", highlight: true },
   { icon: <TrendingUp className="w-5 h-5 text-primary" />, title: "Climate-Social Analysis", desc: "Statistical relationships between climate hazards and health outcomes — anaemia, stunting, menstrual hygiene, antenatal care. Future wet-bulb and heat projections by state.", tag: "New", link: "/insights", highlight: true },
+  { icon: <Sun className="w-5 h-5 text-primary" />, title: "El Niño Impact Brief", desc: "Compound drought + heat + groundwater + sanitation risk per district. Critical areas, children affected, and the 15-month WASH cascade with UNICEF pre-positioning windows.", tag: "New", link: "/el-nino", highlight: true },
 ];
 
 const METHODOLOGY = [
