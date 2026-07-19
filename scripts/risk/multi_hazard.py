@@ -1,5 +1,5 @@
 """
-Multi-hazard counting and demographic aggregation — UNICEF CCRR 2026 framework.
+Multi-hazard counting and demographic aggregation — CCRR 2026 framework.
 Produces non-duplicating "people exposed to N hazards" headlines.
 """
 

@@ -49,7 +49,7 @@ export default function MethodologyPage() {
         </nav>
 
         <S id="s1" title="1. The Framework">
-          <P>ClimResWASH uses the IPCC AR6 risk framework, aligned to UNICEF CCRR 2026 scoring (0–10):</P>
+          <P>ClimResWASH uses the IPCC AR6 risk framework, aligned to CCRR 2026 scoring (0–10):</P>
           <Formula>Risk = (Hazard × Exposure × Sensitivity) × (1 − Adaptive Capacity) ÷ 10</Formula>
           <P>Each hex (H3 resolution 5, ~252 km²) receives a risk score from 0 (safe) to 10 (extreme). Risk is the maximum across 11 hazard channels. At extreme hazard (H≥10), adaptive capacity effectiveness is dampened to prevent well-served areas from scoring near-zero during genuine disasters.</P>
           <Formula>AC dampening = max(0.2, 1 − H/12)</Formula>

@@ -5,6 +5,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   ArrowRight,
   Activity,
   MapPin,
@@ -23,6 +29,7 @@ import {
   Wrench,
   TrendingUp,
   Sun,
+  ChevronDown,
 } from "lucide-react";
 
 // --- Utility Components ---
@@ -82,7 +89,7 @@ const FEATURES = [
   { icon: <Droplets className="w-5 h-5 text-primary" />, title: "WASH Assessment", desc: "District-level assessment linking climate hazards to groundwater, JJM water supply, sanitation, handwashing, and waste management — with manual field data entry.", tag: "New", link: "/wash-assess", highlight: true },
   { icon: <AlertTriangle className="w-5 h-5 text-primary" />, title: "District Action Screener", desc: "Cross-filter 713 districts by hazard type, WASH gaps (JJM, SBM, MHM, clean fuel), and priority tier. Download targeted district lists as CSV for field planning.", tag: "New", link: "/screener", highlight: true },
   { icon: <TrendingUp className="w-5 h-5 text-primary" />, title: "Climate-Social Analysis", desc: "Statistical relationships between climate hazards and health outcomes — anaemia, stunting, menstrual hygiene, antenatal care. Future wet-bulb and heat projections by state.", tag: "New", link: "/insights", highlight: true },
-  { icon: <Sun className="w-5 h-5 text-primary" />, title: "El Niño Impact Brief", desc: "Compound drought + heat + groundwater + sanitation risk per district. Critical areas, children affected, and the 15-month WASH cascade with UNICEF pre-positioning windows.", tag: "New", link: "/el-nino", highlight: true },
+  { icon: <Sun className="w-5 h-5 text-primary" />, title: "El Niño Impact Brief", desc: "Compound drought + heat + groundwater + sanitation risk per district. Critical areas, children affected, and the 15-month WASH cascade with pre-positioning windows.", tag: "New", link: "/el-nino", highlight: true },
 ];
 
 const METHODOLOGY = [
@@ -116,42 +123,75 @@ export default function HomePage() {
               </div>
               <div className="flex flex-col">
                 <span className="font-bold text-lg leading-none tracking-tight text-slate-900 dark:text-white">ClimateAdapt</span>
-                <span className="text-[10px] font-semibold tracking-widest uppercase text-slate-500 dark:text-slate-400 mt-1">UNICEF India</span>
+                <span className="text-[10px] font-semibold tracking-widest uppercase text-slate-500 dark:text-slate-400 mt-1">India</span>
               </div>
             </div>
-            
+
             {/* Links */}
-            <div className="hidden md:flex items-center gap-8">
+            <div className="hidden md:flex items-center gap-7">
               <a href="#impact" className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-primary transition-colors">Impact</a>
               <a href="#platform" className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-primary transition-colors">Platform</a>
               <a href="#methodology" className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-primary transition-colors">Methodology</a>
-<Link href="/grid" className="text-sm font-semibold flex items-center gap-1.5 text-teal-500 hover:text-teal-400 transition-colors">
-                <Grid3X3 className="w-3.5 h-3.5" /> Hex Grid
-              </Link>
-              <Link href="/forecast" className="text-sm font-semibold flex items-center gap-1.5 text-red-500 hover:text-red-400 transition-colors">
-                <Radio className="w-3.5 h-3.5 animate-pulse" /> Forecast
-              </Link>
-              <Link href="/states" className="text-sm font-semibold flex items-center gap-1.5 text-violet-500 hover:text-violet-400 transition-colors">
-                States
-              </Link>
-              <Link href="/action-plan" className="text-sm font-semibold flex items-center gap-1.5 text-orange-500 hover:text-orange-400 transition-colors">
-                Action Plan
-              </Link>
-              <Link href="/simulator" className="text-sm font-semibold flex items-center gap-1.5 text-violet-400 hover:text-violet-300 transition-colors">
-                <FlaskConical className="w-3.5 h-3.5" /> Simulator
-              </Link>
-              <Link href="/technology" className="text-sm font-semibold flex items-center gap-1.5 text-cyan-500 hover:text-cyan-400 transition-colors">
-                <Wrench className="w-3.5 h-3.5" /> Technologies
-              </Link>
-              <Link href="/wash-assess" className="text-sm font-semibold flex items-center gap-1.5 text-[#00AEEF] hover:text-[#00AEEF]/80 transition-colors">
-                <Droplets className="w-3.5 h-3.5" /> WASH Assess
-              </Link>
-              <Link href="/screener" className="text-sm font-semibold flex items-center gap-1.5 text-emerald-500 hover:text-emerald-400 transition-colors">
-                Screener
-              </Link>
-              <Link href="/insights" className="text-sm font-semibold flex items-center gap-1.5 text-rose-400 hover:text-rose-300 transition-colors">
-                Analysis
-              </Link>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger className="flex items-center gap-1 text-sm font-semibold text-red-500 hover:text-red-400 transition-colors outline-none">
+                  Phase 1 <ChevronDown className="w-3.5 h-3.5" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-48">
+                  <DropdownMenuItem asChild>
+                    <Link href="/el-nino" className="flex items-center gap-2 cursor-pointer">
+                      <Sun className="w-3.5 h-3.5 text-orange-500" /> El Niño Brief
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/forecast" className="flex items-center gap-2 cursor-pointer">
+                      <Radio className="w-3.5 h-3.5 text-red-500" /> Forecast
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/grid" className="flex items-center gap-2 cursor-pointer">
+                      <Grid3X3 className="w-3.5 h-3.5 text-teal-500" /> Hex Grid
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger className="flex items-center gap-1 text-sm font-semibold text-violet-500 hover:text-violet-400 transition-colors outline-none">
+                  Phase 2 <ChevronDown className="w-3.5 h-3.5" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-48">
+                  <DropdownMenuItem asChild>
+                    <Link href="/states" className="cursor-pointer">States</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/action-plan" className="cursor-pointer">Action Plan</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/simulator" className="flex items-center gap-2 cursor-pointer">
+                      <FlaskConical className="w-3.5 h-3.5 text-violet-400" /> Simulator
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/technology" className="flex items-center gap-2 cursor-pointer">
+                      <Wrench className="w-3.5 h-3.5 text-cyan-500" /> Technologies
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/wash-assess" className="flex items-center gap-2 cursor-pointer">
+                      <Droplets className="w-3.5 h-3.5 text-[#00AEEF]" /> WASH Assess
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/screener" className="cursor-pointer">Screener</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/insights" className="flex items-center gap-2 cursor-pointer">
+                      <TrendingUp className="w-3.5 h-3.5 text-rose-400" /> Analysis
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
 
             {/* Actions */}
@@ -207,7 +247,7 @@ export default function HomePage() {
             <div className="max-w-2xl">
               <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-4 text-slate-900 dark:text-white">Measurable Impact</h2>
               <p className="text-lg text-slate-600 dark:text-slate-300">
-                Evidence-based risk mapping grounded in the UNICEF-CEEW methodology.
+                Evidence-based risk mapping grounded in the CEEW climate risk methodology.
               </p>
             </div>
           </div>
@@ -285,7 +325,7 @@ export default function HomePage() {
           <div className="mb-16 text-center">
             <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-4 text-slate-900 dark:text-white">Scientific Rigour</h2>
             <p className="text-lg text-slate-600 dark:text-slate-300">
-              Grounded in the IPCC AR5 risk framework and the UNICEF-CEEW Climate Extremes study.
+              Grounded in the IPCC AR5 risk framework and the CEEW Climate Extremes study.
             </p>
           </div>
 
@@ -346,10 +386,10 @@ export default function HomePage() {
       <footer className="border-t border-slate-200 dark:border-slate-800 py-8 bg-white dark:bg-slate-950">
         <div className="container mx-auto px-4 text-center flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
-            ClimateAdapt India - A UNICEF Initiative
+            ClimateAdapt India - Open Climate-WASH Risk Platform
           </p>
           <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
-            <span className="flex items-center gap-1.5"><BookOpen className="w-4 h-4" /> Built on UNICEF-CEEW Data</span>
+            <span className="flex items-center gap-1.5"><BookOpen className="w-4 h-4" /> Built on CEEW Climate Risk Data</span>
           </div>
         </div>
       </footer>

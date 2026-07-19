@@ -540,7 +540,7 @@ function TechnologyDetail({ tech }: { tech: TechnologyInfo }) {
                   Climate Hazard Suitability Matrix
                 </CardTitle>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Source: WASH Technology Climate Matrix (UNICEF / WHO). ✓ Recommended — deploy with standard design.&nbsp;
+                  Source: WASH Technology Climate Matrix (WHO). ✓ Recommended — deploy with standard design.&nbsp;
                   ~ Conditional — use with design modifications. ✗ Not Suitable — select an alternative.
                 </p>
                 {tech.matrixContext && (

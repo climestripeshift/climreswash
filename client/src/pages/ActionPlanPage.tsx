@@ -313,7 +313,7 @@ export default function ActionPlanPage() {
               <option value="present">Present risk ↓</option>
               {SHOW_FUTURE_2050 && <option value="future">2050 risk ↓ (pre-empt view)</option>}
               {SHOW_FUTURE_2050 && <option value="escalation">Escalation ↓</option>}
-              <option value="children">Child impact ↓ (UNICEF lens)</option>
+              <option value="children">Child impact ↓ (children lens)</option>
             </select>
           </div>
           <div className="flex gap-1">
@@ -413,7 +413,7 @@ export default function ActionPlanPage() {
           Data: NFHS-5 (WASH), ERA5/CHIRPS (climate), WorldPop (population) · Generated {new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
         </div>
         <div className="mt-4 text-[10px] text-muted-foreground print:hidden">
-          Click any row to expand district action details. Sort by "Child impact" for the UNICEF lens (risk × children-under-5 weighting).
+          Click any row to expand district action details. Sort by "Child impact" for the child-weighted lens (risk × children-under-5 weighting).
           {SHOW_FUTURE_2050 && " Violet \"shift\" badge = dominant hazard changes by 2050."}
         </div>
       </div>

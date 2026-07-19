@@ -38,7 +38,7 @@ const ATTRIBUTES: AttrDef[] = [
   { key: "hex_risk",       label: "Max Risk (all hazards)", icon: "⚠️",  category: "overview", desc: "Highest risk across all 10 hazard channels + cascade amplifiers" },
   { key: "data_confidence", label: "Data Confidence",       icon: "🎯",  category: "overview", desc: "Data-provenance confidence: HIGH = real validated data · MEDIUM = real but coarse · LOW = heuristic/absent" },
   { key: "population",    label: "Total Population",       icon: "👥",  category: "overview", desc: "WorldPop 2020 UN-adjusted 100m resolution" },
-  { key: "hazard_count_5", label: "Hazards ≥5 (CCRR)",     icon: "🎯",  category: "overview", desc: "Number of hazards scoring ≥5.0 — UNICEF CCRR threshold" },
+  { key: "hazard_count_5", label: "Hazards ≥5 (CCRR)",     icon: "🎯",  category: "overview", desc: "Number of hazards scoring ≥5.0 — CCRR threshold" },
   { key: "hazard_count_3", label: "Hazards ≥3 (moderate)", icon: "🎯",  category: "overview", desc: "Number of hazards scoring ≥3.0 — moderate threshold" },
   { key: "cascade_count", label: "WASH Cascades",          icon: "🔗",  category: "overview", desc: "Number of WASH cascade rules triggered in this hex" },
 

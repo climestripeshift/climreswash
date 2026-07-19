@@ -157,7 +157,7 @@ export default function ElNinoPage() {
             <div className="flex items-center gap-2">
               <span className="text-xl">🌀</span>
               <h1 className="text-base font-bold leading-none">El Niño Impact Readiness</h1>
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400 border border-orange-500/30 font-semibold">UNICEF BRIEF</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400 border border-orange-500/30 font-semibold">IMPACT BRIEF</span>
             </div>
             <p className="text-[11px] text-muted-foreground mt-0.5">
               Compound drought · heat · WASH vulnerability in {summary.total_districts} Indian districts
@@ -499,9 +499,9 @@ export default function ElNinoPage() {
               </div>
             </div>
 
-            {/* UNICEF intervention windows */}
+            {/* Intervention windows */}
             <div className="rounded-xl border border-green-500/20 bg-green-500/5 p-4">
-              <h3 className="text-sm font-bold text-green-400 mb-3">UNICEF Pre-positioning Windows</h3>
+              <h3 className="text-sm font-bold text-green-400 mb-3">Pre-positioning Windows</h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                 {[
                   { window:"On advisory (Month 0–3)", color:"border-blue-500/30 bg-blue-500/5", items:[
