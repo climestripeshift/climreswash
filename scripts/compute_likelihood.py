@@ -16,6 +16,7 @@ import h3
 
 ROOT      = Path(__file__).resolve().parent.parent
 HEX_PROPS = ROOT / "client/public/data/india_hex_props.json"
+HEX_GEO   = ROOT / "client/public/data/india_hex_grid.geojson"
 RASTER_DIR = ROOT / "data/raw/climatology"
 
 # ── Normalization references (tunable) ────────────────────────────────────────
@@ -149,8 +150,34 @@ def main():
         vals = [p.get(col_name, 0) for p in props]
         print(f"  {col_name:30s}: {min(vals):.3f} – {max(vals):.3f}  (mean {sum(vals)/len(vals):.3f})")
 
-    # Save
-    print(f"\nSaving {HEX_PROPS}...")
+    geo_cols = [cfg[1] for cfg in LIKELIHOOD_CONFIG] + \
+               [cfg[1].replace("_likelihood", "_days_per_year") for cfg in LIKELIHOOD_CONFIG]
+
+    # Update GeoJSON first — join_hex_districts.py reads these columns from here.
+    # These are pipeline-internal inputs, not frontend-rendered fields.
+    if HEX_GEO.exists():
+        print(f"\nUpdating {HEX_GEO}...")
+        with open(HEX_GEO) as f:
+            gj = json.load(f)
+        props_by_id = {p["h3_id"]: p for p in props}
+        for feat in gj["features"]:
+            h3_id = feat["properties"].get("h3_id")
+            p = props_by_id.get(h3_id)
+            if p is None:
+                continue
+            for col in geo_cols:
+                if col in p:
+                    feat["properties"][col] = p[col]
+        with open(HEX_GEO, "w") as f:
+            json.dump(gj, f, separators=(",", ":"))
+
+    # Save HEX_PROPS WITHOUT the raw likelihood/day-count columns — the frontend
+    # never renders them, and keeping them here previously caused a white-screen
+    # crash from props file size (see commit 72ae7f6). Full data stays in GeoJSON.
+    print(f"\nSaving {HEX_PROPS} (intermediate columns excluded)...")
+    for p in props:
+        for col in geo_cols:
+            p.pop(col, None)
     with open(HEX_PROPS, "w") as f:
         json.dump(props, f, separators=(",", ":"))
 

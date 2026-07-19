@@ -14,6 +14,7 @@ import h3
 
 ROOT      = Path(__file__).resolve().parent.parent
 HEX_PROPS = ROOT / "client/public/data/india_hex_props.json"
+HEX_GEO   = ROOT / "client/public/data/india_hex_grid.geojson"
 IBTRACS   = ROOT / "data/raw/cyclone/IBTrACS.NI.list.v04r00.csv"
 TRACK_RADIUS_KM = 150
 REFERENCE_ANNUAL = 0.5  # track every 2 years = likelihood 1.0
@@ -114,7 +115,25 @@ def main():
     above_zero = sum(1 for v in vals if v > 0.01)
     print(f"  {above_zero} hexes with cyclone_likelihood > 0.01")
 
-    print(f"\nSaving {HEX_PROPS}...")
+    # Update GeoJSON first — join_hex_districts.py reads cyclone_likelihood from here.
+    if HEX_GEO.exists():
+        print(f"Updating {HEX_GEO}...")
+        with open(HEX_GEO) as f:
+            gj = json.load(f)
+        props_by_id = {p["h3_id"]: p for p in props}
+        for feat in gj["features"]:
+            h3_id = feat["properties"].get("h3_id")
+            p = props_by_id.get(h3_id)
+            if p is not None and "cyclone_likelihood" in p:
+                feat["properties"]["cyclone_likelihood"] = p["cyclone_likelihood"]
+        with open(HEX_GEO, "w") as f:
+            json.dump(gj, f, separators=(",", ":"))
+
+    # Save HEX_PROPS WITHOUT cyclone_likelihood — pipeline-internal input, not
+    # frontend-rendered (see commit 72ae7f6, which stripped it for this reason).
+    print(f"\nSaving {HEX_PROPS} (cyclone_likelihood excluded)...")
+    for p in props:
+        p.pop("cyclone_likelihood", None)
     with open(HEX_PROPS, "w") as f:
         json.dump(props, f, separators=(",", ":"))
 
