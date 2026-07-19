@@ -8,95 +8,18 @@
     "scope": "natural recharge only \u2014 no artificial recharge (MGNREGS) component"
   },
   "correlations": {
-    "rainfall_vs_gw_stress": -0.776,
-    "monsoon_rainfall_vs_gw_stress": -0.778,
+    "rainfall_vs_gw_stress": -0.754,
+    "monsoon_rainfall_vs_gw_stress": -0.757,
     "rainfall_vs_jjm_fhtc": -0.061,
-    "gw_stress_vs_jjm_fhtc": -0.072,
+    "gw_stress_vs_jjm_fhtc": -0.074,
     "n_districts_missing_jjm_data": 3
   },
   "districts": [
     {
-      "district": "Alwar",
-      "population": 4380933,
-      "jjm_fhtc_pct": 64.4,
-      "gw_stress_score": 1.0,
-      "lat": 27.595,
-      "lon": 76.599,
-      "annual_rainfall_mm": 684.7,
-      "monsoon_rainfall_mm": 555.0,
-      "monsoon_share_pct": 81.1
-    },
-    {
-      "district": "Barmer",
-      "population": 3263772,
-      "jjm_fhtc_pct": 21.9,
-      "gw_stress_score": 1.0,
-      "lat": 25.732,
-      "lon": 71.45,
-      "annual_rainfall_mm": 332.8,
-      "monsoon_rainfall_mm": 310.1,
-      "monsoon_share_pct": 93.2
-    },
-    {
-      "district": "Bikaner",
-      "population": 3130813,
-      "jjm_fhtc_pct": 58.3,
-      "gw_stress_score": 1.0,
-      "lat": 28.197,
-      "lon": 73.171,
-      "annual_rainfall_mm": 280.1,
-      "monsoon_rainfall_mm": 231.8,
-      "monsoon_share_pct": 82.7
-    },
-    {
-      "district": "Churu",
-      "population": 2204264,
-      "jjm_fhtc_pct": 67.5,
-      "gw_stress_score": 1.0,
-      "lat": 28.357,
-      "lon": 74.704,
-      "annual_rainfall_mm": 361.6,
-      "monsoon_rainfall_mm": 290.3,
-      "monsoon_share_pct": 80.3
-    },
-    {
-      "district": "Jaipur",
-      "population": 8136049,
-      "jjm_fhtc_pct": 68.0,
-      "gw_stress_score": 1.0,
-      "lat": 26.971,
-      "lon": 75.752,
-      "annual_rainfall_mm": 605.8,
-      "monsoon_rainfall_mm": 518.3,
-      "monsoon_share_pct": 85.6
-    },
-    {
-      "district": "Jaisalmer",
-      "population": 849620,
-      "jjm_fhtc_pct": 54.0,
-      "gw_stress_score": 1.0,
-      "lat": 27.083,
-      "lon": 70.905,
-      "annual_rainfall_mm": 241.4,
-      "monsoon_rainfall_mm": 206.9,
-      "monsoon_share_pct": 85.7
-    },
-    {
-      "district": "Jalor",
-      "population": 2152599,
-      "jjm_fhtc_pct": null,
-      "gw_stress_score": 1.0,
-      "lat": 25.109,
-      "lon": 72.213,
-      "annual_rainfall_mm": 586.7,
-      "monsoon_rainfall_mm": 553.9,
-      "monsoon_share_pct": 94.4
-    },
-    {
       "district": "Jhunjhunun",
       "population": 2275860,
       "jjm_fhtc_pct": 54.3,
-      "gw_stress_score": 1.0,
+      "gw_stress_score": 1.251,
       "lat": 28.1,
       "lon": 75.576,
       "annual_rainfall_mm": 437.1,
@@ -104,10 +27,32 @@
       "monsoon_share_pct": 80.2
     },
     {
+      "district": "Sikar",
+      "population": 2940971,
+      "jjm_fhtc_pct": 66.0,
+      "gw_stress_score": 1.2,
+      "lat": 27.645,
+      "lon": 75.281,
+      "annual_rainfall_mm": 468.3,
+      "monsoon_rainfall_mm": 382.0,
+      "monsoon_share_pct": 81.6
+    },
+    {
+      "district": "Jalor",
+      "population": 2152599,
+      "jjm_fhtc_pct": null,
+      "gw_stress_score": 1.115,
+      "lat": 25.109,
+      "lon": 72.213,
+      "annual_rainfall_mm": 586.7,
+      "monsoon_rainfall_mm": 553.9,
+      "monsoon_share_pct": 94.4
+    },
+    {
       "district": "Nagaur",
       "population": 3945290,
       "jjm_fhtc_pct": 64.9,
-      "gw_stress_score": 1.0,
+      "gw_stress_score": 1.073,
       "lat": 27.068,
       "lon": 74.196,
       "annual_rainfall_mm": 434.7,
@@ -115,15 +60,70 @@
       "monsoon_share_pct": 86.3
     },
     {
-      "district": "Sikar",
-      "population": 2940971,
-      "jjm_fhtc_pct": 66.0,
-      "gw_stress_score": 1.0,
-      "lat": 27.645,
-      "lon": 75.281,
-      "annual_rainfall_mm": 468.3,
-      "monsoon_rainfall_mm": 382.0,
-      "monsoon_share_pct": 81.6
+      "district": "Alwar",
+      "population": 4380933,
+      "jjm_fhtc_pct": 64.4,
+      "gw_stress_score": 1.064,
+      "lat": 27.595,
+      "lon": 76.599,
+      "annual_rainfall_mm": 684.7,
+      "monsoon_rainfall_mm": 555.0,
+      "monsoon_share_pct": 81.1
+    },
+    {
+      "district": "Jaisalmer",
+      "population": 849620,
+      "jjm_fhtc_pct": 54.0,
+      "gw_stress_score": 1.044,
+      "lat": 27.083,
+      "lon": 70.905,
+      "annual_rainfall_mm": 241.4,
+      "monsoon_rainfall_mm": 206.9,
+      "monsoon_share_pct": 85.7
+    },
+    {
+      "district": "Barmer",
+      "population": 3263772,
+      "jjm_fhtc_pct": 21.9,
+      "gw_stress_score": 1.014,
+      "lat": 25.732,
+      "lon": 71.45,
+      "annual_rainfall_mm": 332.8,
+      "monsoon_rainfall_mm": 310.1,
+      "monsoon_share_pct": 93.2
+    },
+    {
+      "district": "Churu",
+      "population": 2204264,
+      "jjm_fhtc_pct": 67.5,
+      "gw_stress_score": 1.014,
+      "lat": 28.357,
+      "lon": 74.704,
+      "annual_rainfall_mm": 361.6,
+      "monsoon_rainfall_mm": 290.3,
+      "monsoon_share_pct": 80.3
+    },
+    {
+      "district": "Bikaner",
+      "population": 3130813,
+      "jjm_fhtc_pct": 58.3,
+      "gw_stress_score": 1.004,
+      "lat": 28.197,
+      "lon": 73.171,
+      "annual_rainfall_mm": 280.1,
+      "monsoon_rainfall_mm": 231.8,
+      "monsoon_share_pct": 82.7
+    },
+    {
+      "district": "Jaipur",
+      "population": 8136049,
+      "jjm_fhtc_pct": 68.0,
+      "gw_stress_score": 1.004,
+      "lat": 26.971,
+      "lon": 75.752,
+      "annual_rainfall_mm": 605.8,
+      "monsoon_rainfall_mm": 518.3,
+      "monsoon_share_pct": 85.6
     },
     {
       "district": "Jodhpur",

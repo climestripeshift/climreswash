@@ -5,8 +5,8 @@ Andhra Pradesh,ANANTAPUR,141,3.35,-0.09,15.24,0.112
 Andhra Pradesh,CHITTOOR,100,6.32,0.17,39.45,0.211
 Andhra Pradesh,CUDDAPAH,76,6.05,0.16,37.62,0.202
 Andhra Pradesh,EAST,84,2.87,0.08,22.48,0.096
-Andhra Pradesh,GUNTUR,87,2.69,0.4,11.98,0.09
-Andhra Pradesh,KRISHNA,96,6.89,0.01,34.61,0.23
+Andhra Pradesh,GUNTUR,87,2.69,0.4,11.98,0.090
+Andhra Pradesh,KRISHNA,96,6.89,0.01,34.61,0.230
 Andhra Pradesh,KURNOOL,46,3.55,0.05,40.5,0.118
 Andhra Pradesh,NELLORE,54,3.22,0.23,17.67,0.107
 Andhra Pradesh,PRAKASAM,91,5.49,-0.54,34.04,0.183
@@ -40,14 +40,14 @@ Assam,NALBARI,3,1.92,1.35,2.33,0.064
 Assam,SIBSAGAR,4,1.89,0.46,3.78,0.063
 Assam,SONITPUR,13,3.22,1.12,7.6,0.107
 Assam,TINSUKIA,8,2.98,1.56,5.27,0.099
-Bihar,ARARIA,9,2.39,1.56,3.43,0.08
+Bihar,ARARIA,9,2.39,1.56,3.43,0.080
 Bihar,AURANGABAD,12,4.46,1.2,11.3,0.149
 Bihar,BANKA,15,4.0,2.13,6.85,0.133
 Bihar,BEGUSARAI,24,4.84,3.45,6.49,0.161
 Bihar,BHAGALPUR,17,4.14,1.1,10.31,0.138
-Bihar,BHOJPUR,33,4.81,1.75,8.21,0.16
+Bihar,BHOJPUR,33,4.81,1.75,8.21,0.160
 Bihar,BUXAR,26,4.56,1.0,10.02,0.152
-Bihar,DARBHANGA,12,2.71,0.87,4.32,0.09
+Bihar,DARBHANGA,12,2.71,0.87,4.32,0.090
 Bihar,GAYA,19,4.94,2.1,13.0,0.165
 Bihar,GOPALGANJ,19,2.66,1.3,4.03,0.089
 Bihar,JAMUI,15,4.65,1.87,8.13,0.155
@@ -70,18 +70,18 @@ Bihar,PURNIA,16,2.93,1.25,4.72,0.098
 Bihar,ROHTAS,14,3.36,0.74,8.94,0.112
 Bihar,SAHARSA,16,3.54,2.19,7.19,0.118
 Bihar,SAMASTIPUR,21,4.1,1.89,5.93,0.137
-Bihar,SARAN,27,3.01,0.45,5.25,0.1
+Bihar,SARAN,27,3.01,0.45,5.25,0.100
 Bihar,SEIKHPURA,7,5.92,3.65,7.7,0.197
 Bihar,SHEOHAR,5,2.76,1.63,3.4,0.092
 Bihar,SITAMARHI,18,1.89,0.73,3.4,0.063
-Bihar,SIWAN,17,3.01,1.5,5.3,0.1
+Bihar,SIWAN,17,3.01,1.5,5.3,0.100
 Bihar,SUPAUL,22,2.54,1.45,4.6,0.085
 Bihar,VAISHALI,26,3.11,0.91,4.53,0.104
 Chandigarh,CHANDIGARH,19,22.35,2.51,64.44,0.745
 Chhattisgarh,BASTAR,27,3.12,1.55,10.81,0.104
-Chhattisgarh,BILASPUR,113,3.89,0.95,40.0,0.13
+Chhattisgarh,BILASPUR,113,3.89,0.95,40.0,0.130
 Chhattisgarh,DHAMTARI,42,4.48,0.95,15.7,0.149
-Chhattisgarh,DURG,119,3.91,0.96,21.24,0.13
+Chhattisgarh,DURG,119,3.91,0.96,21.24,0.130
 Chhattisgarh,JANJGIR,59,3.08,0.8,10.73,0.103
 Chhattisgarh,JASHPUR,74,4.18,0.8,15.2,0.139
 Chhattisgarh,KANKER,10,2.44,1.55,3.35,0.081
@@ -95,34 +95,34 @@ Chhattisgarh,RAJNANDGAON,56,3.55,1.05,10.1,0.118
 Chhattisgarh,SURGUJA,102,4.82,0.78,12.3,0.161
 Delhi,CENTRAL,1,1.95,1.95,1.95,0.065
 Delhi,EAST,8,12.85,3.08,26.43,0.428
-Delhi,NEW,8,9.9,3.7,22.0,0.33
+Delhi,NEW,8,9.9,3.7,22.0,0.330
 Delhi,NORTH,29,7.62,0.62,28.16,0.254
 Delhi,SOUTH,31,20.38,0.84,66.75,0.679
 Delhi,WEST,8,9.05,1.99,35.44,0.302
 Goa,NORTH,32,4.83,1.3,12.93,0.161
 Goa,SOUTH,29,5.5,1.22,11.5,0.183
 Gujarat,Ahmedabad,24,13.73,1.27,76.29,0.458
-Gujarat,Amreli,35,8.41,1.98,25.15,0.28
-Gujarat,Anand,21,9.01,0.82,25.8,0.3
-Gujarat,Banaskantha,29,36.71,4.37,178.71,1.0
+Gujarat,Amreli,35,8.41,1.98,25.15,0.280
+Gujarat,Anand,21,9.01,0.82,25.8,0.300
+Gujarat,Banaskantha,29,36.71,4.37,178.71,1.081
 Gujarat,Bharuch,32,3.81,-1.5,9.46,0.127
 Gujarat,Bhavnagar,33,9.77,1.49,50.58,0.326
 Gujarat,DAMAN,4,2.2,1.45,2.7,0.073
 Gujarat,DIU,3,5.72,4.6,6.37,0.191
 Gujarat,Dohad,26,4.44,0.44,10.04,0.148
-Gujarat,Gandhinagar,22,89.93,4.52,191.17,1.0
+Gujarat,Gandhinagar,22,89.93,4.52,191.17,1.439
 Gujarat,Jamnagar,47,3.92,0.48,11.43,0.131
 Gujarat,Junagadh,54,6.68,0.94,21.76,0.223
 Gujarat,Kachchh,49,11.98,0.26,102.41,0.399
 Gujarat,Kheda,21,7.76,0.36,26.77,0.259
-Gujarat,Mahesana,41,32.11,0.53,174.5,1.0
+Gujarat,Mahesana,41,32.11,0.53,174.5,1.027
 Gujarat,Narmada,19,5.94,1.0,26.76,0.198
 Gujarat,Navsari,19,3.36,0.9,6.18,0.112
 Gujarat,Panchmahals,35,5.94,-0.59,21.02,0.198
-Gujarat,Patan,19,57.28,0.12,148.3,1.0
+Gujarat,Patan,19,57.28,0.12,148.3,1.259
 Gujarat,Porbandar,30,3.97,0.7,8.89,0.132
 Gujarat,Rajkot,47,4.76,0.56,10.41,0.159
-Gujarat,Sabarkantha,38,9.91,1.22,50.46,0.33
+Gujarat,Sabarkantha,38,9.91,1.22,50.46,0.330
 Gujarat,Surat,42,4.6,1.28,13.7,0.153
 Gujarat,Surendranagar,32,4.55,0.31,15.5,0.152
 Gujarat,The,23,2.18,0.2,7.3,0.073
@@ -135,33 +135,33 @@ Haryana,FARIDABAD,4,17.86,2.53,29.75,0.595
 Haryana,FATEHABAD,12,17.03,0.11,56.5,0.568
 Haryana,GURGAON,7,25.39,10.17,38.95,0.846
 Haryana,HISAR,20,6.51,1.55,21.85,0.217
-Haryana,JHAJJAR,12,1.81,0.69,3.29,0.06
+Haryana,JHAJJAR,12,1.81,0.69,3.29,0.060
 Haryana,JIND,22,17.43,1.63,53.07,0.581
 Haryana,KAITHAL,19,27.35,2.66,52.64,0.912
 Haryana,KARNAL,31,20.54,4.82,36.65,0.685
-Haryana,KURUKSHETRA,11,39.21,20.84,45.76,1.0
+Haryana,KURUKSHETRA,11,39.21,20.84,45.76,1.107
 Haryana,MAHENDRAGARH,1,3.27,3.27,3.27,0.109
 Haryana,MEWAT,2,1.68,0.49,2.87,0.056
 Haryana,PALWAL,9,12.85,0.62,28.33,0.428
 Haryana,PANCHKULA,18,10.88,0.86,32.25,0.363
 Haryana,PANIPAT,22,20.26,1.82,38.49,0.675
-Haryana,REWARI,3,37.02,12.1,77.95,1.0
+Haryana,REWARI,3,37.02,12.1,77.95,1.084
 Haryana,ROHTAK,8,2.38,0.4,8.69,0.079
-Haryana,SIRSA,27,13.2,2.11,49.16,0.44
+Haryana,SIRSA,27,13.2,2.11,49.16,0.440
 Haryana,SONIPAT,28,10.06,0.25,37.75,0.335
 Haryana,YAMUNANAGAR,26,15.77,0.29,42.28,0.526
 Himachal Pradesh,HAMIRPUR,1,2.02,2.02,2.02,0.067
 Himachal Pradesh,KANGRA,22,3.81,0.54,10.05,0.127
 Himachal Pradesh,KULLU,1,6.82,6.82,6.82,0.227
-Himachal Pradesh,MANDI,6,3.61,1.91,4.56,0.12
+Himachal Pradesh,MANDI,6,3.61,1.91,4.56,0.120
 Himachal Pradesh,SIRMAUR,13,12.2,1.79,36.25,0.407
-Himachal Pradesh,SOLAN,10,13.5,4.85,29.32,0.45
+Himachal Pradesh,SOLAN,10,13.5,4.85,29.32,0.450
 Himachal Pradesh,UNA,31,6.7,0.75,29.1,0.223
 Jammu and Kashmir,BARAMULA,16,2.59,0.7,6.8,0.086
 Jammu and Kashmir,JAMMU,111,5.44,0.3,32.86,0.181
 Jammu and Kashmir,KATHUA,51,4.62,0.45,23.15,0.154
 Jammu and Kashmir,KUPWARA,22,2.93,0.5,7.2,0.098
-Jammu and Kashmir,PULWAMA,2,7.79,0.35,15.24,0.26
+Jammu and Kashmir,PULWAMA,2,7.79,0.35,15.24,0.260
 Jammu and Kashmir,RAJAURI,34,2.28,0.6,5.42,0.076
 Jammu and Kashmir,SRINAGAR,1,2.8,2.8,2.8,0.093
 Jammu and Kashmir,UDHAMPUR,29,2.93,0.47,24.93,0.098
@@ -175,11 +175,11 @@ Jharkhand,GIRIDIH,6,3.33,2.05,4.9,0.111
 Jharkhand,GODDA,10,5.49,2.53,8.01,0.183
 Jharkhand,GUMLA,26,3.12,0.8,5.9,0.104
 Jharkhand,HAZARIBAG,11,4.01,1.68,6.51,0.134
-Jharkhand,KODARMA,5,2.69,1.85,3.95,0.09
+Jharkhand,KODARMA,5,2.69,1.85,3.95,0.090
 Jharkhand,LOHARDAGA,8,3.64,2.5,7.2,0.121
 Jharkhand,PAKAUR,8,5.08,1.4,8.4,0.169
 Jharkhand,PALAMU,13,6.96,2.1,12.8,0.232
-Jharkhand,RANCHI,31,3.31,1.09,5.64,0.11
+Jharkhand,RANCHI,31,3.31,1.09,5.64,0.110
 Jharkhand,SAHIBGANJ,15,4.1,2.0,6.71,0.137
 Karnataka,Bagalkot,27,4.4,0.66,27.3,0.147
 Karnataka,Bangalore,86,4.75,0.0,27.4,0.158
@@ -191,18 +191,18 @@ Karnataka,Chamarajanagar,26,3.97,0.08,33.43,0.132
 Karnataka,Chikmagalur,77,4.29,0.48,12.85,0.143
 Karnataka,Chitradurga,39,3.4,0.16,15.38,0.113
 Karnataka,Dakshin,95,6.67,1.0,18.91,0.222
-Karnataka,Davanagere,56,2.4,0.1,9.76,0.08
+Karnataka,Davanagere,56,2.4,0.1,9.76,0.080
 Karnataka,Dharwad,22,4.06,0.5,13.91,0.135
 Karnataka,Gadag,23,5.05,0.1,19.98,0.168
 Karnataka,Gulbarga,94,3.4,0.01,15.0,0.113
 Karnataka,Hassan,72,3.5,0.3,10.32,0.117
 Karnataka,Haveri,26,3.09,0.14,10.98,0.103
-Karnataka,Kodagu,75,6.31,0.55,18.6,0.21
+Karnataka,Kodagu,75,6.31,0.55,18.6,0.210
 Karnataka,Kolar,54,5.6,0.04,50.97,0.187
 Karnataka,Koppal,32,3.2,0.82,10.6,0.107
 Karnataka,Mandya,45,2.45,0.05,7.36,0.082
 Karnataka,Mysore,62,3.25,0.4,9.68,0.108
-Karnataka,Raichur,53,2.11,0.0,6.65,0.07
+Karnataka,Raichur,53,2.11,0.0,6.65,0.070
 Karnataka,Shimoga,80,5.21,0.65,12.91,0.174
 Karnataka,Tumkur,73,3.56,0.06,22.08,0.119
 Karnataka,Udupi,60,6.26,0.4,12.12,0.209
@@ -213,7 +213,7 @@ Kerala,IDUKKI,72,4.01,0.35,49.53,0.134
 Kerala,KANNUR,97,6.95,0.7,20.77,0.232
 Kerala,KASARAGOD,119,8.84,1.45,21.3,0.295
 Kerala,KOLLAM,112,5.68,0.2,20.3,0.189
-Kerala,KOTTAYAM,94,3.6,0.0,12.02,0.12
+Kerala,KOTTAYAM,94,3.6,0.0,12.02,0.120
 Kerala,KOZHIKODE,91,4.85,0.35,30.24,0.162
 Kerala,MALAPPURAM,120,6.78,0.72,33.24,0.226
 Kerala,PALAKKAD,140,5.37,0.2,31.94,0.179
@@ -246,13 +246,13 @@ Madhya Pradesh,HOSHANGABAD,17,4.9,0.77,12.3,0.163
 Madhya Pradesh,INDORE,41,4.36,0.33,16.04,0.145
 Madhya Pradesh,JABALPUR,34,4.58,1.38,12.93,0.153
 Madhya Pradesh,JHABUA,14,4.28,0.35,23.57,0.143
-Madhya Pradesh,KATNI,17,5.71,1.83,10.81,0.19
+Madhya Pradesh,KATNI,17,5.71,1.83,10.81,0.190
 Madhya Pradesh,MANDLA,29,2.37,0.5,5.37,0.079
 Madhya Pradesh,MANDSAUR,44,5.56,0.8,22.25,0.185
 Madhya Pradesh,MORENA,9,8.88,0.9,22.4,0.296
 Madhya Pradesh,NARSIMHAPUR,18,4.7,0.9,15.35,0.157
 Madhya Pradesh,NEEMUCH,36,4.12,0.4,11.4,0.137
-Madhya Pradesh,PANNA,27,4.49,0.46,16.79,0.15
+Madhya Pradesh,PANNA,27,4.49,0.46,16.79,0.150
 Madhya Pradesh,RAISEN,30,3.94,-0.25,9.65,0.131
 Madhya Pradesh,RAJGARH,28,4.41,1.0,17.29,0.147
 Madhya Pradesh,RATLAM,48,6.16,1.01,22.4,0.205
@@ -280,9 +280,9 @@ Maharashtra,Buldana,63,5.58,0.44,40.0,0.186
 Maharashtra,Chandrapur,67,3.81,0.5,18.0,0.127
 Maharashtra,Dhule,40,4.77,0.71,13.3,0.159
 Maharashtra,Gadchiroli,37,3.71,1.07,7.1,0.124
-Maharashtra,Gondia,26,3.3,0.6,12.1,0.11
+Maharashtra,Gondia,26,3.3,0.6,12.1,0.110
 Maharashtra,Hingoli,29,4.53,1.9,10.5,0.151
-Maharashtra,Jalgaon,32,7.19,1.3,40.0,0.24
+Maharashtra,Jalgaon,32,7.19,1.3,40.0,0.240
 Maharashtra,Jalna,38,3.12,1.2,5.6,0.104
 Maharashtra,Kolhapur,38,3.27,0.6,7.81,0.109
 Maharashtra,Latur,42,4.08,0.4,15.35,0.136
@@ -304,63 +304,63 @@ Maharashtra,Thane,43,2.56,0.5,5.05,0.085
 Maharashtra,Wardha,62,3.75,0.6,9.9,0.125
 Maharashtra,Washim,45,4.33,1.45,8.3,0.144
 Maharashtra,Yavatmal,87,3.84,0.6,9.9,0.128
-Meghalaya,East,12,2.1,0.15,4.93,0.07
+Meghalaya,East,12,2.1,0.15,4.93,0.070
 Meghalaya,RI,2,2.42,1.98,2.85,0.081
 Meghalaya,West,1,0.52,0.52,0.52,0.017
 Meghalaya,west,8,2.24,1.26,3.89,0.075
 Nagaland,DIMAPUR,4,4.76,0.63,6.73,0.159
 Punjab,AMRITSAR,6,16.39,8.3,26.89,0.546
-Punjab,BARNALA,5,42.43,36.09,45.45,1.0
+Punjab,BARNALA,5,42.43,36.09,45.45,1.139
 Punjab,BATHINDA,24,19.7,4.76,36.1,0.657
-Punjab,FARIDKOT,18,9.9,1.66,23.42,0.33
+Punjab,FARIDKOT,18,9.9,1.66,23.42,0.330
 Punjab,FATEHGARH,13,22.86,2.45,40.23,0.762
 Punjab,FAZILKA,10,3.5,0.98,10.99,0.117
 Punjab,FIROZPUR,4,11.01,4.56,20.19,0.367
 Punjab,GURDASPUR,19,9.79,1.78,20.07,0.326
 Punjab,HOSHIARPUR,28,15.56,2.1,61.9,0.519
-Punjab,JALANDHAR,26,25.79,6.15,40.76,0.86
+Punjab,JALANDHAR,26,25.79,6.15,40.76,0.860
 Punjab,KAPURTHALA,15,20.53,10.67,31.56,0.684
 Punjab,LUDHIANA,18,17.61,3.72,35.8,0.587
 Punjab,MANSA,8,14.03,1.67,22.78,0.468
-Punjab,MOGA,4,32.42,19.1,41.89,1.0
+Punjab,MOGA,4,32.42,19.1,41.89,1.031
 Punjab,MUKTSAR,11,3.07,0.79,11.3,0.102
 Punjab,PATHANKOT,11,6.25,1.56,14.62,0.208
-Punjab,PATIALA,20,30.08,3.58,49.14,1.0
+Punjab,PATIALA,20,30.08,3.58,49.14,1.001
 Punjab,RUPNAGAR,8,10.15,1.62,41.44,0.338
-Punjab,SANGRUR,15,38.14,25.07,45.96,1.0
+Punjab,SANGRUR,15,38.14,25.07,45.96,1.096
 Punjab,SAS,7,6.33,1.9,17.29,0.211
-Punjab,SBS,5,21.61,5.92,28.85,0.72
-Punjab,TARAN,8,20.41,16.16,23.63,0.68
+Punjab,SBS,5,21.61,5.92,28.85,0.720
+Punjab,TARAN,8,20.41,16.16,23.63,0.680
 Rajasthan,AJMER,30,7.11,1.4,18.92,0.237
-Rajasthan,ALWAR,25,35.18,4.06,76.21,1.0
+Rajasthan,ALWAR,25,35.18,4.06,76.21,1.064
 Rajasthan,BANSWARA,33,3.49,1.9,6.9,0.116
 Rajasthan,BARAN,17,2.72,0.71,4.9,0.091
-Rajasthan,BARMER,37,31.1,4.1,98.45,1.0
+Rajasthan,BARMER,37,31.1,4.1,98.45,1.014
 Rajasthan,BHARATPUR,24,16.0,0.06,53.94,0.533
 Rajasthan,BHILWARA,35,5.79,0.5,16.6,0.193
-Rajasthan,BIKANER,39,30.32,5.6,117.83,1.0
+Rajasthan,BIKANER,39,30.32,5.6,117.83,1.004
 Rajasthan,BUNDI,7,2.43,0.75,8.09,0.081
 Rajasthan,CHITTAURGARH,20,6.13,1.3,12.98,0.204
-Rajasthan,CHURU,22,31.1,5.66,66.1,1.0
+Rajasthan,CHURU,22,31.1,5.66,66.1,1.014
 Rajasthan,DAUSA,15,21.8,8.2,60.52,0.727
 Rajasthan,DHAULPUR,12,11.6,0.73,38.8,0.387
 Rajasthan,DUNGARPUR,16,4.05,1.37,8.7,0.135
 Rajasthan,GANGANAGAR,34,14.77,2.65,40.28,0.492
 Rajasthan,HANUMANGARH,32,20.3,0.35,51.68,0.677
-Rajasthan,JAIPUR,93,30.27,0.4,85.97,1.0
-Rajasthan,JAISALMER,50,33.47,3.95,109.94,1.0
-Rajasthan,JALORE,19,40.0,1.91,85.67,1.0
+Rajasthan,JAIPUR,93,30.27,0.4,85.97,1.004
+Rajasthan,JAISALMER,50,33.47,3.95,109.94,1.044
+Rajasthan,JALORE,19,40.0,1.91,85.67,1.115
 Rajasthan,JHALAWAR,25,4.34,0.3,12.12,0.145
-Rajasthan,JHUNJHUNU,10,56.15,38.5,73.8,1.0
+Rajasthan,JHUNJHUNU,10,56.15,38.5,73.8,1.251
 Rajasthan,JODHPUR,41,23.01,1.4,121.55,0.767
 Rajasthan,KARAULI,18,13.43,0.19,48.36,0.448
 Rajasthan,KOTA,16,5.21,0.52,18.16,0.174
-Rajasthan,NAGAUR,16,35.99,11.2,111.8,1.0
+Rajasthan,NAGAUR,16,35.99,11.2,111.8,1.073
 Rajasthan,PALI,23,9.35,1.32,33.1,0.312
 Rajasthan,PRATAPGARH,15,4.12,2.5,9.0,0.137
 Rajasthan,RAJSAMAND,28,5.68,1.58,12.99,0.189
 Rajasthan,SAWAI,16,5.2,0.71,15.61,0.173
-Rajasthan,SIKAR,30,49.48,3.52,84.14,1.0
+Rajasthan,SIKAR,30,49.48,3.52,84.14,1.200
 Rajasthan,SIROHI,14,9.28,1.29,26.37,0.309
 Rajasthan,TONK,16,3.97,0.15,13.3,0.132
 Rajasthan,UDAIPUR,40,4.52,1.5,13.4,0.151
@@ -387,16 +387,16 @@ Tamil Nadu,Sivaganga,11,4.68,0.98,19.3,0.156
 Tamil Nadu,Thanjavur,9,3.51,0.03,12.41,0.117
 Tamil Nadu,Theni,16,5.05,0.0,20.2,0.168
 Tamil Nadu,Thiruvannamalai,18,2.36,0.25,6.54,0.079
-Tamil Nadu,Tiruchirappalli,23,3.61,0.72,10.73,0.12
+Tamil Nadu,Tiruchirappalli,23,3.61,0.72,10.73,0.120
 Tamil Nadu,Tirunelveli,43,4.64,0.32,15.07,0.155
 Tamil Nadu,Tiruppur,16,3.67,0.25,10.83,0.122
 Tamil Nadu,Tiruvallur,18,2.16,0.0,4.51,0.072
-Tamil Nadu,Tiruvarur,6,1.8,1.45,1.96,0.06
-Tamil Nadu,Tuticorin,24,3.61,0.43,7.76,0.12
+Tamil Nadu,Tiruvarur,6,1.8,1.45,1.96,0.060
+Tamil Nadu,Tuticorin,24,3.61,0.43,7.76,0.120
 Tamil Nadu,Vellore,28,3.57,0.25,10.24,0.119
 Tamil Nadu,Villupuram,29,1.37,0.0,3.57,0.046
 Tamil Nadu,Virudhunagar,15,2.84,0.25,5.8,0.095
-Telangana,ADILABAD,106,6.89,-0.02,62.2,0.23
+Telangana,ADILABAD,106,6.89,-0.02,62.2,0.230
 Telangana,HYDERABAD,25,5.95,0.15,30.5,0.198
 Telangana,KARIMNAGAR,81,3.65,-0.82,26.99,0.122
 Telangana,KHAMMAM,85,5.29,0.03,44.7,0.176
@@ -409,7 +409,7 @@ Telangana,WARANGAL,92,2.78,-0.11,12.41,0.093
 Tripura,DHALAI,4,3.56,1.59,6.23,0.119
 Tripura,NORTH,7,3.34,1.05,6.71,0.111
 Tripura,SOUTH,5,2.61,0.98,3.49,0.087
-Tripura,WEST,8,7.8,1.98,26.38,0.26
+Tripura,WEST,8,7.8,1.98,26.38,0.260
 Uttar Pradesh,AGRA,8,16.66,0.4,44.14,0.555
 Uttar Pradesh,ALIGARH,7,5.76,0.29,10.8,0.192
 Uttar Pradesh,ALLAHABAD,29,4.52,0.9,15.19,0.151
@@ -418,7 +418,7 @@ Uttar Pradesh,AURAIYA,6,5.51,0.45,18.37,0.184
 Uttar Pradesh,AZAMGARH,14,3.92,0.33,8.04,0.131
 Uttar Pradesh,BAGHPAT,1,26.17,26.17,26.17,0.872
 Uttar Pradesh,BAHRAICH,12,3.09,1.18,9.06,0.103
-Uttar Pradesh,BALLIA,18,3.01,0.57,7.9,0.1
+Uttar Pradesh,BALLIA,18,3.01,0.57,7.9,0.100
 Uttar Pradesh,BALRAMPUR,16,2.65,0.65,7.74,0.088
 Uttar Pradesh,BANDA,8,4.26,0.15,12.38,0.142
 Uttar Pradesh,BARABANKI,21,3.87,1.1,9.65,0.129
@@ -432,7 +432,7 @@ Uttar Pradesh,CHITRAKOOT,9,7.9,1.6,15.81,0.263
 Uttar Pradesh,DEORIA,7,2.52,0.83,4.24,0.084
 Uttar Pradesh,ETAH,6,7.61,1.96,13.39,0.254
 Uttar Pradesh,ETAWAH,6,10.6,1.37,34.82,0.353
-Uttar Pradesh,FAIZABAD,10,3.61,1.38,6.38,0.12
+Uttar Pradesh,FAIZABAD,10,3.61,1.38,6.38,0.120
 Uttar Pradesh,FARRUKHABAD,2,10.37,4.37,16.37,0.346
 Uttar Pradesh,FATEHPUR,10,6.97,2.56,27.13,0.232
 Uttar Pradesh,FIROZABAD,3,14.23,7.67,18.65,0.474
@@ -440,7 +440,7 @@ Uttar Pradesh,GAUTAM,4,23.53,1.93,40.35,0.784
 Uttar Pradesh,GHAZIABAD,5,10.85,0.84,20.67,0.362
 Uttar Pradesh,GHAZIPUR,16,3.44,0.6,8.67,0.115
 Uttar Pradesh,GONDA,9,2.77,1.8,5.7,0.092
-Uttar Pradesh,GORAKHPUR,4,3.0,1.59,4.08,0.1
+Uttar Pradesh,GORAKHPUR,4,3.0,1.59,4.08,0.100
 Uttar Pradesh,HAMIRPUR,6,3.5,1.14,11.04,0.117
 Uttar Pradesh,HARDOI,18,3.96,0.59,9.54,0.132
 Uttar Pradesh,HATHRAS,3,4.71,0.87,10.75,0.157
@@ -449,7 +449,7 @@ Uttar Pradesh,JAUNPUR,23,4.36,0.96,16.72,0.145
 Uttar Pradesh,JHANSI,17,4.52,1.96,6.51,0.151
 Uttar Pradesh,JYOTIBA,5,16.17,14.13,19.89,0.539
 Uttar Pradesh,KANNAUJ,2,25.48,25.14,25.83,0.849
-Uttar Pradesh,KANPUR,17,4.81,0.54,18.77,0.16
+Uttar Pradesh,KANPUR,17,4.81,0.54,18.77,0.160
 Uttar Pradesh,KAUSHAMBI,5,13.88,2.96,21.41,0.463
 Uttar Pradesh,KHERI,7,2.55,1.34,6.53,0.085
 Uttar Pradesh,KUSHINAGAR,4,2.25,1.2,3.29,0.075
@@ -478,20 +478,20 @@ Uttar Pradesh,SONBHADRA,15,6.32,2.57,13.48,0.211
 Uttar Pradesh,SULTANPUR,33,4.52,1.23,11.55,0.151
 Uttar Pradesh,UNNAO,13,3.87,0.55,10.65,0.129
 Uttar Pradesh,VARANASI,7,6.49,1.4,11.1,0.216
-West Bengal,BANKURA,78,3.91,0.69,13.73,0.13
-West Bengal,BARDDHAMAN,95,8.71,0.69,28.4,0.29
+West Bengal,BANKURA,78,3.91,0.69,13.73,0.130
+West Bengal,BARDDHAMAN,95,8.71,0.69,28.4,0.290
 West Bengal,BIRBHUM,81,8.12,1.27,28.1,0.271
 West Bengal,CALCUTTA,11,17.67,7.07,21.98,0.589
 West Bengal,DARJILING,19,3.21,1.28,6.68,0.107
-West Bengal,EAST,20,11.11,1.13,19.32,0.37
+West Bengal,EAST,20,11.11,1.13,19.32,0.370
 West Bengal,HAORA,23,6.04,0.49,16.33,0.201
 West Bengal,HUGLI,35,10.0,0.45,26.5,0.333
 West Bengal,JALPAIGURI,34,3.42,1.15,16.14,0.114
 West Bengal,KOCHBIHAR,23,2.56,0.99,6.46,0.085
 West Bengal,MALDAH,32,4.93,0.9,11.05,0.164
-West Bengal,MURSHIDABAD,53,11.69,0.58,30.49,0.39
+West Bengal,MURSHIDABAD,53,11.69,0.58,30.49,0.390
 West Bengal,NADIA,57,5.21,1.25,11.42,0.174
 West Bengal,NORTH,62,5.07,0.63,13.26,0.169
 West Bengal,PURULIYA,57,3.76,1.84,7.51,0.125
-West Bengal,SOUTH,82,8.1,0.4,19.4,0.27
+West Bengal,SOUTH,82,8.1,0.4,19.4,0.270
 West Bengal,WEST,64,7.7,0.51,17.36,0.257
