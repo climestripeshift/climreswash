@@ -68,6 +68,23 @@ interface NfhsTrendsData {
   }>;
 }
 
+interface RajGwDistrict {
+  district: string; population: number;
+  jjm_fhtc_pct: number|null; gw_stress_score: number;
+  lat: number; lon: number;
+  annual_rainfall_mm: number; monsoon_rainfall_mm: number; monsoon_share_pct: number;
+}
+
+interface RajGwData {
+  meta: { n_districts: number; years: string; rainfall_source: string; gw_stress_source: string; jjm_source: string; scope: string };
+  correlations: {
+    rainfall_vs_gw_stress: number; monsoon_rainfall_vs_gw_stress: number;
+    rainfall_vs_jjm_fhtc: number; gw_stress_vs_jjm_fhtc: number;
+    n_districts_missing_jjm_data: number;
+  };
+  districts: RajGwDistrict[];
+}
+
 type TrendIndicator = "water"|"stunting"|"wasting"|"severe_wasting"|"underweight"|"diarrhoea"|"mhm";
 
 const TREND_LABELS: Record<TrendIndicator, string> = {
@@ -260,6 +277,12 @@ export default function InsightsPage() {
     staleTime: Infinity,
   });
 
+  const { data: rajGw } = useQuery<RajGwData>({
+    queryKey: ["rajasthan-gw"],
+    queryFn: () => fetch("/data/rajasthan_gw_rainfall_jjm.json").then(r => r.json()),
+    staleTime: Infinity,
+  });
+
   const [activeSection, setActiveSection]   = useState("relationships");
   const [filterState, setFilterState]       = useState("All India");
   const [districtSearch, setDistrictSearch] = useState("");
@@ -300,6 +323,27 @@ export default function InsightsPage() {
       points: c.points.map(p => ({ x: p.x, y: p.y, d: p.state, s: p.state })),
     } as RelationshipData));
   }, [trends]);
+
+  const rajGwScatters = useMemo(() => {
+    if (!rajGw) return [];
+    const jjmDistricts = rajGw.districts.filter(d => d.jjm_fhtc_pct != null);
+    return [
+      {
+        title: "Rainfall vs Groundwater Stress", r: rajGw.correlations.rainfall_vs_gw_stress,
+        n: rajGw.districts.length, x_key: "x", y_key: "y",
+        x_label: "Annual rainfall (mm)", y_label: "GW stress (0-1)",
+        interpretation: `10-yr mean rainfall (Open-Meteo ERA5) vs WRIS well-depth stress score, n=${rajGw.districts.length} Rajasthan districts. Strong negative — natural recharge drives groundwater health almost on its own.`,
+        points: rajGw.districts.map(d => ({ x: d.annual_rainfall_mm, y: d.gw_stress_score, d: d.district, s: "Rajasthan" })),
+      } as RelationshipData,
+      {
+        title: "Groundwater Stress vs JJM Tap Coverage", r: rajGw.correlations.gw_stress_vs_jjm_fhtc,
+        n: jjmDistricts.length, x_key: "x", y_key: "y",
+        x_label: "GW stress (0-1)", y_label: "JJM tap coverage (%)",
+        interpretation: `n=${jjmDistricts.length} districts with JJM data (${rajGw.correlations.n_districts_missing_jjm_data} excluded — no data in pipeline). Near-zero correlation — scheme rollout doesn't track aquifer sustainability.`,
+        points: jjmDistricts.map(d => ({ x: d.gw_stress_score, y: d.jjm_fhtc_pct as number, d: d.district, s: "Rajasthan" })),
+      } as RelationshipData,
+    ];
+  }, [rajGw]);
 
   const filteredDistricts = useMemo(() => {
     let rows = data?.all_districts ?? [];
@@ -360,6 +404,7 @@ export default function InsightsPage() {
   const sections = [
     { id:"relationships", label:"Climate-Health",    icon:"🔗" },
     { id:"nfhs6",         label:"NFHS-6 Trends",      icon:"📈" },
+    { id:"rajgw",         label:"Rajasthan Groundwater", icon:"🕳️" },
     { id:"wash",          label:"WASH-Health",        icon:"💧" },
     { id:"districts",     label:"All Districts",      icon:"🗺️" },
     { id:"future",        label:"Future Projections", icon:"📅" },
@@ -631,6 +676,110 @@ export default function InsightsPage() {
                   {trendScatters.map(rel => (
                     <ScatterCard key={rel.title} rel={rel} filterState={filterState} highlightDistrict={districtSearch} />
                   ))}
+                </div>
+              </>
+            )}
+          </section>
+        )}
+
+        {/* ── TAB: Rajasthan Groundwater ────────────────────────────── */}
+        {activeSection === "rajgw" && (
+          <section className="space-y-5">
+            {!rajGw ? (
+              <div className="text-sm text-muted-foreground py-8 text-center">Loading Rajasthan groundwater data…</div>
+            ) : (
+              <>
+                <div className="rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-4 space-y-1.5">
+                  <h2 className="text-sm font-bold text-cyan-400">Rajasthan: does rainfall explain groundwater stress, and does that drive JJM rollout?</h2>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    All {rajGw.meta.n_districts} Rajasthan districts · {rajGw.meta.years} mean annual rainfall from the{" "}
+                    <strong className="text-foreground">Open-Meteo ERA5 archive</strong> (real precipitation, not a hazard-frequency
+                    proxy) at population-weighted district centroids, correlated against <strong className="text-foreground">WRIS</strong>{" "}
+                    observation-well groundwater stress and <strong className="text-foreground">JJM IMIS</strong> tap-water coverage.
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Scope: {rajGw.meta.scope}.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {[
+                    { label:"Rain → GW stress", r: rajGw.correlations.rainfall_vs_gw_stress, desc:"annual rainfall" },
+                    { label:"Monsoon → GW stress", r: rajGw.correlations.monsoon_rainfall_vs_gw_stress, desc:"Jun-Sep only" },
+                    { label:"Rain → JJM coverage", r: rajGw.correlations.rainfall_vs_jjm_fhtc, desc:"rainfall vs taps" },
+                    { label:"GW stress → JJM coverage", r: rajGw.correlations.gw_stress_vs_jjm_fhtc, desc:"stress vs taps" },
+                  ].map(c => {
+                    const badge = rBadge(c.r);
+                    return (
+                      <div key={c.label} className="rounded-lg border border-border bg-card p-2.5 text-center">
+                        <div className={badge.cls + " mx-auto w-fit"}>{badge.label}</div>
+                        <div className="text-[11px] font-medium mt-1.5 leading-tight">{c.label}</div>
+                        <div className="text-[10px] text-muted-foreground">{c.desc}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {rajGwScatters.map(rel => (
+                    <ScatterCard key={rel.title} rel={rel} filterState="All India" highlightDistrict={districtSearch} />
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
+                    <h3 className="text-sm font-semibold text-emerald-400 mb-1.5">🚰 The canal-recharge outlier</h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Ganganagar (267mm/yr) and Hanumangarh (337mm/yr) get arid-zone rainfall — similar to Bikaner or Churu — but
+                      their groundwater stress is far lower (0.49 and 0.68 vs 1.00) and their JJM coverage is the highest in the
+                      state (89–91%). The Indira Gandhi Canal is doing real artificial recharge here, visible even without
+                      MGNREGS data: rainfall alone underpredicts their groundwater health.
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
+                    <h3 className="text-sm font-semibold text-amber-400 mb-1.5">⚠️ Data gap, not zero coverage</h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Jalor, Dhaulpur and Chittaurgarh have no JJM record at all in the pipeline — every hex in these districts
+                      is null, not 0%. They're correctly excluded from the JJM correlations above rather than counted as
+                      zero coverage, which would have distorted the result.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-border bg-card overflow-hidden">
+                  <div className="px-4 py-2.5 border-b border-border">
+                    <h3 className="text-sm font-semibold">All 33 districts, sorted by groundwater stress (worst first)</h3>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead className="border-b border-border">
+                        <tr>
+                          <th className={thCls + " text-left pl-3"}>District</th>
+                          <th className={thCls + " text-right"}>Pop</th>
+                          <th className={thCls + " text-right"}>GW stress</th>
+                          <th className={thCls + " text-right"}>JJM tap %</th>
+                          <th className={thCls + " text-right"}>Annual rain</th>
+                          <th className={thCls + " text-right pr-3"}>Monsoon rain</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rajGw.districts.map(d => (
+                          <tr key={d.district} className="border-b border-border/30 hover:bg-muted/20">
+                            <td className="px-3 py-1.5 font-medium whitespace-nowrap">{d.district}</td>
+                            <td className="px-2 py-1.5 text-right font-mono text-muted-foreground text-[10px]">{FMT_POP(d.population)}</td>
+                            <td className={`px-2 py-1.5 text-right font-mono ${d.gw_stress_score >= 0.9 ? "text-red-400 font-semibold" : d.gw_stress_score >= 0.5 ? "text-orange-400" : "text-green-400"}`}>
+                              {d.gw_stress_score.toFixed(2)}
+                            </td>
+                            <td className={`px-2 py-1.5 text-right font-mono ${d.jjm_fhtc_pct == null ? "text-muted-foreground" : d.jjm_fhtc_pct < 50 ? "text-red-400" : d.jjm_fhtc_pct < 75 ? "text-yellow-500" : "text-green-400"}`}>
+                              {d.jjm_fhtc_pct != null ? `${d.jjm_fhtc_pct.toFixed(1)}%` : "— no data"}
+                            </td>
+                            <td className="px-2 py-1.5 text-right font-mono">{d.annual_rainfall_mm.toFixed(0)} mm</td>
+                            <td className="px-2 py-1.5 text-right font-mono pr-3">{d.monsoon_rainfall_mm.toFixed(0)} mm</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </>
             )}
