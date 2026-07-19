@@ -1493,7 +1493,7 @@ export default function HexMapPage() {
   }, [rankQ.data]);
 
   const hexQ = useQuery<any>({
-    queryKey: ["india-hex-props"],
+    queryKey: ["india-hex-props-geojson"],
     queryFn: async () => {
       try {
         const props: any[] = await fetch("/data/india_hex_props.json").then((r) => r.json());
@@ -1519,6 +1519,7 @@ export default function HexMapPage() {
     queryKey: ["india-hex-future"],
     queryFn: () => fetch("/data/india_hex_future.json").then((r) => r.json()),
     staleTime: Infinity,
+    enabled: FUTURE_KEYS.has(attr),
   });
 
   const nfhs5ExtraQ = useQuery<Record<string, any>>({

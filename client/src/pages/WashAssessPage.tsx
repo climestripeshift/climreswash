@@ -544,16 +544,18 @@ export default function WashAssessPage() {
     queryKey: ["sbm-toilet-types"],
     queryFn: () => fetch("/data/sbm_toilet_types.json").then(r => r.json()),
     staleTime: Infinity,
+    enabled: !!selectedDistrict,
   });
 
   const { data: jjmFhtc } = useQuery<Record<string, any>>({
     queryKey: ["jjm-district-fhtc"],
     queryFn: () => fetch("/data/jjm_district_fhtc.json").then(r => r.json()),
     staleTime: Infinity,
+    enabled: !!selectedDistrict,
   });
 
   const { data: hexProps } = useQuery<any[]>({
-    queryKey: ["hex-props-wash"],
+    queryKey: ["india-hex-props-raw"],
     queryFn: () => fetch("/data/india_hex_props.json").then(r => r.json()),
     staleTime: Infinity,
   });
@@ -819,7 +821,7 @@ export default function WashAssessPage() {
       season != null,                                                              // seasonality
       hexAgg != null,                                                              // hex auto-data
       pct("jjm_tap_pct", jjmData?.fhtc_pct ?? null) != null,                    // water — JJM IMIS or manual only
-      pct("toilet_od_pct", null) != null || pct("toilet_twin_pit_pct", null) != null, // sanitation — manual only
+      pct("toilet_od_pct", null) != null || pct("toilet_twin_pit_pct", hexAgg?.sanitation_pct != null ? hexAgg.sanitation_pct : null) != null, // sanitation — manual or NFHS-5 auto fallback (matches sanitPct logic below)
       manual.hwws_pct != null,                                                    // hygiene manual
       manual.swm_coverage_pct != null || manual.rrc_present != null,             // waste management
       manual.lwm_type != null,                                                    // LWM type
@@ -1635,7 +1637,7 @@ export default function WashAssessPage() {
                     <AlertTriangle className="w-3 h-3" /> Burden
                   </div>
                   <StatRow label="Burden days/yr" value={hexAgg.burden_days?.toFixed(0)} source="derived" />
-                  <StatRow label="Active hazards" value={hexAgg.cascade_count != null ? Math.round(hexAgg.cascade_count).toString() : null} source="derived" />
+                  <StatRow label="WASH cascade rules" value={hexAgg.cascade_count != null ? Math.round(hexAgg.cascade_count).toString() : null} source="derived" />
                   <StatRow label="Air quality" value={hexAgg.pollution_risk?.toFixed(2)} unit="/10" source="derived" />
                 </div>
               </div>

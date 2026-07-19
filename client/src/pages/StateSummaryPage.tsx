@@ -17,7 +17,7 @@ export default function StateSummaryPage() {
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   const hexQ = useQuery<any[]>({
-    queryKey: ["hex-props-state-summary"],
+    queryKey: ["india-hex-props-raw"],
     queryFn: () => fetch("/data/india_hex_props.json").then((r) => r.json()),
     staleTime: Infinity,
   });

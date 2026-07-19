@@ -115,7 +115,7 @@ export default function ReportPage() {
   const districtName = decodeURIComponent(params.district || "");
 
   const hexQ = useQuery<any[]>({
-    queryKey: ["hex-props-report"],
+    queryKey: ["india-hex-props-raw"],
     queryFn: () => fetch("/data/india_hex_props.json").then((r) => r.json()),
     staleTime: Infinity,
   });

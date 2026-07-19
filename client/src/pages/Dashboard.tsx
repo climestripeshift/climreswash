@@ -242,7 +242,7 @@ export default function Dashboard() {
   const [selected, setSelected] = useState<any | null>(null);
 
   const hexQ = useQuery<any[]>({
-    queryKey: ["hex-props-dashboard"],
+    queryKey: ["india-hex-props-raw"],
     queryFn: () => fetch("/data/india_hex_props.json").then(r => r.json()),
     staleTime: Infinity,
   });

@@ -666,7 +666,7 @@ export default function ForecastPage() {
   const mapRef = useRef<LeafletMap | null>(null);
 
   const hexQ = useQuery<any>({
-    queryKey: ["india-hex-props-forecast"],
+    queryKey: ["india-hex-props-geojson"],
     queryFn: async () => {
       try {
         const props: any[] = await fetch("/data/india_hex_props.json").then((r) => r.json());
