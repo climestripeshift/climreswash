@@ -782,10 +782,20 @@ function FilterSidebar({
 // ── Canvas + map setup ────────────────────────────────────────────────────────
 
 const canvasRenderer = L.canvas({ padding: 0.5 });
+// Dedicated pane + renderer for state/district boundaries, kept above the hex
+// canvas so boundary clicks are never swallowed by whichever layer happened
+// to finish loading (and therefore drawing) last.
+const boundaryRenderer = L.svg({ pane: "boundaries" });
 
 function SetupCanvas() {
   const map = useMap();
-  useEffect(() => { (map as any).options.renderer = canvasRenderer; }, [map]);
+  useEffect(() => {
+    (map as any).options.renderer = canvasRenderer;
+    if (!map.getPane("boundaries")) {
+      map.createPane("boundaries");
+      map.getPane("boundaries")!.style.zIndex = "450";
+    }
+  }, [map]);
   return null;
 }
 
@@ -1320,10 +1330,10 @@ function BoundaryLayers({
   });
 
   const districtStyle = useCallback(() => ({
-    fillOpacity: 0.01, color: "#ffffff", weight: 1.5, dashArray: "5 3", opacity: 0.8,
+    fillOpacity: 0.01, color: "#ffffff", weight: 1.5, dashArray: "5 3", opacity: 0.8, renderer: boundaryRenderer,
   }), []);
   const stateStyle = useCallback(() => ({
-    fillOpacity: 0.01, color: "#f59e0b", weight: 2.5,
+    fillOpacity: 0.01, color: "#f59e0b", weight: 2.5, renderer: boundaryRenderer,
   }), []);
 
   const onDistrictFeature = useCallback((feature: any, layer: any) => {
@@ -1466,6 +1476,16 @@ export default function HexMapPage() {
   const handleBoundaryClick = useCallback((type: "state" | "district", name: string, stateName: string) => {
     setClickedBoundary({ type, name, stateName });
     setClickedHex(null);
+    // Clicking a boundary on the map now filters the hex grid the same way
+    // the sidebar state/district dropdowns already do — hiding everything
+    // outside the clicked area.
+    if (type === "state") {
+      setSelectedState(name);
+      setSelectedDistrict("All");
+    } else {
+      setSelectedState(stateName);
+      setSelectedDistrict(name);
+    }
   }, []);
   const [sidebarOpen, setSidebarOpen]         = useState(!presentMode && window.innerWidth > 768);
   const [crossFilters, setCrossFilters]       = useState<CrossFilter[]>([]);
@@ -1592,6 +1612,10 @@ export default function HexMapPage() {
 
   const handleStateChange = useCallback((state: string) => {
     setSelectedState(state); setSelectedDistrict("All");
+    setClickedHex(null);
+    // Selecting a state opens the same state-wide summary a map click would —
+    // no need to hunt for the (thin) boundary line on the map itself.
+    setClickedBoundary(state === "All India" ? null : { type: "state", name: state, stateName: state });
     if (state === "All India" || !hexQ.data) return;
     fitToFeatures(hexQ.data.features.filter((f: any) => f.properties.state === state));
   }, [hexQ.data, fitToFeatures]);
