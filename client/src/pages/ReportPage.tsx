@@ -108,6 +108,52 @@ function MetricCard({ label, value, sub, color }: { label: string; value: string
   );
 }
 
+function NfhsFullProfile({ data }: {
+  data: { state: string; categories: Record<string, { indicator: string; nfhs5: number; nfhs4: number | null }[]> };
+}) {
+  const categories = Object.entries(data.categories);
+  const total = categories.reduce((s, [, v]) => s + v.length, 0);
+  return (
+    <Section title={`NFHS-5 Full Profile — ${total} indicators across ${categories.length} categories`}>
+      <style>{`
+        @media print {
+          .nfhs-full-profile details summary { display: none; }
+          .nfhs-full-profile details > div { display: block !important; }
+        }
+      `}</style>
+      <div className="nfhs-full-profile">
+        {categories.map(([category, indicators], i) => (
+          <details key={category} open={i === 0} style={{ marginBottom: 8, border: "1px solid #e5e7eb", borderRadius: 8, overflow: "hidden" }}>
+            <summary style={{ padding: "8px 10px", fontSize: 11, fontWeight: 700, color: "#374151", background: "#f9fafb", cursor: "pointer" }}>
+              {category} <span style={{ fontWeight: 400, color: "#9ca3af" }}>({indicators.length})</span>
+            </summary>
+            <div style={{ padding: "4px 10px 8px" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10 }}>
+                <thead>
+                  <tr style={{ color: "#9ca3af", textAlign: "left" }}>
+                    <th style={{ fontWeight: 600, padding: "2px 6px 2px 0" }}>Indicator</th>
+                    <th style={{ fontWeight: 600, padding: "2px 6px", textAlign: "right", width: 60 }}>NFHS-5</th>
+                    <th style={{ fontWeight: 600, padding: "2px 0", textAlign: "right", width: 60 }}>NFHS-4</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {indicators.map((ind, j) => (
+                    <tr key={j} style={{ borderTop: "1px solid #f3f4f6" }}>
+                      <td style={{ padding: "3px 6px 3px 0", color: "#374151" }}>{ind.indicator}</td>
+                      <td style={{ padding: "3px 6px", textAlign: "right", fontWeight: 700, color: "#111827" }}>{ind.nfhs5}</td>
+                      <td style={{ padding: "3px 0", textAlign: "right", color: "#9ca3af" }}>{ind.nfhs4 ?? "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </details>
+        ))}
+      </div>
+    </Section>
+  );
+}
+
 // ── Main Report ──────────────────────────────────────────────────────────────
 
 export default function ReportPage() {
@@ -135,6 +181,12 @@ export default function ReportPage() {
   const nfhs5ExtraQ = useQuery<Record<string, any>>({
     queryKey: ["nfhs5-extra"],
     queryFn: () => fetch("/data/nfhs5_extra.json").then((r) => r.json()),
+    staleTime: Infinity,
+  });
+
+  const nfhs5FullQ = useQuery<Record<string, { state: string; categories: Record<string, { indicator: string; nfhs5: number; nfhs4: number | null }[]> }>>({
+    queryKey: ["nfhs5-full-profile"],
+    queryFn: () => fetch("/data/nfhs5_full_profile.json").then((r) => r.json()),
     staleTime: Infinity,
   });
 
@@ -244,6 +296,10 @@ export default function ReportPage() {
   const nfhsExtra = useMemo(() =>
     nfhs5ExtraQ.data?.[districtName] ?? null,
   [nfhs5ExtraQ.data, districtName]);
+
+  const nfhsFull = useMemo(() =>
+    nfhs5FullQ.data?.[districtName] ?? null,
+  [nfhs5FullQ.data, districtName]);
 
   const jjmData = useMemo(() => {
     if (!jjmQ.data) return null;
@@ -380,6 +436,9 @@ export default function ReportPage() {
             })}
           </div>
         </Section>
+
+        {/* ── NFHS-5 FULL PROFILE (all indicators, all categories) ─────── */}
+        {nfhsFull && <NfhsFullProfile data={nfhsFull} />}
 
         {/* ── JJM & SBM FIELD DATA ────────────────────────────────────── */}
         {(jjmData || sbmData) && (
