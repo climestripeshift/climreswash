@@ -59,6 +59,23 @@ const TIER_META: Record<string, { label: string; color: string }> = {
   low:      { label: "Low",       color: "#16a34a" },
 };
 
+// Hex-data state name → NFHS-6 fact-sheet state name (mirrors compute_nfhs_trends.py HEX_TO_NFHS)
+const NFHS6_STATE_ALIAS: Record<string, string> = {
+  "Andaman & Nicobar Island": "Andaman & Nicobar Islands",
+  "Dadra & Nagar Haveli": "Dadra & Nagar Haveli and Daman & Diu",
+  "Daman & Diu": "Dadra & Nagar Haveli and Daman & Diu",
+};
+
+const NFHS6_TREND_META: Record<string, string> = {
+  water: "Improved Water Access",
+  stunting: "Child Stunting",
+  wasting: "Child Wasting",
+  severe_wasting: "Severe Wasting",
+  underweight: "Child Underweight",
+  diarrhoea: "Diarrhoea Prevalence (children)",
+  mhm: "Hygienic Menstrual Protection",
+};
+
 function fmt(n: number) {
   return n >= 1e7 ? `${(n / 1e7).toFixed(1)} Cr` : n >= 1e5 ? `${(n / 1e5).toFixed(1)} L` : n.toLocaleString();
 }
@@ -154,6 +171,44 @@ function NfhsFullProfile({ data }: {
   );
 }
 
+function Nfhs6StateTrend({ districtName, row }: { districtName: string; row: any }) {
+  return (
+    <Section title={`NFHS-6 Trends (state-level) — ${row.state}${row.small_sample ? " · small sample, wide CI" : ""}`}>
+      <div style={{ fontSize: 10, color: "#9ca3af", marginBottom: 10, lineHeight: 1.5 }}>
+        NFHS-6 fact sheets publish state totals only, not district breakdowns — the figures below describe{" "}
+        <strong style={{ color: "#6b7280" }}>{row.state}</strong> as a whole, not {districtName} specifically.
+        Sanitation, anaemia, clean fuel and handwashing aren't published in NFHS-6, so those indicators above stay NFHS-5.
+      </div>
+      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
+        <thead>
+          <tr style={{ color: "#9ca3af", textAlign: "left" }}>
+            <th style={{ fontWeight: 600, padding: "2px 6px 4px 0" }}>Indicator</th>
+            <th style={{ fontWeight: 600, padding: "2px 6px 4px", textAlign: "right", width: 60 }}>NFHS-5</th>
+            <th style={{ fontWeight: 600, padding: "2px 6px 4px", textAlign: "right", width: 60 }}>NFHS-6</th>
+            <th style={{ fontWeight: 600, padding: "2px 0 4px", textAlign: "right", width: 64 }}>Change</th>
+          </tr>
+        </thead>
+        <tbody>
+          {Object.entries(NFHS6_TREND_META).map(([key, label]) => {
+            const cell = row[key];
+            if (!cell) return null;
+            return (
+              <tr key={key} style={{ borderTop: "1px solid #f3f4f6" }}>
+                <td style={{ padding: "4px 6px 4px 0", color: "#374151" }}>{label}</td>
+                <td style={{ padding: "4px 6px", textAlign: "right", color: "#9ca3af" }}>{cell.nfhs5}%</td>
+                <td style={{ padding: "4px 6px", textAlign: "right", fontWeight: 700, color: "#111827" }}>{cell.nfhs6}%</td>
+                <td style={{ padding: "4px 0", textAlign: "right", fontWeight: 700, color: cell.improved ? "#16a34a" : "#dc2626" }}>
+                  {cell.delta > 0 ? "+" : ""}{cell.delta}pp
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </Section>
+  );
+}
+
 // ── Main Report ──────────────────────────────────────────────────────────────
 
 export default function ReportPage() {
@@ -187,6 +242,12 @@ export default function ReportPage() {
   const nfhs5FullQ = useQuery<Record<string, { state: string; categories: Record<string, { indicator: string; nfhs5: number; nfhs4: number | null }[]> }>>({
     queryKey: ["nfhs5-full-profile"],
     queryFn: () => fetch("/data/nfhs5_full_profile.json").then((r) => r.json()),
+    staleTime: Infinity,
+  });
+
+  const nfhs6TrendsQ = useQuery<any>({
+    queryKey: ["nfhs6-trends"],
+    queryFn: () => fetch("/data/nfhs_trends.json").then((r) => r.json()),
     staleTime: Infinity,
   });
 
@@ -300,6 +361,12 @@ export default function ReportPage() {
   const nfhsFull = useMemo(() =>
     nfhs5FullQ.data?.[districtName] ?? null,
   [nfhs5FullQ.data, districtName]);
+
+  const nfhs6StateRow = useMemo(() => {
+    if (!nfhs6TrendsQ.data || !report) return null;
+    const target = NFHS6_STATE_ALIAS[report.state] ?? report.state;
+    return nfhs6TrendsQ.data.states.find((s: any) => s.state === target) ?? null;
+  }, [nfhs6TrendsQ.data, report]);
 
   const jjmData = useMemo(() => {
     if (!jjmQ.data) return null;
@@ -439,6 +506,9 @@ export default function ReportPage() {
 
         {/* ── NFHS-5 FULL PROFILE (all indicators, all categories) ─────── */}
         {nfhsFull && <NfhsFullProfile data={nfhsFull} />}
+
+        {/* ── NFHS-6 TRENDS (state-level context) ───────────────────────── */}
+        {nfhs6StateRow && <Nfhs6StateTrend districtName={districtName} row={nfhs6StateRow} />}
 
         {/* ── JJM & SBM FIELD DATA ────────────────────────────────────── */}
         {(jjmData || sbmData) && (
