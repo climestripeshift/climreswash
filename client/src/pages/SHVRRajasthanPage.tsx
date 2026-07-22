@@ -234,18 +234,25 @@ function RajasthanHexMap({ hexes, hexByH3Id, ratings, infraByDistrict, schools, 
         attribution='&copy; <a href="https://www.openstreetmap.org/">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>' />
       {viewMode === "hex" && <GeoJSON key={`${mode}-${layer.key}`} data={geoData as any} style={styleFeature} onEachFeature={onEachFeature} />}
       {viewMode === "district" && districtGeo && (
-        <GeoJSON key={`districts-${mode}-${layer.key}`} data={districtGeo as any}
-          style={(feature: any) => ({
-            fillColor: layerColor(layer, feature.properties.value), fillOpacity: 0.65, color: "#1e293b", weight: 1, renderer: canvasRenderer,
-          })}
-          onEachFeature={(feature: any, leafletLayer: any) => {
-            const p = feature.properties;
-            const label = p.value != null ? (layer.group === "rating" ? `${p.value.toFixed(2)}★` : layer.group === "infra" ? `${p.value.toFixed(1)}%` : `${p.value.toFixed(1)}/10`) : "No data";
-            leafletLayer.bindTooltip(`<b>${p.district}</b><br/>${layer.label}: ${label}`, { sticky: true });
-          }} />
+        <>
+          <style>{`
+            .district-label-tooltip { background: transparent; border: none; box-shadow: none; padding: 0;
+              font-weight: 800; font-size: 12px; color: #0f172a; text-shadow: 0 0 3px #fff, 0 0 3px #fff, 0 0 3px #fff; }
+            .district-label-tooltip::before { display: none; }
+          `}</style>
+          <GeoJSON key={`districts-${mode}-${layer.key}`} data={districtGeo as any}
+            style={(feature: any) => ({
+              fillColor: layerColor(layer, feature.properties.value), fillOpacity: 0.7, color: "#1e293b", weight: 1, renderer: canvasRenderer,
+            })}
+            onEachFeature={(feature: any, leafletLayer: any) => {
+              const p = feature.properties;
+              const label = p.value != null ? (layer.group === "rating" ? `${p.value.toFixed(2)}★` : layer.group === "infra" ? `${p.value.toFixed(1)}%` : `${p.value.toFixed(1)}/10`) : "—";
+              leafletLayer.bindTooltip(`${p.district}<br/>${label}`, { permanent: true, direction: "center", className: "district-label-tooltip" });
+            }} />
+        </>
       )}
-      <SchoolPointsLayer schools={schools} hexByH3Id={hexByH3Id} layer={layer} mode={mode} />
-      {districtMarkers.map((m) => (
+      {viewMode === "hex" && <SchoolPointsLayer schools={schools} hexByH3Id={hexByH3Id} layer={layer} mode={mode} />}
+      {viewMode === "hex" && districtMarkers.map((m) => (
         <CircleMarker key={m.district} center={[m.lat, m.lng]}
           radius={Math.max(5, Math.min(22, Math.sqrt(m.school_count) * 1.1))}
           pathOptions={{ color: "#ffffff", weight: 1.5, fillColor: ratingColor(m.rating), fillOpacity: 0.75, dashArray: "2 2" }}>
@@ -541,8 +548,8 @@ export default function SHVRRajasthanPage() {
     staleTime: Infinity,
   });
   const districtBoundaryQ = useQuery<any>({
-    queryKey: ["india-districts-boundary"],
-    queryFn: () => fetch("/data/india.json").then((r) => r.json()),
+    queryKey: ["rajasthan-districts-current"],
+    queryFn: () => fetch("/data/rajasthan_districts_current.geojson").then((r) => r.json()),
     staleTime: Infinity,
   });
 
@@ -622,21 +629,52 @@ export default function SHVRRajasthanPage() {
     return Object.fromEntries(Object.entries(sums).map(([d, s]) => [d, s.total / s.n]));
   }, [rajHexes, layer]);
 
+  // Rating/infra stats at the REAL current-district granularity (e.g. Balotra separate from
+  // Barmer) — computed client-side from the school records, which already carry district_raw.
+  // Hazard/future layers can't be split this finely: the hex grid only knows old boundaries,
+  // so those fall back to the old parent district's hex average for every split district.
+  const currentDistrictStats = useMemo(() => {
+    const clean = (raw: string) => raw.replace("(RAJ.)", "").trim()
+      .toLowerCase().replace(/(^|\s|-)\w/g, (c) => c.toUpperCase());
+    const byDistrict: Record<string, { rated: number[]; toilet: number; repair: number; newRoom: number; dilap: number; n: number }> = {};
+    for (const s of visibleSchools) {
+      if (!s.district_raw) continue;
+      const d = clean(s.district_raw);
+      const e = (byDistrict[d] ??= { rated: [], toilet: 0, repair: 0, newRoom: 0, dilap: 0, n: 0 });
+      e.n += 1;
+      if (s.rating != null) e.rated.push(s.rating);
+      if (s.girls_toilet_required) e.toilet += 1;
+      if (s.classroom_repair_needed) e.repair += 1;
+      if (s.new_classroom_requirement) e.newRoom += 1;
+      if (s.building_dilapidated) e.dilap += 1;
+    }
+    return Object.fromEntries(Object.entries(byDistrict).map(([d, e]) => [d, {
+      avg_rating: e.rated.length ? e.rated.reduce((s, x) => s + x, 0) / e.rated.length : null,
+      toilet_required_pct: e.n ? 100 * e.toilet / e.n : null,
+      classroom_repair_pct: e.n ? 100 * e.repair / e.n : null,
+      new_classroom_pct: e.n ? 100 * e.newRoom / e.n : null,
+      dilapidated_pct: e.n ? 100 * e.dilap / e.n : null,
+    }]));
+  }, [visibleSchools]);
+
   const districtGeo = useMemo(() => {
     if (!districtBoundaryQ.data) return null;
-    const features = districtBoundaryQ.data.features.filter((f: any) => f.properties.STATE === "Rajasthan");
     return {
       type: "FeatureCollection",
-      features: features.map((f: any) => {
+      features: districtBoundaryQ.data.features.map((f: any) => {
         const district = f.properties.NAME;
+        const oldDistrict = f.properties.OLD_DISTRICT ?? district;
         let value: number | null;
-        if (layer.group === "rating") value = avgRatingByDistrict[district] ?? null;
-        else if (layer.group === "infra") value = infraDistrictValue(layer, district, infraSummaryQ.data?.by_district);
-        else value = hexAvgByDistrict[district] ?? null;
+        if (layer.group === "rating") value = currentDistrictStats[district]?.avg_rating ?? null;
+        else if (layer.group === "infra") {
+          const field = INFRA_FIELD[layer.key];
+          value = (currentDistrictStats[district] as any)?.[field] ?? null;
+        }
+        else value = hexAvgByDistrict[oldDistrict] ?? null;
         return { ...f, properties: { ...f.properties, district, value } };
       }),
     };
-  }, [districtBoundaryQ.data, layer, avgRatingByDistrict, hexAvgByDistrict, infraSummaryQ.data]);
+  }, [districtBoundaryQ.data, layer, currentDistrictStats, hexAvgByDistrict]);
 
   const isLoading = hexQ.isLoading || ratingsQ.isLoading || districtSummaryQ.isLoading || (layer.group === "future" && futureQ.isLoading);
 
