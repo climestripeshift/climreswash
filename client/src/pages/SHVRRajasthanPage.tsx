@@ -21,6 +21,11 @@ interface School {
   status: string;
   rating: number | null;
   percentage: number | null;
+  lat: number | null;
+  lon: number | null;
+  h3_id: string | null;
+  matched_village: string | null;
+  location_precision: "village_match" | "district_centroid";
 }
 
 interface DistrictSummary {
@@ -103,9 +108,47 @@ function SetupCanvas() {
 
 interface DistrictMarker { district: string; lat: number; lng: number; school_count: number; rating: number | null; layerAvg: number | null }
 
-function RajasthanHexMap({ hexes, ratings, mode, layer, districtMarkers }: {
-  hexes: any[]; ratings: Record<string, HexRating>; mode: "all" | "completed"; layer: LayerDef;
-  districtMarkers: DistrictMarker[];
+// Individual village-matched school points — canvas-rendered like the OSM
+// schools layer on /grid, since there can be tens of thousands of them.
+function SchoolPointsLayer({ schools, hexByH3Id, layer, mode }: {
+  schools: School[]; hexByH3Id: Record<string, any>; layer: LayerDef; mode: "all" | "completed";
+}) {
+  const geoData = useMemo(() => {
+    const visible = schools.filter((s) =>
+      s.location_precision === "village_match" && s.lat != null && s.lon != null &&
+      (mode === "all" || s.status === "completed"));
+    return {
+      type: "FeatureCollection",
+      features: visible.map((s) => ({
+        type: "Feature",
+        properties: {
+          name: s.name, rating: s.rating, status: s.status, village: s.matched_village, district: s.district,
+          layerValue: layer.group !== "rating" ? (s.h3_id ? hexByH3Id[s.h3_id]?.[layer.key] ?? null : null) : null,
+        },
+        geometry: { type: "Point", coordinates: [s.lon, s.lat] },
+      })),
+    };
+  }, [schools, hexByH3Id, layer, mode]);
+
+  const pointToLayer = useCallback((feature: any, latlng: L.LatLng) =>
+    L.circleMarker(latlng, {
+      radius: 3, weight: 0.6, color: "#ffffff", fillColor: ratingColor(feature.properties.rating), fillOpacity: 0.9, renderer: canvasRenderer,
+    }), []);
+
+  const onEachFeature = useCallback((feature: any, leafletLayer: any) => {
+    const p = feature.properties;
+    const parts = [`<b>${p.name}</b>`, `📍 ${p.village}, ${p.district}`, `${p.rating != null ? `${p.rating}★` : "no rating"} (${STATUS_LABEL[p.status] ?? p.status})`];
+    if (layer.group !== "rating" && p.layerValue != null) parts.push(`${layer.icon} ${layer.label}: <b>${p.layerValue.toFixed(1)}/10</b> (this hex)`);
+    leafletLayer.bindTooltip(parts.join("<br/>"), { sticky: true });
+  }, [layer]);
+
+  if (!geoData.features.length) return null;
+  return <GeoJSON key={`schools-${layer.key}-${mode}`} data={geoData as any} pointToLayer={pointToLayer} onEachFeature={onEachFeature} />;
+}
+
+function RajasthanHexMap({ hexes, hexByH3Id, ratings, schools, mode, layer, districtMarkers }: {
+  hexes: any[]; hexByH3Id: Record<string, any>; ratings: Record<string, HexRating>; schools: School[];
+  mode: "all" | "completed"; layer: LayerDef; districtMarkers: DistrictMarker[];
 }) {
   const mapRef = useRef<LeafletMap | null>(null);
 
@@ -146,13 +189,14 @@ function RajasthanHexMap({ hexes, ratings, mode, layer, districtMarkers }: {
       <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>' />
       <GeoJSON key={`${mode}-${layer.key}`} data={geoData as any} style={styleFeature} onEachFeature={onEachFeature} />
+      <SchoolPointsLayer schools={schools} hexByH3Id={hexByH3Id} layer={layer} mode={mode} />
       {districtMarkers.map((m) => (
         <CircleMarker key={m.district} center={[m.lat, m.lng]}
           radius={Math.max(5, Math.min(22, Math.sqrt(m.school_count) * 1.1))}
-          pathOptions={{ color: "#ffffff", weight: 1.5, fillColor: ratingColor(m.rating), fillOpacity: 0.9 }}>
+          pathOptions={{ color: "#ffffff", weight: 1.5, fillColor: ratingColor(m.rating), fillOpacity: 0.75, dashArray: "2 2" }}>
           <Tooltip sticky>
             <div style={{ fontSize: 11 }}>
-              <b>{m.district}</b><br />
+              <b>{m.district}</b> — district centroid (address not matched)<br />
               🏫 {m.school_count.toLocaleString()} SHVR schools · {m.rating != null ? `${m.rating.toFixed(2)}★ avg` : "no rating"}<br />
               {layer.group !== "rating" && m.layerAvg != null && <>{layer.icon} {layer.label}: <b>{m.layerAvg.toFixed(1)}/10</b> (district avg)</>}
             </div>
@@ -178,9 +222,13 @@ function Legend({ layer }: { layer: LayerDef }) {
         <div className="w-2.5 h-2.5 rounded-sm" style={{ background: "#374151" }} />
         <span className="text-[9px] text-muted-foreground">No data for this hex</span>
       </div>
+      <div className="flex items-center gap-1.5 mb-1">
+        <div className="w-2 h-2 rounded-full border border-white" style={{ background: "#16a34a" }} />
+        <span className="text-[9px] text-muted-foreground">🏫 individual school (real village location)</span>
+      </div>
       <div className="flex items-center gap-1.5">
-        <div className="w-2.5 h-2.5 rounded-full border border-white" style={{ background: "#16a34a" }} />
-        <span className="text-[9px] text-muted-foreground">🏫 district school marker (size = count, color = rating)</span>
+        <div className="w-2.5 h-2.5 rounded-full border border-white border-dashed" style={{ background: "#16a34a", opacity: 0.75 }} />
+        <span className="text-[9px] text-muted-foreground">district centroid (address not matched — size = count)</span>
       </div>
     </div>
   );
@@ -239,6 +287,7 @@ function SchoolTable({ schools, districts }: { schools: School[]; districts: str
               <th className="px-3 py-2 font-medium">School</th>
               <th className="px-3 py-2 font-medium">UDISE Code</th>
               <th className="px-3 py-2 font-medium">District</th>
+              <th className="px-3 py-2 font-medium">Location</th>
               <th className="px-3 py-2 font-medium">Status</th>
               <th className="px-3 py-2 font-medium text-right">Rating</th>
             </tr>
@@ -249,6 +298,11 @@ function SchoolTable({ schools, districts }: { schools: School[]; districts: str
                 <td className="px-3 py-1.5">{s.name}</td>
                 <td className="px-3 py-1.5 font-mono text-muted-foreground">{s.udise_code}</td>
                 <td className="px-3 py-1.5">{s.district}</td>
+                <td className="px-3 py-1.5">
+                  {s.location_precision === "village_match"
+                    ? <span className="text-emerald-400">📍 {s.matched_village}</span>
+                    : <span className="text-muted-foreground">district centroid</span>}
+                </td>
                 <td className={`px-3 py-1.5 ${STATUS_COLOR[s.status] ?? ""}`}>{STATUS_LABEL[s.status] ?? s.status}</td>
                 <td className="px-3 py-1.5 text-right font-semibold" style={{ color: ratingColor(s.rating) }}>
                   {s.rating != null ? `${s.rating}★` : "—"}
@@ -299,8 +353,8 @@ export default function SHVRRajasthanPage() {
     staleTime: Infinity,
   });
   const schoolsQ = useQuery<School[]>({
-    queryKey: ["shvr-schools"],
-    queryFn: () => fetch("/data/shvr_schools_rajasthan.json").then((r) => r.json()),
+    queryKey: ["shvr-schools-located"],
+    queryFn: () => fetch("/data/shvr_schools_located_rajasthan.json").then((r) => r.json()),
     staleTime: Infinity,
   });
 
@@ -312,32 +366,53 @@ export default function SHVRRajasthanPage() {
     return base.map((p) => ({ ...p, ...(futMap[p.h3_id] ?? {}) }));
   }, [hexQ.data, futureQ.data, layer.group]);
 
+  const hexByH3Id = useMemo(() => Object.fromEntries(rajHexes.map((p) => [p.h3_id, p])), [rajHexes]);
+
   const districts = useMemo(() => Object.keys(districtSummaryQ.data?.districts ?? {}).sort(), [districtSummaryQ.data]);
 
-  // District centroids (avg of hex boundary centers) + current-layer district average, for the school markers
+  const visibleSchools = useMemo(() =>
+    schoolsQ.data?.filter((s) => mode === "all" || s.status === "completed") ?? [],
+  [schoolsQ.data, mode]);
+
+  const matchStats = useMemo(() => {
+    const total = schoolsQ.data?.length ?? 0;
+    const matched = schoolsQ.data?.filter((s) => s.location_precision === "village_match").length ?? 0;
+    return { total, matched };
+  }, [schoolsQ.data]);
+
+  // District centroids for the REMAINDER only — schools whose address didn't match a
+  // village get an aggregate marker here; matched ones render as individual points instead.
   const districtMarkers = useMemo<DistrictMarker[]>(() => {
-    if (!rajHexes.length || !ratingsQ.data || !districtSummaryQ.data) return [];
-    const byDistrict: Record<string, { lat: number; lng: number; n: number; layerVals: number[] }> = {};
+    if (!rajHexes.length || !visibleSchools.length) return [];
+    const unmatched = visibleSchools.filter((s) => s.location_precision === "district_centroid");
+    const centroidByDistrict: Record<string, { lat: number; lng: number; n: number; layerVals: number[] }> = {};
     for (const p of rajHexes) {
       const d = p.district_name;
-      if (!d || !districtSummaryQ.data.districts[d]) continue;
+      if (!d) continue;
       const boundary = cellToBoundary(p.h3_id);
       const clat = boundary.reduce((s: number, b: number[]) => s + b[0], 0) / boundary.length;
       const clng = boundary.reduce((s: number, b: number[]) => s + b[1], 0) / boundary.length;
-      const entry = (byDistrict[d] ??= { lat: 0, lng: 0, n: 0, layerVals: [] });
+      const entry = (centroidByDistrict[d] ??= { lat: 0, lng: 0, n: 0, layerVals: [] });
       entry.lat += clat; entry.lng += clng; entry.n += 1;
       if (layer.group !== "rating" && p[layer.key] != null) entry.layerVals.push(p[layer.key]);
     }
+    const byDistrict: Record<string, { rated: number[]; count: number }> = {};
+    for (const s of unmatched) {
+      const entry = (byDistrict[s.district] ??= { rated: [], count: 0 });
+      entry.count += 1;
+      if (s.rating != null) entry.rated.push(s.rating);
+    }
     return Object.entries(byDistrict).map(([district, v]) => {
-      const summary = districtSummaryQ.data!.districts[district];
+      const c = centroidByDistrict[district];
+      if (!c) return null;
       return {
-        district, lat: v.lat / v.n, lng: v.lng / v.n,
-        school_count: summary.school_count,
-        rating: mode === "all" ? summary.avg_rating_all : summary.avg_rating_completed_only,
-        layerAvg: v.layerVals.length ? v.layerVals.reduce((s, x) => s + x, 0) / v.layerVals.length : null,
+        district, lat: c.lat / c.n, lng: c.lng / c.n,
+        school_count: v.count,
+        rating: v.rated.length ? v.rated.reduce((s, x) => s + x, 0) / v.rated.length : null,
+        layerAvg: c.layerVals.length ? c.layerVals.reduce((s, x) => s + x, 0) / c.layerVals.length : null,
       };
-    });
-  }, [rajHexes, ratingsQ.data, districtSummaryQ.data, mode, layer]);
+    }).filter((m): m is DistrictMarker => m !== null);
+  }, [rajHexes, visibleSchools, layer]);
 
   const isLoading = hexQ.isLoading || ratingsQ.isLoading || districtSummaryQ.isLoading || (layer.group === "future" && futureQ.isLoading);
 
@@ -354,10 +429,14 @@ export default function SHVRRajasthanPage() {
       {districtSummaryQ.data && (
         <div className="px-4 py-2 border-b border-border/30 bg-amber-500/5 text-[11px] text-muted-foreground leading-relaxed">
           ⚠️ Covers {districts.length} of Rajasthan's 33 districts (old/undivided boundaries) — missing:{" "}
-          <strong className="text-foreground">{districtSummaryQ.data.meta.missing_districts.join(", ")}</strong>.
-          School markers are placed at each district's <strong className="text-foreground">centroid</strong>, not each
-          school's real address — SHVR's export has no coordinates. Includes all {schoolsQ.data?.length.toLocaleString() ?? "…"} exported
-          records regardless of evaluation status — most are "Not Assigned" and their rating may be a stale placeholder.
+          <strong className="text-foreground">{districtSummaryQ.data.meta.missing_districts.join(", ")}</strong>.{" "}
+          {matchStats.total > 0 && (
+            <><strong className="text-emerald-400">{matchStats.matched.toLocaleString()}</strong> of {matchStats.total.toLocaleString()} schools
+            ({(100 * matchStats.matched / matchStats.total).toFixed(0)}%) matched their address to a real village location
+            (dots below); the rest sit at their district's centroid (dashed circles) since SHVR gives no coordinates and their
+            address text didn't resolve. Includes all records regardless of evaluation status — most are "Not Assigned" and
+            their rating may be a stale placeholder.</>
+          )}
         </div>
       )}
 
@@ -398,7 +477,7 @@ export default function SHVRRajasthanPage() {
             </div>
           ) : (
             <>
-              <RajasthanHexMap hexes={rajHexes} ratings={ratingsQ.data ?? {}} mode={mode} layer={layer} districtMarkers={districtMarkers} />
+              <RajasthanHexMap hexes={rajHexes} hexByH3Id={hexByH3Id} ratings={ratingsQ.data ?? {}} schools={visibleSchools} mode={mode} layer={layer} districtMarkers={districtMarkers} />
               <div className="absolute bottom-3 left-3 z-[800]"><Legend layer={layer} /></div>
             </>
           )}
