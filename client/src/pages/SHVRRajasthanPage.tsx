@@ -79,7 +79,7 @@ interface DistrictFullSummary {
 }
 
 interface DistrictSummary {
-  meta: { source: string; note: string; missing_districts: string[] };
+  meta: { source: string; note: string; missing_districts: string[]; no_rating_districts: string[] };
   districts: Record<string, {
     school_count: number; completed_count: number; pct_completed: number | null;
     avg_rating_all: number | null; avg_rating_completed_only: number | null;
@@ -755,11 +755,15 @@ export default function SHVRRajasthanPage() {
   const matchStats = useMemo(() => {
     const total = schoolsQ.data?.length ?? 0;
     const inShvr = schoolsQ.data?.filter((s) => s.in_shvr).length ?? 0;
+    // a subset of SHVR-portal districts were exported from a "school directory" view with no
+    // star rating at all (not low-rated — genuinely absent), distinct from CSR-only schools
+    const rated = schoolsQ.data?.filter((s) => s.in_shvr && s.rating != null).length ?? 0;
+    const inShvrUnrated = inShvr - rated;
     const notInShvr = total - inShvr;
-    // village-matching only ran against the SHVR-rated schools — CSR-only additions always
+    // village-matching only ran against SHVR-portal schools — CSR-only additions always
     // sit at their district centroid, since they never went through address geocoding.
     const matched = schoolsQ.data?.filter((s) => s.location_precision === "village_match").length ?? 0;
-    return { total, inShvr, notInShvr, matched };
+    return { total, inShvr, rated, inShvrUnrated, notInShvr, matched };
   }, [schoolsQ.data]);
 
   // District centroids for the REMAINDER only — schools whose address didn't match a
@@ -889,16 +893,25 @@ export default function SHVRRajasthanPage() {
         <div className="px-4 py-2 border-b border-border/30 bg-amber-500/5 text-[11px] text-muted-foreground leading-relaxed">
           ⚠️ This is the full union of every school that appears in either data source —{" "}
           <strong className="text-foreground">{matchStats.total.toLocaleString()} schools</strong> total:{" "}
-          <strong className="text-emerald-400">{matchStats.inShvr.toLocaleString()}</strong> participated in SHVR and got a
-          star rating (covering {districts.length} of Rajasthan's 33 old/undivided districts — missing:{" "}
-          <strong className="text-foreground">{districtSummaryQ.data.meta.missing_districts.join(", ")}</strong>), plus{" "}
-          <strong className="text-sky-400">{matchStats.notInShvr.toLocaleString()}</strong> more that never took part in SHVR
-          but do appear in the UNICEF CSR infrastructure-requirement files (repair / new classroom / dilapidated building /
-          toilet), which cover all 41 current districts directly. Infrastructure percentages below are computed against this
-          full total, not just the SHVR-rated subset — so a district can show a real repair rate even with no star rating.{" "}
+          <strong className="text-emerald-400">{matchStats.inShvr.toLocaleString()}</strong> appear on the SHVR portal
+          ({matchStats.rated.toLocaleString()} with a completed star rating; {matchStats.inShvrUnrated.toLocaleString()} more
+          from districts only exported as a school directory listing — real SHVR records, but no rating column at all){" "}
+          {districtSummaryQ.data.meta.missing_districts.length > 0 && (
+            <>(missing entirely: <strong className="text-foreground">{districtSummaryQ.data.meta.missing_districts.join(", ")}</strong>) </>
+          )}
+          — covering {districts.length} of Rajasthan's 33 old/undivided districts on the SHVR portal
+          {districtSummaryQ.data.meta.no_rating_districts.length > 0 && (
+            <>, though <strong className="text-foreground">{districtSummaryQ.data.meta.no_rating_districts.join(", ")}</strong> have
+            no rated school at all yet (school-directory-only districts)</>
+          )} — plus{" "}
+          <strong className="text-sky-400">{matchStats.notInShvr.toLocaleString()}</strong> more that never appear on the SHVR
+          portal at all but do appear in the UNICEF CSR infrastructure-requirement files (repair / new classroom / dilapidated
+          building / toilet), which cover all 41 current districts directly. Infrastructure percentages below are computed
+          against this full total, not just the rated subset — so a district can show a real repair rate even with no star
+          rating.{" "}
           {matchStats.total > 0 && (
-            <><strong className="text-emerald-400">{matchStats.matched.toLocaleString()}</strong> of the {matchStats.inShvr.toLocaleString()}
-            SHVR-rated schools ({(100 * matchStats.matched / Math.max(1, matchStats.inShvr)).toFixed(0)}%) matched their address to a real
+            <><strong className="text-emerald-400">{matchStats.matched.toLocaleString()}</strong> of the {matchStats.inShvr.toLocaleString()}{" "}
+            SHVR-portal schools ({(100 * matchStats.matched / Math.max(1, matchStats.inShvr)).toFixed(0)}%) matched their address to a real
             village location (dots below); the rest — including all CSR-only schools, which were never geocoded — sit at their
             district's centroid (dashed circles).</>
           )}

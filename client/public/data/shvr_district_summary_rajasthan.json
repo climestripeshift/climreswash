@@ -1,8 +1,8 @@
 {
   "meta": {
     "source": "SHVR (shvr.education.gov.in) per-district exports, State Nodal Officer access",
-    "note": "32 of ~50 current Rajasthan districts exported, covering 26 of the hex grid's 33 old/undivided districts. Includes ALL rows regardless of evaluation status \u2014 avg_rating_completed_only is the more trustworthy figure; avg_rating_all also includes not_assigned/in_progress/yet_to_start rows whose rating values may be stale placeholders rather than finished evaluations.",
-    "missing_districts": [
+    "note": "41 of Rajasthan's ~50 current districts exported, covering 33 of the hex grid's 33 old/undivided districts. Includes ALL rows regardless of evaluation status \u2014 avg_rating_completed_only is the more trustworthy figure; avg_rating_all also includes not_assigned/in_progress/yet_to_start rows whose rating values may be stale placeholders rather than finished evaluations. A subset of districts (no_rating_districts) came from a different SHVR export view \u2014 a school directory listing, not the ratings view \u2014 so those schools are real SHVR-portal records with real names/UDISE/status but no star rating at all (avg_rating_all/completed_only are null, not low).",
+    "no_rating_districts": [
       "Dungarpur",
       "Ganganagar",
       "Hanumangarh",
@@ -10,7 +10,8 @@
       "Karauli",
       "Rajsamand",
       "Sawai Madhopur"
-    ]
+    ],
+    "missing_districts": []
   },
   "districts": {
     "Ajmer": {
@@ -27,9 +28,9 @@
         "5": 30
       },
       "status_counts": {
-        "in_progress": 1,
+        "completed": 450,
         "not_assigned": 1559,
-        "completed": 450
+        "in_progress": 1
       }
     },
     "Alwar": {
@@ -46,9 +47,9 @@
         "5": 26
       },
       "status_counts": {
-        "in_progress": 2,
+        "completed": 630,
         "not_assigned": 1396,
-        "completed": 630
+        "in_progress": 2
       }
     },
     "Barmer": {
@@ -65,8 +66,8 @@
         "5": 32
       },
       "status_counts": {
-        "not_assigned": 2918,
-        "completed": 387
+        "completed": 387,
+        "not_assigned": 2918
       }
     },
     "Banswara": {
@@ -83,8 +84,8 @@
         "5": 2
       },
       "status_counts": {
-        "not_assigned": 980,
-        "completed": 91
+        "completed": 91,
+        "not_assigned": 980
       }
     },
     "Baran": {
@@ -101,9 +102,9 @@
         "5": 9
       },
       "status_counts": {
-        "yet_to_start": 1,
+        "completed": 86,
         "not_assigned": 784,
-        "completed": 86
+        "yet_to_start": 1
       }
     },
     "Bharatpur": {
@@ -120,9 +121,9 @@
         "5": 10
       },
       "status_counts": {
-        "yet_to_start": 14,
+        "completed": 336,
         "not_assigned": 1219,
-        "completed": 336
+        "yet_to_start": 14
       }
     },
     "Bhilwara": {
@@ -139,8 +140,8 @@
         "5": 17
       },
       "status_counts": {
-        "not_assigned": 1719,
-        "completed": 566
+        "completed": 566,
+        "not_assigned": 1719
       }
     },
     "Bikaner": {
@@ -157,8 +158,8 @@
         "5": 16
       },
       "status_counts": {
-        "not_assigned": 892,
-        "completed": 440
+        "completed": 440,
+        "not_assigned": 892
       }
     },
     "Bundi": {
@@ -175,8 +176,8 @@
         "5": 6
       },
       "status_counts": {
-        "not_assigned": 559,
-        "completed": 145
+        "completed": 145,
+        "not_assigned": 559
       }
     },
     "Chittaurgarh": {
@@ -193,9 +194,9 @@
         "5": 8
       },
       "status_counts": {
-        "yet_to_start": 7,
+        "completed": 256,
         "not_assigned": 789,
-        "completed": 256
+        "yet_to_start": 7
       }
     },
     "Churu": {
@@ -212,8 +213,8 @@
         "5": 16
       },
       "status_counts": {
-        "not_assigned": 558,
-        "completed": 377
+        "completed": 377,
+        "not_assigned": 558
       }
     },
     "Dausa": {
@@ -230,8 +231,8 @@
         "5": 23
       },
       "status_counts": {
-        "not_assigned": 1480,
-        "completed": 308
+        "completed": 308,
+        "not_assigned": 1480
       }
     },
     "Dhaulpur": {
@@ -248,8 +249,8 @@
         "5": 3
       },
       "status_counts": {
-        "not_assigned": 417,
-        "completed": 218
+        "completed": 218,
+        "not_assigned": 417
       }
     },
     "Nagaur": {
@@ -266,9 +267,43 @@
         "5": 17
       },
       "status_counts": {
-        "in_progress": 4,
+        "completed": 823,
         "not_assigned": 941,
-        "completed": 823
+        "in_progress": 4
+      }
+    },
+    "Dungarpur": {
+      "school_count": 1432,
+      "completed_count": 1432,
+      "pct_completed": 100.0,
+      "avg_rating_all": null,
+      "avg_rating_completed_only": null,
+      "rating_distribution_all": {
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0
+      },
+      "status_counts": {
+        "completed": 1432
+      }
+    },
+    "Hanumangarh": {
+      "school_count": 1509,
+      "completed_count": 1509,
+      "pct_completed": 100.0,
+      "avg_rating_all": null,
+      "avg_rating_completed_only": null,
+      "rating_distribution_all": {
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0
+      },
+      "status_counts": {
+        "completed": 1509
       }
     },
     "Jaipur": {
@@ -285,9 +320,9 @@
         "5": 107
       },
       "status_counts": {
-        "in_progress": 1,
+        "completed": 972,
         "not_assigned": 3195,
-        "completed": 972
+        "in_progress": 1
       }
     },
     "Jaisalmer": {
@@ -304,8 +339,8 @@
         "5": 6
       },
       "status_counts": {
-        "not_assigned": 589,
-        "completed": 170
+        "completed": 170,
+        "not_assigned": 589
       }
     },
     "Jalor": {
@@ -322,8 +357,8 @@
         "5": 12
       },
       "status_counts": {
-        "not_assigned": 1196,
-        "completed": 434
+        "completed": 434,
+        "not_assigned": 1196
       }
     },
     "Jhalawar": {
@@ -340,8 +375,60 @@
         "5": 3
       },
       "status_counts": {
-        "not_assigned": 779,
-        "completed": 208
+        "completed": 208,
+        "not_assigned": 779
+      }
+    },
+    "Jhunjhunun": {
+      "school_count": 1658,
+      "completed_count": 1658,
+      "pct_completed": 100.0,
+      "avg_rating_all": null,
+      "avg_rating_completed_only": null,
+      "rating_distribution_all": {
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0
+      },
+      "status_counts": {
+        "completed": 1658
+      }
+    },
+    "Jodhpur": {
+      "school_count": 3209,
+      "completed_count": 2053,
+      "pct_completed": 64.0,
+      "avg_rating_all": 3.07,
+      "avg_rating_completed_only": 4.02,
+      "rating_distribution_all": {
+        "1": 48,
+        "2": 165,
+        "3": 943,
+        "4": 357,
+        "5": 9
+      },
+      "status_counts": {
+        "completed": 2053,
+        "not_assigned": 1156
+      }
+    },
+    "Karauli": {
+      "school_count": 844,
+      "completed_count": 844,
+      "pct_completed": 100.0,
+      "avg_rating_all": null,
+      "avg_rating_completed_only": null,
+      "rating_distribution_all": {
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0
+      },
+      "status_counts": {
+        "completed": 844
       }
     },
     "Kota": {
@@ -358,10 +445,10 @@
         "5": 4
       },
       "status_counts": {
-        "yet_to_start": 2,
-        "in_progress": 1,
+        "completed": 181,
         "not_assigned": 403,
-        "completed": 181
+        "in_progress": 1,
+        "yet_to_start": 2
       }
     },
     "Pali": {
@@ -378,28 +465,10 @@
         "5": 8
       },
       "status_counts": {
-        "yet_to_start": 1,
-        "in_progress": 2,
+        "completed": 211,
         "not_assigned": 457,
-        "completed": 211
-      }
-    },
-    "Jodhpur": {
-      "school_count": 1522,
-      "completed_count": 366,
-      "pct_completed": 24.0,
-      "avg_rating_all": 3.07,
-      "avg_rating_completed_only": 4.02,
-      "rating_distribution_all": {
-        "1": 48,
-        "2": 165,
-        "3": 943,
-        "4": 357,
-        "5": 9
-      },
-      "status_counts": {
-        "not_assigned": 1156,
-        "completed": 366
+        "in_progress": 2,
+        "yet_to_start": 1
       }
     },
     "Pratapgarh": {
@@ -416,8 +485,60 @@
         "5": 2
       },
       "status_counts": {
-        "not_assigned": 1215,
-        "completed": 150
+        "completed": 150,
+        "not_assigned": 1215
+      }
+    },
+    "Rajsamand": {
+      "school_count": 954,
+      "completed_count": 954,
+      "pct_completed": 100.0,
+      "avg_rating_all": null,
+      "avg_rating_completed_only": null,
+      "rating_distribution_all": {
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0
+      },
+      "status_counts": {
+        "completed": 954
+      }
+    },
+    "Udaipur": {
+      "school_count": 2676,
+      "completed_count": 645,
+      "pct_completed": 24.1,
+      "avg_rating_all": 3.03,
+      "avg_rating_completed_only": 4.08,
+      "rating_distribution_all": {
+        "1": 54,
+        "2": 258,
+        "3": 1441,
+        "4": 411,
+        "5": 11
+      },
+      "status_counts": {
+        "completed": 645,
+        "not_assigned": 2031
+      }
+    },
+    "Sawai Madhopur": {
+      "school_count": 1181,
+      "completed_count": 1181,
+      "pct_completed": 100.0,
+      "avg_rating_all": null,
+      "avg_rating_completed_only": null,
+      "rating_distribution_all": {
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0
+      },
+      "status_counts": {
+        "completed": 1181
       }
     },
     "Sikar": {
@@ -434,8 +555,8 @@
         "5": 32
       },
       "status_counts": {
-        "not_assigned": 1197,
-        "completed": 302
+        "completed": 302,
+        "not_assigned": 1197
       }
     },
     "Sirohi": {
@@ -452,9 +573,26 @@
         "5": 1
       },
       "status_counts": {
-        "in_progress": 1,
+        "completed": 97,
         "not_assigned": 355,
-        "completed": 97
+        "in_progress": 1
+      }
+    },
+    "Ganganagar": {
+      "school_count": 1484,
+      "completed_count": 1484,
+      "pct_completed": 100.0,
+      "avg_rating_all": null,
+      "avg_rating_completed_only": null,
+      "rating_distribution_all": {
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0
+      },
+      "status_counts": {
+        "completed": 1484
       }
     },
     "Tonk": {
@@ -471,26 +609,8 @@
         "5": 22
       },
       "status_counts": {
-        "not_assigned": 1866,
-        "completed": 567
-      }
-    },
-    "Udaipur": {
-      "school_count": 2175,
-      "completed_count": 144,
-      "pct_completed": 6.6,
-      "avg_rating_all": 3.03,
-      "avg_rating_completed_only": 4.08,
-      "rating_distribution_all": {
-        "1": 54,
-        "2": 258,
-        "3": 1441,
-        "4": 411,
-        "5": 11
-      },
-      "status_counts": {
-        "not_assigned": 2031,
-        "completed": 144
+        "completed": 567,
+        "not_assigned": 1866
       }
     }
   }

@@ -4,9 +4,20 @@ Rajasthan and assign district-average star ratings onto hexes.
 
 Source: data/raw/shvr_rajasthan/*.xlsx — one file per (post-2023-split)
 district, exported from https://shvr.education.gov.in by a State Nodal
-Officer account. Columns: S.No, School Name, UDISE Code, Address, School
-Type, NEP Category, State Name, District Name, District Evaluation Status,
-Self Evaluation Rating (1-5), Self Evaluation percentage.
+Officer account.
+
+Two export formats are mixed in here (columns located by HEADER NAME, not
+fixed position, to handle both):
+  - "ratings view" (the original 32 files): S.No, School Name, UDISE Code,
+    Address, School Type, NEP Category, State Name, District Name, District
+    Evaluation Status, Self Evaluation Rating (1-5), Self Evaluation
+    percentage.
+  - "directory view" (9 files added later, covering the districts the
+    ratings view never had): S.No, State Name, District Name, School Name,
+    Udise Code, Address, School Type, Status, Management Group, NEP
+    Category — no rating/percentage columns at all. Those schools are still
+    real SHVR-portal records (in_shvr=True downstream), just with
+    rating=None — same as any other not-yet-evaluated school.
 
 No lat/lon in the source — schools are joined to hexes by DISTRICT, same
 pattern as every other district-level dataset already in this platform
@@ -14,11 +25,7 @@ pattern as every other district-level dataset already in this platform
 district names; the hex grid still uses the OLD 33 undivided districts, so
 new districts are mapped back to their old parent (e.g. Balotra -> Barmer).
 
-Coverage caveat (real, not a bug): only 32 of Rajasthan's ~50 current
-districts were exported, covering 26 of the hex grid's 33 old districts.
-7 old districts have zero data (Dungarpur, Ganganagar, Hanumangarh,
-Jhunjhunun, Karauli, Rajsamand, Sawai Madhopur) and are left null, not
-imputed. Includes ALL rows regardless of District Evaluation Status
+Includes ALL rows regardless of District Evaluation Status
 (completed/not_assigned/in_progress/yet_to_start) per explicit instruction —
 status is preserved per-school and per-district so the frontend can be
 honest about which ratings reflect a finished evaluation.
@@ -51,12 +58,67 @@ NEW_TO_OLD_DISTRICT = {
     "KOTPUTLI-BEHROR": "Jaipur",
     "PHALODI": "Jodhpur",
     "PRATAPGARH (RAJ.)": "Pratapgarh",
+    "SALUMBAR": "Udaipur",  # carved out of old Udaipur post-2023
+    "JHUNJHUNU": "Jhunjhunun",  # hex grid/india.json spell it with the trailing "n"
 }
+
+# header text (normalized: lowercased, letters only) -> logical field name
+HEADER_MAP = {
+    "schoolname": "name", "udisecode": "udise_code", "address": "address",
+    "schooltype": "school_type", "nepcategory": "nep_category",
+    "districtname": "district_raw",
+    "districtevaluationstatus": "status", "status": "status",
+    "selfevaluationrating": "rating", "selfevaluationpercentage": "percentage",
+}
+
+
+def _norm_header(s) -> str:
+    return "".join(c for c in str(s or "").lower() if c.isalpha())
 
 
 def map_district(raw: str) -> str:
     raw = (raw or "").strip().upper()
     return NEW_TO_OLD_DISTRICT.get(raw, raw.title())
+
+
+def read_school_rows(f: Path) -> list[dict]:
+    """Column position varies by export format — locate fields by header name."""
+    wb = openpyxl.load_workbook(f, data_only=True)
+    ws = wb.active
+    rows_iter = ws.iter_rows(values_only=True)
+    header = next(rows_iter)
+    col_for_field = {}
+    for i, h in enumerate(header):
+        field = HEADER_MAP.get(_norm_header(h))
+        if field and field not in col_for_field:  # first match wins (e.g. "status" vs "districtevaluationstatus")
+            col_for_field[field] = i
+
+    def get(row, field):
+        i = col_for_field.get(field)
+        return row[i] if i is not None and i < len(row) else None
+
+    out = []
+    for row in rows_iter:
+        name = get(row, "name")
+        if not name:
+            continue
+        district_raw = get(row, "district_raw")
+        rating = get(row, "rating")
+        pct = get(row, "percentage")
+        udise = get(row, "udise_code")
+        out.append({
+            "name": name,
+            "udise_code": str(udise) if udise else None,
+            "address": get(row, "address"),
+            "school_type": get(row, "school_type"),
+            "nep_category": get(row, "nep_category"),
+            "district_raw": district_raw,
+            "district": map_district(district_raw),
+            "status": get(row, "status"),
+            "rating": rating,
+            "percentage": float(pct) if pct not in (None, "") else None,
+        })
+    return out
 
 
 def main():
@@ -65,23 +127,7 @@ def main():
 
     schools: list[dict] = []
     for f in files:
-        wb = openpyxl.load_workbook(f, data_only=True)
-        ws = wb.active
-        for row in ws.iter_rows(min_row=2, values_only=True):
-            if not row[1]:
-                continue
-            schools.append({
-                "name": row[1],
-                "udise_code": str(row[2]) if row[2] else None,
-                "address": row[3],
-                "school_type": row[4],
-                "nep_category": row[5],
-                "district_raw": row[7],
-                "district": map_district(row[7]),
-                "status": row[8],
-                "rating": row[9],
-                "percentage": float(row[10]) if row[10] not in (None, "") else None,
-            })
+        schools.extend(read_school_rows(f))
     print(f"  {len(schools)} school records parsed")
 
     status_totals: dict[str, int] = defaultdict(int)
@@ -142,15 +188,22 @@ def main():
     print(f"\nSaving {OUT_SCHOOLS}...")
     OUT_SCHOOLS.write_text(json.dumps(schools, separators=(",", ":")))
 
+    no_rating_districts = sorted(d for d, v in district_summary.items() if v["avg_rating_all"] is None)
+
     print(f"Saving {OUT_DISTRICT}...")
     OUT_DISTRICT.write_text(json.dumps({
         "meta": {
             "source": "SHVR (shvr.education.gov.in) per-district exports, State Nodal Officer access",
-            "note": "32 of ~50 current Rajasthan districts exported, covering 26 of the hex grid's 33 "
-                    "old/undivided districts. Includes ALL rows regardless of evaluation status — "
-                    "avg_rating_completed_only is the more trustworthy figure; avg_rating_all also "
-                    "includes not_assigned/in_progress/yet_to_start rows whose rating values may be "
-                    "stale placeholders rather than finished evaluations.",
+            "note": f"{len(files)} of Rajasthan's ~50 current districts exported, covering "
+                    f"{len(district_summary)} of the hex grid's 33 old/undivided districts. Includes ALL "
+                    "rows regardless of evaluation status — avg_rating_completed_only is the more "
+                    "trustworthy figure; avg_rating_all also includes not_assigned/in_progress/"
+                    "yet_to_start rows whose rating values may be stale placeholders rather than "
+                    "finished evaluations. A subset of districts (no_rating_districts) came from a "
+                    "different SHVR export view — a school directory listing, not the ratings view — "
+                    "so those schools are real SHVR-portal records with real names/UDISE/status but "
+                    "no star rating at all (avg_rating_all/completed_only are null, not low).",
+            "no_rating_districts": no_rating_districts,
             "missing_districts": missing,
         },
         "districts": district_summary,

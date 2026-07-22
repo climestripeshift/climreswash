@@ -65,11 +65,15 @@
       "dilapidated_pct": 1.6
     },
     "unrated": {
-      "school_count": 0,
-      "toilet_required_count": 0,
-      "classroom_repair_needed_count": 0,
-      "new_classroom_requirement_count": 0,
-      "building_dilapidated_count": 0
+      "school_count": 11250,
+      "toilet_required_count": 214,
+      "classroom_repair_needed_count": 5946,
+      "new_classroom_requirement_count": 2870,
+      "building_dilapidated_count": 254,
+      "toilet_required_pct": 1.9,
+      "classroom_repair_pct": 52.9,
+      "new_classroom_pct": 25.5,
+      "dilapidated_pct": 2.3
     }
   }
 }
