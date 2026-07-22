@@ -27,6 +27,7 @@ interface School {
   matched_village: string | null;
   location_precision: "village_match" | "district_centroid";
   in_shvr: boolean;
+  school_level: "PS" | "UPS" | "SR_SEC" | null;
   new_classroom_requirement: boolean;
   classroom_repair_needed: boolean;
   classrooms_needing_repair: number;
@@ -48,6 +49,18 @@ interface InfraSummary {
   meta: { sources: string[]; note: string };
   by_rating: Record<string, InfraStats>;
 }
+
+// Government grade-level breakdown (PS/UPS/Secondary/Sr.Secondary), full unified registry —
+// sourced from the CSR files' own "school type" column, ~80% coverage (the toilet-only file
+// and un-joined schools have no source for it, grouped under "unknown").
+interface LevelStats extends InfraStats {
+  label: string; in_shvr_count: number; avg_rating: number | null;
+}
+interface LevelSummary {
+  meta: { note: string };
+  by_level: Record<"PS" | "UPS" | "SR_SEC" | "unknown", LevelStats>;
+}
+const LEVEL_ORDER: ("PS" | "UPS" | "SR_SEC" | "unknown")[] = ["PS", "UPS", "SR_SEC", "unknown"];
 
 // Full unified registry (SHVR-rated ∪ every CSR-file school) per CURRENT district — real
 // percentages for all 41 districts, since total_school_count is a genuine denominator now,
@@ -85,6 +98,12 @@ const STATUS_COLOR: Record<string, string> = {
   completed: "text-emerald-400", not_assigned: "text-muted-foreground", in_progress: "text-amber-400", yet_to_start: "text-red-400",
   not_in_shvr: "text-sky-400",
 };
+
+const LEVEL_LABEL: Record<string, string> = {
+  PS: "Primary (PS)", UPS: "Upper Primary (UPS)", SR_SEC: "Sr./Higher Secondary (SSS)",
+  unknown: "Unknown",
+};
+const LEVEL_SHORT: Record<string, string> = { PS: "PS", UPS: "UPS", SR_SEC: "HS", unknown: "—" };
 
 // ── Layer definitions ──────────────────────────────────────────────────────
 
@@ -343,6 +362,7 @@ function SchoolTable({ schools, districts }: { schools: School[]; districts: str
   const [search, setSearch] = useState("");
   const [districtFilter, setDistrictFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [levelFilter, setLevelFilter] = useState("All");
   const [page, setPage] = useState(0);
 
   const filtered = useMemo(() => {
@@ -350,10 +370,11 @@ function SchoolTable({ schools, districts }: { schools: School[]; districts: str
     return schools.filter((s) => {
       if (districtFilter !== "All" && s.district !== districtFilter) return false;
       if (statusFilter !== "All" && s.status !== statusFilter) return false;
+      if (levelFilter !== "All" && (s.school_level ?? "unknown") !== levelFilter) return false;
       if (q && !s.name?.toLowerCase().includes(q) && !s.udise_code?.includes(q)) return false;
       return true;
     });
-  }, [schools, search, districtFilter, statusFilter]);
+  }, [schools, search, districtFilter, statusFilter, levelFilter]);
 
   const pageRows = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -380,6 +401,11 @@ function SchoolTable({ schools, districts }: { schools: School[]; districts: str
           <option value="All">All Statuses</option>
           {Object.entries(STATUS_LABEL).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
         </select>
+        <select value={levelFilter} onChange={(e) => { setLevelFilter(e.target.value); setPage(0); }}
+          className="rounded-md border border-border/50 bg-background px-2 py-1.5 text-xs outline-none">
+          <option value="All">All Levels</option>
+          {LEVEL_ORDER.map((k) => <option key={k} value={k}>{LEVEL_LABEL[k]}</option>)}
+        </select>
         <span className="text-[10px] text-muted-foreground whitespace-nowrap">{filtered.length.toLocaleString()} schools</span>
       </div>
 
@@ -390,6 +416,7 @@ function SchoolTable({ schools, districts }: { schools: School[]; districts: str
               <th className="px-3 py-2 font-medium">School</th>
               <th className="px-3 py-2 font-medium">UDISE Code</th>
               <th className="px-3 py-2 font-medium">District</th>
+              <th className="px-3 py-2 font-medium">Level</th>
               <th className="px-3 py-2 font-medium">Location</th>
               <th className="px-3 py-2 font-medium">Status</th>
               <th className="px-3 py-2 font-medium">Infra Needs</th>
@@ -402,6 +429,9 @@ function SchoolTable({ schools, districts }: { schools: School[]; districts: str
                 <td className="px-3 py-1.5">{s.name}</td>
                 <td className="px-3 py-1.5 font-mono text-muted-foreground">{s.udise_code}</td>
                 <td className="px-3 py-1.5">{s.district}</td>
+                <td className="px-3 py-1.5 text-muted-foreground" title={LEVEL_LABEL[s.school_level ?? "unknown"]}>
+                  {LEVEL_SHORT[s.school_level ?? "unknown"]}
+                </td>
                 <td className="px-3 py-1.5">
                   {s.location_precision === "village_match"
                     ? <span className="text-emerald-400">📍 {s.matched_village}</span>
@@ -471,6 +501,72 @@ function InfraByRatingTable({ data }: { data: InfraSummary }) {
                     {k === "unrated" ? "Unrated" : `${k}★`}
                   </td>
                   <td className="px-3 py-1.5 text-right">{v.school_count.toLocaleString()}</td>
+                  <td className="px-3 py-1.5 text-right font-semibold" style={{ color: pctColor(v.toilet_required_pct) }}>
+                    {v.toilet_required_pct}% <span className="text-muted-foreground font-normal">({v.toilet_required_count})</span>
+                  </td>
+                  <td className="px-3 py-1.5 text-right font-semibold" style={{ color: pctColor(v.classroom_repair_pct) }}>
+                    {v.classroom_repair_pct}% <span className="text-muted-foreground font-normal">({v.classroom_repair_needed_count})</span>
+                  </td>
+                  <td className="px-3 py-1.5 text-right font-semibold" style={{ color: pctColor(v.new_classroom_pct) }}>
+                    {v.new_classroom_pct}% <span className="text-muted-foreground font-normal">({v.new_classroom_requirement_count})</span>
+                  </td>
+                  <td className="px-3 py-1.5 text-right font-semibold" style={{ color: pctColor(v.dilapidated_pct) }}>
+                    {v.dilapidated_pct}% <span className="text-muted-foreground font-normal">({v.building_dilapidated_count})</span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function InfraByLevelTable({ data }: { data: LevelSummary }) {
+  const rows = LEVEL_ORDER.filter((k) => data.by_level[k]?.school_count > 0);
+  const pctColor = (pct: number | undefined) => {
+    if (pct == null) return "";
+    return pct >= 50 ? "#dc2626" : pct >= 25 ? "#ea580c" : pct >= 10 ? "#d97706" : "#16a34a";
+  };
+  return (
+    <div className="border border-border/40 rounded-lg overflow-hidden">
+      <div className="p-3 border-b border-border/30 bg-muted/20">
+        <div className="text-xs font-semibold">🏫 Infrastructure Needs by School Level (GPS / UPS / HS)</div>
+        <div className="text-[10px] text-muted-foreground mt-1 leading-relaxed">
+          Government grade-level classification (Primary 1-5 / Upper Primary 1-8 / Senior-Higher Secondary 1-12),
+          sourced from the CSR files' own "school type" column — only the 3 UDISE-joined files carry it, so the{" "}
+          {data.by_level.unknown?.school_count.toLocaleString() ?? 0} schools reached only via the name-matched
+          toilet file (or not in any CSR file) fall under "Unknown". A distinct plain-"Secondary" bucket was dropped:
+          the source spreadsheet uses bare "SS" inconsistently (spot-checking showed many of those rows' own school
+          name says "Senior Secondary"), so it wasn't reliable enough to classify separately.
+        </div>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs">
+          <thead className="border-b border-border/30 bg-muted/10">
+            <tr className="text-left text-muted-foreground">
+              <th className="px-3 py-2 font-medium">Level</th>
+              <th className="px-3 py-2 font-medium text-right">Schools (in SHVR)</th>
+              <th className="px-3 py-2 font-medium text-right">Avg Rating</th>
+              <th className="px-3 py-2 font-medium text-right">🚽 Toilet Needed</th>
+              <th className="px-3 py-2 font-medium text-right">🔧 Repair Needed</th>
+              <th className="px-3 py-2 font-medium text-right">🏗️ New Classroom</th>
+              <th className="px-3 py-2 font-medium text-right">🧱 Dilapidated</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((k) => {
+              const v = data.by_level[k];
+              return (
+                <tr key={k} className="border-b border-border/10">
+                  <td className="px-3 py-1.5 font-semibold">{v.label}</td>
+                  <td className="px-3 py-1.5 text-right">
+                    {v.school_count.toLocaleString()} <span className="text-muted-foreground font-normal">({v.in_shvr_count.toLocaleString()})</span>
+                  </td>
+                  <td className="px-3 py-1.5 text-right" style={{ color: ratingColor(v.avg_rating) }}>
+                    {v.avg_rating != null ? `${v.avg_rating.toFixed(2)}★` : "—"}
+                  </td>
                   <td className="px-3 py-1.5 text-right font-semibold" style={{ color: pctColor(v.toilet_required_pct) }}>
                     {v.toilet_required_pct}% <span className="text-muted-foreground font-normal">({v.toilet_required_count})</span>
                   </td>
@@ -622,6 +718,11 @@ export default function SHVRRajasthanPage() {
   const infraSummaryQ = useQuery<InfraSummary>({
     queryKey: ["shvr-infra-summary"],
     queryFn: () => fetch("/data/shvr_infra_by_rating_rajasthan.json").then((r) => r.json()),
+    staleTime: Infinity,
+  });
+  const levelSummaryQ = useQuery<LevelSummary>({
+    queryKey: ["shvr-infra-by-level"],
+    queryFn: () => fetch("/data/shvr_infra_by_level_rajasthan.json").then((r) => r.json()),
     staleTime: Infinity,
   });
   const districtBoundaryQ = useQuery<any>({
@@ -878,6 +979,7 @@ export default function SHVRRajasthanPage() {
         </div>
 
         {infraSummaryQ.data && <InfraByRatingTable data={infraSummaryQ.data} />}
+        {levelSummaryQ.data && <InfraByLevelTable data={levelSummaryQ.data} />}
         {districtAbsoluteQ.data && (
           <DistrictInfraTable data={districtAbsoluteQ.data} infraUnit={infraUnit} />
         )}

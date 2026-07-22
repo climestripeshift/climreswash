@@ -51,6 +51,10 @@ SCHOOLS = ROOT / "client/public/data/shvr_schools_infra_rajasthan.json"
 OUT_SCHOOLS = ROOT / "client/public/data/shvr_schools_infra_rajasthan.json"
 OUT_SUMMARY = ROOT / "client/public/data/shvr_infra_by_rating_rajasthan.json"
 OUT_DISTRICT = ROOT / "client/public/data/shvr_district_absolute_infra_rajasthan.json"
+OUT_LEVEL = ROOT / "client/public/data/shvr_infra_by_level_rajasthan.json"
+
+LEVEL_LABEL = {"PS": "Primary (PS)", "UPS": "Upper Primary (UPS)",
+               "SR_SEC": "Sr./Higher Secondary (SSS)", "unknown": "Unknown / not in CSR type column"}
 
 NAME_MATCH_THRESHOLD = 0.82
 
@@ -73,6 +77,49 @@ def norm_name(v: str) -> str:
 
 def yes(v) -> bool:
     return str(v or "").strip().upper() == "YES"
+
+
+# The CSR files' "school type" column (PS/UPS/SS/SSS classification) is free text with ~240
+# distinct raw spellings (case variants, punctuation, trailing refnos, mangled legacy-Hindi-font
+# garbage, composite-school descriptions). Canonicalize the high-frequency forms (covering
+# >98% of rows) into 4 government grade-level buckets; anything unrecognized falls through to
+# None (Unknown) rather than guessing — a missing level is safer than a wrong one.
+_SR_SEC_EXACT = {
+    "SSS", "GSSS", "GGSSS", "GGSS", "GSS S", "MGGS", "MGSS", "MGGSSS", "MGG", "MGSSS",
+    "SSEC", "SENSEC", "SINSEC", "KGBV", "SR", "PUPS_SSS",
+}
+_UPS_EXACT = {"UPS", "GUPS", "GGUPS", "PUPS", "USP", "UPSS", "UPSSANS", "UPSSANSKRIT"}
+_PS_EXACT = {"PS", "GPS", "GGPS", "PGS", "PRIMERY", "PRIMARY", "PRIMARYSCHOOL"}
+
+
+def canonical_school_level(raw) -> str | None:
+    if raw is None:
+        return None
+    t = str(raw).strip()
+    if not t:
+        return None
+    compact = re.sub(r"[^A-Z]", "", t.upper())
+    if not compact:
+        return None
+    # composite schools spanning up to senior/higher secondary -> classify at their ceiling
+    if "HSEC" in compact or "HIGHERSEC" in compact:
+        return "SR_SEC"
+    if compact in _SR_SEC_EXACT or compact.startswith(("SSS", "GSSS", "MGGS", "MGSS")):
+        return "SR_SEC"
+    if "SRSEC" in compact or "SENSEC" in compact or "SENIORSEC" in compact:
+        return "SR_SEC"
+    if compact in _UPS_EXACT or compact.startswith(("UPS", "GUPS", "GGUPS")):
+        return "UPS"
+    if "UPPERPRIM" in compact or "PRIMARYWITHUPPER" in compact:
+        return "UPS"
+    # NOTE: bare "SS"/"GSS" tokens are deliberately NOT mapped to "SEC" (plain Secondary) —
+    # spot-checking showed the source spreadsheet uses "SS" inconsistently: many of those rows'
+    # own school-name field says "...SENIOR SECONDARY SCHOOL..." (so it's really SR_SEC), and a
+    # couple say "...UPPER PRIMARY SCHOOL..." (not secondary at all). The label isn't reliable
+    # enough to trust, so those fall through to unknown rather than risk a wrong bucket.
+    if compact in _PS_EXACT or compact.startswith(("PS", "GPS")):
+        return "PS"
+    return None
 
 
 # CSR district-column spelling variants -> canonical name (matches rajasthan_districts_current.geojson)
@@ -104,15 +151,16 @@ def clean_udise_map(rows: list[tuple[str, str, str, dict]]) -> dict[str, dict]:
             dropped += 1
             continue
         # merge all rows for this (legitimately single) school: bools OR together,
-        # numbers sum (e.g. two repair line-items' classroom counts really do add up)
+        # numbers sum (e.g. two repair line-items' classroom counts really do add up),
+        # everything else (e.g. school_level) keeps the first non-null value seen
         merged: dict = {}
         for _, _, data in entries:
             for k, v in data.items():
                 if isinstance(v, bool):
                     merged[k] = merged.get(k, False) or v
-                elif isinstance(v, (int, float)) and k in merged:
-                    merged[k] += v
-                else:
+                elif isinstance(v, (int, float)):
+                    merged[k] = merged.get(k, 0) + v if k in merged else v
+                elif merged.get(k) is None:
                     merged[k] = v
         merged["_name"] = entries[0][0]
         merged["_district"] = canonical_district(entries[0][1])
@@ -134,6 +182,7 @@ def load_acr_new() -> dict[str, dict]:
             "dilapidated_declared_official": yes(row[9]),
             "dilapidated_classroom_count": row[10] if isinstance(row[10], (int, float)) else 0,
             "new_classroom_requirement": True,
+            "school_level": canonical_school_level(row[6]),
         }))
     return clean_udise_map(rows)
 
@@ -150,6 +199,7 @@ def load_acr_repair() -> dict[str, dict]:
             "classrooms_needing_repair": row[8] if isinstance(row[8], (int, float)) else 0,
             "repair_amount_needed_lakh": row[9] if isinstance(row[9], (int, float)) else 0,
             "classroom_repair_needed": True,
+            "school_level": canonical_school_level(row[6]),
         }))
     return clean_udise_map(rows)
 
@@ -162,7 +212,10 @@ def load_dilapidated() -> dict[str, dict]:
     for row in ws.iter_rows(min_row=4, values_only=True):
         if row[4] is None:
             continue
-        rows.append((norm_code(row[4]), row[3], row[1], {"building_dilapidated_listed": yes(row[6])}))
+        rows.append((norm_code(row[4]), row[3], row[1], {
+            "building_dilapidated_listed": yes(row[6]),
+            "school_level": canonical_school_level(row[5]),
+        }))
     return clean_udise_map(rows)
 
 
@@ -212,7 +265,7 @@ def main():
             "status": "not_in_shvr", "rating": None, "percentage": None,
             "lat": None, "lon": None, "h3_id": None,
             "matched_village": None, "location_precision": "district_centroid",
-            "in_shvr": False,
+            "in_shvr": False, "school_level": None,  # resolved below, from whichever CSR file has it
         })
     print(f"Unified registry: {len(schools)} schools ({len(existing_codes)} on file already + {len(new_codes)} newly added)")
 
@@ -227,6 +280,7 @@ def main():
         s["classrooms_needing_repair"] = 0
         s["girls_toilet_required"] = None  # filled below, name-matched
         s["toilet_match_method"] = None
+        s["school_level"] = None  # PS/UPS/SEC/SR_SEC — filled below from whichever CSR file has it
 
         if code and code in acr_new:
             matched_new += 1
@@ -235,14 +289,20 @@ def main():
             s["dilapidated_classroom_count"] = d["dilapidated_classroom_count"]
             if d["building_fully_dilapidated"]:
                 s["building_dilapidated"] = True
+            if d.get("school_level"):
+                s["school_level"] = d["school_level"]
         if code and code in acr_repair:
             matched_repair += 1
             d = acr_repair[code]
             s["classroom_repair_needed"] = True
             s["classrooms_needing_repair"] = d["classrooms_needing_repair"]
+            if not s["school_level"] and d.get("school_level"):
+                s["school_level"] = d["school_level"]
         if code and code in dilapidated:
             matched_dilap += 1
             s["building_dilapidated"] = True
+            if not s["school_level"] and dilapidated[code].get("school_level"):
+                s["school_level"] = dilapidated[code]["school_level"]
 
     print(f"\nUDISE-joined: new_classroom={matched_new} repair={matched_repair} dilapidated={matched_dilap}")
 
@@ -329,6 +389,43 @@ def main():
         print(f"  {d:18s} n={v['total_school_count']:6d} ({shvr_tag:18s})  repair={v['classroom_repair_needed_count']:5d} ({v['classroom_repair_pct']:>5}%)  "
               f"new_room={v['new_classroom_requirement_count']:5d}  dilapidated={v['building_dilapidated_count']:4d}  toilet={v['toilet_required_count']:4d}")
 
+    # ── Summary by school level (PS/UPS/Secondary/Sr.Secondary), full unified registry —
+    # sourced from the CSR files' own "school type" column, canonicalized; only ~81% of
+    # schools have it (the 3 UDISE-keyed CSR files carry it, toilet-only matches don't) ──
+    by_level: dict[str, dict] = {}
+    for level_key in ["PS", "UPS", "SR_SEC", "unknown"]:
+        group = [s for s in schools if (s["school_level"] or "unknown") == level_key]
+        n = len(group)
+        in_shvr = [s for s in group if s["in_shvr"]]
+        rated = [s["rating"] for s in in_shvr if s["rating"] is not None]
+        toilet_c = sum(1 for s in group if s["girls_toilet_required"])
+        repair_c = sum(1 for s in group if s["classroom_repair_needed"])
+        new_room_c = sum(1 for s in group if s["new_classroom_requirement"])
+        dilap_c = sum(1 for s in group if s["building_dilapidated"])
+        by_level[level_key] = {
+            "label": LEVEL_LABEL[level_key],
+            "school_count": n,
+            "in_shvr_count": len(in_shvr),
+            "avg_rating": round(sum(rated) / len(rated), 2) if rated else None,
+            "toilet_required_count": toilet_c,
+            "classroom_repair_needed_count": repair_c,
+            "new_classroom_requirement_count": new_room_c,
+            "building_dilapidated_count": dilap_c,
+            "toilet_required_pct": round(100 * toilet_c / n, 1) if n else None,
+            "classroom_repair_pct": round(100 * repair_c / n, 1) if n else None,
+            "new_classroom_pct": round(100 * new_room_c / n, 1) if n else None,
+            "dilapidated_pct": round(100 * dilap_c / n, 1) if n else None,
+        }
+
+    def pct_or_dash(v, k):
+        return v[k] if v[k] is not None else "-"
+
+    print("\nInfrastructure needs by school level:")
+    for k, v in by_level.items():
+        print(f"  {k:8s} n={v['school_count']:6d}  toilet={pct_or_dash(v,'toilet_required_pct'):>5}%  "
+              f"repair={pct_or_dash(v,'classroom_repair_pct'):>5}%  new_room={pct_or_dash(v,'new_classroom_pct'):>5}%  "
+              f"dilapidated={pct_or_dash(v,'dilapidated_pct'):>5}%")
+
     OUT_SCHOOLS.write_text(json.dumps(schools, separators=(",", ":")))
     OUT_SUMMARY.write_text(json.dumps({
         "meta": {
@@ -355,10 +452,23 @@ def main():
         "by_district": by_district,
     }, indent=2))
 
+    OUT_LEVEL.write_text(json.dumps({
+        "meta": {
+            "note": "Full unified registry, grouped by government school grade-level "
+                    "(PS=Primary 1-5, UPS=Upper Primary 1-8, SEC=Secondary/High School 1-10, "
+                    "SR_SEC=Senior/Higher Secondary 1-12). Sourced from the 'school type' column "
+                    "in the 3 UDISE-keyed CSR files (~240 raw spelling variants canonicalized); "
+                    "schools only reached via the name-matched toilet file, or never appearing in "
+                    "any CSR file at all, have no source for this column and fall into 'unknown'.",
+        },
+        "by_level": by_level,
+    }, indent=2))
+
     import os
     print(f"\nSaved {OUT_SCHOOLS} ({os.path.getsize(OUT_SCHOOLS)//1024}KB)")
     print(f"Saved {OUT_DISTRICT}")
     print(f"Saved {OUT_SUMMARY}")
+    print(f"Saved {OUT_LEVEL}")
 
 
 if __name__ == "__main__":

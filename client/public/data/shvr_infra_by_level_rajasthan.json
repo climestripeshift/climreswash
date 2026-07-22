@@ -1,0 +1,63 @@
+{
+  "meta": {
+    "note": "Full unified registry, grouped by government school grade-level (PS=Primary 1-5, UPS=Upper Primary 1-8, SEC=Secondary/High School 1-10, SR_SEC=Senior/Higher Secondary 1-12). Sourced from the 'school type' column in the 3 UDISE-keyed CSR files (~240 raw spelling variants canonicalized); schools only reached via the name-matched toilet file, or never appearing in any CSR file at all, have no source for this column and fall into 'unknown'."
+  },
+  "by_level": {
+    "PS": {
+      "label": "Primary (PS)",
+      "school_count": 22299,
+      "in_shvr_count": 10070,
+      "avg_rating": 3.0,
+      "toilet_required_count": 452,
+      "classroom_repair_needed_count": 19381,
+      "new_classroom_requirement_count": 6552,
+      "building_dilapidated_count": 1783,
+      "toilet_required_pct": 2.0,
+      "classroom_repair_pct": 86.9,
+      "new_classroom_pct": 29.4,
+      "dilapidated_pct": 8.0
+    },
+    "UPS": {
+      "label": "Upper Primary (UPS)",
+      "school_count": 15070,
+      "in_shvr_count": 7315,
+      "avg_rating": 3.17,
+      "toilet_required_count": 371,
+      "classroom_repair_needed_count": 13730,
+      "new_classroom_requirement_count": 6334,
+      "building_dilapidated_count": 386,
+      "toilet_required_pct": 2.5,
+      "classroom_repair_pct": 91.1,
+      "new_classroom_pct": 42.0,
+      "dilapidated_pct": 2.6
+    },
+    "SR_SEC": {
+      "label": "Sr./Higher Secondary (SSS)",
+      "school_count": 17151,
+      "in_shvr_count": 9084,
+      "avg_rating": 3.23,
+      "toilet_required_count": 626,
+      "classroom_repair_needed_count": 15896,
+      "new_classroom_requirement_count": 8540,
+      "building_dilapidated_count": 255,
+      "toilet_required_pct": 3.6,
+      "classroom_repair_pct": 92.7,
+      "new_classroom_pct": 49.8,
+      "dilapidated_pct": 1.5
+    },
+    "unknown": {
+      "label": "Unknown / not in CSR type column",
+      "school_count": 13605,
+      "in_shvr_count": 13133,
+      "avg_rating": 3.2,
+      "toilet_required_count": 136,
+      "classroom_repair_needed_count": 558,
+      "new_classroom_requirement_count": 297,
+      "building_dilapidated_count": 0,
+      "toilet_required_pct": 1.0,
+      "classroom_repair_pct": 4.1,
+      "new_classroom_pct": 2.2,
+      "dilapidated_pct": 0.0
+    }
+  }
+}
