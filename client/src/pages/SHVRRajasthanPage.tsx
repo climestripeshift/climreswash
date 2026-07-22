@@ -26,6 +26,7 @@ interface School {
   h3_id: string | null;
   matched_village: string | null;
   location_precision: "village_match" | "district_centroid";
+  in_shvr: boolean;
   new_classroom_requirement: boolean;
   classroom_repair_needed: boolean;
   classrooms_needing_repair: number;
@@ -36,7 +37,7 @@ interface School {
 }
 
 interface InfraStats {
-  school_count: number; avg_rating?: number | null;
+  school_count: number;
   toilet_required_count: number; classroom_repair_needed_count: number;
   new_classroom_requirement_count: number; building_dilapidated_count: number;
   toilet_required_pct?: number; classroom_repair_pct?: number;
@@ -46,16 +47,22 @@ interface InfraStats {
 interface InfraSummary {
   meta: { sources: string[]; note: string };
   by_rating: Record<string, InfraStats>;
-  by_district: Record<string, InfraStats>;
 }
 
-interface DistrictAbsoluteStats {
-  new_classroom_requirement_count: number; classroom_repair_needed_count: number;
-  building_dilapidated_count: number; toilet_required_count: number; has_shvr_rating: boolean;
+// Full unified registry (SHVR-rated ∪ every CSR-file school) per CURRENT district — real
+// percentages for all 41 districts, since total_school_count is a genuine denominator now,
+// not just the SHVR-rated subset.
+interface DistrictStats {
+  total_school_count: number; in_shvr_count: number; has_shvr_rating: boolean;
+  avg_rating: number | null;
+  toilet_required_count: number; classroom_repair_needed_count: number;
+  new_classroom_requirement_count: number; building_dilapidated_count: number;
+  toilet_required_pct: number | null; classroom_repair_pct: number | null;
+  new_classroom_pct: number | null; dilapidated_pct: number | null;
 }
-interface DistrictAbsoluteSummary {
+interface DistrictFullSummary {
   meta: { note: string };
-  by_district: Record<string, DistrictAbsoluteStats>;
+  by_district: Record<string, DistrictStats>;
 }
 
 interface DistrictSummary {
@@ -72,24 +79,29 @@ type HexRating = { district: string; avg_rating_all: number; avg_rating_complete
 
 const STATUS_LABEL: Record<string, string> = {
   completed: "Completed", not_assigned: "Not Assigned", in_progress: "In Progress", yet_to_start: "Yet to Start",
+  not_in_shvr: "Not in SHVR",
 };
 const STATUS_COLOR: Record<string, string> = {
   completed: "text-emerald-400", not_assigned: "text-muted-foreground", in_progress: "text-amber-400", yet_to_start: "text-red-400",
+  not_in_shvr: "text-sky-400",
 };
 
 // ── Layer definitions ──────────────────────────────────────────────────────
 
 interface LayerDef { key: string; label: string; icon: string; group: "rating" | "hazard" | "future" | "infra"; domain: [number, number] }
 
-// infra layer key -> field name in InfraStats (percentage, SHVR-covered districts only)
-const INFRA_FIELD: Record<string, keyof InfraStats> = {
+type InfraPctField = "toilet_required_pct" | "classroom_repair_pct" | "new_classroom_pct" | "dilapidated_pct";
+type InfraCountField = "toilet_required_count" | "classroom_repair_needed_count" | "new_classroom_requirement_count" | "building_dilapidated_count";
+
+// infra layer key -> pct field name in DistrictStats (real denominator: full union registry)
+const INFRA_FIELD: Record<string, InfraPctField> = {
   infra_toilet_pct: "toilet_required_pct",
   infra_repair_pct: "classroom_repair_pct",
   infra_new_classroom_pct: "new_classroom_pct",
   infra_dilapidated_pct: "dilapidated_pct",
 };
-// same layer key -> field name in DistrictAbsoluteStats (raw counts, all CSR districts)
-const INFRA_ABSOLUTE_FIELD: Record<string, Exclude<keyof DistrictAbsoluteStats, "has_shvr_rating">> = {
+// same layer key -> raw count field name in DistrictStats
+const INFRA_ABSOLUTE_FIELD: Record<string, InfraCountField> = {
   infra_toilet_pct: "toilet_required_count",
   infra_repair_pct: "classroom_repair_needed_count",
   infra_new_classroom_pct: "new_classroom_requirement_count",
@@ -123,6 +135,8 @@ const LAYER_BY_KEY = Object.fromEntries(LAYERS.map((l) => [l.key, l]));
 const RATING_RAMP: [number, number, number][] = [[239, 68, 68], [249, 115, 22], [234, 179, 8], [132, 204, 22], [34, 197, 94]]; // low->high, red->green
 const RISK_RAMP:   [number, number, number][] = [[34, 197, 94], [234, 179, 8], [249, 115, 22], [239, 68, 68], [153, 27, 27]]; // low->high, green->red
 
+function round1(v: number) { return Math.round(v * 10) / 10; }
+
 function gradientColor(ramp: [number, number, number][], t: number) {
   t = Math.max(0, Math.min(1, t));
   const s = t * (ramp.length - 1);
@@ -148,17 +162,12 @@ function layerColor(layer: LayerDef, value: number | null) {
 
 type InfraUnit = "pct" | "absolute";
 
-// district-level infra value (% for SHVR-covered districts, or raw count for all CSR
-// districts), used both for hex fill (uniform per district) and the district choropleth
+// district-level infra value (% or raw count, both against the real full-registry
+// denominator), used both for hex fill (uniform per district) and the district choropleth
 function infraDistrictValue(layer: LayerDef, district: string, unit: InfraUnit,
-  pctByDistrict: Record<string, InfraStats> | undefined, absoluteByDistrict: Record<string, DistrictAbsoluteStats> | undefined): number | null {
-  if (unit === "absolute") {
-    const field = INFRA_ABSOLUTE_FIELD[layer.key];
-    const v = absoluteByDistrict?.[district]?.[field];
-    return typeof v === "number" ? v : null;
-  }
-  const field = INFRA_FIELD[layer.key];
-  const v = pctByDistrict?.[district]?.[field];
+  districtStats: Record<string, DistrictStats> | undefined): number | null {
+  const field = unit === "absolute" ? INFRA_ABSOLUTE_FIELD[layer.key] : INFRA_FIELD[layer.key];
+  const v = districtStats?.[district]?.[field];
   return typeof v === "number" ? v : null;
 }
 
@@ -211,10 +220,10 @@ function SchoolPointsLayer({ schools, hexByH3Id, layer, mode }: {
   return <GeoJSON key={`schools-${layer.key}-${mode}`} data={geoData as any} pointToLayer={pointToLayer} onEachFeature={onEachFeature} />;
 }
 
-function RajasthanHexMap({ hexes, hexByH3Id, ratings, infraByDistrict, infraUnit, oldDistrictAbsolute, schools, mode, layer, districtMarkers, viewMode, districtGeo }: {
+function RajasthanHexMap({ hexes, hexByH3Id, ratings, infraUnit, oldDistrictStats, schools, mode, layer, districtMarkers, viewMode, districtGeo }: {
   hexes: any[]; hexByH3Id: Record<string, any>; ratings: Record<string, HexRating>;
-  infraByDistrict: Record<string, InfraStats> | undefined; infraUnit: InfraUnit;
-  oldDistrictAbsolute: Record<string, DistrictAbsoluteStats> | undefined; schools: School[];
+  infraUnit: InfraUnit;
+  oldDistrictStats: Record<string, DistrictStats> | undefined; schools: School[];
   mode: "all" | "completed"; layer: LayerDef; districtMarkers: DistrictMarker[];
   viewMode: "hex" | "district"; districtGeo: any;
 }) {
@@ -235,7 +244,7 @@ function RajasthanHexMap({ hexes, hexByH3Id, ratings, infraByDistrict, infraUnit
         const r = ratings[p.h3_id];
         value = r ? (mode === "all" ? r.avg_rating_all : r.avg_rating_completed_only) : null;
       } else if (layer.group === "infra") {
-        value = infraDistrictValue(layer, p.district_name, infraUnit, infraByDistrict, oldDistrictAbsolute);
+        value = infraDistrictValue(layer, p.district_name, infraUnit, oldDistrictStats);
       } else {
         value = p[layer.key] ?? null;
       }
@@ -245,7 +254,7 @@ function RajasthanHexMap({ hexes, hexByH3Id, ratings, infraByDistrict, infraUnit
         geometry: { type: "Polygon", coordinates: [coords] },
       };
     }),
-  }), [hexes, ratings, infraByDistrict, mode, layer]);
+  }), [hexes, ratings, oldDistrictStats, infraUnit, mode, layer]);
 
   const styleFeature = useCallback((feature: any) => ({
     fillColor: layerColor(layer, feature.properties.value), fillOpacity: 0.78, color: "#1e293b", weight: 0.3, renderer: canvasRenderer,
@@ -289,7 +298,7 @@ function RajasthanHexMap({ hexes, hexByH3Id, ratings, infraByDistrict, infraUnit
           <Tooltip sticky>
             <div style={{ fontSize: 11 }}>
               <b>{m.district}</b> — district centroid (address not matched)<br />
-              🏫 {m.school_count.toLocaleString()} SHVR schools · {m.rating != null ? `${m.rating.toFixed(2)}★ avg` : "no rating"}<br />
+              🏫 {m.school_count.toLocaleString()} schools · {m.rating != null ? `${m.rating.toFixed(2)}★ avg (rated subset)` : "no SHVR rating"}<br />
               {layer.group !== "rating" && m.layerAvg != null && <>{layer.icon} {layer.label}: <b>{m.layerAvg.toFixed(1)}/10</b> (district avg)</>}
             </div>
           </Tooltip>
@@ -485,15 +494,12 @@ function InfraByRatingTable({ data }: { data: InfraSummary }) {
 }
 
 interface DistrictTableRow {
-  district: string; avgRating: number | null; schoolCount: number | null;
+  district: string; avgRating: number | null; totalSchoolCount: number; inShvrCount: number;
   toilet: number | null; repair: number | null; newRoom: number | null; dilapidated: number | null;
   hasShvrRating: boolean;
 }
 
-function DistrictInfraTable({ pctData, absoluteData, avgRatingByCurrentDistrict, infraUnit }: {
-  pctData: InfraSummary; absoluteData: DistrictAbsoluteSummary | undefined;
-  avgRatingByCurrentDistrict: Record<string, { avg_rating: number | null }>; infraUnit: InfraUnit;
-}) {
+function DistrictInfraTable({ data, infraUnit }: { data: DistrictFullSummary; infraUnit: InfraUnit }) {
   const [sortBy, setSortBy] = useState<"toilet" | "repair" | "newRoom" | "dilapidated">("repair");
   const colorScale = (v: number | null, max: number) => {
     if (v == null) return "";
@@ -502,21 +508,16 @@ function DistrictInfraTable({ pctData, absoluteData, avgRatingByCurrentDistrict,
   };
 
   const rows = useMemo<DistrictTableRow[]>(() => {
-    if (infraUnit === "pct") {
-      return Object.entries(pctData.by_district).map(([district, v]) => ({
-        district, avgRating: v.avg_rating ?? null, schoolCount: v.school_count,
-        toilet: v.toilet_required_pct ?? null, repair: v.classroom_repair_pct ?? null,
-        newRoom: v.new_classroom_pct ?? null, dilapidated: v.dilapidated_pct ?? null, hasShvrRating: true,
-      }));
-    }
-    if (!absoluteData) return [];
-    return Object.entries(absoluteData.by_district).map(([district, v]) => ({
-      district, avgRating: avgRatingByCurrentDistrict[district]?.avg_rating ?? null, schoolCount: null,
-      toilet: v.toilet_required_count, repair: v.classroom_repair_needed_count,
-      newRoom: v.new_classroom_requirement_count, dilapidated: v.building_dilapidated_count,
+    const field = INFRA_ABSOLUTE_FIELD, pctField = INFRA_FIELD;
+    return Object.entries(data.by_district).map(([district, v]) => ({
+      district, avgRating: v.avg_rating, totalSchoolCount: v.total_school_count, inShvrCount: v.in_shvr_count,
       hasShvrRating: v.has_shvr_rating,
+      toilet: infraUnit === "absolute" ? v[field.infra_toilet_pct] as number : v[pctField.infra_toilet_pct] as number | null,
+      repair: infraUnit === "absolute" ? v[field.infra_repair_pct] as number : v[pctField.infra_repair_pct] as number | null,
+      newRoom: infraUnit === "absolute" ? v[field.infra_new_classroom_pct] as number : v[pctField.infra_new_classroom_pct] as number | null,
+      dilapidated: infraUnit === "absolute" ? v[field.infra_dilapidated_pct] as number : v[pctField.infra_dilapidated_pct] as number | null,
     }));
-  }, [pctData, absoluteData, avgRatingByCurrentDistrict, infraUnit]);
+  }, [data, infraUnit]);
 
   const maxes = useMemo(() => ({
     toilet: Math.max(1, ...rows.map((r) => r.toilet ?? 0)),
@@ -538,12 +539,11 @@ function DistrictInfraTable({ pctData, absoluteData, avgRatingByCurrentDistrict,
   return (
     <div className="border border-border/40 rounded-lg overflow-hidden">
       <div className="p-3 border-b border-border/30 bg-muted/20">
-        <div className="text-xs font-semibold">🗺️ Infrastructure Needs by District — {infraUnit === "absolute" ? `${rows.length} districts, absolute counts` : `${rows.length} districts, % of SHVR-rated schools`}</div>
+        <div className="text-xs font-semibold">🗺️ Infrastructure Needs by District — {rows.length} districts, {infraUnit === "absolute" ? "absolute counts" : "% of all known schools"}</div>
         <div className="text-[10px] text-muted-foreground mt-1">
-          Click a column header to sort.{" "}
-          {infraUnit === "absolute"
-            ? "Direct from the 4 CSR files — covers all current districts, including ones SHVR never rated a school in (marked below)."
-            : "Percentage of SHVR-rated schools only — districts SHVR didn't cover aren't shown here; switch to absolute counts to see them."}
+          Click a column header to sort. Every district's total is the full union registry (SHVR-rated schools plus every
+          school in the CSR requirement files), so counts and percentages are real for all 41 districts — including the
+          ones SHVR never rated a school in (marked "no SHVR").
         </div>
       </div>
       <div className="overflow-x-auto max-h-[40vh] overflow-y-auto">
@@ -552,7 +552,7 @@ function DistrictInfraTable({ pctData, absoluteData, avgRatingByCurrentDistrict,
             <tr className="text-left text-muted-foreground">
               <th className="px-3 py-2 font-medium">District</th>
               <th className="px-3 py-2 font-medium text-right">Avg Rating</th>
-              {infraUnit === "pct" && <th className="px-3 py-2 font-medium text-right">Schools</th>}
+              <th className="px-3 py-2 font-medium text-right">Schools (in SHVR)</th>
               <SortHeader field="toilet">🚽 Toilet</SortHeader>
               <SortHeader field="repair">🔧 Repair</SortHeader>
               <SortHeader field="newRoom">🏗️ New Room</SortHeader>
@@ -568,7 +568,9 @@ function DistrictInfraTable({ pctData, absoluteData, avgRatingByCurrentDistrict,
                 <td className="px-3 py-1.5 text-right" style={{ color: ratingColor(r.avgRating) }}>
                   {r.avgRating != null ? `${r.avgRating.toFixed(2)}★` : "—"}
                 </td>
-                {infraUnit === "pct" && <td className="px-3 py-1.5 text-right text-muted-foreground">{r.schoolCount?.toLocaleString() ?? "—"}</td>}
+                <td className="px-3 py-1.5 text-right text-muted-foreground">
+                  {r.totalSchoolCount.toLocaleString()} <span className="text-[10px]">({r.inShvrCount.toLocaleString()})</span>
+                </td>
                 <td className="px-3 py-1.5 text-right font-semibold" style={{ color: colorScale(r.toilet, maxes.toilet) }}>{fmt(r.toilet)}</td>
                 <td className="px-3 py-1.5 text-right font-semibold" style={{ color: colorScale(r.repair, maxes.repair) }}>{fmt(r.repair)}</td>
                 <td className="px-3 py-1.5 text-right font-semibold" style={{ color: colorScale(r.newRoom, maxes.newRoom) }}>{fmt(r.newRoom)}</td>
@@ -627,7 +629,7 @@ export default function SHVRRajasthanPage() {
     queryFn: () => fetch("/data/rajasthan_districts_current.geojson").then((r) => r.json()),
     staleTime: Infinity,
   });
-  const districtAbsoluteQ = useQuery<DistrictAbsoluteSummary>({
+  const districtAbsoluteQ = useQuery<DistrictFullSummary>({
     queryKey: ["shvr-district-absolute"],
     queryFn: () => fetch("/data/shvr_district_absolute_infra_rajasthan.json").then((r) => r.json()),
     staleTime: Infinity,
@@ -651,8 +653,12 @@ export default function SHVRRajasthanPage() {
 
   const matchStats = useMemo(() => {
     const total = schoolsQ.data?.length ?? 0;
+    const inShvr = schoolsQ.data?.filter((s) => s.in_shvr).length ?? 0;
+    const notInShvr = total - inShvr;
+    // village-matching only ran against the SHVR-rated schools — CSR-only additions always
+    // sit at their district centroid, since they never went through address geocoding.
     const matched = schoolsQ.data?.filter((s) => s.location_precision === "village_match").length ?? 0;
-    return { total, matched };
+    return { total, inShvr, notInShvr, matched };
   }, [schoolsQ.data]);
 
   // District centroids for the REMAINDER only — schools whose address didn't match a
@@ -703,50 +709,40 @@ export default function SHVRRajasthanPage() {
     return Object.fromEntries(Object.entries(sums).map(([d, s]) => [d, s.total / s.n]));
   }, [rajHexes, layer]);
 
-  // Rating/infra stats at the REAL current-district granularity (e.g. Balotra separate from
-  // Barmer) — computed client-side from the school records, which already carry district_raw.
-  // Hazard/future layers can't be split this finely: the hex grid only knows old boundaries,
-  // so those fall back to the old parent district's hex average for every split district.
-  const currentDistrictStats = useMemo(() => {
-    const clean = (raw: string) => raw.replace("(RAJ.)", "").trim()
-      .toLowerCase().replace(/(^|\s|-)\w/g, (c) => c.toUpperCase());
-    const byDistrict: Record<string, { rated: number[]; toilet: number; repair: number; newRoom: number; dilap: number; n: number }> = {};
-    for (const s of visibleSchools) {
-      if (!s.district_raw) continue;
-      const d = clean(s.district_raw);
-      const e = (byDistrict[d] ??= { rated: [], toilet: 0, repair: 0, newRoom: 0, dilap: 0, n: 0 });
-      e.n += 1;
-      if (s.rating != null) e.rated.push(s.rating);
-      if (s.girls_toilet_required) e.toilet += 1;
-      if (s.classroom_repair_needed) e.repair += 1;
-      if (s.new_classroom_requirement) e.newRoom += 1;
-      if (s.building_dilapidated) e.dilap += 1;
-    }
-    return Object.fromEntries(Object.entries(byDistrict).map(([d, e]) => [d, {
-      avg_rating: e.rated.length ? e.rated.reduce((s, x) => s + x, 0) / e.rated.length : null,
-      toilet_required_pct: e.n ? 100 * e.toilet / e.n : null,
-      classroom_repair_pct: e.n ? 100 * e.repair / e.n : null,
-      new_classroom_pct: e.n ? 100 * e.newRoom / e.n : null,
-      dilapidated_pct: e.n ? 100 * e.dilap / e.n : null,
-    }]));
-  }, [visibleSchools]);
+  // Full per-current-district stats (rating + infra, real denominator across the whole union
+  // registry) come straight from the backend now — no client-side recomputation needed.
+  const currentDistrictStats = districtAbsoluteQ.data?.by_district ?? {};
 
-  // Absolute infra counts, rolled up to OLD district boundaries (summed across current-boundary
-  // children) — used for hex-view coloring, since hexes only know the old/coarser district.
-  const oldDistrictAbsolute = useMemo<Record<string, DistrictAbsoluteStats>>(() => {
+  // Rolled up to OLD district boundaries (summed counts across current-boundary children,
+  // pct recomputed against the summed total) — used for hex-view coloring, since hexes only
+  // know the old/coarser district.
+  const oldDistrictStats = useMemo<Record<string, DistrictStats>>(() => {
     if (!districtBoundaryQ.data || !districtAbsoluteQ.data) return {};
-    const byOld: Record<string, DistrictAbsoluteStats> = {};
+    const byOld: Record<string, DistrictStats> = {};
     for (const f of districtBoundaryQ.data.features) {
       const current = f.properties.NAME;
       const old = f.properties.OLD_DISTRICT ?? current;
       const stats = districtAbsoluteQ.data.by_district[current];
       if (!stats) continue;
-      const entry = (byOld[old] ??= { new_classroom_requirement_count: 0, classroom_repair_needed_count: 0, building_dilapidated_count: 0, toilet_required_count: 0, has_shvr_rating: false });
-      entry.new_classroom_requirement_count += stats.new_classroom_requirement_count;
-      entry.classroom_repair_needed_count += stats.classroom_repair_needed_count;
-      entry.building_dilapidated_count += stats.building_dilapidated_count;
+      const entry = (byOld[old] ??= {
+        total_school_count: 0, in_shvr_count: 0, has_shvr_rating: false, avg_rating: null,
+        toilet_required_count: 0, classroom_repair_needed_count: 0, new_classroom_requirement_count: 0, building_dilapidated_count: 0,
+        toilet_required_pct: null, classroom_repair_pct: null, new_classroom_pct: null, dilapidated_pct: null,
+      });
+      entry.total_school_count += stats.total_school_count;
+      entry.in_shvr_count += stats.in_shvr_count;
       entry.toilet_required_count += stats.toilet_required_count;
+      entry.classroom_repair_needed_count += stats.classroom_repair_needed_count;
+      entry.new_classroom_requirement_count += stats.new_classroom_requirement_count;
+      entry.building_dilapidated_count += stats.building_dilapidated_count;
       entry.has_shvr_rating = entry.has_shvr_rating || stats.has_shvr_rating;
+    }
+    for (const entry of Object.values(byOld)) {
+      if (!entry.total_school_count) continue;
+      entry.toilet_required_pct = round1(100 * entry.toilet_required_count / entry.total_school_count);
+      entry.classroom_repair_pct = round1(100 * entry.classroom_repair_needed_count / entry.total_school_count);
+      entry.new_classroom_pct = round1(100 * entry.new_classroom_requirement_count / entry.total_school_count);
+      entry.dilapidated_pct = round1(100 * entry.building_dilapidated_count / entry.total_school_count);
     }
     return byOld;
   }, [districtBoundaryQ.data, districtAbsoluteQ.data]);
@@ -769,15 +765,7 @@ export default function SHVRRajasthanPage() {
         const oldDistrict = f.properties.OLD_DISTRICT ?? district;
         let value: number | null;
         if (layer.group === "rating") value = currentDistrictStats[district]?.avg_rating ?? null;
-        else if (layer.group === "infra") {
-          if (infraUnit === "absolute") {
-            const field = INFRA_ABSOLUTE_FIELD[layer.key];
-            value = districtAbsoluteQ.data?.by_district[district]?.[field] ?? null;
-          } else {
-            const field = INFRA_FIELD[layer.key];
-            value = (currentDistrictStats[district] as any)?.[field] ?? null;
-          }
-        }
+        else if (layer.group === "infra") value = infraDistrictValue(layer, district, infraUnit, currentDistrictStats);
         else value = hexAvgByDistrict[oldDistrict] ?? null;
         return { ...f, properties: { ...f.properties, district, value } };
       }),
@@ -798,17 +786,20 @@ export default function SHVRRajasthanPage() {
 
       {districtSummaryQ.data && (
         <div className="px-4 py-2 border-b border-border/30 bg-amber-500/5 text-[11px] text-muted-foreground leading-relaxed">
-          ⚠️ SHVR star ratings cover {districts.length} of Rajasthan's 33 districts (old/undivided boundaries) — missing:{" "}
-          <strong className="text-foreground">{districtSummaryQ.data.meta.missing_districts.join(", ")}</strong>. Switch the
-          Infrastructure layer to <strong className="text-foreground">"# schools"</strong> to see repair/toilet/classroom
-          need for those districts too — the CSR requirement lists cover all 41 current districts directly, independent of
-          SHVR coverage.{" "}
+          ⚠️ This is the full union of every school that appears in either data source —{" "}
+          <strong className="text-foreground">{matchStats.total.toLocaleString()} schools</strong> total:{" "}
+          <strong className="text-emerald-400">{matchStats.inShvr.toLocaleString()}</strong> participated in SHVR and got a
+          star rating (covering {districts.length} of Rajasthan's 33 old/undivided districts — missing:{" "}
+          <strong className="text-foreground">{districtSummaryQ.data.meta.missing_districts.join(", ")}</strong>), plus{" "}
+          <strong className="text-sky-400">{matchStats.notInShvr.toLocaleString()}</strong> more that never took part in SHVR
+          but do appear in the UNICEF CSR infrastructure-requirement files (repair / new classroom / dilapidated building /
+          toilet), which cover all 41 current districts directly. Infrastructure percentages below are computed against this
+          full total, not just the SHVR-rated subset — so a district can show a real repair rate even with no star rating.{" "}
           {matchStats.total > 0 && (
-            <><strong className="text-emerald-400">{matchStats.matched.toLocaleString()}</strong> of {matchStats.total.toLocaleString()} schools
-            ({(100 * matchStats.matched / matchStats.total).toFixed(0)}%) matched their address to a real village location
-            (dots below); the rest sit at their district's centroid (dashed circles) since SHVR gives no coordinates and their
-            address text didn't resolve. Includes all records regardless of evaluation status — most are "Not Assigned" and
-            their rating may be a stale placeholder.</>
+            <><strong className="text-emerald-400">{matchStats.matched.toLocaleString()}</strong> of the {matchStats.inShvr.toLocaleString()}
+            SHVR-rated schools ({(100 * matchStats.matched / Math.max(1, matchStats.inShvr)).toFixed(0)}%) matched their address to a real
+            village location (dots below); the rest — including all CSR-only schools, which were never geocoded — sit at their
+            district's centroid (dashed circles).</>
           )}
         </div>
       )}
@@ -861,7 +852,7 @@ export default function SHVRRajasthanPage() {
             <span className="text-xs text-muted-foreground">School rating basis:</span>
             <button onClick={() => setMode("all")}
               className={`px-2.5 py-1 rounded text-[11px] font-medium ${mode === "all" ? "bg-emerald-600 text-white" : "bg-muted/60 text-muted-foreground"}`}>
-              All records ({schoolsQ.data?.length.toLocaleString() ?? "…"})
+              All schools ({schoolsQ.data?.length.toLocaleString() ?? "…"})
             </button>
             <button onClick={() => setMode("completed")}
               className={`px-2.5 py-1 rounded text-[11px] font-medium ${mode === "completed" ? "bg-emerald-600 text-white" : "bg-muted/60 text-muted-foreground"}`}>
@@ -878,7 +869,7 @@ export default function SHVRRajasthanPage() {
           ) : (
             <>
               <RajasthanHexMap hexes={rajHexes} hexByH3Id={hexByH3Id} ratings={ratingsQ.data ?? {}}
-                infraByDistrict={infraSummaryQ.data?.by_district} infraUnit={infraUnit} oldDistrictAbsolute={oldDistrictAbsolute}
+                infraUnit={infraUnit} oldDistrictStats={oldDistrictStats}
                 schools={visibleSchools} mode={mode} layer={effectiveLayer}
                 districtMarkers={districtMarkers} viewMode={viewMode} districtGeo={districtGeo} />
               <div className="absolute bottom-3 left-3 z-[800]"><Legend layer={effectiveLayer} infraUnit={infraUnit} /></div>
@@ -887,9 +878,8 @@ export default function SHVRRajasthanPage() {
         </div>
 
         {infraSummaryQ.data && <InfraByRatingTable data={infraSummaryQ.data} />}
-        {infraSummaryQ.data && (
-          <DistrictInfraTable pctData={infraSummaryQ.data} absoluteData={districtAbsoluteQ.data}
-            avgRatingByCurrentDistrict={currentDistrictStats} infraUnit={infraUnit} />
+        {districtAbsoluteQ.data && (
+          <DistrictInfraTable data={districtAbsoluteQ.data} infraUnit={infraUnit} />
         )}
 
         {schoolsQ.isLoading ? (
