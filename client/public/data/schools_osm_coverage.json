@@ -1,0 +1,187 @@
+{
+  "Andaman & Nicobar Island": {
+    "osm_schools": 12,
+    "udise_official_total": 403,
+    "coverage_pct": 3.0
+  },
+  "Andhra Pradesh": {
+    "osm_schools": 2980,
+    "udise_official_total": 61059,
+    "coverage_pct": 4.9
+  },
+  "Arunachal Pradesh": {
+    "osm_schools": 126,
+    "udise_official_total": 3125,
+    "coverage_pct": 4.0
+  },
+  "Assam": {
+    "osm_schools": 1986,
+    "udise_official_total": 55356,
+    "coverage_pct": 3.6
+  },
+  "Bihar": {
+    "osm_schools": 6001,
+    "udise_official_total": 96317,
+    "coverage_pct": 6.2
+  },
+  "Chandigarh": {
+    "osm_schools": 6,
+    "udise_official_total": 213,
+    "coverage_pct": 2.8
+  },
+  "Chhattisgarh": {
+    "osm_schools": 222,
+    "udise_official_total": 57164,
+    "coverage_pct": 0.4
+  },
+  "Dadra & Nagar Haveli": {
+    "osm_schools": 8,
+    "udise_official_total": 423,
+    "coverage_pct": 1.9
+  },
+  "Daman & Diu": {
+    "osm_schools": 2,
+    "udise_official_total": 423,
+    "coverage_pct": 0.5
+  },
+  "Goa": {
+    "osm_schools": 68,
+    "udise_official_total": 1468,
+    "coverage_pct": 4.6
+  },
+  "Gujarat": {
+    "osm_schools": 213,
+    "udise_official_total": 53599,
+    "coverage_pct": 0.4
+  },
+  "Haryana": {
+    "osm_schools": 763,
+    "udise_official_total": 23507,
+    "coverage_pct": 3.2
+  },
+  "Himachal Pradesh": {
+    "osm_schools": 496,
+    "udise_official_total": 16950,
+    "coverage_pct": 2.9
+  },
+  "Jammu & Kashmir": {
+    "osm_schools": 1186,
+    "udise_official_total": 24218,
+    "coverage_pct": 4.9
+  },
+  "Jharkhand": {
+    "osm_schools": 213,
+    "udise_official_total": 44310,
+    "coverage_pct": 0.5
+  },
+  "Karnataka": {
+    "osm_schools": 4171,
+    "udise_official_total": 74782,
+    "coverage_pct": 5.6
+  },
+  "Kerala": {
+    "osm_schools": 4476,
+    "udise_official_total": 15694,
+    "coverage_pct": 28.5
+  },
+  "Ladakh": {
+    "osm_schools": 259,
+    "udise_official_total": 881,
+    "coverage_pct": 29.4
+  },
+  "Lakshadweep": {
+    "osm_schools": 0,
+    "udise_official_total": 32,
+    "coverage_pct": 0.0
+  },
+  "Madhya Pradesh": {
+    "osm_schools": 785,
+    "udise_official_total": 119570,
+    "coverage_pct": 0.7
+  },
+  "Maharashtra": {
+    "osm_schools": 2744,
+    "udise_official_total": 108159,
+    "coverage_pct": 2.5
+  },
+  "Manipur": {
+    "osm_schools": 49,
+    "udise_official_total": 4648,
+    "coverage_pct": 1.1
+  },
+  "Meghalaya": {
+    "osm_schools": 288,
+    "udise_official_total": 11510,
+    "coverage_pct": 2.5
+  },
+  "Mizoram": {
+    "osm_schools": 17,
+    "udise_official_total": 3966,
+    "coverage_pct": 0.4
+  },
+  "NCT of Delhi": {
+    "osm_schools": 302,
+    "udise_official_total": null,
+    "coverage_pct": null
+  },
+  "Nagaland": {
+    "osm_schools": 73,
+    "udise_official_total": 2700,
+    "coverage_pct": 2.7
+  },
+  "Odisha": {
+    "osm_schools": 363,
+    "udise_official_total": 61548,
+    "coverage_pct": 0.6
+  },
+  "Puducherry": {
+    "osm_schools": 689,
+    "udise_official_total": 764,
+    "coverage_pct": 90.2
+  },
+  "Punjab": {
+    "osm_schools": 758,
+    "udise_official_total": 27194,
+    "coverage_pct": 2.8
+  },
+  "Rajasthan": {
+    "osm_schools": 1117,
+    "udise_official_total": 106749,
+    "coverage_pct": 1.0
+  },
+  "Sikkim": {
+    "osm_schools": 17,
+    "udise_official_total": 1207,
+    "coverage_pct": 1.4
+  },
+  "Tamil Nadu": {
+    "osm_schools": 4909,
+    "udise_official_total": 57684,
+    "coverage_pct": 8.5
+  },
+  "Telangana": {
+    "osm_schools": 1290,
+    "udise_official_total": 41958,
+    "coverage_pct": 3.1
+  },
+  "Tripura": {
+    "osm_schools": 233,
+    "udise_official_total": 5007,
+    "coverage_pct": 4.7
+  },
+  "Uttar Pradesh": {
+    "osm_schools": 12000,
+    "udise_official_total": 266075,
+    "coverage_pct": 4.5
+  },
+  "Uttarakhand": {
+    "osm_schools": 1597,
+    "udise_official_total": 22521,
+    "coverage_pct": 7.1
+  },
+  "West Bengal": {
+    "osm_schools": 5587,
+    "udise_official_total": 93095,
+    "coverage_pct": 6.0
+  }
+}

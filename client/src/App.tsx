@@ -23,6 +23,7 @@ import WashAssessPage from "@/pages/WashAssessPage";
 import ScreenerPage from "@/pages/ScreenerPage";
 import InsightsPage from "@/pages/InsightsPage";
 import ElNinoPage from "@/pages/ElNinoPage";
+import SHVRRajasthanPage from "@/pages/SHVRRajasthanPage";
 
 function Router() {
   return (
@@ -46,6 +47,7 @@ function Router() {
       <Route path="/technology" component={TechnologyPage} />
       <Route path="/technology/:slug" component={TechnologyPage} />
       <Route path="/wash-assess" component={WashAssessPage} />
+      <Route path="/shvr-rajasthan" component={SHVRRajasthanPage} />
       <Route component={NotFound} />
     </Switch>
   );

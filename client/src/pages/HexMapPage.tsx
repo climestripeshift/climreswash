@@ -512,6 +512,7 @@ function FilterSidebar({
   features,
   showDistricts, onShowDistrictsChange, showStates, onShowStatesChange,
   showRivers, onShowRiversChange,
+  showSchools, onShowSchoolsChange,
   heatViewMode, onHeatViewModeChange,
 }: {
   collapsed: boolean; onToggle: () => void;
@@ -524,6 +525,7 @@ function FilterSidebar({
   showDistricts: boolean; onShowDistrictsChange: (v: boolean) => void;
   showStates: boolean; onShowStatesChange: (v: boolean) => void;
   showRivers: boolean; onShowRiversChange: (v: boolean) => void;
+  showSchools: boolean; onShowSchoolsChange: (v: boolean) => void;
   heatViewMode: "annual" | "peak"; onHeatViewModeChange: (m: "annual" | "peak") => void;
 }) {
   const [openCats, setOpenCats] = useState<Record<string, boolean>>({ overview: true });
@@ -598,7 +600,13 @@ function FilterSidebar({
             className="w-3 h-3 accent-blue-500" />
           <span className="text-blue-400">Rivers</span>
         </label>
+        <label className="flex items-center gap-1.5 text-[10px] cursor-pointer">
+          <input type="checkbox" checked={showSchools} onChange={(e) => onShowSchoolsChange(e.target.checked)}
+            className="w-3 h-3 accent-emerald-500" />
+          <span className="text-emerald-400">Schools</span>
+        </label>
       </div>
+      {showSchools && selectedState !== "All India" && <SchoolsCoverageNote state={selectedState} />}
 
       {/* Category sections */}
       <div className="flex-1 overflow-y-auto">
@@ -1395,15 +1403,69 @@ function RiverOverlay({ show }: { show: boolean }) {
   );
 }
 
+// Real school points from OpenStreetMap — volunteer-mapped, so coverage is
+// partial (see SchoolsCoverageNote). No WASH-infrastructure data; UDISE+ has
+// that but no public bulk API for individual schools.
+function SchoolsOverlay({ show, selectedState }: { show: boolean; selectedState: string }) {
+  const schoolsQ = useQuery<any>({
+    queryKey: ["schools-osm"],
+    queryFn: () => fetch("/data/schools_osm.geojson").then((r) => r.json()),
+    staleTime: Infinity,
+    enabled: show,
+  });
+
+  const filtered = useMemo(() => {
+    if (!schoolsQ.data || selectedState === "All India") return null;
+    return {
+      ...schoolsQ.data,
+      features: schoolsQ.data.features.filter((f: any) => f.properties.state === selectedState),
+    };
+  }, [schoolsQ.data, selectedState]);
+
+  const pointToLayer = useCallback((_feature: any, latlng: L.LatLng) =>
+    L.circleMarker(latlng, {
+      radius: 4, color: "#059669", weight: 1, fillColor: "#34d399", fillOpacity: 0.85,
+      renderer: boundaryRenderer,
+    }), []);
+
+  const onEachSchool = useCallback((feature: any, layer: any) => {
+    const name = feature.properties?.name || "Unnamed school (OSM)";
+    layer.bindTooltip(`🏫 ${name}`, { sticky: true, className: "text-[10px]" });
+  }, []);
+
+  if (!show || !filtered || !filtered.features.length) return null;
+  return (
+    <GeoJSON key={`schools-${selectedState}`} data={filtered} pointToLayer={pointToLayer} onEachFeature={onEachSchool} />
+  );
+}
+
+function SchoolsCoverageNote({ state }: { state: string }) {
+  const covQ = useQuery<Record<string, { osm_schools: number; udise_official_total: number | null; coverage_pct: number | null }>>({
+    queryKey: ["schools-osm-coverage"],
+    queryFn: () => fetch("/data/schools_osm_coverage.json").then((r) => r.json()),
+    staleTime: Infinity,
+  });
+  const row = covQ.data?.[state];
+  if (!row) return null;
+  return (
+    <div className="px-3 py-1.5 border-b border-border/30 text-[9px] text-muted-foreground bg-emerald-500/5">
+      🏫 {row.osm_schools.toLocaleString()} schools mapped in OSM
+      {row.udise_official_total != null && (
+        <> · ~{row.coverage_pct}% of {row.udise_official_total.toLocaleString()} official (UDISE+) — partial, volunteer-mapped, no WASH data</>
+      )}
+    </div>
+  );
+}
+
 function HexMap({
   geoData, attr, selectedState, selectedDistrict, crossFilters, mapRef, onHexClick,
-  showDistricts, showStates, showRivers, onBoundaryClick, hasFutureData,
+  showDistricts, showStates, showRivers, showSchools, onBoundaryClick, hasFutureData,
 }: {
   geoData: any; attr: string; selectedState: string; selectedDistrict: string;
   crossFilters: CrossFilter[];
   mapRef: React.MutableRefObject<LeafletMap | null>;
   onHexClick: (p: any) => void;
-  showDistricts: boolean; showStates: boolean; showRivers: boolean;
+  showDistricts: boolean; showStates: boolean; showRivers: boolean; showSchools: boolean;
   onBoundaryClick: (type: "state" | "district", name: string, stateName: string) => void;
   hasFutureData: boolean;
 }) {
@@ -1452,6 +1514,7 @@ function HexMap({
         data={filtered} style={styleFeature} onEachFeature={onEachFeature} />
       <BoundaryLayers showDistricts={showDistricts} showStates={showStates} onBoundaryClick={onBoundaryClick} />
       <RiverOverlay show={showRivers} />
+      <SchoolsOverlay show={showSchools} selectedState={selectedState} />
     </MapContainer>
   );
 }
@@ -1492,6 +1555,7 @@ export default function HexMapPage() {
   const [showDistricts, setShowDistricts]     = useState(false);
   const [showStates, setShowStates]           = useState(true);
   const [showRivers, setShowRivers]           = useState(false);
+  const [showSchools, setShowSchools]         = useState(false);
   const mapRef = useRef<LeafletMap | null>(null);
 
   const rankQ = useQuery<any[]>({
@@ -1647,6 +1711,7 @@ export default function HexMapPage() {
         showDistricts={showDistricts} onShowDistrictsChange={setShowDistricts}
         showStates={showStates} onShowStatesChange={setShowStates}
         showRivers={showRivers} onShowRiversChange={setShowRivers}
+        showSchools={showSchools} onShowSchoolsChange={setShowSchools}
         heatViewMode={heatViewMode} onHeatViewModeChange={setHeatViewMode}
         matchCount={(() => {
           if (!crossFilters.length || !features.length) return features.length;
@@ -1689,7 +1754,7 @@ export default function HexMapPage() {
               <HexMap geoData={mergedGeoData ?? hexQ.data} attr={effectiveAttr} selectedState={selectedState}
                 selectedDistrict={selectedDistrict} crossFilters={crossFilters}
                 mapRef={mapRef} onHexClick={(p) => { setClickedHex(p); setClickedBoundary(null); }}
-                showDistricts={showDistricts} showStates={showStates} showRivers={showRivers}
+                showDistricts={showDistricts} showStates={showStates} showRivers={showRivers} showSchools={showSchools}
                 onBoundaryClick={handleBoundaryClick} hasFutureData={!!futureQ.data} />
               {futureQ.isFetching && (
                 <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-[900] flex items-center gap-2 bg-background/90 border border-border rounded-full px-4 py-1.5 text-xs text-muted-foreground shadow-lg">
