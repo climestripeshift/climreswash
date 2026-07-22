@@ -1,0 +1,294 @@
+{
+  "meta": {
+    "note": "Absolute counts direct from the 4 CSR requirement lists, by CURRENT (post-2023-split) district \u2014 NOT limited to SHVR-rated schools. Each source file is already a filtered 'schools needing X' list, so there's no total-schools denominator to compute a percentage against here; these are raw counts, including for districts SHVR never rated a single school in."
+  },
+  "by_district": {
+    "Ajmer": {
+      "new_classroom_requirement_count": 385,
+      "classroom_repair_needed_count": 1039,
+      "building_dilapidated_count": 35,
+      "toilet_required_count": 22,
+      "has_shvr_rating": true
+    },
+    "Alwar": {
+      "new_classroom_requirement_count": 614,
+      "classroom_repair_needed_count": 1167,
+      "building_dilapidated_count": 32,
+      "toilet_required_count": 25,
+      "has_shvr_rating": true
+    },
+    "Balotara": {
+      "new_classroom_requirement_count": 462,
+      "classroom_repair_needed_count": 1251,
+      "building_dilapidated_count": 39,
+      "toilet_required_count": 121,
+      "has_shvr_rating": true
+    },
+    "Banswara": {
+      "new_classroom_requirement_count": 967,
+      "classroom_repair_needed_count": 1798,
+      "building_dilapidated_count": 104,
+      "toilet_required_count": 21,
+      "has_shvr_rating": true
+    },
+    "Baran": {
+      "new_classroom_requirement_count": 653,
+      "classroom_repair_needed_count": 954,
+      "building_dilapidated_count": 92,
+      "toilet_required_count": 134,
+      "has_shvr_rating": true
+    },
+    "Barmer": {
+      "new_classroom_requirement_count": 704,
+      "classroom_repair_needed_count": 2190,
+      "building_dilapidated_count": 32,
+      "toilet_required_count": 66,
+      "has_shvr_rating": true
+    },
+    "Beawar": {
+      "new_classroom_requirement_count": 343,
+      "classroom_repair_needed_count": 944,
+      "building_dilapidated_count": 20,
+      "toilet_required_count": 42,
+      "has_shvr_rating": true
+    },
+    "Bharatpur": {
+      "new_classroom_requirement_count": 436,
+      "classroom_repair_needed_count": 801,
+      "building_dilapidated_count": 10,
+      "toilet_required_count": 24,
+      "has_shvr_rating": true
+    },
+    "Bhilwara": {
+      "new_classroom_requirement_count": 691,
+      "classroom_repair_needed_count": 2097,
+      "building_dilapidated_count": 98,
+      "toilet_required_count": 144,
+      "has_shvr_rating": true
+    },
+    "Bikaner": {
+      "new_classroom_requirement_count": 498,
+      "classroom_repair_needed_count": 1404,
+      "building_dilapidated_count": 35,
+      "toilet_required_count": 35,
+      "has_shvr_rating": true
+    },
+    "Bundi": {
+      "new_classroom_requirement_count": 292,
+      "classroom_repair_needed_count": 1110,
+      "building_dilapidated_count": 26,
+      "toilet_required_count": 9,
+      "has_shvr_rating": true
+    },
+    "Chittaurgarh": {
+      "new_classroom_requirement_count": 314,
+      "classroom_repair_needed_count": 1226,
+      "building_dilapidated_count": 66,
+      "toilet_required_count": 54,
+      "has_shvr_rating": true
+    },
+    "Churu": {
+      "new_classroom_requirement_count": 626,
+      "classroom_repair_needed_count": 1142,
+      "building_dilapidated_count": 29,
+      "toilet_required_count": 80,
+      "has_shvr_rating": true
+    },
+    "Dausa": {
+      "new_classroom_requirement_count": 746,
+      "classroom_repair_needed_count": 1228,
+      "building_dilapidated_count": 106,
+      "toilet_required_count": 63,
+      "has_shvr_rating": true
+    },
+    "Deeg": {
+      "new_classroom_requirement_count": 343,
+      "classroom_repair_needed_count": 544,
+      "building_dilapidated_count": 57,
+      "toilet_required_count": 31,
+      "has_shvr_rating": true
+    },
+    "Dhaulpur": {
+      "new_classroom_requirement_count": 609,
+      "classroom_repair_needed_count": 928,
+      "building_dilapidated_count": 19,
+      "toilet_required_count": 19,
+      "has_shvr_rating": true
+    },
+    "Didwana-Kuchaman": {
+      "new_classroom_requirement_count": 217,
+      "classroom_repair_needed_count": 1114,
+      "building_dilapidated_count": 22,
+      "toilet_required_count": 1,
+      "has_shvr_rating": true
+    },
+    "Dungarpur": {
+      "new_classroom_requirement_count": 906,
+      "classroom_repair_needed_count": 1515,
+      "building_dilapidated_count": 188,
+      "toilet_required_count": 267,
+      "has_shvr_rating": false
+    },
+    "Ganganagar": {
+      "new_classroom_requirement_count": 884,
+      "classroom_repair_needed_count": 1082,
+      "building_dilapidated_count": 91,
+      "toilet_required_count": 0,
+      "has_shvr_rating": false
+    },
+    "Hanumangarh": {
+      "new_classroom_requirement_count": 346,
+      "classroom_repair_needed_count": 754,
+      "building_dilapidated_count": 20,
+      "toilet_required_count": 108,
+      "has_shvr_rating": false
+    },
+    "Jaipur": {
+      "new_classroom_requirement_count": 1173,
+      "classroom_repair_needed_count": 2436,
+      "building_dilapidated_count": 96,
+      "toilet_required_count": 106,
+      "has_shvr_rating": true
+    },
+    "Jaisalmer": {
+      "new_classroom_requirement_count": 491,
+      "classroom_repair_needed_count": 1144,
+      "building_dilapidated_count": 43,
+      "toilet_required_count": 82,
+      "has_shvr_rating": true
+    },
+    "Jalor": {
+      "new_classroom_requirement_count": 588,
+      "classroom_repair_needed_count": 1565,
+      "building_dilapidated_count": 15,
+      "toilet_required_count": 79,
+      "has_shvr_rating": true
+    },
+    "Jhalawar": {
+      "new_classroom_requirement_count": 668,
+      "classroom_repair_needed_count": 1302,
+      "building_dilapidated_count": 218,
+      "toilet_required_count": 62,
+      "has_shvr_rating": true
+    },
+    "Jhunjhunun": {
+      "new_classroom_requirement_count": 349,
+      "classroom_repair_needed_count": 1012,
+      "building_dilapidated_count": 28,
+      "toilet_required_count": 7,
+      "has_shvr_rating": false
+    },
+    "Jodhpur": {
+      "new_classroom_requirement_count": 325,
+      "classroom_repair_needed_count": 1984,
+      "building_dilapidated_count": 17,
+      "toilet_required_count": 0,
+      "has_shvr_rating": false
+    },
+    "Karauli": {
+      "new_classroom_requirement_count": 509,
+      "classroom_repair_needed_count": 1240,
+      "building_dilapidated_count": 22,
+      "toilet_required_count": 22,
+      "has_shvr_rating": false
+    },
+    "Khairthal-Tijara": {
+      "new_classroom_requirement_count": 306,
+      "classroom_repair_needed_count": 617,
+      "building_dilapidated_count": 15,
+      "toilet_required_count": 16,
+      "has_shvr_rating": true
+    },
+    "Kota": {
+      "new_classroom_requirement_count": 525,
+      "classroom_repair_needed_count": 895,
+      "building_dilapidated_count": 32,
+      "toilet_required_count": 57,
+      "has_shvr_rating": true
+    },
+    "Kotputli-Behror": {
+      "new_classroom_requirement_count": 303,
+      "classroom_repair_needed_count": 738,
+      "building_dilapidated_count": 4,
+      "toilet_required_count": 13,
+      "has_shvr_rating": true
+    },
+    "Nagaur": {
+      "new_classroom_requirement_count": 223,
+      "classroom_repair_needed_count": 1411,
+      "building_dilapidated_count": 2,
+      "toilet_required_count": 1,
+      "has_shvr_rating": true
+    },
+    "Pali": {
+      "new_classroom_requirement_count": 291,
+      "classroom_repair_needed_count": 1060,
+      "building_dilapidated_count": 6,
+      "toilet_required_count": 90,
+      "has_shvr_rating": true
+    },
+    "Phalodi": {
+      "new_classroom_requirement_count": 479,
+      "classroom_repair_needed_count": 1095,
+      "building_dilapidated_count": 5,
+      "toilet_required_count": 0,
+      "has_shvr_rating": true
+    },
+    "Pratapgarh": {
+      "new_classroom_requirement_count": 607,
+      "classroom_repair_needed_count": 1144,
+      "building_dilapidated_count": 265,
+      "toilet_required_count": 39,
+      "has_shvr_rating": false
+    },
+    "Rajsamand": {
+      "new_classroom_requirement_count": 570,
+      "classroom_repair_needed_count": 1147,
+      "building_dilapidated_count": 27,
+      "toilet_required_count": 9,
+      "has_shvr_rating": false
+    },
+    "Salumbar": {
+      "new_classroom_requirement_count": 362,
+      "classroom_repair_needed_count": 686,
+      "building_dilapidated_count": 5,
+      "toilet_required_count": 46,
+      "has_shvr_rating": false
+    },
+    "Sawai Madhopur": {
+      "new_classroom_requirement_count": 500,
+      "classroom_repair_needed_count": 588,
+      "building_dilapidated_count": 55,
+      "toilet_required_count": 16,
+      "has_shvr_rating": false
+    },
+    "Sikar": {
+      "new_classroom_requirement_count": 647,
+      "classroom_repair_needed_count": 1464,
+      "building_dilapidated_count": 29,
+      "toilet_required_count": 232,
+      "has_shvr_rating": true
+    },
+    "Sirohi": {
+      "new_classroom_requirement_count": 97,
+      "classroom_repair_needed_count": 649,
+      "building_dilapidated_count": 27,
+      "toilet_required_count": 83,
+      "has_shvr_rating": true
+    },
+    "Tonk": {
+      "new_classroom_requirement_count": 604,
+      "classroom_repair_needed_count": 1186,
+      "building_dilapidated_count": 47,
+      "toilet_required_count": 8,
+      "has_shvr_rating": true
+    },
+    "Udaipur": {
+      "new_classroom_requirement_count": 1070,
+      "classroom_repair_needed_count": 1914,
+      "building_dilapidated_count": 345,
+      "toilet_required_count": 92,
+      "has_shvr_rating": true
+    }
+  }
+}

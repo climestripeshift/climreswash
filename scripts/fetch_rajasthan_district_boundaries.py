@@ -47,7 +47,9 @@ NO_DATA_OLD_DISTRICTS = ["Dungarpur", "Ganganagar", "Hanumangarh", "Jhunjhunun",
 # districts with zero SHVR data, but whose OLD boundary would visibly overlap a split-off
 # sibling that IS covered (e.g. old undivided Jodhpur would overlap the Phalodi polygon
 # above) — these need their real CURRENT boundary fetched too, just with no stats to show.
-NO_DATA_CURRENT_DISTRICTS = ["Jodhpur"]
+# Salumbar has no SHVR rating data either, but the CSR infra files DO cover it (carved out
+# of old Udaipur), so it needs a real current boundary too, not Udaipur's old one.
+NO_DATA_CURRENT_DISTRICTS = [("Jodhpur", "Jodhpur"), ("Salumbar", "Udaipur")]
 
 
 def query_name(raw: str) -> str:
@@ -109,13 +111,13 @@ def main():
 
     print(f"\nFetched {len(features)}/{len(raw_names)} current district polygons")
 
-    print(f"Fetching {len(NO_DATA_CURRENT_DISTRICTS)} no-data districts that still need their current boundary...")
-    for name in NO_DATA_CURRENT_DISTRICTS:
+    print(f"Fetching {len(NO_DATA_CURRENT_DISTRICTS)} no-SHVR-rating districts that still need their current boundary...")
+    for name, old in NO_DATA_CURRENT_DISTRICTS:
         geom = fetch_polygon(name)
         if geom and geom["type"] not in ("Polygon", "MultiPolygon"):
             geom = None
         if geom:
-            features.append({"type": "Feature", "properties": {"NAME": name, "OLD_DISTRICT": name, "IS_CURRENT": True}, "geometry": geom})
+            features.append({"type": "Feature", "properties": {"NAME": name, "OLD_DISTRICT": old, "IS_CURRENT": True}, "geometry": geom})
             print(f"    {name}: ok")
         else:
             print(f"    NO MATCH for {name}")

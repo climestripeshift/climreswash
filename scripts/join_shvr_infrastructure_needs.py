@@ -23,17 +23,21 @@ Run: python scripts/join_shvr_infrastructure_needs.py
 import difflib
 import json
 import re
-from collections import defaultdict
+from collections import Counter, defaultdict
 from pathlib import Path
 
 import openpyxl
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC  = Path.home() / "UNICEF RAJASTHAN/2026/wins/CSR/fwd_"
-SCHOOLS = ROOT / "client/public/data/shvr_schools_located_rajasthan.json"
+# Reads its own prior output as input — safe/idempotent, since this script only ever
+# overwrites the infra_* keys it itself adds, never touching the location/rating fields
+# carried through from the original village-matching step.
+SCHOOLS = ROOT / "client/public/data/shvr_schools_infra_rajasthan.json"
 
 OUT_SCHOOLS = ROOT / "client/public/data/shvr_schools_infra_rajasthan.json"
 OUT_SUMMARY = ROOT / "client/public/data/shvr_infra_by_rating_rajasthan.json"
+OUT_DISTRICT_ABSOLUTE = ROOT / "client/public/data/shvr_district_absolute_infra_rajasthan.json"
 
 NAME_MATCH_THRESHOLD = 0.82
 
@@ -51,23 +55,40 @@ def yes(v) -> bool:
     return str(v or "").strip().upper() == "YES"
 
 
-def clean_udise_map(rows: list[tuple[str, str, dict]]) -> dict[str, dict]:
-    """rows: (udise_code, school_name, data) — drops codes whose rows disagree on school name."""
-    by_code: dict[str, list[tuple[str, dict]]] = defaultdict(list)
-    for code, name, data in rows:
-        by_code[code].append((name, data))
+# CSR district-column spelling variants -> canonical name (matches rajasthan_districts_current.geojson)
+DISTRICT_ALIAS = {
+    "BALOTRA": "Balotara", "CHITTORGARH": "Chittaurgarh", "JALORE": "Jalor",
+    "DHOLPUR": "Dhaulpur", "SRI GANGANAGAR": "Ganganagar", "JHUNJHUNU": "Jhunjhunun",
+    "KOTPUTLI- BEHROR": "Kotputli-Behror", "KOTPUTLY/BEHROD": "Kotputli-Behror",
+    "DIDWANA - KUCHAMAN": "Didwana-Kuchaman", "SALUMBER": "Salumbar",
+}
+
+
+def canonical_district(raw: str) -> str:
+    up = (raw or "").strip().upper()
+    return DISTRICT_ALIAS.get(up, up.title())
+
+
+def clean_udise_map(rows: list[tuple[str, str, str, dict]]) -> tuple[dict[str, dict], "Counter[str]"]:
+    """rows: (udise_code, school_name, district_raw, data) — drops codes whose rows disagree on
+    school name. Returns the clean UDISE->data map plus a per-district count of clean entries
+    (this is the absolute count, independent of whether the school is also in the SHVR ratings)."""
+    by_code: dict[str, list[tuple[str, str, dict]]] = defaultdict(list)
+    for code, name, district, data in rows:
+        by_code[code].append((name, district, data))
 
     clean: dict[str, dict] = {}
+    district_counts: Counter = Counter()
     dropped = 0
     for code, entries in by_code.items():
-        names = {norm_name(n) for n, _ in entries}
+        names = {norm_name(n) for n, _, _ in entries}
         if len(names) > 1:
             dropped += 1
             continue
         # merge all rows for this (legitimately single) school: bools OR together,
         # numbers sum (e.g. two repair line-items' classroom counts really do add up)
         merged: dict = {}
-        for _, data in entries:
+        for _, _, data in entries:
             for k, v in data.items():
                 if isinstance(v, bool):
                     merged[k] = merged.get(k, False) or v
@@ -76,11 +97,12 @@ def clean_udise_map(rows: list[tuple[str, str, dict]]) -> dict[str, dict]:
                 else:
                     merged[k] = v
         clean[code] = merged
+        district_counts[canonical_district(entries[0][1])] += 1
     print(f"    {len(by_code)} distinct codes -> {len(clean)} clean, {dropped} dropped (name mismatch)")
-    return clean
+    return clean, district_counts
 
 
-def load_acr_new() -> dict[str, dict]:
+def load_acr_new() -> tuple[dict[str, dict], "Counter[str]"]:
     print("Loading ACR_New_Requirement_List.xlsx (new classroom / dilapidated building)...")
     wb = openpyxl.load_workbook(SRC / "ACR_New_Requirement_List.xlsx", data_only=True)
     ws = wb.active
@@ -90,7 +112,7 @@ def load_acr_new() -> dict[str, dict]:
             continue
         code = norm_code(row[5])
         name = row[4]
-        rows.append((code, name, {
+        rows.append((code, name, row[1], {
             "building_fully_dilapidated": yes(row[8]),
             "dilapidated_declared_official": yes(row[9]),
             "dilapidated_classroom_count": row[10] if isinstance(row[10], (int, float)) else 0,
@@ -99,7 +121,7 @@ def load_acr_new() -> dict[str, dict]:
     return clean_udise_map(rows)
 
 
-def load_acr_repair() -> dict[str, dict]:
+def load_acr_repair() -> tuple[dict[str, dict], "Counter[str]"]:
     print("Loading ACR_Raiparing List.xlsx (classroom repair)...")
     wb = openpyxl.load_workbook(SRC / "ACR_Raiparing List.xlsx", data_only=True)
     ws = wb.active
@@ -109,7 +131,7 @@ def load_acr_repair() -> dict[str, dict]:
             continue
         code = norm_code(row[5])
         name = row[4]
-        rows.append((code, name, {
+        rows.append((code, name, row[1], {
             "classrooms_needing_repair": row[8] if isinstance(row[8], (int, float)) else 0,
             "repair_amount_needed_lakh": row[9] if isinstance(row[9], (int, float)) else 0,
             "classroom_repair_needed": True,
@@ -117,7 +139,7 @@ def load_acr_repair() -> dict[str, dict]:
     return clean_udise_map(rows)
 
 
-def load_dilapidated() -> dict[str, dict]:
+def load_dilapidated() -> tuple[dict[str, dict], "Counter[str]"]:
     print("Loading Dilapited_Building.xlsx...")
     wb = openpyxl.load_workbook(SRC / "Dilapited_Building.xlsx", data_only=True)
     ws = wb.active
@@ -127,22 +149,26 @@ def load_dilapidated() -> dict[str, dict]:
             continue
         code = norm_code(row[4])
         name = row[3]
-        rows.append((code, name, {"building_dilapidated_listed": yes(row[6])}))
+        rows.append((code, name, row[1], {"building_dilapidated_listed": yes(row[6])}))
     return clean_udise_map(rows)
 
 
-def load_toilet_by_name() -> tuple[list[dict], int]:
-    """UDISE codes are broken (all identical) — match by normalized name within district instead."""
+def load_toilet_by_name() -> tuple[list[dict], int, "Counter[str]"]:
+    """UDISE codes are broken (all identical) — match by normalized name within district for
+    per-school attribution, but the District column itself is fine, so a straight per-district
+    row count (no name-matching needed) gives the absolute count directly."""
     print("Loading Toilet_Requirement_List.xlsx (UDISE broken, matching by name)...")
     wb = openpyxl.load_workbook(SRC / "Toilet_Requirement_List.xlsx", data_only=True)
     ws = wb.active
     rows = []
+    district_counts: Counter = Counter()
     for row in ws.iter_rows(min_row=3, values_only=True):
         if row[4] is None:
             continue
         rows.append({"district_raw": row[1], "school_name": row[4], "girls_toilet_required": row[6] or 1})
+        district_counts[canonical_district(row[1])] += 1
     print(f"    {len(rows)} toilet-requirement rows (name-matched, UDISE ignored)")
-    return rows, len(rows)
+    return rows, len(rows), district_counts
 
 
 def main():
@@ -150,10 +176,10 @@ def main():
         print(f"Source folder not found: {SRC}")
         return
 
-    acr_new = load_acr_new()
-    acr_repair = load_acr_repair()
-    dilapidated = load_dilapidated()
-    toilet_rows, toilet_total = load_toilet_by_name()
+    acr_new, acr_new_district_counts = load_acr_new()
+    acr_repair, acr_repair_district_counts = load_acr_repair()
+    dilapidated, dilapidated_district_counts = load_dilapidated()
+    toilet_rows, toilet_total, toilet_district_counts = load_toilet_by_name()
 
     print(f"\nLoading {SCHOOLS}...")
     schools = json.loads(SCHOOLS.read_text())
@@ -269,6 +295,34 @@ def main():
         print(f"  {d:16s} n={v['school_count']:6d}  repair={v['classroom_repair_pct']:>5}%  "
               f"new_room={v['new_classroom_pct']:>5}%  dilapidated={v['dilapidated_pct']:>5}%")
 
+    # ── District ABSOLUTE counts — direct from the 4 CSR files, independent of SHVR coverage.
+    # These lists are each already a filtered subset ("schools needing X"), so there's no
+    # natural "total schools" denominator to compute a percentage against — but the counts
+    # themselves are real and cover districts SHVR never rated a single school in (Dungarpur,
+    # Rajsamand, Karauli, Sawai Madhopur, Ganganagar, Hanumangarh, Jhunjhunun, Salumbar).
+    all_districts = set(acr_new_district_counts) | set(acr_repair_district_counts) | \
+        set(dilapidated_district_counts) | set(toilet_district_counts)
+    # districts with real SHVR rating coverage, at CURRENT (not old-parent) granularity —
+    # avg_rating itself is computed client-side from district_raw, since by_district above is
+    # keyed by the coarser old-parent name and would misattribute e.g. Balotara's rating to Barmer.
+    shvr_covered_current = {canonical_district(s["district_raw"]) for s in schools if s.get("district_raw")}
+
+    district_absolute: dict[str, dict] = {}
+    for d in sorted(all_districts):
+        district_absolute[d] = {
+            "new_classroom_requirement_count": acr_new_district_counts.get(d, 0),
+            "classroom_repair_needed_count": acr_repair_district_counts.get(d, 0),
+            "building_dilapidated_count": dilapidated_district_counts.get(d, 0),
+            "toilet_required_count": toilet_district_counts.get(d, 0),
+            "has_shvr_rating": d in shvr_covered_current,
+        }
+
+    print(f"\nDistrict absolute counts ({len(district_absolute)} districts, direct from CSR files):")
+    for d, v in sorted(district_absolute.items(), key=lambda kv: -kv[1]["classroom_repair_needed_count"]):
+        rated = "✓" if v["has_shvr_rating"] else "✗ (no SHVR rating)"
+        print(f"  {d:18s} repair={v['classroom_repair_needed_count']:5d}  new_room={v['new_classroom_requirement_count']:5d}  "
+              f"dilapidated={v['building_dilapidated_count']:4d}  toilet={v['toilet_required_count']:4d}  SHVR:{rated}")
+
     OUT_SCHOOLS.write_text(json.dumps(schools, separators=(",", ":")))
     OUT_SUMMARY.write_text(json.dumps({
         "meta": {
@@ -285,8 +339,20 @@ def main():
         "by_district": by_district,
     }, indent=2))
 
+    OUT_DISTRICT_ABSOLUTE.write_text(json.dumps({
+        "meta": {
+            "note": "Absolute counts direct from the 4 CSR requirement lists, by CURRENT "
+                    "(post-2023-split) district — NOT limited to SHVR-rated schools. Each source "
+                    "file is already a filtered 'schools needing X' list, so there's no total-schools "
+                    "denominator to compute a percentage against here; these are raw counts, "
+                    "including for districts SHVR never rated a single school in.",
+        },
+        "by_district": district_absolute,
+    }, indent=2))
+
     import os
     print(f"\nSaved {OUT_SCHOOLS} ({os.path.getsize(OUT_SCHOOLS)//1024}KB)")
+    print(f"Saved {OUT_DISTRICT_ABSOLUTE}")
     print(f"Saved {OUT_SUMMARY}")
 
 
