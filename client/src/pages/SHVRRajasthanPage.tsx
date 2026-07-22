@@ -26,6 +26,27 @@ interface School {
   h3_id: string | null;
   matched_village: string | null;
   location_precision: "village_match" | "district_centroid";
+  new_classroom_requirement: boolean;
+  classroom_repair_needed: boolean;
+  classrooms_needing_repair: number;
+  building_dilapidated: boolean;
+  dilapidated_classroom_count: number;
+  girls_toilet_required: number | null;
+  toilet_match_method: "name_match" | null;
+}
+
+interface InfraStats {
+  school_count: number; avg_rating?: number | null;
+  toilet_required_count: number; classroom_repair_needed_count: number;
+  new_classroom_requirement_count: number; building_dilapidated_count: number;
+  toilet_required_pct?: number; classroom_repair_pct?: number;
+  new_classroom_pct?: number; dilapidated_pct?: number;
+}
+
+interface InfraSummary {
+  meta: { sources: string[]; note: string };
+  by_rating: Record<string, InfraStats>;
+  by_district: Record<string, InfraStats>;
 }
 
 interface DistrictSummary {
@@ -49,10 +70,22 @@ const STATUS_COLOR: Record<string, string> = {
 
 // ── Layer definitions ──────────────────────────────────────────────────────
 
-interface LayerDef { key: string; label: string; icon: string; group: "rating" | "hazard" | "future"; domain: [number, number] }
+interface LayerDef { key: string; label: string; icon: string; group: "rating" | "hazard" | "future" | "infra"; domain: [number, number] }
+
+// infra layer key -> field name in InfraStats (by_district / by_rating)
+const INFRA_FIELD: Record<string, keyof InfraStats> = {
+  infra_toilet_pct: "toilet_required_pct",
+  infra_repair_pct: "classroom_repair_pct",
+  infra_new_classroom_pct: "new_classroom_pct",
+  infra_dilapidated_pct: "dilapidated_pct",
+};
 
 const LAYERS: LayerDef[] = [
   { key: "shvr_rating",         label: "SHVR Star Rating",        icon: "⭐", group: "rating", domain: [1, 5] },
+  { key: "infra_toilet_pct",         label: "Toilet Needed %",       icon: "🚽", group: "infra", domain: [0, 100] },
+  { key: "infra_repair_pct",         label: "Classroom Repair %",    icon: "🔧", group: "infra", domain: [0, 100] },
+  { key: "infra_new_classroom_pct",  label: "New Classroom %",       icon: "🏗️", group: "infra", domain: [0, 100] },
+  { key: "infra_dilapidated_pct",    label: "Dilapidated Building %", icon: "🧱", group: "infra", domain: [0, 100] },
   { key: "hex_risk",            label: "Max Risk (all hazards)",  icon: "⚠️", group: "hazard", domain: [0, 10] },
   { key: "flood_risk",          label: "Pluvial Flood",           icon: "🌊", group: "hazard", domain: [0, 10] },
   { key: "heat_risk",           label: "Heatwave",                icon: "🔥", group: "hazard", domain: [0, 10] },
@@ -95,6 +128,13 @@ function hazardColor(value: number | null, domain: [number, number]) {
 
 function layerColor(layer: LayerDef, value: number | null) {
   return layer.group === "rating" ? ratingColor(value) : hazardColor(value, layer.domain);
+}
+
+// district-level infra %, used both for hex fill (uniform per district) and the district choropleth
+function infraDistrictValue(layer: LayerDef, district: string, infraByDistrict: Record<string, InfraStats> | undefined): number | null {
+  const field = INFRA_FIELD[layer.key];
+  const v = infraByDistrict?.[district]?.[field];
+  return typeof v === "number" ? v : null;
 }
 
 const canvasRenderer = L.canvas({ padding: 0.5 });
@@ -146,9 +186,11 @@ function SchoolPointsLayer({ schools, hexByH3Id, layer, mode }: {
   return <GeoJSON key={`schools-${layer.key}-${mode}`} data={geoData as any} pointToLayer={pointToLayer} onEachFeature={onEachFeature} />;
 }
 
-function RajasthanHexMap({ hexes, hexByH3Id, ratings, schools, mode, layer, districtMarkers }: {
-  hexes: any[]; hexByH3Id: Record<string, any>; ratings: Record<string, HexRating>; schools: School[];
+function RajasthanHexMap({ hexes, hexByH3Id, ratings, infraByDistrict, schools, mode, layer, districtMarkers, viewMode, districtGeo }: {
+  hexes: any[]; hexByH3Id: Record<string, any>; ratings: Record<string, HexRating>;
+  infraByDistrict: Record<string, InfraStats> | undefined; schools: School[];
   mode: "all" | "completed"; layer: LayerDef; districtMarkers: DistrictMarker[];
+  viewMode: "hex" | "district"; districtGeo: any;
 }) {
   const mapRef = useRef<LeafletMap | null>(null);
 
@@ -162,6 +204,8 @@ function RajasthanHexMap({ hexes, hexByH3Id, ratings, schools, mode, layer, dist
       if (layer.group === "rating") {
         const r = ratings[p.h3_id];
         value = r ? (mode === "all" ? r.avg_rating_all : r.avg_rating_completed_only) : null;
+      } else if (layer.group === "infra") {
+        value = infraDistrictValue(layer, p.district_name, infraByDistrict);
       } else {
         value = p[layer.key] ?? null;
       }
@@ -171,7 +215,7 @@ function RajasthanHexMap({ hexes, hexByH3Id, ratings, schools, mode, layer, dist
         geometry: { type: "Polygon", coordinates: [coords] },
       };
     }),
-  }), [hexes, ratings, mode, layer]);
+  }), [hexes, ratings, infraByDistrict, mode, layer]);
 
   const styleFeature = useCallback((feature: any) => ({
     fillColor: layerColor(layer, feature.properties.value), fillOpacity: 0.78, color: "#1e293b", weight: 0.3, renderer: canvasRenderer,
@@ -188,7 +232,18 @@ function RajasthanHexMap({ hexes, hexByH3Id, ratings, schools, mode, layer, dist
       <SetupCanvas />
       <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>' />
-      <GeoJSON key={`${mode}-${layer.key}`} data={geoData as any} style={styleFeature} onEachFeature={onEachFeature} />
+      {viewMode === "hex" && <GeoJSON key={`${mode}-${layer.key}`} data={geoData as any} style={styleFeature} onEachFeature={onEachFeature} />}
+      {viewMode === "district" && districtGeo && (
+        <GeoJSON key={`districts-${mode}-${layer.key}`} data={districtGeo as any}
+          style={(feature: any) => ({
+            fillColor: layerColor(layer, feature.properties.value), fillOpacity: 0.65, color: "#1e293b", weight: 1, renderer: canvasRenderer,
+          })}
+          onEachFeature={(feature: any, leafletLayer: any) => {
+            const p = feature.properties;
+            const label = p.value != null ? (layer.group === "rating" ? `${p.value.toFixed(2)}★` : layer.group === "infra" ? `${p.value.toFixed(1)}%` : `${p.value.toFixed(1)}/10`) : "No data";
+            leafletLayer.bindTooltip(`<b>${p.district}</b><br/>${layer.label}: ${label}`, { sticky: true });
+          }} />
+      )}
       <SchoolPointsLayer schools={schools} hexByH3Id={hexByH3Id} layer={layer} mode={mode} />
       {districtMarkers.map((m) => (
         <CircleMarker key={m.district} center={[m.lat, m.lng]}
@@ -210,7 +265,7 @@ function RajasthanHexMap({ hexes, hexByH3Id, ratings, schools, mode, layer, dist
 function Legend({ layer }: { layer: LayerDef }) {
   const ramp = layer.group === "rating" ? RATING_RAMP : RISK_RAMP;
   const [lo, hi] = layer.domain;
-  const fmt = (v: number) => layer.group === "rating" ? `${v}★` : `${v}`;
+  const fmt = (v: number) => layer.group === "rating" ? `${v}★` : layer.group === "infra" ? `${v}%` : `${v}`;
   return (
     <div className="bg-background/90 backdrop-blur border border-border/40 rounded-lg p-2.5 shadow-lg w-48">
       <p className="text-[10px] font-semibold mb-1.5">{layer.icon} {layer.label}</p>
@@ -289,6 +344,7 @@ function SchoolTable({ schools, districts }: { schools: School[]; districts: str
               <th className="px-3 py-2 font-medium">District</th>
               <th className="px-3 py-2 font-medium">Location</th>
               <th className="px-3 py-2 font-medium">Status</th>
+              <th className="px-3 py-2 font-medium">Infra Needs</th>
               <th className="px-3 py-2 font-medium text-right">Rating</th>
             </tr>
           </thead>
@@ -304,6 +360,12 @@ function SchoolTable({ schools, districts }: { schools: School[]; districts: str
                     : <span className="text-muted-foreground">district centroid</span>}
                 </td>
                 <td className={`px-3 py-1.5 ${STATUS_COLOR[s.status] ?? ""}`}>{STATUS_LABEL[s.status] ?? s.status}</td>
+                <td className="px-3 py-1.5 space-x-1">
+                  {s.building_dilapidated && <span title="Building dilapidated">🧱</span>}
+                  {s.classroom_repair_needed && <span title={`${s.classrooms_needing_repair} classroom(s) need repair`}>🔧</span>}
+                  {s.new_classroom_requirement && <span title="New classroom required">🏗️</span>}
+                  {s.girls_toilet_required != null && <span title={`${s.girls_toilet_required} girls' toilet(s) required (name-matched)`}>🚽</span>}
+                </td>
                 <td className="px-3 py-1.5 text-right font-semibold" style={{ color: ratingColor(s.rating) }}>
                   {s.rating != null ? `${s.rating}★` : "—"}
                 </td>
@@ -324,11 +386,127 @@ function SchoolTable({ schools, districts }: { schools: School[]; districts: str
   );
 }
 
+function InfraByRatingTable({ data }: { data: InfraSummary }) {
+  const rows = ["5", "4", "3", "2", "1", "unrated"].filter((k) => data.by_rating[k]?.school_count > 0);
+  const pctColor = (pct: number | undefined) => {
+    if (pct == null) return "";
+    return pct >= 50 ? "#dc2626" : pct >= 25 ? "#ea580c" : pct >= 10 ? "#d97706" : "#16a34a";
+  };
+  return (
+    <div className="border border-border/40 rounded-lg overflow-hidden">
+      <div className="p-3 border-b border-border/30 bg-muted/20">
+        <div className="text-xs font-semibold">🏗️ Infrastructure Needs by SHVR Rating</div>
+        <div className="text-[10px] text-muted-foreground mt-1 leading-relaxed">
+          From UNICEF Rajasthan CSR requirement lists (new classroom / repair / dilapidated building — joined by UDISE
+          code; toilet requirement — the source file's UDISE column was found broken, matched by school name within
+          district instead, lower confidence).
+        </div>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs">
+          <thead className="border-b border-border/30 bg-muted/10">
+            <tr className="text-left text-muted-foreground">
+              <th className="px-3 py-2 font-medium">Rating</th>
+              <th className="px-3 py-2 font-medium text-right">Schools</th>
+              <th className="px-3 py-2 font-medium text-right">🚽 Toilet Needed</th>
+              <th className="px-3 py-2 font-medium text-right">🔧 Repair Needed</th>
+              <th className="px-3 py-2 font-medium text-right">🏗️ New Classroom</th>
+              <th className="px-3 py-2 font-medium text-right">🧱 Dilapidated</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((k) => {
+              const v = data.by_rating[k];
+              return (
+                <tr key={k} className="border-b border-border/10">
+                  <td className="px-3 py-1.5 font-semibold" style={{ color: k === "unrated" ? undefined : ratingColor(Number(k)) }}>
+                    {k === "unrated" ? "Unrated" : `${k}★`}
+                  </td>
+                  <td className="px-3 py-1.5 text-right">{v.school_count.toLocaleString()}</td>
+                  <td className="px-3 py-1.5 text-right font-semibold" style={{ color: pctColor(v.toilet_required_pct) }}>
+                    {v.toilet_required_pct}% <span className="text-muted-foreground font-normal">({v.toilet_required_count})</span>
+                  </td>
+                  <td className="px-3 py-1.5 text-right font-semibold" style={{ color: pctColor(v.classroom_repair_pct) }}>
+                    {v.classroom_repair_pct}% <span className="text-muted-foreground font-normal">({v.classroom_repair_needed_count})</span>
+                  </td>
+                  <td className="px-3 py-1.5 text-right font-semibold" style={{ color: pctColor(v.new_classroom_pct) }}>
+                    {v.new_classroom_pct}% <span className="text-muted-foreground font-normal">({v.new_classroom_requirement_count})</span>
+                  </td>
+                  <td className="px-3 py-1.5 text-right font-semibold" style={{ color: pctColor(v.dilapidated_pct) }}>
+                    {v.dilapidated_pct}% <span className="text-muted-foreground font-normal">({v.building_dilapidated_count})</span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function DistrictInfraTable({ data, avgRatingByDistrict }: { data: InfraSummary; avgRatingByDistrict: Record<string, number | null> }) {
+  const [sortBy, setSortBy] = useState<keyof InfraStats>("classroom_repair_pct");
+  const pctColor = (pct: number | undefined) => {
+    if (pct == null) return "";
+    return pct >= 50 ? "#dc2626" : pct >= 25 ? "#ea580c" : pct >= 10 ? "#d97706" : "#16a34a";
+  };
+  const rows = useMemo(() =>
+    Object.entries(data.by_district).sort((a, b) => ((b[1][sortBy] as number) ?? 0) - ((a[1][sortBy] as number) ?? 0)),
+  [data, sortBy]);
+
+  const SortHeader = ({ field, children }: { field: keyof InfraStats; children: React.ReactNode }) => (
+    <th className="px-3 py-2 font-medium text-right cursor-pointer hover:text-foreground select-none" onClick={() => setSortBy(field)}>
+      {children}{sortBy === field && " ▾"}
+    </th>
+  );
+
+  return (
+    <div className="border border-border/40 rounded-lg overflow-hidden">
+      <div className="p-3 border-b border-border/30 bg-muted/20">
+        <div className="text-xs font-semibold">🗺️ Infrastructure Needs by District</div>
+        <div className="text-[10px] text-muted-foreground mt-1">Click a column header to sort. Same sources as the rating breakdown above.</div>
+      </div>
+      <div className="overflow-x-auto max-h-[40vh] overflow-y-auto">
+        <table className="w-full text-xs">
+          <thead className="sticky top-0 bg-background border-b border-border/30">
+            <tr className="text-left text-muted-foreground">
+              <th className="px-3 py-2 font-medium">District</th>
+              <th className="px-3 py-2 font-medium text-right">Avg Rating</th>
+              <th className="px-3 py-2 font-medium text-right">Schools</th>
+              <SortHeader field="toilet_required_pct">🚽 Toilet</SortHeader>
+              <SortHeader field="classroom_repair_pct">🔧 Repair</SortHeader>
+              <SortHeader field="new_classroom_pct">🏗️ New Room</SortHeader>
+              <SortHeader field="dilapidated_pct">🧱 Dilapidated</SortHeader>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(([district, v]) => (
+              <tr key={district} className="border-b border-border/10 hover:bg-muted/20">
+                <td className="px-3 py-1.5 font-medium">{district}</td>
+                <td className="px-3 py-1.5 text-right" style={{ color: ratingColor(avgRatingByDistrict[district] ?? null) }}>
+                  {avgRatingByDistrict[district] != null ? `${avgRatingByDistrict[district]!.toFixed(2)}★` : "—"}
+                </td>
+                <td className="px-3 py-1.5 text-right text-muted-foreground">{v.school_count.toLocaleString()}</td>
+                <td className="px-3 py-1.5 text-right font-semibold" style={{ color: pctColor(v.toilet_required_pct) }}>{v.toilet_required_pct}%</td>
+                <td className="px-3 py-1.5 text-right font-semibold" style={{ color: pctColor(v.classroom_repair_pct) }}>{v.classroom_repair_pct}%</td>
+                <td className="px-3 py-1.5 text-right font-semibold" style={{ color: pctColor(v.new_classroom_pct) }}>{v.new_classroom_pct}%</td>
+                <td className="px-3 py-1.5 text-right font-semibold" style={{ color: pctColor(v.dilapidated_pct) }}>{v.dilapidated_pct}%</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────
 
 export default function SHVRRajasthanPage() {
   const [mode, setMode] = useState<"all" | "completed">("all");
   const [attr, setAttr] = useState("shvr_rating");
+  const [viewMode, setViewMode] = useState<"hex" | "district">("hex");
   const layer = LAYER_BY_KEY[attr];
 
   const hexQ = useQuery<any[]>({
@@ -353,8 +531,18 @@ export default function SHVRRajasthanPage() {
     staleTime: Infinity,
   });
   const schoolsQ = useQuery<School[]>({
-    queryKey: ["shvr-schools-located"],
-    queryFn: () => fetch("/data/shvr_schools_located_rajasthan.json").then((r) => r.json()),
+    queryKey: ["shvr-schools-infra"],
+    queryFn: () => fetch("/data/shvr_schools_infra_rajasthan.json").then((r) => r.json()),
+    staleTime: Infinity,
+  });
+  const infraSummaryQ = useQuery<InfraSummary>({
+    queryKey: ["shvr-infra-summary"],
+    queryFn: () => fetch("/data/shvr_infra_by_rating_rajasthan.json").then((r) => r.json()),
+    staleTime: Infinity,
+  });
+  const districtBoundaryQ = useQuery<any>({
+    queryKey: ["india-districts-boundary"],
+    queryFn: () => fetch("/data/india.json").then((r) => r.json()),
     staleTime: Infinity,
   });
 
@@ -414,6 +602,42 @@ export default function SHVRRajasthanPage() {
     }).filter((m): m is DistrictMarker => m !== null);
   }, [rajHexes, visibleSchools, layer]);
 
+  const avgRatingByDistrict = useMemo<Record<string, number | null>>(() => {
+    if (!districtSummaryQ.data) return {};
+    return Object.fromEntries(Object.entries(districtSummaryQ.data.districts).map(([d, v]) =>
+      [d, mode === "all" ? v.avg_rating_all : v.avg_rating_completed_only]));
+  }, [districtSummaryQ.data, mode]);
+
+  // Per-district average of a hazard/future hex value — used to color the district choropleth
+  const hexAvgByDistrict = useMemo<Record<string, number | null>>(() => {
+    if (layer.group === "rating" || layer.group === "infra" || !rajHexes.length) return {};
+    const sums: Record<string, { total: number; n: number }> = {};
+    for (const p of rajHexes) {
+      const d = p.district_name;
+      const v = p[layer.key];
+      if (!d || v == null) continue;
+      const entry = (sums[d] ??= { total: 0, n: 0 });
+      entry.total += v; entry.n += 1;
+    }
+    return Object.fromEntries(Object.entries(sums).map(([d, s]) => [d, s.total / s.n]));
+  }, [rajHexes, layer]);
+
+  const districtGeo = useMemo(() => {
+    if (!districtBoundaryQ.data) return null;
+    const features = districtBoundaryQ.data.features.filter((f: any) => f.properties.STATE === "Rajasthan");
+    return {
+      type: "FeatureCollection",
+      features: features.map((f: any) => {
+        const district = f.properties.NAME;
+        let value: number | null;
+        if (layer.group === "rating") value = avgRatingByDistrict[district] ?? null;
+        else if (layer.group === "infra") value = infraDistrictValue(layer, district, infraSummaryQ.data?.by_district);
+        else value = hexAvgByDistrict[district] ?? null;
+        return { ...f, properties: { ...f.properties, district, value } };
+      }),
+    };
+  }, [districtBoundaryQ.data, layer, avgRatingByDistrict, hexAvgByDistrict, infraSummaryQ.data]);
+
   const isLoading = hexQ.isLoading || ratingsQ.isLoading || districtSummaryQ.isLoading || (layer.group === "future" && futureQ.isLoading);
 
   return (
@@ -443,11 +667,14 @@ export default function SHVRRajasthanPage() {
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Hex layer:</span>
+            <span className="text-xs text-muted-foreground">Map layer:</span>
             <select value={attr} onChange={(e) => setAttr(e.target.value)}
               className="rounded-md border border-border/50 bg-background px-2 py-1.5 text-xs outline-none">
               <optgroup label="School Ratings">
                 {LAYERS.filter((l) => l.group === "rating").map((l) => <option key={l.key} value={l.key}>{l.icon} {l.label}</option>)}
+              </optgroup>
+              <optgroup label="Infrastructure Needs">
+                {LAYERS.filter((l) => l.group === "infra").map((l) => <option key={l.key} value={l.key}>{l.icon} {l.label}</option>)}
               </optgroup>
               <optgroup label="Current Hazards">
                 {LAYERS.filter((l) => l.group === "hazard").map((l) => <option key={l.key} value={l.key}>{l.icon} {l.label}</option>)}
@@ -456,6 +683,17 @@ export default function SHVRRajasthanPage() {
                 {LAYERS.filter((l) => l.group === "future").map((l) => <option key={l.key} value={l.key}>{l.icon} {l.label}</option>)}
               </optgroup>
             </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">Map view:</span>
+            <button onClick={() => setViewMode("hex")}
+              className={`px-2.5 py-1 rounded text-[11px] font-medium ${viewMode === "hex" ? "bg-emerald-600 text-white" : "bg-muted/60 text-muted-foreground"}`}>
+              ⬡ Hex Grid
+            </button>
+            <button onClick={() => setViewMode("district")}
+              className={`px-2.5 py-1 rounded text-[11px] font-medium ${viewMode === "district" ? "bg-emerald-600 text-white" : "bg-muted/60 text-muted-foreground"}`}>
+              🗺️ Districts
+            </button>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">School rating basis:</span>
@@ -477,11 +715,16 @@ export default function SHVRRajasthanPage() {
             </div>
           ) : (
             <>
-              <RajasthanHexMap hexes={rajHexes} hexByH3Id={hexByH3Id} ratings={ratingsQ.data ?? {}} schools={visibleSchools} mode={mode} layer={layer} districtMarkers={districtMarkers} />
+              <RajasthanHexMap hexes={rajHexes} hexByH3Id={hexByH3Id} ratings={ratingsQ.data ?? {}}
+                infraByDistrict={infraSummaryQ.data?.by_district} schools={visibleSchools} mode={mode} layer={layer}
+                districtMarkers={districtMarkers} viewMode={viewMode} districtGeo={districtGeo} />
               <div className="absolute bottom-3 left-3 z-[800]"><Legend layer={layer} /></div>
             </>
           )}
         </div>
+
+        {infraSummaryQ.data && <InfraByRatingTable data={infraSummaryQ.data} />}
+        {infraSummaryQ.data && <DistrictInfraTable data={infraSummaryQ.data} avgRatingByDistrict={avgRatingByDistrict} />}
 
         {schoolsQ.isLoading ? (
           <div className="text-xs text-muted-foreground py-4 text-center">Loading school list…</div>
