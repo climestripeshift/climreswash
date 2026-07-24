@@ -247,12 +247,12 @@ function SchoolPointsLayer({ schools, hexByH3Id, layer, mode }: {
   return <GeoJSON key={`schools-${layer.key}-${mode}`} data={geoData as any} pointToLayer={pointToLayer} onEachFeature={onEachFeature} />;
 }
 
-function RajasthanHexMap({ hexes, hexByH3Id, ratings, infraUnit, oldDistrictStats, schools, mode, layer, districtMarkers, viewMode, districtGeo }: {
+function RajasthanHexMap({ hexes, hexByH3Id, ratings, infraUnit, oldDistrictStats, schools, mode, layer, districtMarkers, viewMode, districtGeo, showDistrictLabels }: {
   hexes: any[]; hexByH3Id: Record<string, any>; ratings: Record<string, HexRating>;
   infraUnit: InfraUnit;
   oldDistrictStats: Record<string, DistrictStats> | undefined; schools: School[];
   mode: "all" | "completed"; layer: LayerDef; districtMarkers: DistrictMarker[];
-  viewMode: "hex" | "district"; districtGeo: any;
+  viewMode: "hex" | "district"; districtGeo: any; showDistrictLabels: boolean;
 }) {
   const fmtValue = (v: number) =>
     layer.group === "rating" ? `${v.toFixed(2)}★`
@@ -306,14 +306,18 @@ function RajasthanHexMap({ hexes, hexByH3Id, ratings, infraUnit, oldDistrictStat
               font-weight: 800; font-size: 12px; color: #0f172a; text-shadow: 0 0 3px #fff, 0 0 3px #fff, 0 0 3px #fff; }
             .district-label-tooltip::before { display: none; }
           `}</style>
-          <GeoJSON key={`districts-${mode}-${layer.key}-${infraUnit}`} data={districtGeo as any}
+          <GeoJSON key={`districts-${mode}-${layer.key}-${infraUnit}-${showDistrictLabels}`} data={districtGeo as any}
             style={(feature: any) => ({
               fillColor: layerColor(layer, feature.properties.value), fillOpacity: 0.7, color: "#1e293b", weight: 1, renderer: canvasRenderer,
             })}
             onEachFeature={(feature: any, leafletLayer: any) => {
               const p = feature.properties;
               const label = p.value != null ? fmtValue(p.value) : "—";
-              leafletLayer.bindTooltip(`${p.district}<br/>${label}`, { permanent: true, direction: "center", className: "district-label-tooltip" });
+              if (showDistrictLabels) {
+                leafletLayer.bindTooltip(`${p.district}<br/>${label}`, { permanent: true, direction: "center", className: "district-label-tooltip" });
+              } else {
+                leafletLayer.bindTooltip(`${p.district}<br/>${label}`, { sticky: true });
+              }
             }} />
         </>
       )}
@@ -748,6 +752,7 @@ export default function SHVRRajasthanPage() {
   const [attr, setAttr] = useState("shvr_rating");
   const [viewMode, setViewMode] = useState<"hex" | "district">("hex");
   const [infraUnit, setInfraUnit] = useState<InfraUnit>("pct");
+  const [showDistrictLabels, setShowDistrictLabels] = useState(true);
   const layer = LAYER_BY_KEY[attr];
 
   const hexQ = useQuery<any[]>({
@@ -1015,6 +1020,12 @@ export default function SHVRRajasthanPage() {
               🗺️ Districts
             </button>
           </div>
+          {viewMode === "district" && (
+            <button onClick={() => setShowDistrictLabels((v) => !v)}
+              className={`px-2.5 py-1 rounded text-[11px] font-medium ${showDistrictLabels ? "bg-emerald-600 text-white" : "bg-muted/60 text-muted-foreground"}`}>
+              {showDistrictLabels ? "🏷️ Labels On" : "🏷️ Labels Off"}
+            </button>
+          )}
           {layer.group === "infra" && (
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">Show as:</span>
@@ -1051,7 +1062,8 @@ export default function SHVRRajasthanPage() {
               <RajasthanHexMap hexes={rajHexes} hexByH3Id={hexByH3Id} ratings={ratingsQ.data ?? {}}
                 infraUnit={infraUnit} oldDistrictStats={oldDistrictStats}
                 schools={visibleSchools} mode={mode} layer={effectiveLayer}
-                districtMarkers={districtMarkers} viewMode={viewMode} districtGeo={districtGeo} />
+                districtMarkers={districtMarkers} viewMode={viewMode} districtGeo={districtGeo}
+                showDistrictLabels={showDistrictLabels} />
               <div className="absolute bottom-3 left-3 z-[800]"><Legend layer={effectiveLayer} infraUnit={infraUnit} /></div>
             </>
           )}
