@@ -52,6 +52,7 @@ OUT_SCHOOLS = ROOT / "client/public/data/shvr_schools_infra_rajasthan.json"
 OUT_SUMMARY = ROOT / "client/public/data/shvr_infra_by_rating_rajasthan.json"
 OUT_DISTRICT = ROOT / "client/public/data/shvr_district_absolute_infra_rajasthan.json"
 OUT_LEVEL = ROOT / "client/public/data/shvr_infra_by_level_rajasthan.json"
+OUT_TOILET_RAW = ROOT / "client/public/data/shvr_toilet_raw_by_district_rajasthan.json"
 
 LEVEL_LABEL = {"PS": "Primary (PS)", "UPS": "Upper Primary (UPS)",
                "SR_SEC": "Sr./Higher Secondary (SSS)", "unknown": "Unknown / not in CSR type column"}
@@ -242,6 +243,19 @@ def main():
     acr_repair = load_acr_repair()
     dilapidated = load_dilapidated()
     toilet_rows = load_toilet_rows()
+
+    # ── Raw toilet requirement by district, straight from the source file — no SHVR
+    # link/match involved at all, so nothing here depends on name-matching confidence ──
+    toilet_raw_by_district: dict[str, dict] = {}
+    for row in toilet_rows:
+        d = row["district"]
+        entry = toilet_raw_by_district.setdefault(d, {"school_count": 0, "toilet_units_required": 0})
+        entry["school_count"] += 1
+        entry["toilet_units_required"] += row["girls_toilet_required"]
+    print(f"\nRaw toilet requirement (source file, no SHVR link): "
+          f"{sum(v['school_count'] for v in toilet_raw_by_district.values())} schools, "
+          f"{sum(v['toilet_units_required'] for v in toilet_raw_by_district.values())} units, "
+          f"{len(toilet_raw_by_district)} districts")
 
     print(f"\nLoading {SCHOOLS}...")
     schools = json.loads(SCHOOLS.read_text())
@@ -464,11 +478,24 @@ def main():
         "by_level": by_level,
     }, indent=2))
 
+    OUT_TOILET_RAW.write_text(json.dumps({
+        "meta": {
+            "source": "Toilet_Requirement_List.xlsx",
+            "note": "Straight from the source file, one row per flagged school, independent of "
+                    "SHVR — not matched/linked to any school record, just district + school name + "
+                    "toilet units required as entered. The file's UDISE code column is broken (every "
+                    "row shares one code), so these counts can't be deduplicated by UDISE; they are "
+                    "raw row counts under each school's name as entered in the sheet.",
+        },
+        "by_district": toilet_raw_by_district,
+    }, indent=2))
+
     import os
     print(f"\nSaved {OUT_SCHOOLS} ({os.path.getsize(OUT_SCHOOLS)//1024}KB)")
     print(f"Saved {OUT_DISTRICT}")
     print(f"Saved {OUT_SUMMARY}")
     print(f"Saved {OUT_LEVEL}")
+    print(f"Saved {OUT_TOILET_RAW}")
 
 
 if __name__ == "__main__":

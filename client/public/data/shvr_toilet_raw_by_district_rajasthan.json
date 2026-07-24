@@ -1,0 +1,160 @@
+{
+  "meta": {
+    "source": "Toilet_Requirement_List.xlsx",
+    "note": "Straight from the source file, one row per flagged school, independent of SHVR \u2014 not matched/linked to any school record, just district + school name + toilet units required as entered. The file's UDISE code column is broken (every row shares one code), so these counts can't be deduplicated by UDISE; they are raw row counts under each school's name as entered in the sheet."
+  },
+  "by_district": {
+    "Ajmer": {
+      "school_count": 21,
+      "toilet_units_required": 21
+    },
+    "Alwar": {
+      "school_count": 25,
+      "toilet_units_required": 25
+    },
+    "Balotara": {
+      "school_count": 121,
+      "toilet_units_required": 143
+    },
+    "Banswara": {
+      "school_count": 21,
+      "toilet_units_required": 21
+    },
+    "Baran": {
+      "school_count": 134,
+      "toilet_units_required": 134
+    },
+    "Barmer": {
+      "school_count": 66,
+      "toilet_units_required": 66
+    },
+    "Beawar": {
+      "school_count": 42,
+      "toilet_units_required": 42
+    },
+    "Bharatpur": {
+      "school_count": 24,
+      "toilet_units_required": 24
+    },
+    "Bhilwara": {
+      "school_count": 144,
+      "toilet_units_required": 144
+    },
+    "Bikaner": {
+      "school_count": 35,
+      "toilet_units_required": 35
+    },
+    "Bundi": {
+      "school_count": 9,
+      "toilet_units_required": 9
+    },
+    "Chittaurgarh": {
+      "school_count": 54,
+      "toilet_units_required": 54
+    },
+    "Churu": {
+      "school_count": 80,
+      "toilet_units_required": 80
+    },
+    "Dausa": {
+      "school_count": 63,
+      "toilet_units_required": 63
+    },
+    "Deeg": {
+      "school_count": 31,
+      "toilet_units_required": 31
+    },
+    "Dhaulpur": {
+      "school_count": 19,
+      "toilet_units_required": 19
+    },
+    "Didwana-Kuchaman": {
+      "school_count": 1,
+      "toilet_units_required": 1
+    },
+    "Dungarpur": {
+      "school_count": 267,
+      "toilet_units_required": 267
+    },
+    "Hanumangarh": {
+      "school_count": 108,
+      "toilet_units_required": 138
+    },
+    "Jaipur": {
+      "school_count": 106,
+      "toilet_units_required": 108
+    },
+    "Jaisalmer": {
+      "school_count": 82,
+      "toilet_units_required": 82
+    },
+    "Jalor": {
+      "school_count": 79,
+      "toilet_units_required": 79
+    },
+    "Jhalawar": {
+      "school_count": 62,
+      "toilet_units_required": 67
+    },
+    "Jhunjhunun": {
+      "school_count": 7,
+      "toilet_units_required": 7
+    },
+    "Karauli": {
+      "school_count": 22,
+      "toilet_units_required": 22
+    },
+    "Khairthal-Tijara": {
+      "school_count": 16,
+      "toilet_units_required": 16
+    },
+    "Kota": {
+      "school_count": 57,
+      "toilet_units_required": 57
+    },
+    "Kotputli-Behror": {
+      "school_count": 13,
+      "toilet_units_required": 13
+    },
+    "Nagaur": {
+      "school_count": 1,
+      "toilet_units_required": 1
+    },
+    "Pali": {
+      "school_count": 90,
+      "toilet_units_required": 220
+    },
+    "Pratapgarh": {
+      "school_count": 39,
+      "toilet_units_required": 39
+    },
+    "Rajsamand": {
+      "school_count": 9,
+      "toilet_units_required": 9
+    },
+    "Salumbar": {
+      "school_count": 46,
+      "toilet_units_required": 46
+    },
+    "Sawai Madhopur": {
+      "school_count": 16,
+      "toilet_units_required": 16
+    },
+    "Sikar": {
+      "school_count": 232,
+      "toilet_units_required": 232
+    },
+    "Sirohi": {
+      "school_count": 83,
+      "toilet_units_required": 83
+    },
+    "Tonk": {
+      "school_count": 8,
+      "toilet_units_required": 8
+    },
+    "Udaipur": {
+      "school_count": 92,
+      "toilet_units_required": 92
+    }
+  }
+}

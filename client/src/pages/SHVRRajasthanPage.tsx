@@ -62,6 +62,14 @@ interface LevelSummary {
 }
 const LEVEL_ORDER: ("PS" | "UPS" | "SR_SEC" | "unknown")[] = ["PS", "UPS", "SR_SEC", "unknown"];
 
+// Straight from Toilet_Requirement_List.xlsx, independent of SHVR — no name-matching or
+// linking involved, just district totals as entered in the source sheet.
+interface ToiletRawStats { school_count: number; toilet_units_required: number }
+interface ToiletRawSummary {
+  meta: { source: string; note: string };
+  by_district: Record<string, ToiletRawStats>;
+}
+
 // Full unified registry (SHVR-rated ∪ every CSR-file school) per CURRENT district — real
 // percentages for all 41 districts, since total_school_count is a genuine denominator now,
 // not just the SHVR-rated subset.
@@ -589,6 +597,59 @@ function InfraByLevelTable({ data }: { data: LevelSummary }) {
   );
 }
 
+function ToiletRawByDistrictTable({ data }: { data: ToiletRawSummary }) {
+  const rows = Object.entries(data.by_district).sort((a, b) => b[1].toilet_units_required - a[1].toilet_units_required);
+  const totalSchools = rows.reduce((s, [, v]) => s + v.school_count, 0);
+  const totalUnits = rows.reduce((s, [, v]) => s + v.toilet_units_required, 0);
+  const maxUnits = Math.max(1, ...rows.map(([, v]) => v.toilet_units_required));
+  const barColor = (v: number) => {
+    const t = v / maxUnits;
+    return t >= 0.5 ? "#dc2626" : t >= 0.25 ? "#ea580c" : t >= 0.1 ? "#d97706" : "#16a34a";
+  };
+  return (
+    <div className="border border-border/40 rounded-lg overflow-hidden">
+      <div className="p-3 border-b border-border/30 bg-muted/20">
+        <div className="text-xs font-semibold">🚽 Girls' Toilet Requirement by District — straight from source, no SHVR link</div>
+        <div className="text-[10px] text-muted-foreground mt-1 leading-relaxed">
+          Directly from {data.meta.source} — {rows.length} districts, {totalSchools.toLocaleString()} schools flagged,{" "}
+          {totalUnits.toLocaleString()} toilet units required in total. Not matched or linked to any SHVR/CSR school
+          record (that link is separately attempted elsewhere at lower confidence, since this file's UDISE code column
+          is broken) — these are the raw district totals as entered in the sheet.
+        </div>
+      </div>
+      <div className="overflow-x-auto max-h-[40vh] overflow-y-auto">
+        <table className="w-full text-xs">
+          <thead className="sticky top-0 bg-background border-b border-border/30">
+            <tr className="text-left text-muted-foreground">
+              <th className="px-3 py-2 font-medium">District</th>
+              <th className="px-3 py-2 font-medium text-right">Schools Flagged</th>
+              <th className="px-3 py-2 font-medium text-right">Toilet Units Required</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(([district, v]) => (
+              <tr key={district} className="border-b border-border/10 hover:bg-muted/20">
+                <td className="px-3 py-1.5 font-medium">{district}</td>
+                <td className="px-3 py-1.5 text-right text-muted-foreground">{v.school_count.toLocaleString()}</td>
+                <td className="px-3 py-1.5 text-right font-semibold" style={{ color: barColor(v.toilet_units_required) }}>
+                  {v.toilet_units_required.toLocaleString()}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr className="border-t border-border/30 font-semibold">
+              <td className="px-3 py-1.5">Total ({rows.length} districts)</td>
+              <td className="px-3 py-1.5 text-right">{totalSchools.toLocaleString()}</td>
+              <td className="px-3 py-1.5 text-right">{totalUnits.toLocaleString()}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 interface DistrictTableRow {
   district: string; avgRating: number | null; totalSchoolCount: number; inShvrCount: number;
   toilet: number | null; repair: number | null; newRoom: number | null; dilapidated: number | null;
@@ -723,6 +784,11 @@ export default function SHVRRajasthanPage() {
   const levelSummaryQ = useQuery<LevelSummary>({
     queryKey: ["shvr-infra-by-level"],
     queryFn: () => fetch("/data/shvr_infra_by_level_rajasthan.json").then((r) => r.json()),
+    staleTime: Infinity,
+  });
+  const toiletRawQ = useQuery<ToiletRawSummary>({
+    queryKey: ["shvr-toilet-raw-by-district"],
+    queryFn: () => fetch("/data/shvr_toilet_raw_by_district_rajasthan.json").then((r) => r.json()),
     staleTime: Infinity,
   });
   const districtBoundaryQ = useQuery<any>({
@@ -993,6 +1059,7 @@ export default function SHVRRajasthanPage() {
 
         {infraSummaryQ.data && <InfraByRatingTable data={infraSummaryQ.data} />}
         {levelSummaryQ.data && <InfraByLevelTable data={levelSummaryQ.data} />}
+        {toiletRawQ.data && <ToiletRawByDistrictTable data={toiletRawQ.data} />}
         {districtAbsoluteQ.data && (
           <DistrictInfraTable data={districtAbsoluteQ.data} infraUnit={infraUnit} />
         )}
