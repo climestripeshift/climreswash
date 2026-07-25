@@ -417,7 +417,22 @@ def main():
             rating_distribution[str(r)] = {"count": rc, "pct": round(100 * rc / n, 1) if n else None}
             self_reported_rating_distribution[str(r)] = {"count": src, "pct": round(100 * src / n, 1) if n else None}
 
+        # JJM amenities (tap water etc) -- only ~30% of schools have a JJM match (name-matched,
+        # no shared ID with the JJM export), so pct is computed against jjm_matched_count, not
+        # the full district total, same denominator choice as self-reported rating above.
+        jjm_matched = [s for s in group if s.get("jjm_match_method")]
+        jjm_n = len(jjm_matched)
+        jjm_amenities = {}
+        for field in ["tap_water", "toilet_running_water", "hand_washing",
+                      "separate_toilets_girls_boys", "rainwater_harvesting",
+                      "dried_toilets", "grey_water_mgmt"]:
+            yes_c = sum(1 for s in jjm_matched if s.get(field) is True)
+            jjm_amenities[f"jjm_{field}_count"] = yes_c
+            jjm_amenities[f"jjm_{field}_pct"] = round(100 * yes_c / jjm_n, 1) if jjm_n else None
+
         by_district[d] = {
+            "jjm_matched_count": jjm_n,
+            **jjm_amenities,
             "total_school_count": n,
             "in_shvr_count": len(in_shvr),
             "has_shvr_rating": len(in_shvr) > 0,

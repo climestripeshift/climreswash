@@ -41,6 +41,16 @@ interface School {
   dilapidated_classroom_count: number;
   girls_toilet_required: number | null;
   toilet_match_method: "name_match" | null;
+  tap_water: boolean | null;
+  toilet_running_water: boolean | null;
+  hand_washing: boolean | null;
+  separate_toilets_girls_boys: boolean | null;
+  rainwater_harvesting: boolean | null;
+  dried_toilets: boolean | null;
+  grey_water_mgmt: boolean | null;
+  jjm_match_method: "block_name_match" | "district_name_match" | null;
+  jjm_block: string | null;
+  jjm_village: string | null;
 }
 
 interface InfraStats {
@@ -91,6 +101,16 @@ interface DistrictStats {
   new_classroom_requirement_count: number; building_dilapidated_count: number;
   toilet_required_pct: number | null; classroom_repair_pct: number | null;
   new_classroom_pct: number | null; dilapidated_pct: number | null;
+  // JJM amenities -- pct computed against jjm_matched_count (schools with a JJM name match),
+  // not the district total, since only ~30% of schools have a JJM match at all
+  jjm_matched_count: number;
+  jjm_tap_water_count: number; jjm_tap_water_pct: number | null;
+  jjm_toilet_running_water_count: number; jjm_toilet_running_water_pct: number | null;
+  jjm_hand_washing_count: number; jjm_hand_washing_pct: number | null;
+  jjm_separate_toilets_girls_boys_count: number; jjm_separate_toilets_girls_boys_pct: number | null;
+  jjm_rainwater_harvesting_count: number; jjm_rainwater_harvesting_pct: number | null;
+  jjm_dried_toilets_count: number; jjm_dried_toilets_pct: number | null;
+  jjm_grey_water_mgmt_count: number; jjm_grey_water_mgmt_pct: number | null;
 }
 interface DistrictFullSummary {
   meta: { note: string };
@@ -149,6 +169,33 @@ const INFRA_ABSOLUTE_FIELD: Record<string, InfraCountField> = {
   infra_dilapidated_pct: "building_dilapidated_count",
 };
 
+// JJM amenity layers reuse the same "infra" pct/absolute machinery, but with an INVERTED
+// domain ([100,0]/[max,0] instead of [0,100]/[0,max]) since a HIGH % here is good (has the
+// amenity), not bad — the opposite semantics of the CSR infra-need layers above.
+type JJMPctField = "jjm_tap_water_pct" | "jjm_toilet_running_water_pct" | "jjm_hand_washing_pct"
+  | "jjm_separate_toilets_girls_boys_pct" | "jjm_rainwater_harvesting_pct" | "jjm_dried_toilets_pct" | "jjm_grey_water_mgmt_pct";
+type JJMCountField = "jjm_tap_water_count" | "jjm_toilet_running_water_count" | "jjm_hand_washing_count"
+  | "jjm_separate_toilets_girls_boys_count" | "jjm_rainwater_harvesting_count" | "jjm_dried_toilets_count" | "jjm_grey_water_mgmt_count";
+const JJM_FIELD: Record<string, JJMPctField> = {
+  jjm_tap_water_pct: "jjm_tap_water_pct",
+  jjm_toilet_running_water_pct: "jjm_toilet_running_water_pct",
+  jjm_hand_washing_pct: "jjm_hand_washing_pct",
+  jjm_separate_toilets_pct: "jjm_separate_toilets_girls_boys_pct",
+  jjm_rainwater_harvesting_pct: "jjm_rainwater_harvesting_pct",
+  jjm_dried_toilets_pct: "jjm_dried_toilets_pct",
+  jjm_grey_water_pct: "jjm_grey_water_mgmt_pct",
+};
+const JJM_ABSOLUTE_FIELD: Record<string, JJMCountField> = {
+  jjm_tap_water_pct: "jjm_tap_water_count",
+  jjm_toilet_running_water_pct: "jjm_toilet_running_water_count",
+  jjm_hand_washing_pct: "jjm_hand_washing_count",
+  jjm_separate_toilets_pct: "jjm_separate_toilets_girls_boys_count",
+  jjm_rainwater_harvesting_pct: "jjm_rainwater_harvesting_count",
+  jjm_dried_toilets_pct: "jjm_dried_toilets_count",
+  jjm_grey_water_pct: "jjm_grey_water_mgmt_count",
+};
+const JJM_LAYER_KEYS = new Set(Object.keys(JJM_FIELD));
+
 const LAYERS: LayerDef[] = [
   { key: "shvr_rating",         label: "SHVR Star Rating (Verified)", icon: "⭐", group: "rating", domain: [1, 5] },
   { key: "shvr_self_reported_rating", label: "SHVR Star Rating (Self-Reported)", icon: "📝", group: "rating", domain: [1, 5] },
@@ -156,6 +203,13 @@ const LAYERS: LayerDef[] = [
   { key: "infra_repair_pct",         label: "Classroom Repair %",    icon: "🔧", group: "infra", domain: [0, 100] },
   { key: "infra_new_classroom_pct",  label: "New Classroom %",       icon: "🏗️", group: "infra", domain: [0, 100] },
   { key: "infra_dilapidated_pct",    label: "Dilapidated Building %", icon: "🧱", group: "infra", domain: [0, 100] },
+  { key: "jjm_tap_water_pct",        label: "JJM: Tap Water %",       icon: "🚰", group: "infra", domain: [100, 0] },
+  { key: "jjm_toilet_running_water_pct", label: "JJM: Toilet Running Water %", icon: "🚽", group: "infra", domain: [100, 0] },
+  { key: "jjm_hand_washing_pct",     label: "JJM: Hand Washing %",    icon: "🧼", group: "infra", domain: [100, 0] },
+  { key: "jjm_separate_toilets_pct", label: "JJM: Separate Toilets %", icon: "🚻", group: "infra", domain: [100, 0] },
+  { key: "jjm_rainwater_harvesting_pct", label: "JJM: Rainwater Harvesting %", icon: "🌧️", group: "infra", domain: [100, 0] },
+  { key: "jjm_dried_toilets_pct",    label: "JJM: Dried Toilets %",   icon: "🏜️", group: "infra", domain: [100, 0] },
+  { key: "jjm_grey_water_pct",       label: "JJM: Grey Water Mgmt %", icon: "💧", group: "infra", domain: [100, 0] },
   { key: "hex_risk",            label: "Max Risk (all hazards)",  icon: "⚠️", group: "hazard", domain: [0, 10] },
   { key: "flood_risk",          label: "Pluvial Flood",           icon: "🌊", group: "hazard", domain: [0, 10] },
   { key: "heat_risk",           label: "Heatwave",                icon: "🔥", group: "hazard", domain: [0, 10] },
@@ -214,8 +268,11 @@ type InfraUnit = "pct" | "absolute";
 // denominator), used both for hex fill (uniform per district) and the district choropleth
 function infraDistrictValue(layer: LayerDef, district: string, unit: InfraUnit,
   districtStats: Record<string, DistrictStats> | undefined): number | null {
-  const field = unit === "absolute" ? INFRA_ABSOLUTE_FIELD[layer.key] : INFRA_FIELD[layer.key];
-  const v = districtStats?.[district]?.[field];
+  const isJJM = JJM_LAYER_KEYS.has(layer.key);
+  const field = isJJM
+    ? (unit === "absolute" ? JJM_ABSOLUTE_FIELD[layer.key] : JJM_FIELD[layer.key])
+    : (unit === "absolute" ? INFRA_ABSOLUTE_FIELD[layer.key] : INFRA_FIELD[layer.key]);
+  const v = districtStats?.[district]?.[field as keyof DistrictStats];
   return typeof v === "number" ? v : null;
 }
 
@@ -410,6 +467,7 @@ function SchoolTable({ schools, districts }: { schools: School[]; districts: str
   const [levelFilter, setLevelFilter] = useState("All");
   const [ratingFilter, setRatingFilter] = useState("All");
   const [toiletFilter, setToiletFilter] = useState("All");
+  const [jjmTapWaterFilter, setJjmTapWaterFilter] = useState("All");
   const [page, setPage] = useState(0);
 
   const filtered = useMemo(() => {
@@ -424,10 +482,13 @@ function SchoolTable({ schools, districts }: { schools: School[]; districts: str
       if (ratingFilter === "self_unrated" && s.self_reported_rating != null) return false;
       if (toiletFilter === "needed" && s.girls_toilet_required == null) return false;
       if (toiletFilter === "not_flagged" && s.girls_toilet_required != null) return false;
+      if (jjmTapWaterFilter === "yes" && s.tap_water !== true) return false;
+      if (jjmTapWaterFilter === "no" && s.tap_water !== false) return false;
+      if (jjmTapWaterFilter === "unmatched" && s.jjm_match_method != null) return false;
       if (q && !s.name?.toLowerCase().includes(q) && !s.udise_code?.includes(q)) return false;
       return true;
     });
-  }, [schools, search, districtFilter, statusFilter, levelFilter, ratingFilter, toiletFilter]);
+  }, [schools, search, districtFilter, statusFilter, levelFilter, ratingFilter, toiletFilter, jjmTapWaterFilter]);
 
   const pageRows = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -473,6 +534,13 @@ function SchoolTable({ schools, districts }: { schools: School[]; districts: str
           <option value="needed">🚽 Toilet Needed</option>
           <option value="not_flagged">Not Flagged</option>
         </select>
+        <select value={jjmTapWaterFilter} onChange={(e) => { setJjmTapWaterFilter(e.target.value); setPage(0); }}
+          className="rounded-md border border-border/50 bg-background px-2 py-1.5 text-xs outline-none">
+          <option value="All">All JJM Tap Water Status</option>
+          <option value="yes">🚰 Has Tap Water</option>
+          <option value="no">No Tap Water</option>
+          <option value="unmatched">Not Matched to JJM</option>
+        </select>
         <span className="text-[10px] text-muted-foreground whitespace-nowrap">{filtered.length.toLocaleString()} schools</span>
       </div>
 
@@ -487,6 +555,7 @@ function SchoolTable({ schools, districts }: { schools: School[]; districts: str
               <th className="px-3 py-2 font-medium">Location</th>
               <th className="px-3 py-2 font-medium">Status</th>
               <th className="px-3 py-2 font-medium">Infra Needs</th>
+              <th className="px-3 py-2 font-medium" title="From the JJM tap-water/sanitation dataset, name-matched (~30% match rate)">JJM Amenities</th>
               <th className="px-3 py-2 font-medium text-right" title="State-verified rating">Rating</th>
               <th className="px-3 py-2 font-medium text-right" title="Self-reported rating">Self-Rpt.</th>
             </tr>
@@ -514,6 +583,17 @@ function SchoolTable({ schools, districts }: { schools: School[]; districts: str
                   {s.classroom_repair_needed && <span title={`${s.classrooms_needing_repair} classroom(s) need repair`}>🔧</span>}
                   {s.new_classroom_requirement && <span title="New classroom required">🏗️</span>}
                   {s.girls_toilet_required != null && <span title={`${s.girls_toilet_required} girls' toilet(s) required (name-matched)`}>🚽</span>}
+                </td>
+                <td className="px-3 py-1.5 space-x-1">
+                  {s.jjm_match_method == null ? (
+                    <span className="text-muted-foreground">—</span>
+                  ) : (
+                    <>
+                      <span title={`Tap water: ${s.tap_water ? "Yes" : "No"}`}>{s.tap_water ? "🚰" : "🚱"}</span>
+                      {s.hand_washing === true && <span title="Hand washing facility available">🧼</span>}
+                      {s.toilet_running_water === true && <span title="Running water in toilets">💧</span>}
+                    </>
+                  )}
                 </td>
                 <td className="px-3 py-1.5 text-right font-semibold" style={{ color: ratingColor(s.rating) }}>
                   {s.rating != null ? `${s.rating}★` : "—"}
@@ -899,7 +979,8 @@ export default function SHVRRajasthanPage() {
     // village-matching only ran against SHVR-portal schools — CSR-only additions always
     // sit at their district centroid, since they never went through address geocoding.
     const matched = schoolsQ.data?.filter((s) => s.location_precision === "village_match").length ?? 0;
-    return { total, inShvr, rated, inShvrUnrated, notInShvr, matched };
+    const jjmMatched = schoolsQ.data?.filter((s) => s.jjm_match_method != null).length ?? 0;
+    return { total, inShvr, rated, inShvrUnrated, notInShvr, matched, jjmMatched };
   }, [schoolsQ.data]);
 
   // District centroids for the REMAINDER only — schools whose address didn't match a
@@ -982,6 +1063,14 @@ export default function SHVRRajasthanPage() {
         rating_distribution: emptyRatingDistribution(), self_reported_rating_distribution: emptyRatingDistribution(),
         toilet_required_count: 0, classroom_repair_needed_count: 0, new_classroom_requirement_count: 0, building_dilapidated_count: 0,
         toilet_required_pct: null, classroom_repair_pct: null, new_classroom_pct: null, dilapidated_pct: null,
+        jjm_matched_count: 0,
+        jjm_tap_water_count: 0, jjm_tap_water_pct: null,
+        jjm_toilet_running_water_count: 0, jjm_toilet_running_water_pct: null,
+        jjm_hand_washing_count: 0, jjm_hand_washing_pct: null,
+        jjm_separate_toilets_girls_boys_count: 0, jjm_separate_toilets_girls_boys_pct: null,
+        jjm_rainwater_harvesting_count: 0, jjm_rainwater_harvesting_pct: null,
+        jjm_dried_toilets_count: 0, jjm_dried_toilets_pct: null,
+        jjm_grey_water_mgmt_count: 0, jjm_grey_water_mgmt_pct: null,
       });
       entry.total_school_count += stats.total_school_count;
       entry.in_shvr_count += stats.in_shvr_count;
@@ -991,6 +1080,14 @@ export default function SHVRRajasthanPage() {
       entry.building_dilapidated_count += stats.building_dilapidated_count;
       entry.has_shvr_rating = entry.has_shvr_rating || stats.has_shvr_rating;
       entry.self_reported_rated_count += stats.self_reported_rated_count;
+      entry.jjm_matched_count += stats.jjm_matched_count;
+      entry.jjm_tap_water_count += stats.jjm_tap_water_count;
+      entry.jjm_toilet_running_water_count += stats.jjm_toilet_running_water_count;
+      entry.jjm_hand_washing_count += stats.jjm_hand_washing_count;
+      entry.jjm_separate_toilets_girls_boys_count += stats.jjm_separate_toilets_girls_boys_count;
+      entry.jjm_rainwater_harvesting_count += stats.jjm_rainwater_harvesting_count;
+      entry.jjm_dried_toilets_count += stats.jjm_dried_toilets_count;
+      entry.jjm_grey_water_mgmt_count += stats.jjm_grey_water_mgmt_count;
       if (stats.avg_self_reported_rating != null) {
         selfReportedWeightedSum[old] = (selfReportedWeightedSum[old] ?? 0) + stats.avg_self_reported_rating * stats.self_reported_rated_count;
       }
@@ -1002,6 +1099,15 @@ export default function SHVRRajasthanPage() {
     for (const [old, entry] of Object.entries(byOld)) {
       if (entry.self_reported_rated_count) {
         entry.avg_self_reported_rating = round1((selfReportedWeightedSum[old] ?? 0) / entry.self_reported_rated_count);
+      }
+      if (entry.jjm_matched_count) {
+        entry.jjm_tap_water_pct = round1(100 * entry.jjm_tap_water_count / entry.jjm_matched_count);
+        entry.jjm_toilet_running_water_pct = round1(100 * entry.jjm_toilet_running_water_count / entry.jjm_matched_count);
+        entry.jjm_hand_washing_pct = round1(100 * entry.jjm_hand_washing_count / entry.jjm_matched_count);
+        entry.jjm_separate_toilets_girls_boys_pct = round1(100 * entry.jjm_separate_toilets_girls_boys_count / entry.jjm_matched_count);
+        entry.jjm_rainwater_harvesting_pct = round1(100 * entry.jjm_rainwater_harvesting_count / entry.jjm_matched_count);
+        entry.jjm_dried_toilets_pct = round1(100 * entry.jjm_dried_toilets_count / entry.jjm_matched_count);
+        entry.jjm_grey_water_mgmt_pct = round1(100 * entry.jjm_grey_water_mgmt_count / entry.jjm_matched_count);
       }
       if (!entry.total_school_count) continue;
       entry.toilet_required_pct = round1(100 * entry.toilet_required_count / entry.total_school_count);
@@ -1030,9 +1136,12 @@ export default function SHVRRajasthanPage() {
       return { ...layer, domain, colorMode: "count" };
     }
     if (layer.group !== "infra" || infraUnit !== "absolute" || !districtAbsoluteQ.data) return layer;
-    const field = INFRA_ABSOLUTE_FIELD[layer.key];
-    const max = Math.max(1, ...Object.values(districtAbsoluteQ.data.by_district).map((d) => d[field] ?? 0));
-    return { ...layer, domain: [0, max] };
+    const isJJM = JJM_LAYER_KEYS.has(layer.key);
+    const field = isJJM ? JJM_ABSOLUTE_FIELD[layer.key] : INFRA_ABSOLUTE_FIELD[layer.key];
+    const max = Math.max(1, ...Object.values(districtAbsoluteQ.data.by_district).map((d) => (d[field as keyof DistrictStats] as number) ?? 0));
+    // JJM amenity counts: MORE schools with the amenity is good -> green=high (domain [max,0]).
+    // CSR infra-need counts: MORE schools needing it is bad -> red=high (domain [0,max], default).
+    return { ...layer, domain: isJJM ? [max, 0] : [0, max] };
   }, [layer, infraUnit, districtAbsoluteQ.data, starFilter]);
 
   const districtGeo = useMemo(() => {
@@ -1097,7 +1206,11 @@ export default function SHVRRajasthanPage() {
             SHVR-portal schools ({(100 * matchStats.matched / Math.max(1, matchStats.inShvr)).toFixed(0)}%) matched their address to a real
             village location (dots below); the rest — including all CSR-only schools, which were never geocoded — sit at their
             district's centroid (dashed circles).</>
-          )}
+          )}{" "}
+          <strong className="text-cyan-400">{matchStats.jjmMatched.toLocaleString()}</strong> schools ({(100 * matchStats.jjmMatched / Math.max(1, matchStats.total)).toFixed(0)}%)
+          are additionally matched to the JJM tap-water/sanitation dataset by name (no shared ID exists between the two
+          sources, so this is name-matched within district/block, same lower-confidence tier as the toilet requirement join
+          above) — where matched, a school's record also carries real tap water / hand-washing / toilet-water status.
         </div>
       )}
 

@@ -1,0 +1,10 @@
+{
+  "meta": {
+    "note": "JJM tap-water/sanitation data merged onto the SHVR/CSR union registry by NAME match (no UDISE code in the JJM export), scoped to (current district, block) at a 0.82 similarity threshold where both sides have a block, falling back to district-only matching at a stricter 0.9 threshold otherwise. jjm_match_method on each school records which tier applied."
+  },
+  "jjm_total": 67417,
+  "matched_total": 20033,
+  "block_scoped_matches": 12081,
+  "district_scoped_matches": 7952,
+  "unmatched": 47384
+}
