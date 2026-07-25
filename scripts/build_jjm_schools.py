@@ -46,7 +46,7 @@ OUT_DISTRICT = ROOT / "client/public/data/jjm_district_summary_rajasthan.json"
 # canonical_district() same as every other source in this pipeline)
 FILENAME_TO_DISTRICT = {
     "ajmer": "AJMER", "alwar": "ALWAR", "balotra": "BALOTRA", "banswara": "BANSWARA",
-    "baran": "BARAN", "barmer": "BARMER", "beawar": "BEAWAR", "bharatpur": "BHARATPUR",
+    "baran": "BARAN", "bararn": "BARAN", "barmer": "BARMER", "beawar": "BEAWAR", "bharatpur": "BHARATPUR",
     "bhilwara": "BHILWARA", "bikaner": "BIKANER", "bundi": "BUNDI",
     "chittorgarh": "CHITTORGARH", "chittaurgarh": "CHITTORGARH", "churu": "CHURU",
     "dausa": "DAUSA", "deeg": "DEEG",
@@ -180,20 +180,24 @@ def main():
     for s in schools:
         grouped[s["district"]].append(s)
 
+    amenity_fields = ["tap_water", "toilet_running_water", "hand_washing",
+                       "separate_toilets_girls_boys", "rainwater_harvesting",
+                       "dried_toilets", "grey_water_mgmt"]
     for d, group in sorted(grouped.items()):
         n = len(group)
-        tap_yes = sum(1 for s in group if s["tap_water"] is True)
-        tap_no = sum(1 for s in group if s["tap_water"] is False)
         by_district[d] = {
             "total_facilities": n,
-            "tap_water_yes": tap_yes,
-            "tap_water_no": tap_no,
-            "tap_water_pct": round(100 * tap_yes / n, 1) if n else None,
             "govt_count": sum(1 for s in group if s["category"] == "Government"),
             "private_count": sum(1 for s in group if s["category"] == "Private"),
             "local_body_count": sum(1 for s in group if s["category"] == "Local Body"),
             "has_coordinates": sum(1 for s in group if s["lat"] is not None),
         }
+        for field in amenity_fields:
+            yes_c = sum(1 for s in group if s[field] is True)
+            by_district[d][f"{field}_count"] = yes_c
+            by_district[d][f"{field}_pct"] = round(100 * yes_c / n, 1) if n else None
+        by_district[d]["tap_water_yes"] = by_district[d]["tap_water_count"]
+        by_district[d]["tap_water_no"] = sum(1 for s in group if s["tap_water"] is False)
 
     print(f"\nTap water status by district:")
     for d, v in sorted(by_district.items(), key=lambda kv: -kv[1]["total_facilities"]):
