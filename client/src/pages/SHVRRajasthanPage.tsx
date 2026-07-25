@@ -669,7 +669,8 @@ function ToiletRawByDistrictTable({ data }: { data: ToiletRawSummary }) {
 }
 
 interface DistrictTableRow {
-  district: string; avgRating: number | null; totalSchoolCount: number; inShvrCount: number;
+  district: string; avgRating: number | null; avgSelfReportedRating: number | null;
+  totalSchoolCount: number; inShvrCount: number;
   toilet: number | null; repair: number | null; newRoom: number | null; dilapidated: number | null;
   hasShvrRating: boolean;
 }
@@ -685,7 +686,8 @@ function DistrictInfraTable({ data, infraUnit }: { data: DistrictFullSummary; in
   const rows = useMemo<DistrictTableRow[]>(() => {
     const field = INFRA_ABSOLUTE_FIELD, pctField = INFRA_FIELD;
     return Object.entries(data.by_district).map(([district, v]) => ({
-      district, avgRating: v.avg_rating, totalSchoolCount: v.total_school_count, inShvrCount: v.in_shvr_count,
+      district, avgRating: v.avg_rating, avgSelfReportedRating: v.avg_self_reported_rating,
+      totalSchoolCount: v.total_school_count, inShvrCount: v.in_shvr_count,
       hasShvrRating: v.has_shvr_rating,
       toilet: infraUnit === "absolute" ? v[field.infra_toilet_pct] as number : v[pctField.infra_toilet_pct] as number | null,
       repair: infraUnit === "absolute" ? v[field.infra_repair_pct] as number : v[pctField.infra_repair_pct] as number | null,
@@ -726,7 +728,8 @@ function DistrictInfraTable({ data, infraUnit }: { data: DistrictFullSummary; in
           <thead className="sticky top-0 bg-background border-b border-border/30">
             <tr className="text-left text-muted-foreground">
               <th className="px-3 py-2 font-medium">District</th>
-              <th className="px-3 py-2 font-medium text-right">Avg Rating</th>
+              <th className="px-3 py-2 font-medium text-right" title="State-verified rating">Avg Rating</th>
+              <th className="px-3 py-2 font-medium text-right" title="Self-reported rating">Self-Rpt. Rating</th>
               <th className="px-3 py-2 font-medium text-right">Schools (in SHVR)</th>
               <SortHeader field="toilet">🚽 Toilet</SortHeader>
               <SortHeader field="repair">🔧 Repair</SortHeader>
@@ -742,6 +745,9 @@ function DistrictInfraTable({ data, infraUnit }: { data: DistrictFullSummary; in
                 </td>
                 <td className="px-3 py-1.5 text-right" style={{ color: ratingColor(r.avgRating) }}>
                   {r.avgRating != null ? `${r.avgRating.toFixed(2)}★` : "—"}
+                </td>
+                <td className="px-3 py-1.5 text-right" style={{ color: ratingColor(r.avgSelfReportedRating) }}>
+                  {r.avgSelfReportedRating != null ? `${r.avgSelfReportedRating.toFixed(2)}★` : "—"}
                 </td>
                 <td className="px-3 py-1.5 text-right text-muted-foreground">
                   {r.totalSchoolCount.toLocaleString()} <span className="text-[10px]">({r.inShvrCount.toLocaleString()})</span>
