@@ -6,7 +6,7 @@
       "Dilapited_Building.xlsx",
       "Toilet_Requirement_List.xlsx"
     ],
-    "note": "SHVR-rated schools only (rating breakdown doesn't apply to schools that never participated in SHVR). First 3 CSR files joined by UDISE code, dropping any code whose rows disagree on school name. Toilet requirement matched by normalized school name within district, threshold 0.82 \u2014 lower confidence than the UDISE-joined fields."
+    "note": "by_rating: SHVR state-VERIFIED rated schools only (rating breakdown doesn't apply to schools that never got a verified rating \u2014 only 26 of 33 old districts have one). by_self_reported_rating: SHVR SELF-REPORTED rating, covers all 41 current districts, computed over the full registry not just in_shvr schools. First 3 CSR files joined by UDISE code, dropping any code whose rows disagree on school name. Toilet requirement matched by normalized school name within district, threshold 0.82 \u2014 lower confidence than the UDISE-joined fields."
   },
   "by_rating": {
     "1": {
@@ -46,7 +46,7 @@
       "school_count": 10239,
       "toilet_required_count": 199,
       "classroom_repair_needed_count": 5833,
-      "new_classroom_requirement_count": 2470,
+      "new_classroom_requirement_count": 2469,
       "building_dilapidated_count": 128,
       "toilet_required_pct": 1.9,
       "classroom_repair_pct": 57.0,
@@ -65,15 +65,83 @@
       "dilapidated_pct": 1.6
     },
     "unrated": {
-      "school_count": 11250,
+      "school_count": 11285,
       "toilet_required_count": 214,
       "classroom_repair_needed_count": 5946,
       "new_classroom_requirement_count": 2870,
       "building_dilapidated_count": 254,
       "toilet_required_pct": 1.9,
-      "classroom_repair_pct": 52.9,
-      "new_classroom_pct": 25.5,
+      "classroom_repair_pct": 52.7,
+      "new_classroom_pct": 25.4,
       "dilapidated_pct": 2.3
+    }
+  },
+  "by_self_reported_rating": {
+    "1": {
+      "school_count": 1028,
+      "toilet_required_count": 22,
+      "classroom_repair_needed_count": 371,
+      "new_classroom_requirement_count": 176,
+      "building_dilapidated_count": 88,
+      "toilet_required_pct": 2.1,
+      "classroom_repair_pct": 36.1,
+      "new_classroom_pct": 17.1,
+      "dilapidated_pct": 8.6
+    },
+    "2": {
+      "school_count": 4359,
+      "toilet_required_count": 123,
+      "classroom_repair_needed_count": 2487,
+      "new_classroom_requirement_count": 1205,
+      "building_dilapidated_count": 296,
+      "toilet_required_pct": 2.8,
+      "classroom_repair_pct": 57.1,
+      "new_classroom_pct": 27.6,
+      "dilapidated_pct": 6.8
+    },
+    "3": {
+      "school_count": 31203,
+      "toilet_required_count": 723,
+      "classroom_repair_needed_count": 19670,
+      "new_classroom_requirement_count": 8910,
+      "building_dilapidated_count": 848,
+      "toilet_required_pct": 2.3,
+      "classroom_repair_pct": 63.0,
+      "new_classroom_pct": 28.6,
+      "dilapidated_pct": 2.7
+    },
+    "4": {
+      "school_count": 13701,
+      "toilet_required_count": 240,
+      "classroom_repair_needed_count": 7477,
+      "new_classroom_requirement_count": 3278,
+      "building_dilapidated_count": 173,
+      "toilet_required_pct": 1.8,
+      "classroom_repair_pct": 54.6,
+      "new_classroom_pct": 23.9,
+      "dilapidated_pct": 1.3
+    },
+    "5": {
+      "school_count": 596,
+      "toilet_required_count": 4,
+      "classroom_repair_needed_count": 184,
+      "new_classroom_requirement_count": 72,
+      "building_dilapidated_count": 11,
+      "toilet_required_pct": 0.7,
+      "classroom_repair_pct": 30.9,
+      "new_classroom_pct": 12.1,
+      "dilapidated_pct": 1.8
+    },
+    "unrated": {
+      "school_count": 21629,
+      "toilet_required_count": 525,
+      "classroom_repair_needed_count": 19376,
+      "new_classroom_requirement_count": 8081,
+      "building_dilapidated_count": 1008,
+      "toilet_required_pct": 2.4,
+      "classroom_repair_pct": 89.6,
+      "new_classroom_pct": 37.4,
+      "dilapidated_pct": 4.7
     }
   }
 }

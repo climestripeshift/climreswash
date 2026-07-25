@@ -28,6 +28,12 @@ interface School {
   location_precision: "village_match" | "district_centroid";
   in_shvr: boolean;
   school_level: "PS" | "UPS" | "SR_SEC" | null;
+  block: string | null;
+  self_reported_rating: number | null;
+  self_reported_percentage: number | null;
+  location_rural_urban: "Rural" | "Urban" | null;
+  management: string | null;
+  residential: "Residential" | "Non Residential" | null;
   new_classroom_requirement: boolean;
   classroom_repair_needed: boolean;
   classrooms_needing_repair: number;
@@ -48,6 +54,7 @@ interface InfraStats {
 interface InfraSummary {
   meta: { sources: string[]; note: string };
   by_rating: Record<string, InfraStats>;
+  by_self_reported_rating: Record<string, InfraStats>;
 }
 
 // Government grade-level breakdown (PS/UPS/Secondary/Sr.Secondary), full unified registry —
@@ -76,6 +83,7 @@ interface ToiletRawSummary {
 interface DistrictStats {
   total_school_count: number; in_shvr_count: number; has_shvr_rating: boolean;
   avg_rating: number | null;
+  self_reported_rated_count: number; avg_self_reported_rating: number | null;
   toilet_required_count: number; classroom_repair_needed_count: number;
   new_classroom_requirement_count: number; building_dilapidated_count: number;
   toilet_required_pct: number | null; classroom_repair_pct: number | null;
@@ -100,11 +108,11 @@ type HexRating = { district: string; avg_rating_all: number; avg_rating_complete
 
 const STATUS_LABEL: Record<string, string> = {
   completed: "Completed", not_assigned: "Not Assigned", in_progress: "In Progress", yet_to_start: "Yet to Start",
-  not_in_shvr: "Not in SHVR",
+  not_in_shvr: "Not in SHVR", self_reported_only: "Self-Reported Only",
 };
 const STATUS_COLOR: Record<string, string> = {
   completed: "text-emerald-400", not_assigned: "text-muted-foreground", in_progress: "text-amber-400", yet_to_start: "text-red-400",
-  not_in_shvr: "text-sky-400",
+  not_in_shvr: "text-sky-400", self_reported_only: "text-purple-400",
 };
 
 const LEVEL_LABEL: Record<string, string> = {
@@ -136,7 +144,8 @@ const INFRA_ABSOLUTE_FIELD: Record<string, InfraCountField> = {
 };
 
 const LAYERS: LayerDef[] = [
-  { key: "shvr_rating",         label: "SHVR Star Rating",        icon: "⭐", group: "rating", domain: [1, 5] },
+  { key: "shvr_rating",         label: "SHVR Star Rating (Verified)", icon: "⭐", group: "rating", domain: [1, 5] },
+  { key: "shvr_self_reported_rating", label: "SHVR Star Rating (Self-Reported)", icon: "📝", group: "rating", domain: [1, 5] },
   { key: "infra_toilet_pct",         label: "Toilet Needed %",       icon: "🚽", group: "infra", domain: [0, 100] },
   { key: "infra_repair_pct",         label: "Classroom Repair %",    icon: "🔧", group: "infra", domain: [0, 100] },
   { key: "infra_new_classroom_pct",  label: "New Classroom %",       icon: "🏗️", group: "infra", domain: [0, 100] },
@@ -267,7 +276,9 @@ function RajasthanHexMap({ hexes, hexByH3Id, ratings, infraUnit, oldDistrictStat
       const coords = boundary.map(([lat, lng]: [number, number]) => [lng, lat]);
       coords.push(coords[0]);
       let value: number | null;
-      if (layer.group === "rating") {
+      if (layer.key === "shvr_self_reported_rating") {
+        value = oldDistrictStats?.[p.district_name]?.avg_self_reported_rating ?? null;
+      } else if (layer.group === "rating") {
         const r = ratings[p.h3_id];
         value = r ? (mode === "all" ? r.avg_rating_all : r.avg_rating_completed_only) : null;
       } else if (layer.group === "infra") {
@@ -432,7 +443,8 @@ function SchoolTable({ schools, districts }: { schools: School[]; districts: str
               <th className="px-3 py-2 font-medium">Location</th>
               <th className="px-3 py-2 font-medium">Status</th>
               <th className="px-3 py-2 font-medium">Infra Needs</th>
-              <th className="px-3 py-2 font-medium text-right">Rating</th>
+              <th className="px-3 py-2 font-medium text-right" title="State-verified rating">Rating</th>
+              <th className="px-3 py-2 font-medium text-right" title="Self-reported rating">Self-Rpt.</th>
             </tr>
           </thead>
           <tbody>
@@ -440,7 +452,10 @@ function SchoolTable({ schools, districts }: { schools: School[]; districts: str
               <tr key={i} className="border-b border-border/10 hover:bg-muted/20">
                 <td className="px-3 py-1.5">{s.name}</td>
                 <td className="px-3 py-1.5 font-mono text-muted-foreground">{s.udise_code}</td>
-                <td className="px-3 py-1.5">{s.district}</td>
+                <td className="px-3 py-1.5">
+                  {s.district}
+                  {s.block && <span className="text-muted-foreground"> · {s.block}</span>}
+                </td>
                 <td className="px-3 py-1.5 text-muted-foreground" title={LEVEL_LABEL[s.school_level ?? "unknown"]}>
                   {LEVEL_SHORT[s.school_level ?? "unknown"]}
                 </td>
@@ -459,6 +474,9 @@ function SchoolTable({ schools, districts }: { schools: School[]; districts: str
                 <td className="px-3 py-1.5 text-right font-semibold" style={{ color: ratingColor(s.rating) }}>
                   {s.rating != null ? `${s.rating}★` : "—"}
                 </td>
+                <td className="px-3 py-1.5 text-right font-semibold" style={{ color: ratingColor(s.self_reported_rating) }}>
+                  {s.self_reported_rating != null ? `${s.self_reported_rating}★` : "—"}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -476,8 +494,8 @@ function SchoolTable({ schools, districts }: { schools: School[]; districts: str
   );
 }
 
-function InfraByRatingTable({ data }: { data: InfraSummary }) {
-  const rows = ["5", "4", "3", "2", "1", "unrated"].filter((k) => data.by_rating[k]?.school_count > 0);
+function InfraByRatingTable({ data, title, subtitle }: { data: Record<string, InfraStats>; title: string; subtitle: string }) {
+  const rows = ["5", "4", "3", "2", "1", "unrated"].filter((k) => data[k]?.school_count > 0);
   const pctColor = (pct: number | undefined) => {
     if (pct == null) return "";
     return pct >= 50 ? "#dc2626" : pct >= 25 ? "#ea580c" : pct >= 10 ? "#d97706" : "#16a34a";
@@ -485,12 +503,8 @@ function InfraByRatingTable({ data }: { data: InfraSummary }) {
   return (
     <div className="border border-border/40 rounded-lg overflow-hidden">
       <div className="p-3 border-b border-border/30 bg-muted/20">
-        <div className="text-xs font-semibold">🏗️ Infrastructure Needs by SHVR Rating</div>
-        <div className="text-[10px] text-muted-foreground mt-1 leading-relaxed">
-          From UNICEF Rajasthan CSR requirement lists (new classroom / repair / dilapidated building — joined by UDISE
-          code; toilet requirement — the source file's UDISE column was found broken, matched by school name within
-          district instead, lower confidence).
-        </div>
+        <div className="text-xs font-semibold">{title}</div>
+        <div className="text-[10px] text-muted-foreground mt-1 leading-relaxed">{subtitle}</div>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-xs">
@@ -506,7 +520,7 @@ function InfraByRatingTable({ data }: { data: InfraSummary }) {
           </thead>
           <tbody>
             {rows.map((k) => {
-              const v = data.by_rating[k];
+              const v = data[k];
               return (
                 <tr key={k} className="border-b border-border/10">
                   <td className="px-3 py-1.5 font-semibold" style={{ color: k === "unrated" ? undefined : ratingColor(Number(k)) }}>
@@ -895,6 +909,7 @@ export default function SHVRRajasthanPage() {
   const oldDistrictStats = useMemo<Record<string, DistrictStats>>(() => {
     if (!districtBoundaryQ.data || !districtAbsoluteQ.data) return {};
     const byOld: Record<string, DistrictStats> = {};
+    const selfReportedWeightedSum: Record<string, number> = {};
     for (const f of districtBoundaryQ.data.features) {
       const current = f.properties.NAME;
       const old = f.properties.OLD_DISTRICT ?? current;
@@ -902,6 +917,7 @@ export default function SHVRRajasthanPage() {
       if (!stats) continue;
       const entry = (byOld[old] ??= {
         total_school_count: 0, in_shvr_count: 0, has_shvr_rating: false, avg_rating: null,
+        self_reported_rated_count: 0, avg_self_reported_rating: null,
         toilet_required_count: 0, classroom_repair_needed_count: 0, new_classroom_requirement_count: 0, building_dilapidated_count: 0,
         toilet_required_pct: null, classroom_repair_pct: null, new_classroom_pct: null, dilapidated_pct: null,
       });
@@ -912,8 +928,15 @@ export default function SHVRRajasthanPage() {
       entry.new_classroom_requirement_count += stats.new_classroom_requirement_count;
       entry.building_dilapidated_count += stats.building_dilapidated_count;
       entry.has_shvr_rating = entry.has_shvr_rating || stats.has_shvr_rating;
+      entry.self_reported_rated_count += stats.self_reported_rated_count;
+      if (stats.avg_self_reported_rating != null) {
+        selfReportedWeightedSum[old] = (selfReportedWeightedSum[old] ?? 0) + stats.avg_self_reported_rating * stats.self_reported_rated_count;
+      }
     }
-    for (const entry of Object.values(byOld)) {
+    for (const [old, entry] of Object.entries(byOld)) {
+      if (entry.self_reported_rated_count) {
+        entry.avg_self_reported_rating = round1((selfReportedWeightedSum[old] ?? 0) / entry.self_reported_rated_count);
+      }
       if (!entry.total_school_count) continue;
       entry.toilet_required_pct = round1(100 * entry.toilet_required_count / entry.total_school_count);
       entry.classroom_repair_pct = round1(100 * entry.classroom_repair_needed_count / entry.total_school_count);
@@ -940,7 +963,8 @@ export default function SHVRRajasthanPage() {
         const district = f.properties.NAME;
         const oldDistrict = f.properties.OLD_DISTRICT ?? district;
         let value: number | null;
-        if (layer.group === "rating") value = currentDistrictStats[district]?.avg_rating ?? null;
+        if (layer.key === "shvr_self_reported_rating") value = currentDistrictStats[district]?.avg_self_reported_rating ?? null;
+        else if (layer.group === "rating") value = currentDistrictStats[district]?.avg_rating ?? null;
         else if (layer.group === "infra") value = infraDistrictValue(layer, district, infraUnit, currentDistrictStats);
         else value = hexAvgByDistrict[oldDistrict] ?? null;
         return { ...f, properties: { ...f.properties, district, value } };
@@ -1069,7 +1093,14 @@ export default function SHVRRajasthanPage() {
           )}
         </div>
 
-        {infraSummaryQ.data && <InfraByRatingTable data={infraSummaryQ.data} />}
+        {infraSummaryQ.data && (
+          <InfraByRatingTable data={infraSummaryQ.data.by_rating} title="🏗️ Infrastructure Needs by SHVR Rating (Verified)"
+            subtitle="From UNICEF Rajasthan CSR requirement lists, keyed by the state-VERIFIED rating (only 26 of 33 old districts have one — the other 7's schools fall under Unrated here, not because they scored low)." />
+        )}
+        {infraSummaryQ.data && (
+          <InfraByRatingTable data={infraSummaryQ.data.by_self_reported_rating} title="📝 Infrastructure Needs by SHVR Rating (Self-Reported)"
+            subtitle="Same breakdown, keyed by the school's own self-assessment rating instead — covers all 41 current districts. Unrated here means the school never appears in the self-reported SHVR export (mostly CSR-only schools)." />
+        )}
         {levelSummaryQ.data && <InfraByLevelTable data={levelSummaryQ.data} />}
         {toiletRawQ.data && <ToiletRawByDistrictTable data={toiletRawQ.data} />}
         {districtAbsoluteQ.data && (

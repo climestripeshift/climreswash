@@ -371,6 +371,32 @@ def main():
               f"repair={v.get('classroom_repair_pct','-'):>5}%  new_room={v.get('new_classroom_pct','-'):>5}%  "
               f"dilapidated={v.get('dilapidated_pct','-'):>5}%")
 
+    # ── Same breakdown by SELF-REPORTED rating — covers all 41 districts (unlike the
+    # state-verified `rating` above, which only exists for 26 of 33 old districts) ──
+    by_self_reported_rating: dict[str, dict] = {}
+    for r in [1, 2, 3, 4, 5, None]:
+        key = str(r) if r is not None else "unrated"
+        group = [s for s in schools if s.get("self_reported_rating") == r]
+        n = len(group)
+        by_self_reported_rating[key] = {
+            "school_count": n,
+            "toilet_required_count": sum(1 for s in group if s["girls_toilet_required"]),
+            "classroom_repair_needed_count": sum(1 for s in group if s["classroom_repair_needed"]),
+            "new_classroom_requirement_count": sum(1 for s in group if s["new_classroom_requirement"]),
+            "building_dilapidated_count": sum(1 for s in group if s["building_dilapidated"]),
+        }
+        if n:
+            by_self_reported_rating[key]["toilet_required_pct"] = round(100 * by_self_reported_rating[key]["toilet_required_count"] / n, 1)
+            by_self_reported_rating[key]["classroom_repair_pct"] = round(100 * by_self_reported_rating[key]["classroom_repair_needed_count"] / n, 1)
+            by_self_reported_rating[key]["new_classroom_pct"] = round(100 * by_self_reported_rating[key]["new_classroom_requirement_count"] / n, 1)
+            by_self_reported_rating[key]["dilapidated_pct"] = round(100 * by_self_reported_rating[key]["building_dilapidated_count"] / n, 1)
+
+    print("\nInfrastructure needs by SELF-REPORTED rating:")
+    for k, v in by_self_reported_rating.items():
+        print(f"  {k:8s} n={v['school_count']:6d}  toilet={v.get('toilet_required_pct','-'):>5}%  "
+              f"repair={v.get('classroom_repair_pct','-'):>5}%  new_room={v.get('new_classroom_pct','-'):>5}%  "
+              f"dilapidated={v.get('dilapidated_pct','-'):>5}%")
+
     # ── Summary by CURRENT district, full unified registry — real percentages now,
     # since the denominator is every known school (SHVR + CSR-only), not just raters ──
     by_district: dict[str, dict] = {}
@@ -378,6 +404,7 @@ def main():
         n = len(group)
         in_shvr = [s for s in group if s["in_shvr"]]
         rated = [s["rating"] for s in in_shvr if s["rating"] is not None]
+        self_rated = [s["self_reported_rating"] for s in group if s.get("self_reported_rating") is not None]
         toilet_c = sum(1 for s in group if s["girls_toilet_required"])
         repair_c = sum(1 for s in group if s["classroom_repair_needed"])
         new_room_c = sum(1 for s in group if s["new_classroom_requirement"])
@@ -387,6 +414,8 @@ def main():
             "in_shvr_count": len(in_shvr),
             "has_shvr_rating": len(in_shvr) > 0,
             "avg_rating": round(sum(rated) / len(rated), 2) if rated else None,
+            "self_reported_rated_count": len(self_rated),
+            "avg_self_reported_rating": round(sum(self_rated) / len(self_rated), 2) if self_rated else None,
             "toilet_required_count": toilet_c,
             "classroom_repair_needed_count": repair_c,
             "new_classroom_requirement_count": new_room_c,
@@ -445,13 +474,17 @@ def main():
         "meta": {
             "sources": ["ACR_New_Requirement_List.xlsx", "ACR_Raiparing List.xlsx",
                         "Dilapited_Building.xlsx", "Toilet_Requirement_List.xlsx"],
-            "note": "SHVR-rated schools only (rating breakdown doesn't apply to schools that "
-                    "never participated in SHVR). First 3 CSR files joined by UDISE code, dropping "
-                    "any code whose rows disagree on school name. Toilet requirement matched by "
-                    f"normalized school name within district, threshold {NAME_MATCH_THRESHOLD} — "
-                    "lower confidence than the UDISE-joined fields.",
+            "note": "by_rating: SHVR state-VERIFIED rated schools only (rating breakdown doesn't "
+                    "apply to schools that never got a verified rating — only 26 of 33 old districts "
+                    "have one). by_self_reported_rating: SHVR SELF-REPORTED rating, covers all 41 "
+                    "current districts, computed over the full registry not just in_shvr schools. "
+                    "First 3 CSR files joined by UDISE code, dropping any code whose rows disagree "
+                    f"on school name. Toilet requirement matched by normalized school name within "
+                    f"district, threshold {NAME_MATCH_THRESHOLD} — lower confidence than the "
+                    "UDISE-joined fields.",
         },
         "by_rating": by_rating,
+        "by_self_reported_rating": by_self_reported_rating,
     }, indent=2))
 
     OUT_DISTRICT.write_text(json.dumps({
