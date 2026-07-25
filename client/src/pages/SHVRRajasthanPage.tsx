@@ -1024,7 +1024,10 @@ export default function SHVRRajasthanPage() {
     if (layer.group === "rating" && starFilter != null && districtAbsoluteQ.data) {
       const distKey = layer.key === "shvr_self_reported_rating" ? "self_reported_rating_distribution" : "rating_distribution";
       const max = Math.max(1, ...Object.values(districtAbsoluteQ.data.by_district).map((d) => d[distKey]?.[String(starFilter)]?.count ?? 0));
-      return { ...layer, domain: [0, max], colorMode: "count" };
+      // 1-2★ = a bad rating, so MORE of them is worse → red=high (domain [0,max], the default).
+      // 3-5★ = a good rating, so MORE of them is better → flip to green=high (domain [max,0]).
+      const domain: [number, number] = starFilter >= 3 ? [max, 0] : [0, max];
+      return { ...layer, domain, colorMode: "count" };
     }
     if (layer.group !== "infra" || infraUnit !== "absolute" || !districtAbsoluteQ.data) return layer;
     const field = INFRA_ABSOLUTE_FIELD[layer.key];
