@@ -1,0 +1,395 @@
+{
+  "meta": {
+    "source": "JJM F26 report (Status of Pipe Water Supply in School/Balwadi/Anganwadi), manually exported per-district from the login-gated JJM MIS portal",
+    "note": "No UDISE code in this export -- not linked to the SHVR/CSR union registry, a standalone facility-level dataset keyed by Block/Panchayat/Village/Habitation (LGD codes). Coverage grows as more district files are added to ~/UNICEF RAJASTHAN/climreswash/JJM/ -- re-run this script to pick up new ones.",
+    "districts_covered": [
+      "Beawar",
+      "Bharatpur",
+      "Bhilwara",
+      "Bikaner",
+      "Bundi",
+      "Chittaurgarh",
+      "Churu",
+      "Dausa",
+      "Deeg",
+      "Dhaulpur",
+      "Didwana-Kuchaman",
+      "Dungarpur",
+      "Ganganagar",
+      "Hanumangarh",
+      "Jaipur",
+      "Jaisalmer",
+      "Jalor",
+      "Jhalawar",
+      "Jhunjhunun",
+      "Jodhpur",
+      "Karauli",
+      "Khairthal-Tijara",
+      "Kota",
+      "Kotputli-Behror",
+      "Nagaur",
+      "Pali",
+      "Phalodi",
+      "Pratapgarh",
+      "Rajsamand",
+      "Salumbar",
+      "Sawai Madhopur",
+      "Sikar",
+      "Sirohi",
+      "Tonk",
+      "Udaipur"
+    ]
+  },
+  "by_district": {
+    "Beawar": {
+      "total_facilities": 2101,
+      "tap_water_yes": 1566,
+      "tap_water_no": 535,
+      "tap_water_pct": 74.5,
+      "govt_count": 1655,
+      "private_count": 266,
+      "local_body_count": 69,
+      "has_coordinates": 261
+    },
+    "Bharatpur": {
+      "total_facilities": 1408,
+      "tap_water_yes": 1407,
+      "tap_water_no": 1,
+      "tap_water_pct": 99.9,
+      "govt_count": 964,
+      "private_count": 438,
+      "local_body_count": 2,
+      "has_coordinates": 0
+    },
+    "Bhilwara": {
+      "total_facilities": 1620,
+      "tap_water_yes": 1557,
+      "tap_water_no": 63,
+      "tap_water_pct": 96.1,
+      "govt_count": 1285,
+      "private_count": 189,
+      "local_body_count": 142,
+      "has_coordinates": 3
+    },
+    "Bikaner": {
+      "total_facilities": 2416,
+      "tap_water_yes": 2105,
+      "tap_water_no": 311,
+      "tap_water_pct": 87.1,
+      "govt_count": 1350,
+      "private_count": 647,
+      "local_body_count": 414,
+      "has_coordinates": 433
+    },
+    "Bundi": {
+      "total_facilities": 1714,
+      "tap_water_yes": 1476,
+      "tap_water_no": 238,
+      "tap_water_pct": 86.1,
+      "govt_count": 1343,
+      "private_count": 246,
+      "local_body_count": 119,
+      "has_coordinates": 2
+    },
+    "Chittaurgarh": {
+      "total_facilities": 1844,
+      "tap_water_yes": 1358,
+      "tap_water_no": 486,
+      "tap_water_pct": 73.6,
+      "govt_count": 1753,
+      "private_count": 74,
+      "local_body_count": 0,
+      "has_coordinates": 0
+    },
+    "Churu": {
+      "total_facilities": 1977,
+      "tap_water_yes": 1967,
+      "tap_water_no": 10,
+      "tap_water_pct": 99.5,
+      "govt_count": 1330,
+      "private_count": 580,
+      "local_body_count": 65,
+      "has_coordinates": 4
+    },
+    "Dausa": {
+      "total_facilities": 1943,
+      "tap_water_yes": 1309,
+      "tap_water_no": 634,
+      "tap_water_pct": 67.4,
+      "govt_count": 1434,
+      "private_count": 378,
+      "local_body_count": 127,
+      "has_coordinates": 527
+    },
+    "Deeg": {
+      "total_facilities": 1231,
+      "tap_water_yes": 1078,
+      "tap_water_no": 153,
+      "tap_water_pct": 87.6,
+      "govt_count": 839,
+      "private_count": 349,
+      "local_body_count": 36,
+      "has_coordinates": 0
+    },
+    "Dhaulpur": {
+      "total_facilities": 1146,
+      "tap_water_yes": 1120,
+      "tap_water_no": 26,
+      "tap_water_pct": 97.7,
+      "govt_count": 1061,
+      "private_count": 0,
+      "local_body_count": 83,
+      "has_coordinates": 0
+    },
+    "Didwana-Kuchaman": {
+      "total_facilities": 2081,
+      "tap_water_yes": 2063,
+      "tap_water_no": 18,
+      "tap_water_pct": 99.1,
+      "govt_count": 1530,
+      "private_count": 478,
+      "local_body_count": 64,
+      "has_coordinates": 2
+    },
+    "Dungarpur": {
+      "total_facilities": 3028,
+      "tap_water_yes": 2758,
+      "tap_water_no": 270,
+      "tap_water_pct": 91.1,
+      "govt_count": 2241,
+      "private_count": 372,
+      "local_body_count": 0,
+      "has_coordinates": 35
+    },
+    "Ganganagar": {
+      "total_facilities": 1462,
+      "tap_water_yes": 1452,
+      "tap_water_no": 10,
+      "tap_water_pct": 99.3,
+      "govt_count": 1091,
+      "private_count": 335,
+      "local_body_count": 28,
+      "has_coordinates": 1
+    },
+    "Hanumangarh": {
+      "total_facilities": 1572,
+      "tap_water_yes": 1563,
+      "tap_water_no": 9,
+      "tap_water_pct": 99.4,
+      "govt_count": 1106,
+      "private_count": 443,
+      "local_body_count": 17,
+      "has_coordinates": 278
+    },
+    "Jaipur": {
+      "total_facilities": 1103,
+      "tap_water_yes": 1010,
+      "tap_water_no": 93,
+      "tap_water_pct": 91.6,
+      "govt_count": 715,
+      "private_count": 387,
+      "local_body_count": 0,
+      "has_coordinates": 0
+    },
+    "Jaisalmer": {
+      "total_facilities": 1610,
+      "tap_water_yes": 820,
+      "tap_water_no": 790,
+      "tap_water_pct": 50.9,
+      "govt_count": 744,
+      "private_count": 208,
+      "local_body_count": 585,
+      "has_coordinates": 0
+    },
+    "Jalor": {
+      "total_facilities": 1073,
+      "tap_water_yes": 1033,
+      "tap_water_no": 40,
+      "tap_water_pct": 96.3,
+      "govt_count": 683,
+      "private_count": 371,
+      "local_body_count": 17,
+      "has_coordinates": 986
+    },
+    "Jhalawar": {
+      "total_facilities": 2030,
+      "tap_water_yes": 1555,
+      "tap_water_no": 475,
+      "tap_water_pct": 76.6,
+      "govt_count": 1174,
+      "private_count": 344,
+      "local_body_count": 498,
+      "has_coordinates": 1874
+    },
+    "Jhunjhunun": {
+      "total_facilities": 1428,
+      "tap_water_yes": 1426,
+      "tap_water_no": 2,
+      "tap_water_pct": 99.9,
+      "govt_count": 928,
+      "private_count": 442,
+      "local_body_count": 57,
+      "has_coordinates": 0
+    },
+    "Jodhpur": {
+      "total_facilities": 240,
+      "tap_water_yes": 220,
+      "tap_water_no": 20,
+      "tap_water_pct": 91.7,
+      "govt_count": 123,
+      "private_count": 74,
+      "local_body_count": 42,
+      "has_coordinates": 0
+    },
+    "Karauli": {
+      "total_facilities": 836,
+      "tap_water_yes": 464,
+      "tap_water_no": 372,
+      "tap_water_pct": 55.5,
+      "govt_count": 713,
+      "private_count": 123,
+      "local_body_count": 0,
+      "has_coordinates": 324
+    },
+    "Khairthal-Tijara": {
+      "total_facilities": 1065,
+      "tap_water_yes": 1017,
+      "tap_water_no": 48,
+      "tap_water_pct": 95.5,
+      "govt_count": 715,
+      "private_count": 324,
+      "local_body_count": 6,
+      "has_coordinates": 156
+    },
+    "Kota": {
+      "total_facilities": 1120,
+      "tap_water_yes": 981,
+      "tap_water_no": 139,
+      "tap_water_pct": 87.6,
+      "govt_count": 778,
+      "private_count": 216,
+      "local_body_count": 118,
+      "has_coordinates": 1
+    },
+    "Kotputli-Behror": {
+      "total_facilities": 1784,
+      "tap_water_yes": 1274,
+      "tap_water_no": 510,
+      "tap_water_pct": 71.4,
+      "govt_count": 1042,
+      "private_count": 573,
+      "local_body_count": 169,
+      "has_coordinates": 0
+    },
+    "Nagaur": {
+      "total_facilities": 1615,
+      "tap_water_yes": 973,
+      "tap_water_no": 642,
+      "tap_water_pct": 60.2,
+      "govt_count": 1462,
+      "private_count": 1,
+      "local_body_count": 143,
+      "has_coordinates": 0
+    },
+    "Pali": {
+      "total_facilities": 1781,
+      "tap_water_yes": 1780,
+      "tap_water_no": 1,
+      "tap_water_pct": 99.9,
+      "govt_count": 1191,
+      "private_count": 498,
+      "local_body_count": 90,
+      "has_coordinates": 394
+    },
+    "Phalodi": {
+      "total_facilities": 1453,
+      "tap_water_yes": 1302,
+      "tap_water_no": 151,
+      "tap_water_pct": 89.6,
+      "govt_count": 1042,
+      "private_count": 123,
+      "local_body_count": 251,
+      "has_coordinates": 0
+    },
+    "Pratapgarh": {
+      "total_facilities": 1932,
+      "tap_water_yes": 1081,
+      "tap_water_no": 851,
+      "tap_water_pct": 56.0,
+      "govt_count": 1716,
+      "private_count": 213,
+      "local_body_count": 1,
+      "has_coordinates": 0
+    },
+    "Rajsamand": {
+      "total_facilities": 1311,
+      "tap_water_yes": 1053,
+      "tap_water_no": 258,
+      "tap_water_pct": 80.3,
+      "govt_count": 1104,
+      "private_count": 87,
+      "local_body_count": 120,
+      "has_coordinates": 5
+    },
+    "Salumbar": {
+      "total_facilities": 133,
+      "tap_water_yes": 133,
+      "tap_water_no": 0,
+      "tap_water_pct": 100.0,
+      "govt_count": 99,
+      "private_count": 18,
+      "local_body_count": 16,
+      "has_coordinates": 0
+    },
+    "Sawai Madhopur": {
+      "total_facilities": 994,
+      "tap_water_yes": 855,
+      "tap_water_no": 139,
+      "tap_water_pct": 86.0,
+      "govt_count": 486,
+      "private_count": 321,
+      "local_body_count": 179,
+      "has_coordinates": 0
+    },
+    "Sikar": {
+      "total_facilities": 249,
+      "tap_water_yes": 249,
+      "tap_water_no": 0,
+      "tap_water_pct": 100.0,
+      "govt_count": 146,
+      "private_count": 102,
+      "local_body_count": 0,
+      "has_coordinates": 0
+    },
+    "Sirohi": {
+      "total_facilities": 1144,
+      "tap_water_yes": 848,
+      "tap_water_no": 296,
+      "tap_water_pct": 74.1,
+      "govt_count": 724,
+      "private_count": 212,
+      "local_body_count": 207,
+      "has_coordinates": 1
+    },
+    "Tonk": {
+      "total_facilities": 1744,
+      "tap_water_yes": 1387,
+      "tap_water_no": 357,
+      "tap_water_pct": 79.5,
+      "govt_count": 1126,
+      "private_count": 437,
+      "local_body_count": 159,
+      "has_coordinates": 1
+    },
+    "Udaipur": {
+      "total_facilities": 3484,
+      "tap_water_yes": 2085,
+      "tap_water_no": 1399,
+      "tap_water_pct": 59.8,
+      "govt_count": 2576,
+      "private_count": 441,
+      "local_body_count": 448,
+      "has_coordinates": 12
+    }
+  }
+}
