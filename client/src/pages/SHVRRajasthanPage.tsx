@@ -80,10 +80,13 @@ interface ToiletRawSummary {
 // Full unified registry (SHVR-rated ∪ every CSR-file school) per CURRENT district — real
 // percentages for all 41 districts, since total_school_count is a genuine denominator now,
 // not just the SHVR-rated subset.
+interface RatingBucket { count: number; pct: number | null }
 interface DistrictStats {
   total_school_count: number; in_shvr_count: number; has_shvr_rating: boolean;
   avg_rating: number | null;
   self_reported_rated_count: number; avg_self_reported_rating: number | null;
+  rating_distribution: Record<string, RatingBucket>;
+  self_reported_rating_distribution: Record<string, RatingBucket>;
   toilet_required_count: number; classroom_repair_needed_count: number;
   new_classroom_requirement_count: number; building_dilapidated_count: number;
   toilet_required_pct: number | null; classroom_repair_pct: number | null;
@@ -123,7 +126,10 @@ const LEVEL_SHORT: Record<string, string> = { PS: "PS", UPS: "UPS", SR_SEC: "HS"
 
 // ── Layer definitions ──────────────────────────────────────────────────────
 
-interface LayerDef { key: string; label: string; icon: string; group: "rating" | "hazard" | "future" | "infra"; domain: [number, number] }
+interface LayerDef {
+  key: string; label: string; icon: string; group: "rating" | "hazard" | "future" | "infra"; domain: [number, number];
+  colorMode?: "count"; // set when a rating layer is showing a per-star school COUNT (star filter active) instead of an average
+}
 
 type InfraPctField = "toilet_required_pct" | "classroom_repair_pct" | "new_classroom_pct" | "dilapidated_pct";
 type InfraCountField = "toilet_required_count" | "classroom_repair_needed_count" | "new_classroom_requirement_count" | "building_dilapidated_count";
@@ -173,6 +179,11 @@ const RISK_RAMP:   [number, number, number][] = [[34, 197, 94], [234, 179, 8], [
 
 function round1(v: number) { return Math.round(v * 10) / 10; }
 
+function emptyRatingDistribution(): Record<string, RatingBucket> {
+  return { "1": { count: 0, pct: null }, "2": { count: 0, pct: null }, "3": { count: 0, pct: null },
+    "4": { count: 0, pct: null }, "5": { count: 0, pct: null } };
+}
+
 function gradientColor(ramp: [number, number, number][], t: number) {
   t = Math.max(0, Math.min(1, t));
   const s = t * (ramp.length - 1);
@@ -193,6 +204,7 @@ function hazardColor(value: number | null, domain: [number, number]) {
 }
 
 function layerColor(layer: LayerDef, value: number | null) {
+  if (layer.colorMode === "count") return hazardColor(value, layer.domain);
   return layer.group === "rating" ? ratingColor(value) : hazardColor(value, layer.domain);
 }
 
@@ -256,15 +268,16 @@ function SchoolPointsLayer({ schools, hexByH3Id, layer, mode }: {
   return <GeoJSON key={`schools-${layer.key}-${mode}`} data={geoData as any} pointToLayer={pointToLayer} onEachFeature={onEachFeature} />;
 }
 
-function RajasthanHexMap({ hexes, hexByH3Id, ratings, infraUnit, oldDistrictStats, schools, mode, layer, districtMarkers, viewMode, districtGeo, showDistrictLabels }: {
+function RajasthanHexMap({ hexes, hexByH3Id, ratings, infraUnit, oldDistrictStats, schools, mode, layer, districtMarkers, viewMode, districtGeo, showDistrictLabels, starFilter }: {
   hexes: any[]; hexByH3Id: Record<string, any>; ratings: Record<string, HexRating>;
   infraUnit: InfraUnit;
   oldDistrictStats: Record<string, DistrictStats> | undefined; schools: School[];
   mode: "all" | "completed"; layer: LayerDef; districtMarkers: DistrictMarker[];
-  viewMode: "hex" | "district"; districtGeo: any; showDistrictLabels: boolean;
+  viewMode: "hex" | "district"; districtGeo: any; showDistrictLabels: boolean; starFilter: number | null;
 }) {
-  const fmtValue = (v: number) =>
-    layer.group === "rating" ? `${v.toFixed(2)}★`
+  const fmtValue = (v: number, pct?: number | null) =>
+    layer.colorMode === "count" ? `${v.toLocaleString()} schools${pct != null ? ` (${pct}%)` : ""}`
+    : layer.group === "rating" ? `${v.toFixed(2)}★`
     : layer.group === "infra" ? (infraUnit === "absolute" ? v.toLocaleString() : `${v.toFixed(1)}%`)
     : `${v.toFixed(1)}/10`;
   const mapRef = useRef<LeafletMap | null>(null);
@@ -276,7 +289,15 @@ function RajasthanHexMap({ hexes, hexByH3Id, ratings, infraUnit, oldDistrictStat
       const coords = boundary.map(([lat, lng]: [number, number]) => [lng, lat]);
       coords.push(coords[0]);
       let value: number | null;
-      if (layer.key === "shvr_self_reported_rating") {
+      let pct: number | null = null;
+      if (layer.group === "rating" && starFilter != null) {
+        const dist = layer.key === "shvr_self_reported_rating"
+          ? oldDistrictStats?.[p.district_name]?.self_reported_rating_distribution
+          : oldDistrictStats?.[p.district_name]?.rating_distribution;
+        const bucket = dist?.[String(starFilter)];
+        value = bucket?.count ?? null;
+        pct = bucket?.pct ?? null;
+      } else if (layer.key === "shvr_self_reported_rating") {
         value = oldDistrictStats?.[p.district_name]?.avg_self_reported_rating ?? null;
       } else if (layer.group === "rating") {
         const r = ratings[p.h3_id];
@@ -288,11 +309,11 @@ function RajasthanHexMap({ hexes, hexByH3Id, ratings, infraUnit, oldDistrictStat
       }
       return {
         type: "Feature",
-        properties: { h3_id: p.h3_id, district: p.district_name, value },
+        properties: { h3_id: p.h3_id, district: p.district_name, value, pct },
         geometry: { type: "Polygon", coordinates: [coords] },
       };
     }),
-  }), [hexes, ratings, oldDistrictStats, infraUnit, mode, layer]);
+  }), [hexes, ratings, oldDistrictStats, infraUnit, mode, layer, starFilter]);
 
   const styleFeature = useCallback((feature: any) => ({
     fillColor: layerColor(layer, feature.properties.value), fillOpacity: 0.78, color: "#1e293b", weight: 0.3, renderer: canvasRenderer,
@@ -300,7 +321,7 @@ function RajasthanHexMap({ hexes, hexByH3Id, ratings, infraUnit, oldDistrictStat
 
   const onEachFeature = useCallback((feature: any, leafletLayer: any) => {
     const p = feature.properties;
-    const label = p.value != null ? fmtValue(p.value) : "No data";
+    const label = p.value != null ? fmtValue(p.value, p.pct) : "No data";
     leafletLayer.bindTooltip(`<b>${p.district}</b><br/>${layer.label}: ${label}`, { sticky: true });
   }, [layer, infraUnit]);
 
@@ -309,7 +330,7 @@ function RajasthanHexMap({ hexes, hexByH3Id, ratings, infraUnit, oldDistrictStat
       <SetupCanvas />
       <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>' />
-      {viewMode === "hex" && <GeoJSON key={`${mode}-${layer.key}-${infraUnit}`} data={geoData as any} style={styleFeature} onEachFeature={onEachFeature} />}
+      {viewMode === "hex" && <GeoJSON key={`${mode}-${layer.key}-${infraUnit}-${starFilter}`} data={geoData as any} style={styleFeature} onEachFeature={onEachFeature} />}
       {viewMode === "district" && districtGeo && (
         <>
           <style>{`
@@ -317,13 +338,13 @@ function RajasthanHexMap({ hexes, hexByH3Id, ratings, infraUnit, oldDistrictStat
               font-weight: 800; font-size: 12px; color: #0f172a; text-shadow: 0 0 3px #fff, 0 0 3px #fff, 0 0 3px #fff; }
             .district-label-tooltip::before { display: none; }
           `}</style>
-          <GeoJSON key={`districts-${mode}-${layer.key}-${infraUnit}-${showDistrictLabels}`} data={districtGeo as any}
+          <GeoJSON key={`districts-${mode}-${layer.key}-${infraUnit}-${showDistrictLabels}-${starFilter}`} data={districtGeo as any}
             style={(feature: any) => ({
               fillColor: layerColor(layer, feature.properties.value), fillOpacity: 0.7, color: "#1e293b", weight: 1, renderer: canvasRenderer,
             })}
             onEachFeature={(feature: any, leafletLayer: any) => {
               const p = feature.properties;
-              const label = p.value != null ? fmtValue(p.value) : "—";
+              const label = p.value != null ? fmtValue(p.value, p.pct) : "—";
               if (showDistrictLabels) {
                 leafletLayer.bindTooltip(`${p.district}<br/>${label}`, { permanent: true, direction: "center", className: "district-label-tooltip" });
               } else {
@@ -351,9 +372,10 @@ function RajasthanHexMap({ hexes, hexByH3Id, ratings, infraUnit, oldDistrictStat
 }
 
 function Legend({ layer, infraUnit }: { layer: LayerDef; infraUnit: InfraUnit }) {
-  const ramp = layer.group === "rating" ? RATING_RAMP : RISK_RAMP;
+  const ramp = layer.colorMode === "count" ? RISK_RAMP : layer.group === "rating" ? RATING_RAMP : RISK_RAMP;
   const [lo, hi] = layer.domain;
-  const fmt = (v: number) => layer.group === "rating" ? `${v}★`
+  const fmt = (v: number) => layer.colorMode === "count" ? Math.round(v).toLocaleString()
+    : layer.group === "rating" ? `${v}★`
     : layer.group === "infra" ? (infraUnit === "absolute" ? Math.round(v).toLocaleString() : `${v}%`)
     : `${v}`;
   return (
@@ -795,6 +817,7 @@ export default function SHVRRajasthanPage() {
   const [viewMode, setViewMode] = useState<"hex" | "district">("hex");
   const [infraUnit, setInfraUnit] = useState<InfraUnit>("pct");
   const [showDistrictLabels, setShowDistrictLabels] = useState(true);
+  const [starFilter, setStarFilter] = useState<number | null>(null);
   const layer = LAYER_BY_KEY[attr];
 
   const hexQ = useQuery<any[]>({
@@ -931,6 +954,16 @@ export default function SHVRRajasthanPage() {
   // registry) come straight from the backend now — no client-side recomputation needed.
   const currentDistrictStats = districtAbsoluteQ.data?.by_district ?? {};
 
+  // Total statewide school count at each star (1-5), for the active rating layer — shown
+  // directly on the star-filter buttons. District AVERAGES cluster too tightly around 3★ to
+  // be useful for filtering (see starFilter below, which instead shows per-district counts).
+  const starTotalCounts = useMemo<Record<number, number>>(() => {
+    const src = attr === "shvr_self_reported_rating" ? infraSummaryQ.data?.by_self_reported_rating : infraSummaryQ.data?.by_rating;
+    const counts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    for (const star of [1, 2, 3, 4, 5]) counts[star] = src?.[String(star)]?.school_count ?? 0;
+    return counts;
+  }, [infraSummaryQ.data, attr]);
+
   // Rolled up to OLD district boundaries (summed counts across current-boundary children,
   // pct recomputed against the summed total) — used for hex-view coloring, since hexes only
   // know the old/coarser district.
@@ -946,6 +979,7 @@ export default function SHVRRajasthanPage() {
       const entry = (byOld[old] ??= {
         total_school_count: 0, in_shvr_count: 0, has_shvr_rating: false, avg_rating: null,
         self_reported_rated_count: 0, avg_self_reported_rating: null,
+        rating_distribution: emptyRatingDistribution(), self_reported_rating_distribution: emptyRatingDistribution(),
         toilet_required_count: 0, classroom_repair_needed_count: 0, new_classroom_requirement_count: 0, building_dilapidated_count: 0,
         toilet_required_pct: null, classroom_repair_pct: null, new_classroom_pct: null, dilapidated_pct: null,
       });
@@ -960,6 +994,10 @@ export default function SHVRRajasthanPage() {
       if (stats.avg_self_reported_rating != null) {
         selfReportedWeightedSum[old] = (selfReportedWeightedSum[old] ?? 0) + stats.avg_self_reported_rating * stats.self_reported_rated_count;
       }
+      for (const r of ["1", "2", "3", "4", "5"]) {
+        entry.rating_distribution[r].count += stats.rating_distribution[r]?.count ?? 0;
+        entry.self_reported_rating_distribution[r].count += stats.self_reported_rating_distribution[r]?.count ?? 0;
+      }
     }
     for (const [old, entry] of Object.entries(byOld)) {
       if (entry.self_reported_rated_count) {
@@ -970,18 +1008,29 @@ export default function SHVRRajasthanPage() {
       entry.classroom_repair_pct = round1(100 * entry.classroom_repair_needed_count / entry.total_school_count);
       entry.new_classroom_pct = round1(100 * entry.new_classroom_requirement_count / entry.total_school_count);
       entry.dilapidated_pct = round1(100 * entry.building_dilapidated_count / entry.total_school_count);
+      for (const r of ["1", "2", "3", "4", "5"]) {
+        entry.rating_distribution[r].pct = round1(100 * entry.rating_distribution[r].count / entry.total_school_count);
+        entry.self_reported_rating_distribution[r].pct = round1(100 * entry.self_reported_rating_distribution[r].count / entry.total_school_count);
+      }
     }
     return byOld;
   }, [districtBoundaryQ.data, districtAbsoluteQ.data]);
 
   // Infra layers colored in absolute mode need a data-driven domain (repair counts range into
   // the thousands, toilet counts into the hundreds) — rating/hazard/future/pct keep fixed domains.
+  // A rating layer with the star filter active switches to showing a per-district SCHOOL COUNT
+  // at that exact star (not an average), which needs the same data-driven domain treatment.
   const effectiveLayer = useMemo<LayerDef>(() => {
+    if (layer.group === "rating" && starFilter != null && districtAbsoluteQ.data) {
+      const distKey = layer.key === "shvr_self_reported_rating" ? "self_reported_rating_distribution" : "rating_distribution";
+      const max = Math.max(1, ...Object.values(districtAbsoluteQ.data.by_district).map((d) => d[distKey]?.[String(starFilter)]?.count ?? 0));
+      return { ...layer, domain: [0, max], colorMode: "count" };
+    }
     if (layer.group !== "infra" || infraUnit !== "absolute" || !districtAbsoluteQ.data) return layer;
     const field = INFRA_ABSOLUTE_FIELD[layer.key];
     const max = Math.max(1, ...Object.values(districtAbsoluteQ.data.by_district).map((d) => d[field] ?? 0));
     return { ...layer, domain: [0, max] };
-  }, [layer, infraUnit, districtAbsoluteQ.data]);
+  }, [layer, infraUnit, districtAbsoluteQ.data, starFilter]);
 
   const districtGeo = useMemo(() => {
     if (!districtBoundaryQ.data) return null;
@@ -991,14 +1040,22 @@ export default function SHVRRajasthanPage() {
         const district = f.properties.NAME;
         const oldDistrict = f.properties.OLD_DISTRICT ?? district;
         let value: number | null;
-        if (layer.key === "shvr_self_reported_rating") value = currentDistrictStats[district]?.avg_self_reported_rating ?? null;
+        let pct: number | null = null;
+        if (layer.group === "rating" && starFilter != null) {
+          const dist = layer.key === "shvr_self_reported_rating"
+            ? currentDistrictStats[district]?.self_reported_rating_distribution
+            : currentDistrictStats[district]?.rating_distribution;
+          const bucket = dist?.[String(starFilter)];
+          value = bucket?.count ?? null;
+          pct = bucket?.pct ?? null;
+        } else if (layer.key === "shvr_self_reported_rating") value = currentDistrictStats[district]?.avg_self_reported_rating ?? null;
         else if (layer.group === "rating") value = currentDistrictStats[district]?.avg_rating ?? null;
         else if (layer.group === "infra") value = infraDistrictValue(layer, district, infraUnit, currentDistrictStats);
         else value = hexAvgByDistrict[oldDistrict] ?? null;
-        return { ...f, properties: { ...f.properties, district, value } };
+        return { ...f, properties: { ...f.properties, district, value, pct } };
       }),
     };
-  }, [districtBoundaryQ.data, layer, infraUnit, currentDistrictStats, hexAvgByDistrict, districtAbsoluteQ.data]);
+  }, [districtBoundaryQ.data, layer, infraUnit, currentDistrictStats, hexAvgByDistrict, districtAbsoluteQ.data, starFilter]);
 
   const isLoading = hexQ.isLoading || ratingsQ.isLoading || districtSummaryQ.isLoading || (layer.group === "future" && futureQ.isLoading);
 
@@ -1091,6 +1148,23 @@ export default function SHVRRajasthanPage() {
               </button>
             </div>
           )}
+          {layer.group === "rating" && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground" title="Selecting a star colors each district by how many of ITS schools have that exact rating (count + % of the district's total), instead of the district-wide average.">
+                Star filter (schools per district):
+              </span>
+              <button onClick={() => setStarFilter(null)}
+                className={`px-2.5 py-1 rounded text-[11px] font-medium ${starFilter === null ? "bg-emerald-600 text-white" : "bg-muted/60 text-muted-foreground"}`}>
+                Avg. Rating
+              </button>
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button key={star} onClick={() => setStarFilter(star === starFilter ? null : star)}
+                  className={`px-2.5 py-1 rounded text-[11px] font-medium ${starFilter === star ? "bg-emerald-600 text-white" : "bg-muted/60 text-muted-foreground"}`}>
+                  {star}★ ({starTotalCounts[star].toLocaleString()})
+                </button>
+              ))}
+            </div>
+          )}
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">School rating basis:</span>
             <button onClick={() => setMode("all")}
@@ -1115,7 +1189,7 @@ export default function SHVRRajasthanPage() {
                 infraUnit={infraUnit} oldDistrictStats={oldDistrictStats}
                 schools={visibleSchools} mode={mode} layer={effectiveLayer}
                 districtMarkers={districtMarkers} viewMode={viewMode} districtGeo={districtGeo}
-                showDistrictLabels={showDistrictLabels} />
+                showDistrictLabels={showDistrictLabels} starFilter={layer.group === "rating" ? starFilter : null} />
               <div className="absolute bottom-3 left-3 z-[800]"><Legend layer={effectiveLayer} infraUnit={infraUnit} /></div>
             </>
           )}

@@ -10,6 +10,50 @@
       "avg_rating": 3.25,
       "self_reported_rated_count": 1286,
       "avg_self_reported_rating": 3.25,
+      "rating_distribution": {
+        "1": {
+          "count": 9,
+          "pct": 0.6
+        },
+        "2": {
+          "count": 81,
+          "pct": 5.1
+        },
+        "3": {
+          "count": 795,
+          "pct": 50.1
+        },
+        "4": {
+          "count": 384,
+          "pct": 24.2
+        },
+        "5": {
+          "count": 17,
+          "pct": 1.1
+        }
+      },
+      "self_reported_rating_distribution": {
+        "1": {
+          "count": 9,
+          "pct": 0.6
+        },
+        "2": {
+          "count": 81,
+          "pct": 5.1
+        },
+        "3": {
+          "count": 795,
+          "pct": 50.1
+        },
+        "4": {
+          "count": 384,
+          "pct": 24.2
+        },
+        "5": {
+          "count": 17,
+          "pct": 1.1
+        }
+      },
       "toilet_required_count": 10,
       "classroom_repair_needed_count": 1039,
       "new_classroom_requirement_count": 384,
@@ -26,6 +70,50 @@
       "avg_rating": 3.18,
       "self_reported_rated_count": 1274,
       "avg_self_reported_rating": 3.18,
+      "rating_distribution": {
+        "1": {
+          "count": 20,
+          "pct": 1.1
+        },
+        "2": {
+          "count": 110,
+          "pct": 6.0
+        },
+        "3": {
+          "count": 785,
+          "pct": 43.1
+        },
+        "4": {
+          "count": 344,
+          "pct": 18.9
+        },
+        "5": {
+          "count": 15,
+          "pct": 0.8
+        }
+      },
+      "self_reported_rating_distribution": {
+        "1": {
+          "count": 20,
+          "pct": 1.1
+        },
+        "2": {
+          "count": 110,
+          "pct": 6.0
+        },
+        "3": {
+          "count": 785,
+          "pct": 43.1
+        },
+        "4": {
+          "count": 344,
+          "pct": 18.9
+        },
+        "5": {
+          "count": 15,
+          "pct": 0.8
+        }
+      },
       "toilet_required_count": 15,
       "classroom_repair_needed_count": 1256,
       "new_classroom_requirement_count": 658,
@@ -42,6 +130,50 @@
       "avg_rating": 3.17,
       "self_reported_rated_count": 2058,
       "avg_self_reported_rating": 3.17,
+      "rating_distribution": {
+        "1": {
+          "count": 33,
+          "pct": 1.6
+        },
+        "2": {
+          "count": 144,
+          "pct": 6.8
+        },
+        "3": {
+          "count": 1350,
+          "pct": 63.5
+        },
+        "4": {
+          "count": 503,
+          "pct": 23.7
+        },
+        "5": {
+          "count": 28,
+          "pct": 1.3
+        }
+      },
+      "self_reported_rating_distribution": {
+        "1": {
+          "count": 33,
+          "pct": 1.6
+        },
+        "2": {
+          "count": 144,
+          "pct": 6.8
+        },
+        "3": {
+          "count": 1350,
+          "pct": 63.5
+        },
+        "4": {
+          "count": 503,
+          "pct": 23.7
+        },
+        "5": {
+          "count": 28,
+          "pct": 1.3
+        }
+      },
       "toilet_required_count": 63,
       "classroom_repair_needed_count": 1238,
       "new_classroom_requirement_count": 459,
@@ -58,6 +190,50 @@
       "avg_rating": 2.65,
       "self_reported_rated_count": 1071,
       "avg_self_reported_rating": 2.65,
+      "rating_distribution": {
+        "1": {
+          "count": 96,
+          "pct": 3.8
+        },
+        "2": {
+          "count": 273,
+          "pct": 10.9
+        },
+        "3": {
+          "count": 611,
+          "pct": 24.3
+        },
+        "4": {
+          "count": 89,
+          "pct": 3.5
+        },
+        "5": {
+          "count": 2,
+          "pct": 0.1
+        }
+      },
+      "self_reported_rating_distribution": {
+        "1": {
+          "count": 96,
+          "pct": 3.8
+        },
+        "2": {
+          "count": 273,
+          "pct": 10.9
+        },
+        "3": {
+          "count": 611,
+          "pct": 24.3
+        },
+        "4": {
+          "count": 89,
+          "pct": 3.5
+        },
+        "5": {
+          "count": 2,
+          "pct": 0.1
+        }
+      },
       "toilet_required_count": 14,
       "classroom_repair_needed_count": 1798,
       "new_classroom_requirement_count": 967,
@@ -74,6 +250,50 @@
       "avg_rating": 2.92,
       "self_reported_rated_count": 871,
       "avg_self_reported_rating": 2.92,
+      "rating_distribution": {
+        "1": {
+          "count": 55,
+          "pct": 4.0
+        },
+        "2": {
+          "count": 134,
+          "pct": 9.8
+        },
+        "3": {
+          "count": 518,
+          "pct": 38.0
+        },
+        "4": {
+          "count": 155,
+          "pct": 11.4
+        },
+        "5": {
+          "count": 9,
+          "pct": 0.7
+        }
+      },
+      "self_reported_rating_distribution": {
+        "1": {
+          "count": 55,
+          "pct": 4.0
+        },
+        "2": {
+          "count": 134,
+          "pct": 9.8
+        },
+        "3": {
+          "count": 518,
+          "pct": 38.0
+        },
+        "4": {
+          "count": 155,
+          "pct": 11.4
+        },
+        "5": {
+          "count": 9,
+          "pct": 0.7
+        }
+      },
       "toilet_required_count": 111,
       "classroom_repair_needed_count": 954,
       "new_classroom_requirement_count": 653,
@@ -90,6 +310,50 @@
       "avg_rating": 3.14,
       "self_reported_rated_count": 1247,
       "avg_self_reported_rating": 3.14,
+      "rating_distribution": {
+        "1": {
+          "count": 17,
+          "pct": 0.6
+        },
+        "2": {
+          "count": 77,
+          "pct": 2.9
+        },
+        "3": {
+          "count": 866,
+          "pct": 32.2
+        },
+        "4": {
+          "count": 283,
+          "pct": 10.5
+        },
+        "5": {
+          "count": 4,
+          "pct": 0.1
+        }
+      },
+      "self_reported_rating_distribution": {
+        "1": {
+          "count": 17,
+          "pct": 0.6
+        },
+        "2": {
+          "count": 77,
+          "pct": 2.9
+        },
+        "3": {
+          "count": 866,
+          "pct": 32.2
+        },
+        "4": {
+          "count": 283,
+          "pct": 10.5
+        },
+        "5": {
+          "count": 4,
+          "pct": 0.1
+        }
+      },
       "toilet_required_count": 60,
       "classroom_repair_needed_count": 2203,
       "new_classroom_requirement_count": 707,
@@ -106,6 +370,50 @@
       "avg_rating": 3.24,
       "self_reported_rated_count": 724,
       "avg_self_reported_rating": 3.24,
+      "rating_distribution": {
+        "1": {
+          "count": 5,
+          "pct": 0.4
+        },
+        "2": {
+          "count": 46,
+          "pct": 3.8
+        },
+        "3": {
+          "count": 457,
+          "pct": 37.6
+        },
+        "4": {
+          "count": 203,
+          "pct": 16.7
+        },
+        "5": {
+          "count": 13,
+          "pct": 1.1
+        }
+      },
+      "self_reported_rating_distribution": {
+        "1": {
+          "count": 5,
+          "pct": 0.4
+        },
+        "2": {
+          "count": 46,
+          "pct": 3.8
+        },
+        "3": {
+          "count": 457,
+          "pct": 37.6
+        },
+        "4": {
+          "count": 203,
+          "pct": 16.7
+        },
+        "5": {
+          "count": 13,
+          "pct": 1.1
+        }
+      },
       "toilet_required_count": 29,
       "classroom_repair_needed_count": 945,
       "new_classroom_requirement_count": 343,
@@ -122,6 +430,50 @@
       "avg_rating": 3.1,
       "self_reported_rated_count": 898,
       "avg_self_reported_rating": 3.1,
+      "rating_distribution": {
+        "1": {
+          "count": 19,
+          "pct": 1.6
+        },
+        "2": {
+          "count": 81,
+          "pct": 7.0
+        },
+        "3": {
+          "count": 593,
+          "pct": 51.0
+        },
+        "4": {
+          "count": 205,
+          "pct": 17.6
+        },
+        "5": {
+          "count": 0,
+          "pct": 0.0
+        }
+      },
+      "self_reported_rating_distribution": {
+        "1": {
+          "count": 19,
+          "pct": 1.6
+        },
+        "2": {
+          "count": 81,
+          "pct": 7.0
+        },
+        "3": {
+          "count": 593,
+          "pct": 51.0
+        },
+        "4": {
+          "count": 205,
+          "pct": 17.6
+        },
+        "5": {
+          "count": 0,
+          "pct": 0.0
+        }
+      },
       "toilet_required_count": 20,
       "classroom_repair_needed_count": 800,
       "new_classroom_requirement_count": 436,
@@ -138,6 +490,50 @@
       "avg_rating": 3.16,
       "self_reported_rated_count": 2285,
       "avg_self_reported_rating": 3.16,
+      "rating_distribution": {
+        "1": {
+          "count": 20,
+          "pct": 0.7
+        },
+        "2": {
+          "count": 169,
+          "pct": 5.7
+        },
+        "3": {
+          "count": 1527,
+          "pct": 51.1
+        },
+        "4": {
+          "count": 552,
+          "pct": 18.5
+        },
+        "5": {
+          "count": 17,
+          "pct": 0.6
+        }
+      },
+      "self_reported_rating_distribution": {
+        "1": {
+          "count": 20,
+          "pct": 0.7
+        },
+        "2": {
+          "count": 169,
+          "pct": 5.7
+        },
+        "3": {
+          "count": 1527,
+          "pct": 51.1
+        },
+        "4": {
+          "count": 552,
+          "pct": 18.5
+        },
+        "5": {
+          "count": 17,
+          "pct": 0.6
+        }
+      },
       "toilet_required_count": 118,
       "classroom_repair_needed_count": 2098,
       "new_classroom_requirement_count": 692,
@@ -154,6 +550,50 @@
       "avg_rating": 3.21,
       "self_reported_rated_count": 1332,
       "avg_self_reported_rating": 3.21,
+      "rating_distribution": {
+        "1": {
+          "count": 7,
+          "pct": 0.3
+        },
+        "2": {
+          "count": 110,
+          "pct": 5.2
+        },
+        "3": {
+          "count": 825,
+          "pct": 39.3
+        },
+        "4": {
+          "count": 374,
+          "pct": 17.8
+        },
+        "5": {
+          "count": 16,
+          "pct": 0.8
+        }
+      },
+      "self_reported_rating_distribution": {
+        "1": {
+          "count": 7,
+          "pct": 0.3
+        },
+        "2": {
+          "count": 110,
+          "pct": 5.2
+        },
+        "3": {
+          "count": 825,
+          "pct": 39.3
+        },
+        "4": {
+          "count": 374,
+          "pct": 17.8
+        },
+        "5": {
+          "count": 16,
+          "pct": 0.8
+        }
+      },
       "toilet_required_count": 30,
       "classroom_repair_needed_count": 1403,
       "new_classroom_requirement_count": 498,
@@ -170,6 +610,50 @@
       "avg_rating": 3.11,
       "self_reported_rated_count": 704,
       "avg_self_reported_rating": 3.11,
+      "rating_distribution": {
+        "1": {
+          "count": 6,
+          "pct": 0.5
+        },
+        "2": {
+          "count": 64,
+          "pct": 5.2
+        },
+        "3": {
+          "count": 490,
+          "pct": 39.7
+        },
+        "4": {
+          "count": 138,
+          "pct": 11.2
+        },
+        "5": {
+          "count": 6,
+          "pct": 0.5
+        }
+      },
+      "self_reported_rating_distribution": {
+        "1": {
+          "count": 6,
+          "pct": 0.5
+        },
+        "2": {
+          "count": 64,
+          "pct": 5.2
+        },
+        "3": {
+          "count": 490,
+          "pct": 39.7
+        },
+        "4": {
+          "count": 138,
+          "pct": 11.2
+        },
+        "5": {
+          "count": 6,
+          "pct": 0.5
+        }
+      },
       "toilet_required_count": 6,
       "classroom_repair_needed_count": 1110,
       "new_classroom_requirement_count": 292,
@@ -186,6 +670,50 @@
       "avg_rating": 3.17,
       "self_reported_rated_count": 1052,
       "avg_self_reported_rating": 3.17,
+      "rating_distribution": {
+        "1": {
+          "count": 5,
+          "pct": 0.3
+        },
+        "2": {
+          "count": 85,
+          "pct": 4.9
+        },
+        "3": {
+          "count": 698,
+          "pct": 40.1
+        },
+        "4": {
+          "count": 256,
+          "pct": 14.7
+        },
+        "5": {
+          "count": 8,
+          "pct": 0.5
+        }
+      },
+      "self_reported_rating_distribution": {
+        "1": {
+          "count": 5,
+          "pct": 0.3
+        },
+        "2": {
+          "count": 85,
+          "pct": 4.9
+        },
+        "3": {
+          "count": 698,
+          "pct": 40.1
+        },
+        "4": {
+          "count": 256,
+          "pct": 14.7
+        },
+        "5": {
+          "count": 8,
+          "pct": 0.5
+        }
+      },
       "toilet_required_count": 37,
       "classroom_repair_needed_count": 1226,
       "new_classroom_requirement_count": 314,
@@ -202,6 +730,50 @@
       "avg_rating": 3.39,
       "self_reported_rated_count": 935,
       "avg_self_reported_rating": 3.39,
+      "rating_distribution": {
+        "1": {
+          "count": 5,
+          "pct": 0.3
+        },
+        "2": {
+          "count": 23,
+          "pct": 1.5
+        },
+        "3": {
+          "count": 530,
+          "pct": 34.8
+        },
+        "4": {
+          "count": 361,
+          "pct": 23.7
+        },
+        "5": {
+          "count": 16,
+          "pct": 1.1
+        }
+      },
+      "self_reported_rating_distribution": {
+        "1": {
+          "count": 5,
+          "pct": 0.3
+        },
+        "2": {
+          "count": 23,
+          "pct": 1.5
+        },
+        "3": {
+          "count": 530,
+          "pct": 34.8
+        },
+        "4": {
+          "count": 361,
+          "pct": 23.7
+        },
+        "5": {
+          "count": 16,
+          "pct": 1.1
+        }
+      },
       "toilet_required_count": 65,
       "classroom_repair_needed_count": 1142,
       "new_classroom_requirement_count": 626,
@@ -218,6 +790,50 @@
       "avg_rating": 3.1,
       "self_reported_rated_count": 1788,
       "avg_self_reported_rating": 3.1,
+      "rating_distribution": {
+        "1": {
+          "count": 49,
+          "pct": 2.5
+        },
+        "2": {
+          "count": 195,
+          "pct": 10.0
+        },
+        "3": {
+          "count": 1098,
+          "pct": 56.5
+        },
+        "4": {
+          "count": 423,
+          "pct": 21.8
+        },
+        "5": {
+          "count": 23,
+          "pct": 1.2
+        }
+      },
+      "self_reported_rating_distribution": {
+        "1": {
+          "count": 49,
+          "pct": 2.5
+        },
+        "2": {
+          "count": 195,
+          "pct": 10.0
+        },
+        "3": {
+          "count": 1098,
+          "pct": 56.5
+        },
+        "4": {
+          "count": 423,
+          "pct": 21.8
+        },
+        "5": {
+          "count": 23,
+          "pct": 1.2
+        }
+      },
       "toilet_required_count": 37,
       "classroom_repair_needed_count": 1228,
       "new_classroom_requirement_count": 746,
@@ -234,6 +850,50 @@
       "avg_rating": 3.05,
       "self_reported_rated_count": 671,
       "avg_self_reported_rating": 3.05,
+      "rating_distribution": {
+        "1": {
+          "count": 21,
+          "pct": 2.4
+        },
+        "2": {
+          "count": 79,
+          "pct": 9.0
+        },
+        "3": {
+          "count": 427,
+          "pct": 48.8
+        },
+        "4": {
+          "count": 134,
+          "pct": 15.3
+        },
+        "5": {
+          "count": 10,
+          "pct": 1.1
+        }
+      },
+      "self_reported_rating_distribution": {
+        "1": {
+          "count": 21,
+          "pct": 2.4
+        },
+        "2": {
+          "count": 79,
+          "pct": 9.0
+        },
+        "3": {
+          "count": 427,
+          "pct": 48.8
+        },
+        "4": {
+          "count": 134,
+          "pct": 15.3
+        },
+        "5": {
+          "count": 10,
+          "pct": 1.1
+        }
+      },
       "toilet_required_count": 27,
       "classroom_repair_needed_count": 545,
       "new_classroom_requirement_count": 343,
@@ -250,6 +910,50 @@
       "avg_rating": 3.12,
       "self_reported_rated_count": 635,
       "avg_self_reported_rating": 3.12,
+      "rating_distribution": {
+        "1": {
+          "count": 10,
+          "pct": 0.9
+        },
+        "2": {
+          "count": 58,
+          "pct": 5.0
+        },
+        "3": {
+          "count": 416,
+          "pct": 36.0
+        },
+        "4": {
+          "count": 148,
+          "pct": 12.8
+        },
+        "5": {
+          "count": 3,
+          "pct": 0.3
+        }
+      },
+      "self_reported_rating_distribution": {
+        "1": {
+          "count": 10,
+          "pct": 0.9
+        },
+        "2": {
+          "count": 58,
+          "pct": 5.0
+        },
+        "3": {
+          "count": 416,
+          "pct": 36.0
+        },
+        "4": {
+          "count": 148,
+          "pct": 12.8
+        },
+        "5": {
+          "count": 3,
+          "pct": 0.3
+        }
+      },
       "toilet_required_count": 12,
       "classroom_repair_needed_count": 928,
       "new_classroom_requirement_count": 609,
@@ -266,6 +970,50 @@
       "avg_rating": 3.3,
       "self_reported_rated_count": 967,
       "avg_self_reported_rating": 3.3,
+      "rating_distribution": {
+        "1": {
+          "count": 8,
+          "pct": 0.5
+        },
+        "2": {
+          "count": 47,
+          "pct": 3.1
+        },
+        "3": {
+          "count": 571,
+          "pct": 38.1
+        },
+        "4": {
+          "count": 331,
+          "pct": 22.1
+        },
+        "5": {
+          "count": 10,
+          "pct": 0.7
+        }
+      },
+      "self_reported_rating_distribution": {
+        "1": {
+          "count": 8,
+          "pct": 0.5
+        },
+        "2": {
+          "count": 47,
+          "pct": 3.1
+        },
+        "3": {
+          "count": 571,
+          "pct": 38.1
+        },
+        "4": {
+          "count": 331,
+          "pct": 22.1
+        },
+        "5": {
+          "count": 10,
+          "pct": 0.7
+        }
+      },
       "toilet_required_count": 1,
       "classroom_repair_needed_count": 1114,
       "new_classroom_requirement_count": 217,
@@ -282,6 +1030,50 @@
       "avg_rating": null,
       "self_reported_rated_count": 1434,
       "avg_self_reported_rating": 2.92,
+      "rating_distribution": {
+        "1": {
+          "count": 0,
+          "pct": 0.0
+        },
+        "2": {
+          "count": 0,
+          "pct": 0.0
+        },
+        "3": {
+          "count": 0,
+          "pct": 0.0
+        },
+        "4": {
+          "count": 0,
+          "pct": 0.0
+        },
+        "5": {
+          "count": 0,
+          "pct": 0.0
+        }
+      },
+      "self_reported_rating_distribution": {
+        "1": {
+          "count": 69,
+          "pct": 2.9
+        },
+        "2": {
+          "count": 216,
+          "pct": 9.0
+        },
+        "3": {
+          "count": 910,
+          "pct": 37.9
+        },
+        "4": {
+          "count": 233,
+          "pct": 9.7
+        },
+        "5": {
+          "count": 6,
+          "pct": 0.2
+        }
+      },
       "toilet_required_count": 186,
       "classroom_repair_needed_count": 1515,
       "new_classroom_requirement_count": 906,
@@ -298,6 +1090,50 @@
       "avg_rating": null,
       "self_reported_rated_count": 1495,
       "avg_self_reported_rating": 3.39,
+      "rating_distribution": {
+        "1": {
+          "count": 0,
+          "pct": 0.0
+        },
+        "2": {
+          "count": 0,
+          "pct": 0.0
+        },
+        "3": {
+          "count": 0,
+          "pct": 0.0
+        },
+        "4": {
+          "count": 0,
+          "pct": 0.0
+        },
+        "5": {
+          "count": 0,
+          "pct": 0.0
+        }
+      },
+      "self_reported_rating_distribution": {
+        "1": {
+          "count": 4,
+          "pct": 0.2
+        },
+        "2": {
+          "count": 42,
+          "pct": 2.0
+        },
+        "3": {
+          "count": 843,
+          "pct": 40.6
+        },
+        "4": {
+          "count": 583,
+          "pct": 28.1
+        },
+        "5": {
+          "count": 23,
+          "pct": 1.1
+        }
+      },
       "toilet_required_count": 0,
       "classroom_repair_needed_count": 1082,
       "new_classroom_requirement_count": 884,
@@ -314,6 +1150,50 @@
       "avg_rating": null,
       "self_reported_rated_count": 1511,
       "avg_self_reported_rating": 3.41,
+      "rating_distribution": {
+        "1": {
+          "count": 0,
+          "pct": 0.0
+        },
+        "2": {
+          "count": 0,
+          "pct": 0.0
+        },
+        "3": {
+          "count": 0,
+          "pct": 0.0
+        },
+        "4": {
+          "count": 0,
+          "pct": 0.0
+        },
+        "5": {
+          "count": 0,
+          "pct": 0.0
+        }
+      },
+      "self_reported_rating_distribution": {
+        "1": {
+          "count": 10,
+          "pct": 0.6
+        },
+        "2": {
+          "count": 42,
+          "pct": 2.6
+        },
+        "3": {
+          "count": 813,
+          "pct": 50.7
+        },
+        "4": {
+          "count": 613,
+          "pct": 38.2
+        },
+        "5": {
+          "count": 33,
+          "pct": 2.1
+        }
+      },
       "toilet_required_count": 50,
       "classroom_repair_needed_count": 755,
       "new_classroom_requirement_count": 346,
@@ -330,6 +1210,50 @@
       "avg_rating": 3.29,
       "self_reported_rated_count": 2983,
       "avg_self_reported_rating": 3.29,
+      "rating_distribution": {
+        "1": {
+          "count": 37,
+          "pct": 0.9
+        },
+        "2": {
+          "count": 184,
+          "pct": 4.7
+        },
+        "3": {
+          "count": 1686,
+          "pct": 42.9
+        },
+        "4": {
+          "count": 1027,
+          "pct": 26.1
+        },
+        "5": {
+          "count": 49,
+          "pct": 1.2
+        }
+      },
+      "self_reported_rating_distribution": {
+        "1": {
+          "count": 37,
+          "pct": 0.9
+        },
+        "2": {
+          "count": 184,
+          "pct": 4.7
+        },
+        "3": {
+          "count": 1686,
+          "pct": 42.9
+        },
+        "4": {
+          "count": 1027,
+          "pct": 26.1
+        },
+        "5": {
+          "count": 49,
+          "pct": 1.2
+        }
+      },
       "toilet_required_count": 55,
       "classroom_repair_needed_count": 2436,
       "new_classroom_requirement_count": 1174,
@@ -346,6 +1270,50 @@
       "avg_rating": 3.09,
       "self_reported_rated_count": 759,
       "avg_self_reported_rating": 3.09,
+      "rating_distribution": {
+        "1": {
+          "count": 12,
+          "pct": 0.9
+        },
+        "2": {
+          "count": 80,
+          "pct": 5.9
+        },
+        "3": {
+          "count": 497,
+          "pct": 36.4
+        },
+        "4": {
+          "count": 164,
+          "pct": 12.0
+        },
+        "5": {
+          "count": 6,
+          "pct": 0.4
+        }
+      },
+      "self_reported_rating_distribution": {
+        "1": {
+          "count": 12,
+          "pct": 0.9
+        },
+        "2": {
+          "count": 80,
+          "pct": 5.9
+        },
+        "3": {
+          "count": 497,
+          "pct": 36.4
+        },
+        "4": {
+          "count": 164,
+          "pct": 12.0
+        },
+        "5": {
+          "count": 6,
+          "pct": 0.4
+        }
+      },
       "toilet_required_count": 58,
       "classroom_repair_needed_count": 1144,
       "new_classroom_requirement_count": 491,
@@ -362,6 +1330,50 @@
       "avg_rating": 3.18,
       "self_reported_rated_count": 1630,
       "avg_self_reported_rating": 3.18,
+      "rating_distribution": {
+        "1": {
+          "count": 18,
+          "pct": 0.8
+        },
+        "2": {
+          "count": 114,
+          "pct": 5.2
+        },
+        "3": {
+          "count": 1064,
+          "pct": 48.4
+        },
+        "4": {
+          "count": 422,
+          "pct": 19.2
+        },
+        "5": {
+          "count": 12,
+          "pct": 0.5
+        }
+      },
+      "self_reported_rating_distribution": {
+        "1": {
+          "count": 18,
+          "pct": 0.8
+        },
+        "2": {
+          "count": 114,
+          "pct": 5.2
+        },
+        "3": {
+          "count": 1064,
+          "pct": 48.4
+        },
+        "4": {
+          "count": 422,
+          "pct": 19.2
+        },
+        "5": {
+          "count": 12,
+          "pct": 0.5
+        }
+      },
       "toilet_required_count": 43,
       "classroom_repair_needed_count": 1565,
       "new_classroom_requirement_count": 588,
@@ -378,6 +1390,50 @@
       "avg_rating": 3.04,
       "self_reported_rated_count": 987,
       "avg_self_reported_rating": 3.04,
+      "rating_distribution": {
+        "1": {
+          "count": 34,
+          "pct": 2.0
+        },
+        "2": {
+          "count": 106,
+          "pct": 6.3
+        },
+        "3": {
+          "count": 639,
+          "pct": 38.2
+        },
+        "4": {
+          "count": 205,
+          "pct": 12.3
+        },
+        "5": {
+          "count": 3,
+          "pct": 0.2
+        }
+      },
+      "self_reported_rating_distribution": {
+        "1": {
+          "count": 34,
+          "pct": 2.0
+        },
+        "2": {
+          "count": 106,
+          "pct": 6.3
+        },
+        "3": {
+          "count": 639,
+          "pct": 38.2
+        },
+        "4": {
+          "count": 205,
+          "pct": 12.3
+        },
+        "5": {
+          "count": 3,
+          "pct": 0.2
+        }
+      },
       "toilet_required_count": 50,
       "classroom_repair_needed_count": 1302,
       "new_classroom_requirement_count": 668,
@@ -394,6 +1450,50 @@
       "avg_rating": null,
       "self_reported_rated_count": 1662,
       "avg_self_reported_rating": 3.49,
+      "rating_distribution": {
+        "1": {
+          "count": 0,
+          "pct": 0.0
+        },
+        "2": {
+          "count": 0,
+          "pct": 0.0
+        },
+        "3": {
+          "count": 0,
+          "pct": 0.0
+        },
+        "4": {
+          "count": 0,
+          "pct": 0.0
+        },
+        "5": {
+          "count": 0,
+          "pct": 0.0
+        }
+      },
+      "self_reported_rating_distribution": {
+        "1": {
+          "count": 8,
+          "pct": 0.4
+        },
+        "2": {
+          "count": 52,
+          "pct": 2.7
+        },
+        "3": {
+          "count": 770,
+          "pct": 39.6
+        },
+        "4": {
+          "count": 789,
+          "pct": 40.6
+        },
+        "5": {
+          "count": 43,
+          "pct": 2.2
+        }
+      },
       "toilet_required_count": 6,
       "classroom_repair_needed_count": 1012,
       "new_classroom_requirement_count": 349,
@@ -410,6 +1510,50 @@
       "avg_rating": null,
       "self_reported_rated_count": 1696,
       "avg_self_reported_rating": 3.25,
+      "rating_distribution": {
+        "1": {
+          "count": 0,
+          "pct": 0.0
+        },
+        "2": {
+          "count": 0,
+          "pct": 0.0
+        },
+        "3": {
+          "count": 0,
+          "pct": 0.0
+        },
+        "4": {
+          "count": 0,
+          "pct": 0.0
+        },
+        "5": {
+          "count": 0,
+          "pct": 0.0
+        }
+      },
+      "self_reported_rating_distribution": {
+        "1": {
+          "count": 15,
+          "pct": 0.6
+        },
+        "2": {
+          "count": 90,
+          "pct": 3.4
+        },
+        "3": {
+          "count": 1075,
+          "pct": 40.6
+        },
+        "4": {
+          "count": 483,
+          "pct": 18.3
+        },
+        "5": {
+          "count": 33,
+          "pct": 1.2
+        }
+      },
       "toilet_required_count": 0,
       "classroom_repair_needed_count": 1984,
       "new_classroom_requirement_count": 325,
@@ -426,6 +1570,50 @@
       "avg_rating": null,
       "self_reported_rated_count": 846,
       "avg_self_reported_rating": 2.97,
+      "rating_distribution": {
+        "1": {
+          "count": 0,
+          "pct": 0.0
+        },
+        "2": {
+          "count": 0,
+          "pct": 0.0
+        },
+        "3": {
+          "count": 0,
+          "pct": 0.0
+        },
+        "4": {
+          "count": 0,
+          "pct": 0.0
+        },
+        "5": {
+          "count": 0,
+          "pct": 0.0
+        }
+      },
+      "self_reported_rating_distribution": {
+        "1": {
+          "count": 24,
+          "pct": 1.6
+        },
+        "2": {
+          "count": 131,
+          "pct": 8.8
+        },
+        "3": {
+          "count": 545,
+          "pct": 36.6
+        },
+        "4": {
+          "count": 135,
+          "pct": 9.1
+        },
+        "5": {
+          "count": 11,
+          "pct": 0.7
+        }
+      },
       "toilet_required_count": 16,
       "classroom_repair_needed_count": 1240,
       "new_classroom_requirement_count": 509,
@@ -442,6 +1630,50 @@
       "avg_rating": 3.32,
       "self_reported_rated_count": 754,
       "avg_self_reported_rating": 3.32,
+      "rating_distribution": {
+        "1": {
+          "count": 10,
+          "pct": 1.1
+        },
+        "2": {
+          "count": 26,
+          "pct": 2.9
+        },
+        "3": {
+          "count": 445,
+          "pct": 50.4
+        },
+        "4": {
+          "count": 262,
+          "pct": 29.7
+        },
+        "5": {
+          "count": 11,
+          "pct": 1.2
+        }
+      },
+      "self_reported_rating_distribution": {
+        "1": {
+          "count": 10,
+          "pct": 1.1
+        },
+        "2": {
+          "count": 26,
+          "pct": 2.9
+        },
+        "3": {
+          "count": 445,
+          "pct": 50.4
+        },
+        "4": {
+          "count": 262,
+          "pct": 29.7
+        },
+        "5": {
+          "count": 11,
+          "pct": 1.2
+        }
+      },
       "toilet_required_count": 6,
       "classroom_repair_needed_count": 617,
       "new_classroom_requirement_count": 306,
@@ -458,6 +1690,50 @@
       "avg_rating": 3.24,
       "self_reported_rated_count": 587,
       "avg_self_reported_rating": 3.24,
+      "rating_distribution": {
+        "1": {
+          "count": 5,
+          "pct": 0.4
+        },
+        "2": {
+          "count": 38,
+          "pct": 3.3
+        },
+        "3": {
+          "count": 360,
+          "pct": 31.7
+        },
+        "4": {
+          "count": 180,
+          "pct": 15.8
+        },
+        "5": {
+          "count": 4,
+          "pct": 0.4
+        }
+      },
+      "self_reported_rating_distribution": {
+        "1": {
+          "count": 5,
+          "pct": 0.4
+        },
+        "2": {
+          "count": 38,
+          "pct": 3.3
+        },
+        "3": {
+          "count": 360,
+          "pct": 31.7
+        },
+        "4": {
+          "count": 180,
+          "pct": 15.8
+        },
+        "5": {
+          "count": 4,
+          "pct": 0.4
+        }
+      },
       "toilet_required_count": 54,
       "classroom_repair_needed_count": 895,
       "new_classroom_requirement_count": 525,
@@ -474,6 +1750,50 @@
       "avg_rating": 3.43,
       "self_reported_rated_count": 1185,
       "avg_self_reported_rating": 3.43,
+      "rating_distribution": {
+        "1": {
+          "count": 17,
+          "pct": 1.4
+        },
+        "2": {
+          "count": 49,
+          "pct": 3.9
+        },
+        "3": {
+          "count": 590,
+          "pct": 47.3
+        },
+        "4": {
+          "count": 471,
+          "pct": 37.8
+        },
+        "5": {
+          "count": 58,
+          "pct": 4.7
+        }
+      },
+      "self_reported_rating_distribution": {
+        "1": {
+          "count": 17,
+          "pct": 1.4
+        },
+        "2": {
+          "count": 49,
+          "pct": 3.9
+        },
+        "3": {
+          "count": 590,
+          "pct": 47.3
+        },
+        "4": {
+          "count": 471,
+          "pct": 37.8
+        },
+        "5": {
+          "count": 58,
+          "pct": 4.7
+        }
+      },
       "toilet_required_count": 4,
       "classroom_repair_needed_count": 649,
       "new_classroom_requirement_count": 258,
@@ -490,6 +1810,50 @@
       "avg_rating": 3.28,
       "self_reported_rated_count": 801,
       "avg_self_reported_rating": 3.28,
+      "rating_distribution": {
+        "1": {
+          "count": 5,
+          "pct": 0.3
+        },
+        "2": {
+          "count": 38,
+          "pct": 2.4
+        },
+        "3": {
+          "count": 496,
+          "pct": 30.9
+        },
+        "4": {
+          "count": 255,
+          "pct": 15.9
+        },
+        "5": {
+          "count": 7,
+          "pct": 0.4
+        }
+      },
+      "self_reported_rating_distribution": {
+        "1": {
+          "count": 5,
+          "pct": 0.3
+        },
+        "2": {
+          "count": 38,
+          "pct": 2.4
+        },
+        "3": {
+          "count": 496,
+          "pct": 30.9
+        },
+        "4": {
+          "count": 255,
+          "pct": 15.9
+        },
+        "5": {
+          "count": 7,
+          "pct": 0.4
+        }
+      },
       "toilet_required_count": 1,
       "classroom_repair_needed_count": 1411,
       "new_classroom_requirement_count": 223,
@@ -506,6 +1870,50 @@
       "avg_rating": 3.26,
       "self_reported_rated_count": 671,
       "avg_self_reported_rating": 3.26,
+      "rating_distribution": {
+        "1": {
+          "count": 5,
+          "pct": 0.4
+        },
+        "2": {
+          "count": 37,
+          "pct": 2.9
+        },
+        "3": {
+          "count": 415,
+          "pct": 32.3
+        },
+        "4": {
+          "count": 206,
+          "pct": 16.0
+        },
+        "5": {
+          "count": 8,
+          "pct": 0.6
+        }
+      },
+      "self_reported_rating_distribution": {
+        "1": {
+          "count": 5,
+          "pct": 0.4
+        },
+        "2": {
+          "count": 37,
+          "pct": 2.9
+        },
+        "3": {
+          "count": 415,
+          "pct": 32.3
+        },
+        "4": {
+          "count": 206,
+          "pct": 16.0
+        },
+        "5": {
+          "count": 8,
+          "pct": 0.6
+        }
+      },
       "toilet_required_count": 54,
       "classroom_repair_needed_count": 1060,
       "new_classroom_requirement_count": 291,
@@ -522,6 +1930,50 @@
       "avg_rating": 3.07,
       "self_reported_rated_count": 1522,
       "avg_self_reported_rating": 3.07,
+      "rating_distribution": {
+        "1": {
+          "count": 48,
+          "pct": 3.0
+        },
+        "2": {
+          "count": 165,
+          "pct": 10.4
+        },
+        "3": {
+          "count": 943,
+          "pct": 59.7
+        },
+        "4": {
+          "count": 357,
+          "pct": 22.6
+        },
+        "5": {
+          "count": 9,
+          "pct": 0.6
+        }
+      },
+      "self_reported_rating_distribution": {
+        "1": {
+          "count": 48,
+          "pct": 3.0
+        },
+        "2": {
+          "count": 165,
+          "pct": 10.4
+        },
+        "3": {
+          "count": 943,
+          "pct": 59.7
+        },
+        "4": {
+          "count": 357,
+          "pct": 22.6
+        },
+        "5": {
+          "count": 9,
+          "pct": 0.6
+        }
+      },
       "toilet_required_count": 0,
       "classroom_repair_needed_count": 1095,
       "new_classroom_requirement_count": 479,
@@ -538,6 +1990,50 @@
       "avg_rating": 2.68,
       "self_reported_rated_count": 1365,
       "avg_self_reported_rating": 2.68,
+      "rating_distribution": {
+        "1": {
+          "count": 147,
+          "pct": 8.7
+        },
+        "2": {
+          "count": 290,
+          "pct": 17.2
+        },
+        "3": {
+          "count": 778,
+          "pct": 46.0
+        },
+        "4": {
+          "count": 148,
+          "pct": 8.8
+        },
+        "5": {
+          "count": 2,
+          "pct": 0.1
+        }
+      },
+      "self_reported_rating_distribution": {
+        "1": {
+          "count": 147,
+          "pct": 8.7
+        },
+        "2": {
+          "count": 290,
+          "pct": 17.2
+        },
+        "3": {
+          "count": 778,
+          "pct": 46.0
+        },
+        "4": {
+          "count": 148,
+          "pct": 8.8
+        },
+        "5": {
+          "count": 2,
+          "pct": 0.1
+        }
+      },
       "toilet_required_count": 19,
       "classroom_repair_needed_count": 1144,
       "new_classroom_requirement_count": 607,
@@ -554,6 +2050,50 @@
       "avg_rating": null,
       "self_reported_rated_count": 956,
       "avg_self_reported_rating": 3.28,
+      "rating_distribution": {
+        "1": {
+          "count": 0,
+          "pct": 0.0
+        },
+        "2": {
+          "count": 0,
+          "pct": 0.0
+        },
+        "3": {
+          "count": 0,
+          "pct": 0.0
+        },
+        "4": {
+          "count": 0,
+          "pct": 0.0
+        },
+        "5": {
+          "count": 0,
+          "pct": 0.0
+        }
+      },
+      "self_reported_rating_distribution": {
+        "1": {
+          "count": 5,
+          "pct": 0.3
+        },
+        "2": {
+          "count": 39,
+          "pct": 2.4
+        },
+        "3": {
+          "count": 599,
+          "pct": 36.8
+        },
+        "4": {
+          "count": 305,
+          "pct": 18.7
+        },
+        "5": {
+          "count": 8,
+          "pct": 0.5
+        }
+      },
       "toilet_required_count": 7,
       "classroom_repair_needed_count": 1145,
       "new_classroom_requirement_count": 569,
@@ -570,6 +2110,50 @@
       "avg_rating": null,
       "self_reported_rated_count": 501,
       "avg_self_reported_rating": 3.03,
+      "rating_distribution": {
+        "1": {
+          "count": 0,
+          "pct": 0.0
+        },
+        "2": {
+          "count": 0,
+          "pct": 0.0
+        },
+        "3": {
+          "count": 0,
+          "pct": 0.0
+        },
+        "4": {
+          "count": 0,
+          "pct": 0.0
+        },
+        "5": {
+          "count": 0,
+          "pct": 0.0
+        }
+      },
+      "self_reported_rating_distribution": {
+        "1": {
+          "count": 8,
+          "pct": 0.9
+        },
+        "2": {
+          "count": 54,
+          "pct": 6.0
+        },
+        "3": {
+          "count": 356,
+          "pct": 39.8
+        },
+        "4": {
+          "count": 81,
+          "pct": 9.1
+        },
+        "5": {
+          "count": 2,
+          "pct": 0.2
+        }
+      },
       "toilet_required_count": 39,
       "classroom_repair_needed_count": 686,
       "new_classroom_requirement_count": 362,
@@ -586,6 +2170,50 @@
       "avg_rating": null,
       "self_reported_rated_count": 1184,
       "avg_self_reported_rating": 3.06,
+      "rating_distribution": {
+        "1": {
+          "count": 0,
+          "pct": 0.0
+        },
+        "2": {
+          "count": 0,
+          "pct": 0.0
+        },
+        "3": {
+          "count": 0,
+          "pct": 0.0
+        },
+        "4": {
+          "count": 0,
+          "pct": 0.0
+        },
+        "5": {
+          "count": 0,
+          "pct": 0.0
+        }
+      },
+      "self_reported_rating_distribution": {
+        "1": {
+          "count": 30,
+          "pct": 2.2
+        },
+        "2": {
+          "count": 124,
+          "pct": 9.2
+        },
+        "3": {
+          "count": 785,
+          "pct": 58.5
+        },
+        "4": {
+          "count": 240,
+          "pct": 17.9
+        },
+        "5": {
+          "count": 5,
+          "pct": 0.4
+        }
+      },
       "toilet_required_count": 6,
       "classroom_repair_needed_count": 588,
       "new_classroom_requirement_count": 500,
@@ -602,6 +2230,50 @@
       "avg_rating": 3.38,
       "self_reported_rated_count": 1499,
       "avg_self_reported_rating": 3.38,
+      "rating_distribution": {
+        "1": {
+          "count": 16,
+          "pct": 0.7
+        },
+        "2": {
+          "count": 68,
+          "pct": 3.0
+        },
+        "3": {
+          "count": 777,
+          "pct": 34.6
+        },
+        "4": {
+          "count": 606,
+          "pct": 27.0
+        },
+        "5": {
+          "count": 32,
+          "pct": 1.4
+        }
+      },
+      "self_reported_rating_distribution": {
+        "1": {
+          "count": 16,
+          "pct": 0.7
+        },
+        "2": {
+          "count": 68,
+          "pct": 3.0
+        },
+        "3": {
+          "count": 777,
+          "pct": 34.6
+        },
+        "4": {
+          "count": 606,
+          "pct": 27.0
+        },
+        "5": {
+          "count": 32,
+          "pct": 1.4
+        }
+      },
       "toilet_required_count": 194,
       "classroom_repair_needed_count": 1464,
       "new_classroom_requirement_count": 647,
@@ -618,6 +2290,50 @@
       "avg_rating": 3.12,
       "self_reported_rated_count": 453,
       "avg_self_reported_rating": 3.12,
+      "rating_distribution": {
+        "1": {
+          "count": 9,
+          "pct": 1.0
+        },
+        "2": {
+          "count": 25,
+          "pct": 2.9
+        },
+        "3": {
+          "count": 321,
+          "pct": 37.2
+        },
+        "4": {
+          "count": 97,
+          "pct": 11.3
+        },
+        "5": {
+          "count": 1,
+          "pct": 0.1
+        }
+      },
+      "self_reported_rating_distribution": {
+        "1": {
+          "count": 9,
+          "pct": 1.0
+        },
+        "2": {
+          "count": 25,
+          "pct": 2.9
+        },
+        "3": {
+          "count": 321,
+          "pct": 37.2
+        },
+        "4": {
+          "count": 97,
+          "pct": 11.3
+        },
+        "5": {
+          "count": 1,
+          "pct": 0.1
+        }
+      },
       "toilet_required_count": 50,
       "classroom_repair_needed_count": 649,
       "new_classroom_requirement_count": 97,
@@ -634,6 +2350,50 @@
       "avg_rating": 3.07,
       "self_reported_rated_count": 2433,
       "avg_self_reported_rating": 3.07,
+      "rating_distribution": {
+        "1": {
+          "count": 53,
+          "pct": 2.2
+        },
+        "2": {
+          "count": 315,
+          "pct": 12.9
+        },
+        "3": {
+          "count": 1498,
+          "pct": 61.3
+        },
+        "4": {
+          "count": 545,
+          "pct": 22.3
+        },
+        "5": {
+          "count": 22,
+          "pct": 0.9
+        }
+      },
+      "self_reported_rating_distribution": {
+        "1": {
+          "count": 53,
+          "pct": 2.2
+        },
+        "2": {
+          "count": 315,
+          "pct": 12.9
+        },
+        "3": {
+          "count": 1498,
+          "pct": 61.3
+        },
+        "4": {
+          "count": 545,
+          "pct": 22.3
+        },
+        "5": {
+          "count": 22,
+          "pct": 0.9
+        }
+      },
       "toilet_required_count": 8,
       "classroom_repair_needed_count": 1186,
       "new_classroom_requirement_count": 604,
@@ -650,6 +2410,50 @@
       "avg_rating": 3.03,
       "self_reported_rated_count": 2175,
       "avg_self_reported_rating": 3.03,
+      "rating_distribution": {
+        "1": {
+          "count": 54,
+          "pct": 1.9
+        },
+        "2": {
+          "count": 258,
+          "pct": 9.2
+        },
+        "3": {
+          "count": 1441,
+          "pct": 51.1
+        },
+        "4": {
+          "count": 411,
+          "pct": 14.6
+        },
+        "5": {
+          "count": 11,
+          "pct": 0.4
+        }
+      },
+      "self_reported_rating_distribution": {
+        "1": {
+          "count": 54,
+          "pct": 1.9
+        },
+        "2": {
+          "count": 258,
+          "pct": 9.2
+        },
+        "3": {
+          "count": 1441,
+          "pct": 51.1
+        },
+        "4": {
+          "count": 411,
+          "pct": 14.6
+        },
+        "5": {
+          "count": 11,
+          "pct": 0.4
+        }
+      },
       "toilet_required_count": 76,
       "classroom_repair_needed_count": 1914,
       "new_classroom_requirement_count": 1070,

@@ -409,6 +409,14 @@ def main():
         repair_c = sum(1 for s in group if s["classroom_repair_needed"])
         new_room_c = sum(1 for s in group if s["new_classroom_requirement"])
         dilap_c = sum(1 for s in group if s["building_dilapidated"])
+        rating_distribution = {}
+        self_reported_rating_distribution = {}
+        for r in [1, 2, 3, 4, 5]:
+            rc = sum(1 for s in group if s["rating"] == r)
+            src = sum(1 for s in group if s.get("self_reported_rating") == r)
+            rating_distribution[str(r)] = {"count": rc, "pct": round(100 * rc / n, 1) if n else None}
+            self_reported_rating_distribution[str(r)] = {"count": src, "pct": round(100 * src / n, 1) if n else None}
+
         by_district[d] = {
             "total_school_count": n,
             "in_shvr_count": len(in_shvr),
@@ -416,6 +424,11 @@ def main():
             "avg_rating": round(sum(rated) / len(rated), 2) if rated else None,
             "self_reported_rated_count": len(self_rated),
             "avg_self_reported_rating": round(sum(self_rated) / len(self_rated), 2) if self_rated else None,
+            # per-star breakdown: count and % (of total_school_count) of schools at each rating —
+            # district AVERAGES cluster tightly around 3, so this is the useful "how many N-star
+            # schools does this district have" view, not the (nearly meaningless) rounded average.
+            "rating_distribution": rating_distribution,
+            "self_reported_rating_distribution": self_reported_rating_distribution,
             "toilet_required_count": toilet_c,
             "classroom_repair_needed_count": repair_c,
             "new_classroom_requirement_count": new_room_c,
