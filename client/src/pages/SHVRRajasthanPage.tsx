@@ -386,6 +386,8 @@ function SchoolTable({ schools, districts }: { schools: School[]; districts: str
   const [districtFilter, setDistrictFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
   const [levelFilter, setLevelFilter] = useState("All");
+  const [ratingFilter, setRatingFilter] = useState("All");
+  const [toiletFilter, setToiletFilter] = useState("All");
   const [page, setPage] = useState(0);
 
   const filtered = useMemo(() => {
@@ -394,10 +396,16 @@ function SchoolTable({ schools, districts }: { schools: School[]; districts: str
       if (districtFilter !== "All" && s.district !== districtFilter) return false;
       if (statusFilter !== "All" && s.status !== statusFilter) return false;
       if (levelFilter !== "All" && (s.school_level ?? "unknown") !== levelFilter) return false;
+      if (ratingFilter === "verified_rated" && s.rating == null) return false;
+      if (ratingFilter === "verified_unrated" && s.rating != null) return false;
+      if (ratingFilter === "self_rated" && s.self_reported_rating == null) return false;
+      if (ratingFilter === "self_unrated" && s.self_reported_rating != null) return false;
+      if (toiletFilter === "needed" && s.girls_toilet_required == null) return false;
+      if (toiletFilter === "not_flagged" && s.girls_toilet_required != null) return false;
       if (q && !s.name?.toLowerCase().includes(q) && !s.udise_code?.includes(q)) return false;
       return true;
     });
-  }, [schools, search, districtFilter, statusFilter, levelFilter]);
+  }, [schools, search, districtFilter, statusFilter, levelFilter, ratingFilter, toiletFilter]);
 
   const pageRows = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -428,6 +436,20 @@ function SchoolTable({ schools, districts }: { schools: School[]; districts: str
           className="rounded-md border border-border/50 bg-background px-2 py-1.5 text-xs outline-none">
           <option value="All">All Levels</option>
           {LEVEL_ORDER.map((k) => <option key={k} value={k}>{LEVEL_LABEL[k]}</option>)}
+        </select>
+        <select value={ratingFilter} onChange={(e) => { setRatingFilter(e.target.value); setPage(0); }}
+          className="rounded-md border border-border/50 bg-background px-2 py-1.5 text-xs outline-none">
+          <option value="All">All Ratings</option>
+          <option value="verified_rated">Has Verified Rating</option>
+          <option value="verified_unrated">No Verified Rating</option>
+          <option value="self_rated">Has Self-Reported Rating</option>
+          <option value="self_unrated">No Self-Reported Rating</option>
+        </select>
+        <select value={toiletFilter} onChange={(e) => { setToiletFilter(e.target.value); setPage(0); }}
+          className="rounded-md border border-border/50 bg-background px-2 py-1.5 text-xs outline-none">
+          <option value="All">All Toilet Status</option>
+          <option value="needed">🚽 Toilet Needed</option>
+          <option value="not_flagged">Not Flagged</option>
         </select>
         <span className="text-[10px] text-muted-foreground whitespace-nowrap">{filtered.length.toLocaleString()} schools</span>
       </div>
