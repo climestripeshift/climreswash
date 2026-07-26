@@ -153,6 +153,21 @@ function amenityColor(pct: number | null) {
   return gradientColor(AMENITY_RAMP, pct / 100);
 }
 
+type DisplayMode = "number" | "percentage" | "both";
+const DISPLAY_MODE_OPTIONS: { key: DisplayMode; label: string }[] = [
+  { key: "percentage", label: "%" },
+  { key: "number", label: "#" },
+  { key: "both", label: "% + #" },
+];
+function formatStat(pct: number | null, count: number | null, total: number | null, mode: DisplayMode): string {
+  if (pct == null || count == null) return "—";
+  const pctStr = `${pct}%`;
+  const countStr = total != null ? `${count.toLocaleString()}/${total.toLocaleString()}` : count.toLocaleString();
+  if (mode === "percentage") return pctStr;
+  if (mode === "number") return countStr;
+  return `${pctStr} (${countStr})`;
+}
+
 const canvasRenderer = L.canvas({ padding: 0.5 });
 
 const PAGE_SIZE = 50;
@@ -289,7 +304,7 @@ function FacilityTable({ facilities, districts, viewMode }: { facilities: JJMFac
   );
 }
 
-function DistrictAmenityTable({ data, layer }: { data: JJMDistrictSummary; layer: AmenityLayer }) {
+function DistrictAmenityTable({ data, layer, displayMode }: { data: JJMDistrictSummary; layer: AmenityLayer; displayMode: DisplayMode }) {
   const [sortBy, setSortBy] = useState<"pct" | "total">("pct");
   const rows = useMemo(() => {
     return Object.entries(data.by_district).map(([district, v]) => ({
@@ -327,7 +342,7 @@ function DistrictAmenityTable({ data, layer }: { data: JJMDistrictSummary; layer
                 <td className="px-3 py-1.5 font-medium">{r.district}</td>
                 <td className="px-3 py-1.5 text-right text-muted-foreground">{r.total.toLocaleString()}</td>
                 <td className="px-3 py-1.5 text-right font-semibold" style={{ color: amenityColor(r.pct) }}>
-                  {r.pct != null ? `${r.pct}%` : "—"} <span className="text-muted-foreground font-normal">({r.count.toLocaleString()})</span>
+                  {formatStat(r.pct, r.count, r.total, displayMode)}
                 </td>
                 <td className="px-3 py-1.5 text-right text-muted-foreground">{r.hasCoords.toLocaleString()}</td>
               </tr>
@@ -343,6 +358,7 @@ export default function JJMRajasthanPage() {
   const [attr, setAttr] = useState("tap_water");
   const [viewMode, setViewMode] = useState<ViewMode>("school");
   const [levelBucketFilter, setLevelBucketFilter] = useState<LevelBucket | "All">("All");
+  const [displayMode, setDisplayMode] = useState<DisplayMode>("both");
   const layer = LAYER_BY_KEY[attr];
 
   const schoolsQ = useQuery<JJMFacility[]>({
@@ -535,6 +551,17 @@ export default function JJMRajasthanPage() {
               {(viewMode === "school" || viewMode === "colocated" ? SCHOOL_ONLY_LAYERS : LAYERS).map((l) => <option key={l.key} value={l.key}>{l.icon} {l.label}</option>)}
             </select>
           </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">Show:</span>
+            <div className="flex rounded-md border border-border/50 overflow-hidden">
+              {DISPLAY_MODE_OPTIONS.map((o) => (
+                <button key={o.key} onClick={() => setDisplayMode(o.key)}
+                  className={`px-2.5 py-1.5 text-xs font-medium ${displayMode === o.key ? "bg-emerald-600 text-white" : "bg-background text-muted-foreground hover:bg-muted/40"}`}>
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         {viewMode === "colocated" && (
@@ -569,13 +596,13 @@ export default function JJMRajasthanPage() {
                   .jjm-district-label::before { display: none; }
                 `}</style>
                 {districtGeo && (
-                  <GeoJSON key={`districts-${attr}-${viewMode}-${levelBucketFilter}`} data={districtGeo as any}
+                  <GeoJSON key={`districts-${attr}-${viewMode}-${levelBucketFilter}-${displayMode}`} data={districtGeo as any}
                     style={(feature: any) => ({
                       fillColor: amenityColor(feature.properties.pct), fillOpacity: 0.7, color: "#1e293b", weight: 1, renderer: canvasRenderer,
                     })}
                     onEachFeature={(feature: any, leafletLayer: any) => {
                       const p = feature.properties;
-                      const label = p.pct != null ? `${p.pct}% (${p.count.toLocaleString()}/${p.total.toLocaleString()})` : "—";
+                      const label = formatStat(p.pct, p.count, p.total, displayMode);
                       leafletLayer.bindTooltip(`${p.district}<br/>${label}`, { permanent: true, direction: "center", className: "jjm-district-label" });
                     }} />
                 )}
@@ -600,7 +627,7 @@ export default function JJMRajasthanPage() {
           )}
         </div>
 
-        {districtSummary && <DistrictAmenityTable data={districtSummary} layer={layer} />}
+        {districtSummary && <DistrictAmenityTable data={districtSummary} layer={layer} displayMode={displayMode} />}
 
         {facilitiesQ.isLoading ? (
           <div className="text-xs text-muted-foreground py-4 text-center">Loading facility list…</div>
