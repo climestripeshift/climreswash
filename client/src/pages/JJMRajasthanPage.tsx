@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { MapContainer, TileLayer, GeoJSON, CircleMarker, Tooltip } from "react-leaflet";
@@ -16,6 +16,7 @@ interface JJMFacility {
   panchayat: string | null;
   village: string | null;
   habitation: string | null;
+  habitation_lgd_id: string | null;
   name: string;
   category: string | null;
   classification: string | null;
@@ -32,6 +33,33 @@ interface JJMFacility {
   scheme_name: string | null;
   facility_type: FacilityType;
   co_located_with_school?: boolean; // anganwadi rows only
+  co_located_level_bucket?: LevelBucket | null; // anganwadi rows only, inferred (see classifyJJMSchoolLevel)
+}
+
+// The co_located_with_school flag doesn't name which school -- so to know the LEVEL of the
+// co-located school, we match the anganwadi's habitation_lgd_id (an exact govt LGD code, not a
+// fuzzy name match) against JJM school records in the same habitation and read their level off
+// the "classification" column. This is an inference, not a direct field:
+//  - exactly one distinct level found in that habitation -> that level (PS/UPS/SR_SEC)
+//  - more than one distinct level present -> "multiple" (ambiguous which one it's co-located with)
+//  - no JJM school record in that habitation at all -> "none"
+type LevelBucket = "PS" | "UPS" | "SR_SEC" | "multiple" | "none";
+const LEVEL_BUCKET_LABEL: Record<LevelBucket, string> = {
+  PS: "Primary (PS)",
+  UPS: "Upper Primary (UPS)",
+  SR_SEC: "Secondary/Sr. Sec. (SS)",
+  multiple: "Multiple levels in habitation",
+  none: "No JJM school record in habitation",
+};
+const LEVEL_BUCKET_ORDER: LevelBucket[] = ["PS", "UPS", "SR_SEC", "multiple", "none"];
+
+function classifyJJMSchoolLevel(classification: string | null | undefined): "PS" | "UPS" | "SR_SEC" | null {
+  if (!classification) return null;
+  const c = classification.toLowerCase();
+  if (c.startsWith("primary only")) return "PS";
+  if (c.startsWith("upper primary")) return "UPS";
+  if (c.includes("higher secondary") || c.includes("secondary/sr") || c.includes("hr. sec")) return "SR_SEC";
+  return null;
 }
 
 interface JJMDistrictStats {
@@ -126,7 +154,7 @@ const canvasRenderer = L.canvas({ padding: 0.5 });
 const PAGE_SIZE = 50;
 const CATEGORY_OPTIONS = ["Government", "Private", "Local Body"];
 
-function FacilityTable({ facilities, districts, facilityType }: { facilities: JJMFacility[]; districts: string[]; facilityType: FacilityType | "combined" }) {
+function FacilityTable({ facilities, districts, facilityType, levelBucketFilter }: { facilities: JJMFacility[]; districts: string[]; facilityType: FacilityType | "combined"; levelBucketFilter: LevelBucket | "All" }) {
   const [search, setSearch] = useState("");
   const [districtFilter, setDistrictFilter] = useState("All");
   const [categoryFilter, setCategoryFilter] = useState("All");
@@ -146,10 +174,13 @@ function FacilityTable({ facilities, districts, facilityType }: { facilities: JJ
       if (tapWaterFilter === "unknown" && f.tap_water != null) return false;
       if (coLocatedFilter === "yes" && f.co_located_with_school !== true) return false;
       if (coLocatedFilter === "no" && f.co_located_with_school !== false) return false;
+      if (levelBucketFilter !== "All" && f.co_located_level_bucket !== levelBucketFilter) return false;
       if (q && !f.name?.toLowerCase().includes(q) && !f.village?.toLowerCase().includes(q) && !f.habitation?.toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [facilities, search, districtFilter, categoryFilter, tapWaterFilter, coLocatedFilter]);
+  }, [facilities, search, districtFilter, categoryFilter, tapWaterFilter, coLocatedFilter, levelBucketFilter]);
+
+  useEffect(() => { setPage(0); }, [levelBucketFilter]);
 
   const pageRows = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -336,18 +367,56 @@ export default function JJMRajasthanPage() {
     staleTime: Infinity,
   });
 
+  // habitation_lgd_id -> distinct school levels present, from the JJM schools export -- used to
+  // infer the level of the school each co-located anganwadi is likely attached to (see
+  // classifyJJMSchoolLevel above for why this can't be a direct field).
+  const habitationLevelsMap = useMemo(() => {
+    const m = new Map<string, Set<"PS" | "UPS" | "SR_SEC">>();
+    for (const s of schoolsQ.data ?? []) {
+      if (!s.habitation_lgd_id) continue;
+      const level = classifyJJMSchoolLevel(s.classification);
+      if (!level) continue;
+      if (!m.has(s.habitation_lgd_id)) m.set(s.habitation_lgd_id, new Set());
+      m.get(s.habitation_lgd_id)!.add(level);
+    }
+    return m;
+  }, [schoolsQ.data]);
+
+  const coLocatedLevelBucket = useCallback((a: JJMFacility): LevelBucket | null => {
+    if (!a.co_located_with_school) return null;
+    const levels = a.habitation_lgd_id ? habitationLevelsMap.get(a.habitation_lgd_id) : undefined;
+    if (!levels || levels.size === 0) return "none";
+    if (levels.size > 1) return "multiple";
+    return Array.from(levels)[0];
+  }, [habitationLevelsMap]);
+
+  const anganwadiWithLevel = useMemo(() => {
+    if (!anganwadiQ.data) return undefined;
+    return anganwadiQ.data.map((a) => ({ ...a, co_located_level_bucket: coLocatedLevelBucket(a) }));
+  }, [anganwadiQ.data, coLocatedLevelBucket]);
+
+  const levelBucketCounts = useMemo(() => {
+    const counts: Record<LevelBucket, number> = { PS: 0, UPS: 0, SR_SEC: 0, multiple: 0, none: 0 };
+    for (const a of anganwadiWithLevel ?? []) {
+      if (a.co_located_level_bucket) counts[a.co_located_level_bucket]++;
+    }
+    return counts;
+  }, [anganwadiWithLevel]);
+
+  const [levelBucketFilter, setLevelBucketFilter] = useState<LevelBucket | "All">("All");
+
   const facilitiesQ = useMemo(() => {
     if (facilityType === "school") return schoolsQ;
-    if (facilityType === "anganwadi") return anganwadiQ;
-    return { data: [...(schoolsQ.data ?? []), ...(anganwadiQ.data ?? [])], isLoading: schoolsQ.isLoading || anganwadiQ.isLoading };
-  }, [facilityType, schoolsQ, anganwadiQ]);
+    if (facilityType === "anganwadi") return { data: anganwadiWithLevel, isLoading: anganwadiQ.isLoading };
+    return { data: [...(schoolsQ.data ?? []), ...(anganwadiWithLevel ?? [])], isLoading: schoolsQ.isLoading || anganwadiQ.isLoading };
+  }, [facilityType, schoolsQ, anganwadiQ.isLoading, anganwadiWithLevel]);
 
   const districtSummary = useMemo<JJMDistrictSummary | undefined>(() => {
     if (facilityType === "school") return schoolDistrictSummaryQ.data;
     if (facilityType === "anganwadi") return anganwadiDistrictSummaryQ.data;
-    if (!schoolsQ.data || !anganwadiQ.data) return undefined;
-    return computeDistrictSummary([...schoolsQ.data, ...anganwadiQ.data]);
-  }, [facilityType, schoolDistrictSummaryQ.data, anganwadiDistrictSummaryQ.data, schoolsQ.data, anganwadiQ.data]);
+    if (!schoolsQ.data || !anganwadiWithLevel) return undefined;
+    return computeDistrictSummary([...schoolsQ.data, ...anganwadiWithLevel]);
+  }, [facilityType, schoolDistrictSummaryQ.data, anganwadiDistrictSummaryQ.data, schoolsQ.data, anganwadiWithLevel]);
 
   const districts = useMemo(() => Object.keys(districtSummary?.by_district ?? {}).sort(), [districtSummary]);
 
@@ -428,7 +497,7 @@ export default function JJMRajasthanPage() {
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">Facility type:</span>
-            <button onClick={() => { setFacilityType("school"); if (attr === "co_located_with_school") setAttr("tap_water"); }}
+            <button onClick={() => { setFacilityType("school"); if (attr === "co_located_with_school") setAttr("tap_water"); setLevelBucketFilter("All"); }}
               className={`px-2.5 py-1 rounded text-[11px] font-medium ${facilityType === "school" ? "bg-emerald-600 text-white" : "bg-muted/60 text-muted-foreground"}`}>
               🏫 Schools
             </button>
@@ -449,6 +518,22 @@ export default function JJMRajasthanPage() {
             </select>
           </div>
         </div>
+
+        {facilityType !== "school" && (
+          <div className="flex flex-wrap items-center gap-2 -mt-2">
+            <span className="text-xs text-muted-foreground">Co-located school level (inferred from same-habitation JJM school records):</span>
+            <button onClick={() => setLevelBucketFilter("All")}
+              className={`px-2 py-1 rounded text-[11px] font-medium ${levelBucketFilter === "All" ? "bg-purple-600 text-white" : "bg-muted/60 text-muted-foreground"}`}>
+              All co-located ({levelBucketCounts.PS + levelBucketCounts.UPS + levelBucketCounts.SR_SEC + levelBucketCounts.multiple + levelBucketCounts.none})
+            </button>
+            {LEVEL_BUCKET_ORDER.map((b) => (
+              <button key={b} onClick={() => setLevelBucketFilter(b)}
+                className={`px-2 py-1 rounded text-[11px] font-medium ${levelBucketFilter === b ? "bg-purple-600 text-white" : "bg-muted/60 text-muted-foreground"}`}>
+                {LEVEL_BUCKET_LABEL[b]} ({levelBucketCounts[b].toLocaleString()})
+              </button>
+            ))}
+          </div>
+        )}
 
         <div className="h-[60vh] rounded-lg overflow-hidden border border-border/40 relative">
           {isLoading ? (
@@ -502,7 +587,7 @@ export default function JJMRajasthanPage() {
         {facilitiesQ.isLoading ? (
           <div className="text-xs text-muted-foreground py-4 text-center">Loading facility list…</div>
         ) : facilitiesQ.data ? (
-          <FacilityTable facilities={facilitiesQ.data} districts={districts} facilityType={facilityType} />
+          <FacilityTable facilities={facilitiesQ.data} districts={districts} facilityType={facilityType} levelBucketFilter={levelBucketFilter} />
         ) : null}
       </div>
     </div>
