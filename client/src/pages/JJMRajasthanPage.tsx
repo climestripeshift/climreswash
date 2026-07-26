@@ -9,6 +9,10 @@ import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 type FacilityType = "school" | "anganwadi";
+// The top-level view shown on the page: the first two mirror FacilityType 1:1, "colocated" is a
+// derived slice of anganwadi rows (co_located_with_school === true, optionally narrowed further
+// by level bucket), "combined" is schools + anganwadi together.
+type ViewMode = "school" | "anganwadi" | "colocated" | "combined";
 
 interface JJMFacility {
   district: string;
@@ -154,15 +158,17 @@ const canvasRenderer = L.canvas({ padding: 0.5 });
 const PAGE_SIZE = 50;
 const CATEGORY_OPTIONS = ["Government", "Private", "Local Body"];
 
-function FacilityTable({ facilities, districts, facilityType, levelBucketFilter }: { facilities: JJMFacility[]; districts: string[]; facilityType: FacilityType | "combined"; levelBucketFilter: LevelBucket | "All" }) {
+function FacilityTable({ facilities, districts, viewMode }: { facilities: JJMFacility[]; districts: string[]; viewMode: ViewMode }) {
   const [search, setSearch] = useState("");
   const [districtFilter, setDistrictFilter] = useState("All");
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [tapWaterFilter, setTapWaterFilter] = useState("All");
   const [coLocatedFilter, setCoLocatedFilter] = useState("All");
   const [page, setPage] = useState(0);
-  const showCoLocated = facilityType !== "school";
-  const showTypeColumn = facilityType === "combined";
+  // On the dedicated Co-Located tab every row is already co_located_with_school === true, so the
+  // column/filter would just show "Yes" for everything -- only useful on Anganwadi/Combined.
+  const showCoLocated = viewMode === "anganwadi" || viewMode === "combined";
+  const showTypeColumn = viewMode === "combined";
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -174,13 +180,12 @@ function FacilityTable({ facilities, districts, facilityType, levelBucketFilter 
       if (tapWaterFilter === "unknown" && f.tap_water != null) return false;
       if (coLocatedFilter === "yes" && f.co_located_with_school !== true) return false;
       if (coLocatedFilter === "no" && f.co_located_with_school !== false) return false;
-      if (levelBucketFilter !== "All" && f.co_located_level_bucket !== levelBucketFilter) return false;
       if (q && !f.name?.toLowerCase().includes(q) && !f.village?.toLowerCase().includes(q) && !f.habitation?.toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [facilities, search, districtFilter, categoryFilter, tapWaterFilter, coLocatedFilter, levelBucketFilter]);
+  }, [facilities, search, districtFilter, categoryFilter, tapWaterFilter, coLocatedFilter]);
 
-  useEffect(() => { setPage(0); }, [levelBucketFilter]);
+  useEffect(() => { setPage(0); }, [viewMode]);
 
   const pageRows = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -336,7 +341,8 @@ function DistrictAmenityTable({ data, layer }: { data: JJMDistrictSummary; layer
 
 export default function JJMRajasthanPage() {
   const [attr, setAttr] = useState("tap_water");
-  const [facilityType, setFacilityType] = useState<FacilityType | "combined">("school");
+  const [viewMode, setViewMode] = useState<ViewMode>("school");
+  const [levelBucketFilter, setLevelBucketFilter] = useState<LevelBucket | "All">("All");
   const layer = LAYER_BY_KEY[attr];
 
   const schoolsQ = useQuery<JJMFacility[]>({
@@ -403,20 +409,28 @@ export default function JJMRajasthanPage() {
     return counts;
   }, [anganwadiWithLevel]);
 
-  const [levelBucketFilter, setLevelBucketFilter] = useState<LevelBucket | "All">("All");
+  // Co-Located tab = anganwadi rows with co_located_with_school === true, optionally narrowed
+  // further to a specific inferred level bucket (PS/UPS/SS/multiple/none).
+  const coLocatedFacilities = useMemo(() => {
+    if (!anganwadiWithLevel) return undefined;
+    return anganwadiWithLevel.filter((a) =>
+      a.co_located_with_school === true && (levelBucketFilter === "All" || a.co_located_level_bucket === levelBucketFilter));
+  }, [anganwadiWithLevel, levelBucketFilter]);
 
   const facilitiesQ = useMemo(() => {
-    if (facilityType === "school") return schoolsQ;
-    if (facilityType === "anganwadi") return { data: anganwadiWithLevel, isLoading: anganwadiQ.isLoading };
+    if (viewMode === "school") return schoolsQ;
+    if (viewMode === "anganwadi") return { data: anganwadiWithLevel, isLoading: anganwadiQ.isLoading };
+    if (viewMode === "colocated") return { data: coLocatedFacilities, isLoading: anganwadiQ.isLoading };
     return { data: [...(schoolsQ.data ?? []), ...(anganwadiWithLevel ?? [])], isLoading: schoolsQ.isLoading || anganwadiQ.isLoading };
-  }, [facilityType, schoolsQ, anganwadiQ.isLoading, anganwadiWithLevel]);
+  }, [viewMode, schoolsQ, anganwadiQ.isLoading, anganwadiWithLevel, coLocatedFacilities]);
 
   const districtSummary = useMemo<JJMDistrictSummary | undefined>(() => {
-    if (facilityType === "school") return schoolDistrictSummaryQ.data;
-    if (facilityType === "anganwadi") return anganwadiDistrictSummaryQ.data;
+    if (viewMode === "school") return schoolDistrictSummaryQ.data;
+    if (viewMode === "anganwadi") return anganwadiDistrictSummaryQ.data;
+    if (viewMode === "colocated") return coLocatedFacilities ? computeDistrictSummary(coLocatedFacilities) : undefined;
     if (!schoolsQ.data || !anganwadiWithLevel) return undefined;
     return computeDistrictSummary([...schoolsQ.data, ...anganwadiWithLevel]);
-  }, [facilityType, schoolDistrictSummaryQ.data, anganwadiDistrictSummaryQ.data, schoolsQ.data, anganwadiWithLevel]);
+  }, [viewMode, schoolDistrictSummaryQ.data, anganwadiDistrictSummaryQ.data, schoolsQ.data, anganwadiWithLevel, coLocatedFacilities]);
 
   const districts = useMemo(() => Object.keys(districtSummary?.by_district ?? {}).sort(), [districtSummary]);
 
@@ -425,9 +439,9 @@ export default function JJMRajasthanPage() {
   [facilitiesQ.data]);
 
   const coLocationStats = useMemo(() => {
-    if (facilityType === "school" || !anganwadiDistrictSummaryQ.data) return null;
+    if (viewMode === "school" || !anganwadiDistrictSummaryQ.data) return null;
     return anganwadiDistrictSummaryQ.data.meta;
-  }, [facilityType, anganwadiDistrictSummaryQ.data]);
+  }, [viewMode, anganwadiDistrictSummaryQ.data]);
 
   const districtGeo = useMemo(() => {
     if (!districtBoundaryQ.data || !districtSummary) return null;
@@ -496,35 +510,39 @@ export default function JJMRajasthanPage() {
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Facility type:</span>
-            <button onClick={() => { setFacilityType("school"); if (attr === "co_located_with_school") setAttr("tap_water"); setLevelBucketFilter("All"); }}
-              className={`px-2.5 py-1 rounded text-[11px] font-medium ${facilityType === "school" ? "bg-emerald-600 text-white" : "bg-muted/60 text-muted-foreground"}`}>
+            <span className="text-xs text-muted-foreground">View:</span>
+            <button onClick={() => { setViewMode("school"); if (attr === "co_located_with_school") setAttr("tap_water"); }}
+              className={`px-2.5 py-1 rounded text-[11px] font-medium ${viewMode === "school" ? "bg-emerald-600 text-white" : "bg-muted/60 text-muted-foreground"}`}>
               🏫 Schools
             </button>
-            <button onClick={() => setFacilityType("anganwadi")}
-              className={`px-2.5 py-1 rounded text-[11px] font-medium ${facilityType === "anganwadi" ? "bg-emerald-600 text-white" : "bg-muted/60 text-muted-foreground"}`}>
+            <button onClick={() => setViewMode("anganwadi")}
+              className={`px-2.5 py-1 rounded text-[11px] font-medium ${viewMode === "anganwadi" ? "bg-emerald-600 text-white" : "bg-muted/60 text-muted-foreground"}`}>
               👶 Anganwadi
             </button>
-            <button onClick={() => setFacilityType("combined")}
-              className={`px-2.5 py-1 rounded text-[11px] font-medium ${facilityType === "combined" ? "bg-emerald-600 text-white" : "bg-muted/60 text-muted-foreground"}`}>
-              🔗 Combined
+            <button onClick={() => { setViewMode("colocated"); if (attr === "co_located_with_school") setAttr("tap_water"); }}
+              className={`px-2.5 py-1 rounded text-[11px] font-medium ${viewMode === "colocated" ? "bg-purple-600 text-white" : "bg-muted/60 text-muted-foreground"}`}>
+              🔗 Co-Located
+            </button>
+            <button onClick={() => setViewMode("combined")}
+              className={`px-2.5 py-1 rounded text-[11px] font-medium ${viewMode === "combined" ? "bg-emerald-600 text-white" : "bg-muted/60 text-muted-foreground"}`}>
+              📚 Combined
             </button>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">Amenity:</span>
             <select value={attr} onChange={(e) => setAttr(e.target.value)}
               className="rounded-md border border-border/50 bg-background px-2 py-1.5 text-xs outline-none">
-              {(facilityType === "school" ? SCHOOL_ONLY_LAYERS : LAYERS).map((l) => <option key={l.key} value={l.key}>{l.icon} {l.label}</option>)}
+              {(viewMode === "school" || viewMode === "colocated" ? SCHOOL_ONLY_LAYERS : LAYERS).map((l) => <option key={l.key} value={l.key}>{l.icon} {l.label}</option>)}
             </select>
           </div>
         </div>
 
-        {facilityType !== "school" && (
+        {viewMode === "colocated" && (
           <div className="flex flex-wrap items-center gap-2 -mt-2">
             <span className="text-xs text-muted-foreground">Co-located school level (inferred from same-habitation JJM school records):</span>
             <button onClick={() => setLevelBucketFilter("All")}
               className={`px-2 py-1 rounded text-[11px] font-medium ${levelBucketFilter === "All" ? "bg-purple-600 text-white" : "bg-muted/60 text-muted-foreground"}`}>
-              All co-located ({levelBucketCounts.PS + levelBucketCounts.UPS + levelBucketCounts.SR_SEC + levelBucketCounts.multiple + levelBucketCounts.none})
+              All ({levelBucketCounts.PS + levelBucketCounts.UPS + levelBucketCounts.SR_SEC + levelBucketCounts.multiple + levelBucketCounts.none})
             </button>
             {LEVEL_BUCKET_ORDER.map((b) => (
               <button key={b} onClick={() => setLevelBucketFilter(b)}
@@ -551,7 +569,7 @@ export default function JJMRajasthanPage() {
                   .jjm-district-label::before { display: none; }
                 `}</style>
                 {districtGeo && (
-                  <GeoJSON key={`districts-${attr}-${facilityType}`} data={districtGeo as any}
+                  <GeoJSON key={`districts-${attr}-${viewMode}-${levelBucketFilter}`} data={districtGeo as any}
                     style={(feature: any) => ({
                       fillColor: amenityColor(feature.properties.pct), fillOpacity: 0.7, color: "#1e293b", weight: 1, renderer: canvasRenderer,
                     })}
@@ -561,7 +579,7 @@ export default function JJMRajasthanPage() {
                       leafletLayer.bindTooltip(`${p.district}<br/>${label}`, { permanent: true, direction: "center", className: "jjm-district-label" });
                     }} />
                 )}
-                <GeoJSON key={`points-${attr}-${facilityType}`} data={geoPointsData as any} pointToLayer={pointToLayer} onEachFeature={onEachPoint} />
+                <GeoJSON key={`points-${attr}-${viewMode}-${levelBucketFilter}`} data={geoPointsData as any} pointToLayer={pointToLayer} onEachFeature={onEachPoint} />
               </MapContainer>
               <div className="absolute bottom-3 left-3 z-[800] bg-background/90 backdrop-blur border border-border/40 rounded-lg p-2.5 shadow-lg w-52">
                 <p className="text-[10px] font-semibold mb-1.5">{layer.icon} {layer.label}</p>
@@ -587,7 +605,7 @@ export default function JJMRajasthanPage() {
         {facilitiesQ.isLoading ? (
           <div className="text-xs text-muted-foreground py-4 text-center">Loading facility list…</div>
         ) : facilitiesQ.data ? (
-          <FacilityTable facilities={facilitiesQ.data} districts={districts} facilityType={facilityType} levelBucketFilter={levelBucketFilter} />
+          <FacilityTable facilities={facilitiesQ.data} districts={districts} viewMode={viewMode} />
         ) : null}
       </div>
     </div>
