@@ -466,7 +466,7 @@ export default function JJMRajasthanPage() {
                   .jjm-district-label::before { display: none; }
                 `}</style>
                 {districtGeo && (
-                  <GeoJSON key={`districts-${attr}`} data={districtGeo as any}
+                  <GeoJSON key={`districts-${attr}-${facilityType}`} data={districtGeo as any}
                     style={(feature: any) => ({
                       fillColor: amenityColor(feature.properties.pct), fillOpacity: 0.7, color: "#1e293b", weight: 1, renderer: canvasRenderer,
                     })}
@@ -476,7 +476,7 @@ export default function JJMRajasthanPage() {
                       leafletLayer.bindTooltip(`${p.district}<br/>${label}`, { permanent: true, direction: "center", className: "jjm-district-label" });
                     }} />
                 )}
-                <GeoJSON key={`points-${attr}`} data={geoPointsData as any} pointToLayer={pointToLayer} onEachFeature={onEachPoint} />
+                <GeoJSON key={`points-${attr}-${facilityType}`} data={geoPointsData as any} pointToLayer={pointToLayer} onEachFeature={onEachPoint} />
               </MapContainer>
               <div className="absolute bottom-3 left-3 z-[800] bg-background/90 backdrop-blur border border-border/40 rounded-lg p-2.5 shadow-lg w-52">
                 <p className="text-[10px] font-semibold mb-1.5">{layer.icon} {layer.label}</p>
