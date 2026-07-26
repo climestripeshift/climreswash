@@ -167,6 +167,14 @@ function formatStat(pct: number | null, count: number | null, total: number | nu
   if (mode === "number") return countStr;
   return `${pctStr} (${countStr})`;
 }
+// In "number" mode the shading should reflect which districts have the highest/lowest raw count
+// (e.g. most co-located anganwadis in absolute terms), not percentage -- otherwise a
+// small-but-100%-co-located district would outshine a huge district with more actual facilities.
+function statColor(pct: number | null, count: number | null, mode: DisplayMode, maxCount: number) {
+  if (mode !== "number") return amenityColor(pct);
+  if (count == null || maxCount <= 0) return "#374151";
+  return gradientColor(AMENITY_RAMP, count / maxCount);
+}
 
 const canvasRenderer = L.canvas({ padding: 0.5 });
 
@@ -315,6 +323,7 @@ function DistrictAmenityTable({ data, layer, displayMode }: { data: JJMDistrictS
     }));
   }, [data, layer]);
   const sorted = useMemo(() => [...rows].sort((a, b) => sortBy === "pct" ? (b.pct ?? 0) - (a.pct ?? 0) : b.total - a.total), [rows, sortBy]);
+  const maxCount = useMemo(() => Math.max(0, ...rows.map((r) => r.count ?? 0)), [rows]);
 
   return (
     <div className="border border-border/40 rounded-lg overflow-hidden">
@@ -341,7 +350,7 @@ function DistrictAmenityTable({ data, layer, displayMode }: { data: JJMDistrictS
               <tr key={r.district} className="border-b border-border/10 hover:bg-muted/20">
                 <td className="px-3 py-1.5 font-medium">{r.district}</td>
                 <td className="px-3 py-1.5 text-right text-muted-foreground">{r.total.toLocaleString()}</td>
-                <td className="px-3 py-1.5 text-right font-semibold" style={{ color: amenityColor(r.pct) }}>
+                <td className="px-3 py-1.5 text-right font-semibold" style={{ color: statColor(r.pct, r.count, displayMode, maxCount) }}>
                   {formatStat(r.pct, r.count, r.total, displayMode)}
                 </td>
                 <td className="px-3 py-1.5 text-right text-muted-foreground">{r.hasCoords.toLocaleString()}</td>
@@ -473,6 +482,16 @@ export default function JJMRajasthanPage() {
     };
   }, [districtBoundaryQ.data, districtSummary, attr]);
 
+  const maxDistrictCount = useMemo(() => {
+    if (!districtSummary) return 0;
+    let max = 0;
+    for (const stats of Object.values(districtSummary.by_district)) {
+      const c = (stats as any)[`${attr}_count`] as number | undefined;
+      if (c != null && c > max) max = c;
+    }
+    return max;
+  }, [districtSummary, attr]);
+
   const isLoading = facilitiesQ.isLoading || districtBoundaryQ.isLoading;
 
   const pointToLayer = useCallback((feature: any, latlng: L.LatLng) =>
@@ -598,7 +617,8 @@ export default function JJMRajasthanPage() {
                 {districtGeo && (
                   <GeoJSON key={`districts-${attr}-${viewMode}-${levelBucketFilter}-${displayMode}`} data={districtGeo as any}
                     style={(feature: any) => ({
-                      fillColor: amenityColor(feature.properties.pct), fillOpacity: 0.7, color: "#1e293b", weight: 1, renderer: canvasRenderer,
+                      fillColor: statColor(feature.properties.pct, feature.properties.count, displayMode, maxDistrictCount),
+                      fillOpacity: 0.7, color: "#1e293b", weight: 1, renderer: canvasRenderer,
                     })}
                     onEachFeature={(feature: any, leafletLayer: any) => {
                       const p = feature.properties;
@@ -612,7 +632,11 @@ export default function JJMRajasthanPage() {
                 <p className="text-[10px] font-semibold mb-1.5">{layer.icon} {layer.label}</p>
                 <div className="h-2.5 w-full rounded-sm mb-1" style={{ background: `linear-gradient(to right, ${AMENITY_RAMP.map((c) => `rgb(${c.join(",")})`).join(", ")})` }} />
                 <div className="flex justify-between text-[9px] text-muted-foreground mb-1.5">
-                  <span>0%</span><span>100%</span>
+                  {displayMode === "number" ? (
+                    <><span>0</span><span>{maxDistrictCount.toLocaleString()}</span></>
+                  ) : (
+                    <><span>0%</span><span>100%</span></>
+                  )}
                 </div>
                 <div className="flex items-center gap-1.5 mb-1">
                   <div className="w-2.5 h-2.5 rounded-sm" style={{ background: "#374151" }} />
