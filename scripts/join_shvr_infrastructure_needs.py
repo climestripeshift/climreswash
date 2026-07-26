@@ -430,9 +430,38 @@ def main():
             jjm_amenities[f"jjm_{field}_count"] = yes_c
             jjm_amenities[f"jjm_{field}_pct"] = round(100 * yes_c / jjm_n, 1) if jjm_n else None
 
+        # Cross-tab: infra needs + JJM amenities scoped to just ONE school level within this
+        # district (e.g. "how many PRIMARY schools in Dungarpur have no toilet") -- powers the
+        # map's school-level filter, which otherwise can only show all-levels-combined values.
+        level_breakdown = {}
+        for level_key in ["PS", "UPS", "SR_SEC", "unknown"]:
+            lgroup = [s for s in group if (s.get("school_level") or "unknown") == level_key]
+            ln = len(lgroup)
+            l_toilet = sum(1 for s in lgroup if s["girls_toilet_required"])
+            l_repair = sum(1 for s in lgroup if s["classroom_repair_needed"])
+            l_new_room = sum(1 for s in lgroup if s["new_classroom_requirement"])
+            l_dilap = sum(1 for s in lgroup if s["building_dilapidated"])
+            l_jjm_matched = [s for s in lgroup if s.get("jjm_match_method")]
+            l_jjm_n = len(l_jjm_matched)
+            level_breakdown[level_key] = {
+                "total_school_count": ln,
+                "toilet_required_count": l_toilet, "toilet_required_pct": round(100 * l_toilet / ln, 1) if ln else None,
+                "classroom_repair_needed_count": l_repair, "classroom_repair_pct": round(100 * l_repair / ln, 1) if ln else None,
+                "new_classroom_requirement_count": l_new_room, "new_classroom_pct": round(100 * l_new_room / ln, 1) if ln else None,
+                "building_dilapidated_count": l_dilap, "dilapidated_pct": round(100 * l_dilap / ln, 1) if ln else None,
+                "jjm_matched_count": l_jjm_n,
+            }
+            for field in ["tap_water", "toilet_running_water", "hand_washing",
+                          "separate_toilets_girls_boys", "rainwater_harvesting",
+                          "dried_toilets", "grey_water_mgmt"]:
+                yes_c = sum(1 for s in l_jjm_matched if s.get(field) is True)
+                level_breakdown[level_key][f"jjm_{field}_count"] = yes_c
+                level_breakdown[level_key][f"jjm_{field}_pct"] = round(100 * yes_c / l_jjm_n, 1) if l_jjm_n else None
+
         by_district[d] = {
             "jjm_matched_count": jjm_n,
             **jjm_amenities,
+            "level_breakdown": level_breakdown,
             "total_school_count": n,
             "in_shvr_count": len(in_shvr),
             "has_shvr_rating": len(in_shvr) > 0,

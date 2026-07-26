@@ -91,6 +91,25 @@ interface ToiletRawSummary {
 // percentages for all 41 districts, since total_school_count is a genuine denominator now,
 // not just the SHVR-rated subset.
 interface RatingBucket { count: number; pct: number | null }
+
+// Cross-tab: infra needs + JJM amenities scoped to just one school level within a district
+// (e.g. "how many PRIMARY schools in Dungarpur have no toilet") — powers the map's school-level filter.
+interface LevelBreakdownStats {
+  total_school_count: number;
+  toilet_required_count: number; toilet_required_pct: number | null;
+  classroom_repair_needed_count: number; classroom_repair_pct: number | null;
+  new_classroom_requirement_count: number; new_classroom_pct: number | null;
+  building_dilapidated_count: number; dilapidated_pct: number | null;
+  jjm_matched_count: number;
+  jjm_tap_water_count: number; jjm_tap_water_pct: number | null;
+  jjm_toilet_running_water_count: number; jjm_toilet_running_water_pct: number | null;
+  jjm_hand_washing_count: number; jjm_hand_washing_pct: number | null;
+  jjm_separate_toilets_girls_boys_count: number; jjm_separate_toilets_girls_boys_pct: number | null;
+  jjm_rainwater_harvesting_count: number; jjm_rainwater_harvesting_pct: number | null;
+  jjm_dried_toilets_count: number; jjm_dried_toilets_pct: number | null;
+  jjm_grey_water_mgmt_count: number; jjm_grey_water_mgmt_pct: number | null;
+}
+
 interface DistrictStats {
   total_school_count: number; in_shvr_count: number; has_shvr_rating: boolean;
   avg_rating: number | null;
@@ -111,6 +130,7 @@ interface DistrictStats {
   jjm_rainwater_harvesting_count: number; jjm_rainwater_harvesting_pct: number | null;
   jjm_dried_toilets_count: number; jjm_dried_toilets_pct: number | null;
   jjm_grey_water_mgmt_count: number; jjm_grey_water_mgmt_pct: number | null;
+  level_breakdown: Record<"PS" | "UPS" | "SR_SEC" | "unknown", LevelBreakdownStats>;
 }
 interface DistrictFullSummary {
   meta: { note: string };
@@ -238,6 +258,61 @@ function emptyRatingDistribution(): Record<string, RatingBucket> {
     "4": { count: 0, pct: null }, "5": { count: 0, pct: null } };
 }
 
+function emptyLevelBreakdownStats(): LevelBreakdownStats {
+  return {
+    total_school_count: 0,
+    toilet_required_count: 0, toilet_required_pct: null,
+    classroom_repair_needed_count: 0, classroom_repair_pct: null,
+    new_classroom_requirement_count: 0, new_classroom_pct: null,
+    building_dilapidated_count: 0, dilapidated_pct: null,
+    jjm_matched_count: 0,
+    jjm_tap_water_count: 0, jjm_tap_water_pct: null,
+    jjm_toilet_running_water_count: 0, jjm_toilet_running_water_pct: null,
+    jjm_hand_washing_count: 0, jjm_hand_washing_pct: null,
+    jjm_separate_toilets_girls_boys_count: 0, jjm_separate_toilets_girls_boys_pct: null,
+    jjm_rainwater_harvesting_count: 0, jjm_rainwater_harvesting_pct: null,
+    jjm_dried_toilets_count: 0, jjm_dried_toilets_pct: null,
+    jjm_grey_water_mgmt_count: 0, jjm_grey_water_mgmt_pct: null,
+  };
+}
+function emptyLevelBreakdown(): Record<"PS" | "UPS" | "SR_SEC" | "unknown", LevelBreakdownStats> {
+  return { PS: emptyLevelBreakdownStats(), UPS: emptyLevelBreakdownStats(),
+    SR_SEC: emptyLevelBreakdownStats(), unknown: emptyLevelBreakdownStats() };
+}
+function addLevelBreakdown(into: LevelBreakdownStats, from: LevelBreakdownStats) {
+  into.total_school_count += from.total_school_count;
+  into.toilet_required_count += from.toilet_required_count;
+  into.classroom_repair_needed_count += from.classroom_repair_needed_count;
+  into.new_classroom_requirement_count += from.new_classroom_requirement_count;
+  into.building_dilapidated_count += from.building_dilapidated_count;
+  into.jjm_matched_count += from.jjm_matched_count;
+  into.jjm_tap_water_count += from.jjm_tap_water_count;
+  into.jjm_toilet_running_water_count += from.jjm_toilet_running_water_count;
+  into.jjm_hand_washing_count += from.jjm_hand_washing_count;
+  into.jjm_separate_toilets_girls_boys_count += from.jjm_separate_toilets_girls_boys_count;
+  into.jjm_rainwater_harvesting_count += from.jjm_rainwater_harvesting_count;
+  into.jjm_dried_toilets_count += from.jjm_dried_toilets_count;
+  into.jjm_grey_water_mgmt_count += from.jjm_grey_water_mgmt_count;
+}
+function finalizeLevelBreakdown(s: LevelBreakdownStats) {
+  const n = s.total_school_count;
+  if (n) {
+    s.toilet_required_pct = round1(100 * s.toilet_required_count / n);
+    s.classroom_repair_pct = round1(100 * s.classroom_repair_needed_count / n);
+    s.new_classroom_pct = round1(100 * s.new_classroom_requirement_count / n);
+    s.dilapidated_pct = round1(100 * s.building_dilapidated_count / n);
+  }
+  if (s.jjm_matched_count) {
+    s.jjm_tap_water_pct = round1(100 * s.jjm_tap_water_count / s.jjm_matched_count);
+    s.jjm_toilet_running_water_pct = round1(100 * s.jjm_toilet_running_water_count / s.jjm_matched_count);
+    s.jjm_hand_washing_pct = round1(100 * s.jjm_hand_washing_count / s.jjm_matched_count);
+    s.jjm_separate_toilets_girls_boys_pct = round1(100 * s.jjm_separate_toilets_girls_boys_count / s.jjm_matched_count);
+    s.jjm_rainwater_harvesting_pct = round1(100 * s.jjm_rainwater_harvesting_count / s.jjm_matched_count);
+    s.jjm_dried_toilets_pct = round1(100 * s.jjm_dried_toilets_count / s.jjm_matched_count);
+    s.jjm_grey_water_mgmt_pct = round1(100 * s.jjm_grey_water_mgmt_count / s.jjm_matched_count);
+  }
+}
+
 function gradientColor(ramp: [number, number, number][], t: number) {
   t = Math.max(0, Math.min(1, t));
   const s = t * (ramp.length - 1);
@@ -267,12 +342,14 @@ type InfraUnit = "pct" | "absolute";
 // district-level infra value (% or raw count, both against the real full-registry
 // denominator), used both for hex fill (uniform per district) and the district choropleth
 function infraDistrictValue(layer: LayerDef, district: string, unit: InfraUnit,
-  districtStats: Record<string, DistrictStats> | undefined): number | null {
+  districtStats: Record<string, DistrictStats> | undefined,
+  levelFilter?: "PS" | "UPS" | "SR_SEC" | "unknown" | null): number | null {
   const isJJM = JJM_LAYER_KEYS.has(layer.key);
   const field = isJJM
     ? (unit === "absolute" ? JJM_ABSOLUTE_FIELD[layer.key] : JJM_FIELD[layer.key])
     : (unit === "absolute" ? INFRA_ABSOLUTE_FIELD[layer.key] : INFRA_FIELD[layer.key]);
-  const v = districtStats?.[district]?.[field as keyof DistrictStats];
+  const source = levelFilter ? districtStats?.[district]?.level_breakdown?.[levelFilter] : districtStats?.[district];
+  const v = source?.[field as keyof typeof source];
   return typeof v === "number" ? v : null;
 }
 
@@ -325,12 +402,13 @@ function SchoolPointsLayer({ schools, hexByH3Id, layer, mode }: {
   return <GeoJSON key={`schools-${layer.key}-${mode}`} data={geoData as any} pointToLayer={pointToLayer} onEachFeature={onEachFeature} />;
 }
 
-function RajasthanHexMap({ hexes, hexByH3Id, ratings, infraUnit, oldDistrictStats, schools, mode, layer, districtMarkers, viewMode, districtGeo, showDistrictLabels, starFilter }: {
+function RajasthanHexMap({ hexes, hexByH3Id, ratings, infraUnit, oldDistrictStats, schools, mode, layer, districtMarkers, viewMode, districtGeo, showDistrictLabels, starFilter, mapLevelFilter }: {
   hexes: any[]; hexByH3Id: Record<string, any>; ratings: Record<string, HexRating>;
   infraUnit: InfraUnit;
   oldDistrictStats: Record<string, DistrictStats> | undefined; schools: School[];
   mode: "all" | "completed"; layer: LayerDef; districtMarkers: DistrictMarker[];
   viewMode: "hex" | "district"; districtGeo: any; showDistrictLabels: boolean; starFilter: number | null;
+  mapLevelFilter: "PS" | "UPS" | "SR_SEC" | "unknown" | null;
 }) {
   const fmtValue = (v: number, pct?: number | null) =>
     layer.colorMode === "count" ? `${v.toLocaleString()} schools${pct != null ? ` (${pct}%)` : ""}`
@@ -360,7 +438,7 @@ function RajasthanHexMap({ hexes, hexByH3Id, ratings, infraUnit, oldDistrictStat
         const r = ratings[p.h3_id];
         value = r ? (mode === "all" ? r.avg_rating_all : r.avg_rating_completed_only) : null;
       } else if (layer.group === "infra") {
-        value = infraDistrictValue(layer, p.district_name, infraUnit, oldDistrictStats);
+        value = infraDistrictValue(layer, p.district_name, infraUnit, oldDistrictStats, mapLevelFilter);
       } else {
         value = p[layer.key] ?? null;
       }
@@ -370,7 +448,7 @@ function RajasthanHexMap({ hexes, hexByH3Id, ratings, infraUnit, oldDistrictStat
         geometry: { type: "Polygon", coordinates: [coords] },
       };
     }),
-  }), [hexes, ratings, oldDistrictStats, infraUnit, mode, layer, starFilter]);
+  }), [hexes, ratings, oldDistrictStats, infraUnit, mode, layer, starFilter, mapLevelFilter]);
 
   const styleFeature = useCallback((feature: any) => ({
     fillColor: layerColor(layer, feature.properties.value), fillOpacity: 0.78, color: "#1e293b", weight: 0.3, renderer: canvasRenderer,
@@ -387,7 +465,7 @@ function RajasthanHexMap({ hexes, hexByH3Id, ratings, infraUnit, oldDistrictStat
       <SetupCanvas />
       <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>' />
-      {viewMode === "hex" && <GeoJSON key={`${mode}-${layer.key}-${infraUnit}-${starFilter}`} data={geoData as any} style={styleFeature} onEachFeature={onEachFeature} />}
+      {viewMode === "hex" && <GeoJSON key={`${mode}-${layer.key}-${infraUnit}-${starFilter}-${mapLevelFilter}`} data={geoData as any} style={styleFeature} onEachFeature={onEachFeature} />}
       {viewMode === "district" && districtGeo && (
         <>
           <style>{`
@@ -395,7 +473,7 @@ function RajasthanHexMap({ hexes, hexByH3Id, ratings, infraUnit, oldDistrictStat
               font-weight: 800; font-size: 12px; color: #0f172a; text-shadow: 0 0 3px #fff, 0 0 3px #fff, 0 0 3px #fff; }
             .district-label-tooltip::before { display: none; }
           `}</style>
-          <GeoJSON key={`districts-${mode}-${layer.key}-${infraUnit}-${showDistrictLabels}-${starFilter}`} data={districtGeo as any}
+          <GeoJSON key={`districts-${mode}-${layer.key}-${infraUnit}-${showDistrictLabels}-${starFilter}-${mapLevelFilter}`} data={districtGeo as any}
             style={(feature: any) => ({
               fillColor: layerColor(layer, feature.properties.value), fillOpacity: 0.7, color: "#1e293b", weight: 1, renderer: canvasRenderer,
             })}
@@ -898,6 +976,7 @@ export default function SHVRRajasthanPage() {
   const [infraUnit, setInfraUnit] = useState<InfraUnit>("pct");
   const [showDistrictLabels, setShowDistrictLabels] = useState(true);
   const [starFilter, setStarFilter] = useState<number | null>(null);
+  const [mapLevelFilter, setMapLevelFilter] = useState<"PS" | "UPS" | "SR_SEC" | "unknown" | null>(null);
   const layer = LAYER_BY_KEY[attr];
 
   const hexQ = useQuery<any[]>({
@@ -1071,8 +1150,12 @@ export default function SHVRRajasthanPage() {
         jjm_rainwater_harvesting_count: 0, jjm_rainwater_harvesting_pct: null,
         jjm_dried_toilets_count: 0, jjm_dried_toilets_pct: null,
         jjm_grey_water_mgmt_count: 0, jjm_grey_water_mgmt_pct: null,
+        level_breakdown: emptyLevelBreakdown(),
       });
       entry.total_school_count += stats.total_school_count;
+      for (const lvl of LEVEL_ORDER) {
+        if (stats.level_breakdown?.[lvl]) addLevelBreakdown(entry.level_breakdown[lvl], stats.level_breakdown[lvl]);
+      }
       entry.in_shvr_count += stats.in_shvr_count;
       entry.toilet_required_count += stats.toilet_required_count;
       entry.classroom_repair_needed_count += stats.classroom_repair_needed_count;
@@ -1118,6 +1201,7 @@ export default function SHVRRajasthanPage() {
         entry.rating_distribution[r].pct = round1(100 * entry.rating_distribution[r].count / entry.total_school_count);
         entry.self_reported_rating_distribution[r].pct = round1(100 * entry.self_reported_rating_distribution[r].count / entry.total_school_count);
       }
+      for (const lvl of LEVEL_ORDER) finalizeLevelBreakdown(entry.level_breakdown[lvl]);
     }
     return byOld;
   }, [districtBoundaryQ.data, districtAbsoluteQ.data]);
@@ -1138,11 +1222,14 @@ export default function SHVRRajasthanPage() {
     if (layer.group !== "infra" || infraUnit !== "absolute" || !districtAbsoluteQ.data) return layer;
     const isJJM = JJM_LAYER_KEYS.has(layer.key);
     const field = isJJM ? JJM_ABSOLUTE_FIELD[layer.key] : INFRA_ABSOLUTE_FIELD[layer.key];
-    const max = Math.max(1, ...Object.values(districtAbsoluteQ.data.by_district).map((d) => (d[field as keyof DistrictStats] as number) ?? 0));
+    const sources = mapLevelFilter
+      ? Object.values(districtAbsoluteQ.data.by_district).map((d) => d.level_breakdown?.[mapLevelFilter])
+      : Object.values(districtAbsoluteQ.data.by_district);
+    const max = Math.max(1, ...sources.map((d) => (d?.[field as keyof typeof d] as number) ?? 0));
     // JJM amenity counts: MORE schools with the amenity is good -> green=high (domain [max,0]).
     // CSR infra-need counts: MORE schools needing it is bad -> red=high (domain [0,max], default).
     return { ...layer, domain: isJJM ? [max, 0] : [0, max] };
-  }, [layer, infraUnit, districtAbsoluteQ.data, starFilter]);
+  }, [layer, infraUnit, districtAbsoluteQ.data, starFilter, mapLevelFilter]);
 
   const districtGeo = useMemo(() => {
     if (!districtBoundaryQ.data) return null;
@@ -1162,12 +1249,12 @@ export default function SHVRRajasthanPage() {
           pct = bucket?.pct ?? null;
         } else if (layer.key === "shvr_self_reported_rating") value = currentDistrictStats[district]?.avg_self_reported_rating ?? null;
         else if (layer.group === "rating") value = currentDistrictStats[district]?.avg_rating ?? null;
-        else if (layer.group === "infra") value = infraDistrictValue(layer, district, infraUnit, currentDistrictStats);
+        else if (layer.group === "infra") value = infraDistrictValue(layer, district, infraUnit, currentDistrictStats, mapLevelFilter);
         else value = hexAvgByDistrict[oldDistrict] ?? null;
         return { ...f, properties: { ...f.properties, district, value, pct } };
       }),
     };
-  }, [districtBoundaryQ.data, layer, infraUnit, currentDistrictStats, hexAvgByDistrict, districtAbsoluteQ.data, starFilter]);
+  }, [districtBoundaryQ.data, layer, infraUnit, currentDistrictStats, hexAvgByDistrict, districtAbsoluteQ.data, starFilter, mapLevelFilter]);
 
   const isLoading = hexQ.isLoading || ratingsQ.isLoading || districtSummaryQ.isLoading || (layer.group === "future" && futureQ.isLoading);
 
@@ -1264,6 +1351,23 @@ export default function SHVRRajasthanPage() {
               </button>
             </div>
           )}
+          {layer.group === "infra" && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground" title="Scope the map to just one school level, e.g. how many PRIMARY schools in each district have no toilet.">
+                School level:
+              </span>
+              <button onClick={() => setMapLevelFilter(null)}
+                className={`px-2.5 py-1 rounded text-[11px] font-medium ${mapLevelFilter === null ? "bg-emerald-600 text-white" : "bg-muted/60 text-muted-foreground"}`}>
+                All Levels
+              </button>
+              {LEVEL_ORDER.map((lvl) => (
+                <button key={lvl} onClick={() => setMapLevelFilter(lvl === mapLevelFilter ? null : lvl)}
+                  className={`px-2.5 py-1 rounded text-[11px] font-medium ${mapLevelFilter === lvl ? "bg-emerald-600 text-white" : "bg-muted/60 text-muted-foreground"}`}>
+                  {LEVEL_SHORT[lvl]}
+                </button>
+              ))}
+            </div>
+          )}
           {layer.group === "rating" && (
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground" title="Selecting a star colors each district by how many of ITS schools have that exact rating (count + % of the district's total), instead of the district-wide average.">
@@ -1305,7 +1409,8 @@ export default function SHVRRajasthanPage() {
                 infraUnit={infraUnit} oldDistrictStats={oldDistrictStats}
                 schools={visibleSchools} mode={mode} layer={effectiveLayer}
                 districtMarkers={districtMarkers} viewMode={viewMode} districtGeo={districtGeo}
-                showDistrictLabels={showDistrictLabels} starFilter={layer.group === "rating" ? starFilter : null} />
+                showDistrictLabels={showDistrictLabels} starFilter={layer.group === "rating" ? starFilter : null}
+                mapLevelFilter={layer.group === "infra" ? mapLevelFilter : null} />
               <div className="absolute bottom-3 left-3 z-[800]"><Legend layer={effectiveLayer} infraUnit={infraUnit} /></div>
             </>
           )}
