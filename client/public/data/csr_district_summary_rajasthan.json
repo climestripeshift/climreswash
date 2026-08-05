@@ -1,0 +1,1417 @@
+{
+  "meta": {
+    "source": "/Users/adityajain/UNICEF RAJASTHAN/2026/wins/CSR/CSR data Analysis -Final.xlsx",
+    "note": "District resolution of the free-text \"CSR in other districts\" column is best-effort (see DISTRICT_ALIAS in build_csr_district_map.py) -- Bhiwadi in particular is mapped to Alwar as a judgment call, not a confirmed admin fact. csr_statewide_count is the same number for every district (companies whose coverage language reads as \"all of Rajasthan\"); csr_broad_unspecified companies (\"23 districts\", unspecified) aren't counted toward any single district since which ones isn't stated.",
+    "total_companies": 157,
+    "statewide_companies": 6,
+    "broad_unspecified_companies": 0,
+    "unresolved_tokens": {
+      "Gailpur": 1,
+      "Malootana": 1,
+      "Jhawar": 1,
+      "Bhagega": 1
+    },
+    "generated_from_rows": 157
+  },
+  "by_district": {
+    "Ajmer": {
+      "csr_specific_count": 9,
+      "csr_specific_companies": [
+        "Aditya (Ultratech) Cement Works Ltd, Sawa-\nShambupura Road, Adityapuram, Chittorgarh-312622",
+        "Ambuja Cement Foundation, Unit- Marwar Mundwa, Nagaur\nCourier Address- 21-22, Ganpati Plaza Complex, Near Bhagat Chauraha, Tehsil- Beawar, Ajmer-305901",
+        "Ambuja Cement Foundation- Rabriyawas. Address-Village Rabriyawas, Tehsil Jaitaran, District Pali ( Rajastrhan)",
+        "Hindustan Zinc Limited, Chanderiya Lead-Zinc Smelter, P.O. Putholi, Chittorgarh (Rajasthan) -\n312021",
+        "Hindustan Zinc Ltd., Rampura Agucha, District-\nBhilwara ( Rajasthan) 311001",
+        "Property Ventures (india) Private Limited, Makrana Road,MandanganjKishangarh-\nAjmer305801",
+        "R K Marble & Granite PVT.LTD. Makrana Road,MandanganjKishangarh-Ajmer305801",
+        "RSWM Limited, Mayur Nagar,Lodha Banswara-327001",
+        "Ultratech Cement Ltd. (Unit- Kotputli Cement Works) Mohanpura, Kotputli, Jaipur- 303108"
+      ],
+      "csr_statewide_count": 6,
+      "csr_total_available_count": 15,
+      "csr_specific_by_theme": {
+        "formal_education": 6,
+        "wash": 6,
+        "school_hardware": 6,
+        "other_school_initiative": 5,
+        "anganwadi": 4
+      },
+      "csr_statewide_by_theme": {
+        "formal_education": 3,
+        "wash": 1,
+        "school_hardware": 3,
+        "other_school_initiative": 4,
+        "anganwadi": 0
+      },
+      "total_school_count": 1587,
+      "schools_needing_help_count": 1111,
+      "toilet_required_count": 10,
+      "classroom_repair_needed_count": 1039,
+      "building_dilapidated_count": 35,
+      "new_classroom_requirement_count": 384,
+      "needs_help_no_specific_csr": false
+    },
+    "Alwar": {
+      "csr_specific_count": 54,
+      "csr_specific_companies": [
+        "APM Industries Limited         ( Unit Orient Syntex ) SP- 147 Riico Industrial Area Bhiwadi \u2013\n301019",
+        "ASHIANA HOUSING LTD.BHIWADI",
+        "AWL Agri Business Ltd. (Formerly Known as\nAdani Wilmar Ltd.) Vill Roondh Dhooninath, The Ramgarh Alwar (Raj)",
+        "Aksh Optifibre Ltd, Fiber and Cable Division, F1075-81, Phase-III, RIICO Industrial area, Bhiwadi -301019 (Alwar & Reengus)",
+        "Ambuja Cement Foundation- Rabriyawas. Address-Village Rabriyawas, Tehsil Jaitaran, District Pali ( Rajastrhan)",
+        "Ashok Leyland Ltd. SPL. 298 MIA Alwar 301030",
+        "Balkrishna Industries Limited (BKT), SP-923, RIICO Industrial Area, Phase-III, Bhiwadi-301019",
+        "Beam Global Spirits & Wine Pvt.\nVillage-Karora, Post- Behror, District- Alwar",
+        "Carlsberg India, SP1-\n4 and B5 to 8, MIA Ext. Agro Food Park, Alwar",
+        "Daikin Airconditioning India Pvt. Ltd. SP2-12 to SP2-15 & SP2-24 to SP2-27, RIICO New Ind.\nComplex(Majrakath) Neemrana, Alwar-301705",
+        "Dalas Biotech Limited\nE-292, Phase-1, R.I.A., Bhiwadi",
+        "Eicher Enginess(A unit of Tafe motors and Tractors limited) Itarana Alwar",
+        "GINNI INTERNATIONAL LTD.NEEMRANA",
+        "GREENLAM INDUSTRIES BEHROR",
+        "Gillette India Limited, SPA-65 A, RIICO\nIndustrial Area, Bhiwadi- 301019",
+        "Globus Spirits Limited, Shyampur, Behror,\nAlwar- 301701",
+        "Hanon Climate Systems India Pvt Ltd.\nPlot No SP-812A, RIICO Industrial Area, Bhiwadi, Rajasthan",
+        "Havells India Ltd. MIA Alwar 301030",
+        "Hero Moto Corp Ltd., Plot No. SPL-1, RIICO Industrial Area, Phase-2, Kukas, Jaipur- 302028",
+        "Honda Cars India Ltd.\nSPL-1, Tapukara Industrial Area, Khushkhera, Alwar, 310707\n2. Honda Motorcycle & Scooter PVT. LTD. Tapukara",
+        "INSECTICIDES INDIA PVT.LTD BHIWADI, E-\n442, E-443-444, RIICO Industrial area, Chopanki Bhiwadi",
+        "Jaquar and company Pvt.Ltd.\nPlot no-3,Sector-11, Imt Manesar-122050",
+        "KEI INDUSTRIES , Bhiwadi",
+        "Kajaria Ceramics Limited, 19 KM Stone, Bhiwadi-Alwar Road, Village-Gailpur, P.O. Tapukara, Bhiwadi, Alwar- 301707",
+        "Kusum Health Care Pvt. Ltd.Unit 1 &2: SP-289(A), RIICO industrial Area, Chopanki,\nBhiwadi- 301707",
+        "Lupin Limited, Bharatpur Branch-\nLupin Human Welfare & Research Organization, 239, Krishna Nagar, Bharatpur",
+        "MITSUI PRIME ADVANCED COMPOSITE INDIA PVT.NIC(M) NEEMRANA",
+        "Manglam Build-Developers Limited\n6th Floor, Apex Mall, Lal Kothi, Tonk Road, Jaipur",
+        "Metso India Pvt. Ltd SP 1-1 to 1-13 MIA Alwar South East Zone Alwar 301030",
+        "NUVOCO",
+        "National Engineering Industries Ltd",
+        "Nissin Brake India Pvt. Ltd. (HITACHI ASTEMO RAJASTHAN BREAK INDIA  PVT.\nLTD) neemrana",
+        "ORIENT REFRACTORIES",
+        "ORIENT SYNTEX bhiwadi",
+        "PARLE BISCUITS PVT SP2-4 RIICO INDL AREA NEEMRANA ,301705",
+        "ROCA BATHROOM PRODUCTS PVT.LTD\nbhiwadi.",
+        "Rajasthan Prime Steel Processing Center Pvt Ltd\nFactory Add: SPL-1A, Kushkhera Industrial Area, Tapukara",
+        "Ray Ban Sun Optics India Pvt. Ltd. Bhiwadi",
+        "Relaxo Footwears Limited,\nA-1130 & 1130 (A), Industrial Area, Phase-III, Bhiwadi, Dist. Alwar, Raj- 301019",
+        "SRF Ltd. Chemical Business, Village Jhiwana, Post Khijuriw, Tehsil- Tijara, District Alwar-301019",
+        "Saint Gobain India Pvt. Ltd., Plot No. SP-1, Kaharani, Bhiwadi Extension, Bhiwadi, Alwar-301019",
+        "Shri Ram Pistons & Rings Limited,\nSP-1-892 & 893, RIICO Industrial Area, Pathredi, District Alwar-301707",
+        "Siegwerk India Pvt. Ltd. Bhiwadi Alwar Road",
+        "Spirotech Heat Exchangers Pvt. Ltd.\nA-45-46 & 51-52, Industrial Area, Kaharani, Bhiwadi Extension, Bhiwadi- 301019",
+        "Supra craft packaging p ltd B-807 and 808 A\nPathredi, Bhiwadi",
+        "TOYODA GOSEI SYSTEM INDIA PVT. LTD.\nNeemrana",
+        "TOYOTA KIRLOSKAR NEEMRANA",
+        "TS Tech Sun Rajasthan Private Limited,\nWorks: SP 2-5 & 6, NIC, Majrakath, Neemrana,",
+        "The Hi-Tech Gears Limited, A-589, Industrial Complex, Bhiwadi- 301019",
+        "UNITED BREWERIES LTD , Chopanki",
+        "United Spirits Ltd.",
+        "VINTAGE DISTILLERS LTD.,\n117.MIA.ALWAR (RAJ)301001.",
+        "Vijay Solvex Ltd.\nBhagwati Sadan, Swami Dayanand Marg, Alwar-301001",
+        "Yutaka Autoparts India Pvt. Ltd, SPL-2C, Honda Components Supplier Park, Tapukara Industrial Area, Khuskhera, Biwadi-Alwar Road, Bhiwadi"
+      ],
+      "csr_statewide_count": 6,
+      "csr_total_available_count": 60,
+      "csr_specific_by_theme": {
+        "formal_education": 18,
+        "wash": 26,
+        "school_hardware": 21,
+        "other_school_initiative": 32,
+        "anganwadi": 3
+      },
+      "csr_statewide_by_theme": {
+        "formal_education": 3,
+        "wash": 1,
+        "school_hardware": 3,
+        "other_school_initiative": 4,
+        "anganwadi": 0
+      },
+      "total_school_count": 1822,
+      "schools_needing_help_count": 1419,
+      "toilet_required_count": 15,
+      "classroom_repair_needed_count": 1256,
+      "building_dilapidated_count": 33,
+      "new_classroom_requirement_count": 658,
+      "needs_help_no_specific_csr": false
+    },
+    "Balotara": {
+      "csr_specific_count": 0,
+      "csr_specific_companies": [],
+      "csr_statewide_count": 6,
+      "csr_total_available_count": 6,
+      "csr_specific_by_theme": {
+        "formal_education": 0,
+        "wash": 0,
+        "school_hardware": 0,
+        "other_school_initiative": 0,
+        "anganwadi": 0
+      },
+      "csr_statewide_by_theme": {
+        "formal_education": 3,
+        "wash": 1,
+        "school_hardware": 3,
+        "other_school_initiative": 4,
+        "anganwadi": 0
+      },
+      "total_school_count": 2125,
+      "schools_needing_help_count": 1287,
+      "toilet_required_count": 63,
+      "classroom_repair_needed_count": 1238,
+      "building_dilapidated_count": 39,
+      "new_classroom_requirement_count": 459,
+      "needs_help_no_specific_csr": true
+    },
+    "Banswara": {
+      "csr_specific_count": 5,
+      "csr_specific_companies": [
+        "BMD PVT LTD LNJ Nagar Mordi Raj PIN 327001",
+        "Banswara Syntex Ltd.Industrial Area, Dahod Road,  Banswara- 327001",
+        "RSWM LTD  MANDAWA SHIKAR, 515, SHARAT BOSE ROAD , UDAIPUR\n/KAPLKATA",
+        "RSWM Limited, Mayur Nagar,Lodha Banswara-327001",
+        "The India Cements Limited, Banswara Works, Post Vajwana, Banswara-327025"
+      ],
+      "csr_statewide_count": 6,
+      "csr_total_available_count": 11,
+      "csr_specific_by_theme": {
+        "formal_education": 2,
+        "wash": 3,
+        "school_hardware": 3,
+        "other_school_initiative": 3,
+        "anganwadi": 0
+      },
+      "csr_statewide_by_theme": {
+        "formal_education": 3,
+        "wash": 1,
+        "school_hardware": 3,
+        "other_school_initiative": 4,
+        "anganwadi": 0
+      },
+      "total_school_count": 2511,
+      "schools_needing_help_count": 2259,
+      "toilet_required_count": 14,
+      "classroom_repair_needed_count": 1798,
+      "building_dilapidated_count": 104,
+      "new_classroom_requirement_count": 967,
+      "needs_help_no_specific_csr": false
+    },
+    "Baran": {
+      "csr_specific_count": 8,
+      "csr_specific_companies": [
+        "Adani Power Limited.\nNH - 90, Atru Road, Village: Kawai, Tehsil: Atru, Dist.: Baran, 325219, Rajasthan, India.",
+        "Bosch Limited SP-663, RIICO Sitapura Industrial\nArea Jaipur-302022",
+        "Chambal Fertilisers and Chemicals Ltd., P.O. Gadepan- 325208, Kota",
+        "Chhabra Thermal Power Project",
+        "NTPC Ltd. Anta Gas Power Station, Anta,  Baran",
+        "Orient Green Power Company Rajasthan Pvt. Ltd.",
+        "Patanjali Foods Ltd Village Haripura Kota Road\nBaran",
+        "Shri Ram Rayons, Shri Ram Nagar, Kota-324004"
+      ],
+      "csr_statewide_count": 6,
+      "csr_total_available_count": 14,
+      "csr_specific_by_theme": {
+        "formal_education": 5,
+        "wash": 6,
+        "school_hardware": 7,
+        "other_school_initiative": 7,
+        "anganwadi": 1
+      },
+      "csr_statewide_by_theme": {
+        "formal_education": 3,
+        "wash": 1,
+        "school_hardware": 3,
+        "other_school_initiative": 4,
+        "anganwadi": 0
+      },
+      "total_school_count": 1362,
+      "schools_needing_help_count": 1157,
+      "toilet_required_count": 111,
+      "classroom_repair_needed_count": 954,
+      "building_dilapidated_count": 92,
+      "new_classroom_requirement_count": 653,
+      "needs_help_no_specific_csr": false
+    },
+    "Barmer": {
+      "csr_specific_count": 4,
+      "csr_specific_companies": [
+        "Ambuja Cement Foundation- Rabriyawas. Address-Village Rabriyawas, Tehsil Jaitaran, District Pali ( Rajastrhan)",
+        "Cairn Oil & Gas Vedanta Ltd.\nASF Center | 362- 363 | Jwala Mill Road | Udyog Vihar- IV |\nGurgaon 122015 | Haryana | India",
+        "JSW Energy (Barmer) Limited, PO & Village-\nBhadresh, District- Barmer, Rajasthan- 344001",
+        "Rajasthan State Mines & Minerals Limited"
+      ],
+      "csr_statewide_count": 6,
+      "csr_total_available_count": 10,
+      "csr_specific_by_theme": {
+        "formal_education": 4,
+        "wash": 3,
+        "school_hardware": 3,
+        "other_school_initiative": 3,
+        "anganwadi": 3
+      },
+      "csr_statewide_by_theme": {
+        "formal_education": 3,
+        "wash": 1,
+        "school_hardware": 3,
+        "other_school_initiative": 4,
+        "anganwadi": 0
+      },
+      "total_school_count": 2686,
+      "schools_needing_help_count": 2294,
+      "toilet_required_count": 60,
+      "classroom_repair_needed_count": 2203,
+      "building_dilapidated_count": 32,
+      "new_classroom_requirement_count": 707,
+      "needs_help_no_specific_csr": false
+    },
+    "Beawar": {
+      "csr_specific_count": 5,
+      "csr_specific_companies": [
+        "Ambuja Cement Foundation- Rabriyawas. Address-Village Rabriyawas, Tehsil Jaitaran, District Pali ( Rajastrhan)",
+        "Intech Organics Limited 143, Village Biratia\nKalan, Tehsil Raipur",
+        "Nuvoco Vistas Corporation Ltd., Nimbol Cement Plant, Pali",
+        "PG Foils ltd, village Pipalia Kalan",
+        "Shree Cement Ltd, Bangur Nagar, Post Box No. 33, Beawar, Ajmer-305901"
+      ],
+      "csr_statewide_count": 6,
+      "csr_total_available_count": 11,
+      "csr_specific_by_theme": {
+        "formal_education": 1,
+        "wash": 1,
+        "school_hardware": 1,
+        "other_school_initiative": 2,
+        "anganwadi": 2
+      },
+      "csr_statewide_by_theme": {
+        "formal_education": 3,
+        "wash": 1,
+        "school_hardware": 3,
+        "other_school_initiative": 4,
+        "anganwadi": 0
+      },
+      "total_school_count": 1215,
+      "schools_needing_help_count": 997,
+      "toilet_required_count": 29,
+      "classroom_repair_needed_count": 945,
+      "building_dilapidated_count": 20,
+      "new_classroom_requirement_count": 343,
+      "needs_help_no_specific_csr": false
+    },
+    "Bharatpur": {
+      "csr_specific_count": 1,
+      "csr_specific_companies": [
+        "Lupin Limited, Bharatpur Branch-\nLupin Human Welfare & Research Organization, 239, Krishna Nagar, Bharatpur"
+      ],
+      "csr_statewide_count": 6,
+      "csr_total_available_count": 7,
+      "csr_specific_by_theme": {
+        "formal_education": 0,
+        "wash": 0,
+        "school_hardware": 0,
+        "other_school_initiative": 0,
+        "anganwadi": 0
+      },
+      "csr_statewide_by_theme": {
+        "formal_education": 3,
+        "wash": 1,
+        "school_hardware": 3,
+        "other_school_initiative": 4,
+        "anganwadi": 0
+      },
+      "total_school_count": 1163,
+      "schools_needing_help_count": 884,
+      "toilet_required_count": 20,
+      "classroom_repair_needed_count": 800,
+      "building_dilapidated_count": 10,
+      "new_classroom_requirement_count": 436,
+      "needs_help_no_specific_csr": false
+    },
+    "Bhilwara": {
+      "csr_specific_count": 10,
+      "csr_specific_companies": [
+        "Ambuja Cement Foundation- Rabriyawas. Address-Village Rabriyawas, Tehsil Jaitaran, District Pali ( Rajastrhan)",
+        "Hindustan Zinc Limited, Chanderiya Lead-Zinc Smelter, P.O. Putholi, Chittorgarh (Rajasthan) -\n312021",
+        "Hindustan Zinc Ltd., Rampura Agucha, District-\nBhilwara ( Rajasthan) 311001",
+        "Jindal Saw Ltd.,       Araji No. 9697/6711, Near Tiranga Hills, Village-Pur Bhilwara-311802",
+        "Kanchan India Limited, 19- 20, Bhilwara Textile Market, Pur Road, Bhilwara-311001",
+        "Manglam Build-Developers Limited\n6th Floor, Apex Mall, Lal Kothi, Tonk Road, Jaipur",
+        "NUVOCO",
+        "Nitin Spinners Limited, 16- 17 Km. Stone, Chittor Road, Hamirgarh, Bhilwara- 311001",
+        "RSWM LTD  MANDAWA SHIKAR, 515, SHARAT BOSE ROAD , UDAIPUR\n/KAPLKATA",
+        "RSWM Limited, Mayur Nagar,Lodha Banswara-327001"
+      ],
+      "csr_statewide_count": 6,
+      "csr_total_available_count": 16,
+      "csr_specific_by_theme": {
+        "formal_education": 6,
+        "wash": 5,
+        "school_hardware": 4,
+        "other_school_initiative": 4,
+        "anganwadi": 3
+      },
+      "csr_statewide_by_theme": {
+        "formal_education": 3,
+        "wash": 1,
+        "school_hardware": 3,
+        "other_school_initiative": 4,
+        "anganwadi": 0
+      },
+      "total_school_count": 2990,
+      "schools_needing_help_count": 2373,
+      "toilet_required_count": 118,
+      "classroom_repair_needed_count": 2098,
+      "building_dilapidated_count": 98,
+      "new_classroom_requirement_count": 692,
+      "needs_help_no_specific_csr": false
+    },
+    "Bikaner": {
+      "csr_specific_count": 6,
+      "csr_specific_companies": [
+        "Amar Pratap Developers Pvt Ltd., A-21, Ground Floor, Sadulganj, Bikaner.",
+        "Ambuja Cement Foundation- Rabriyawas. Address-Village Rabriyawas, Tehsil Jaitaran, District Pali ( Rajastrhan)",
+        "Bikaji Foods International Ltd., F 196-199, F 178\n& E 188, Bichhwal Industrial Area, Bikaner-334006",
+        "Manglam Build-Developers Limited\n6th Floor, Apex Mall, Lal Kothi, Tonk Road, Jaipur",
+        "NLC India Ltd. Barsingsar Thermal Power Station, Barsingsar, Bikaner - 334402",
+        "Rajasthan State Mines & Minerals Limited"
+      ],
+      "csr_statewide_count": 6,
+      "csr_total_available_count": 12,
+      "csr_specific_by_theme": {
+        "formal_education": 5,
+        "wash": 2,
+        "school_hardware": 2,
+        "other_school_initiative": 2,
+        "anganwadi": 1
+      },
+      "csr_statewide_by_theme": {
+        "formal_education": 3,
+        "wash": 1,
+        "school_hardware": 3,
+        "other_school_initiative": 4,
+        "anganwadi": 0
+      },
+      "total_school_count": 2101,
+      "schools_needing_help_count": 1507,
+      "toilet_required_count": 30,
+      "classroom_repair_needed_count": 1403,
+      "building_dilapidated_count": 35,
+      "new_classroom_requirement_count": 498,
+      "needs_help_no_specific_csr": false
+    },
+    "Bundi": {
+      "csr_specific_count": 5,
+      "csr_specific_companies": [
+        "ACC Limited, Unit-Lakheri Cement Works, PO-\nLakheri, Bundi- 323603",
+        "AWL Agri Business Ltd. (Formerly Known as\nAdani Wilmar Ltd.) Vill Roondh Dhooninath, The Ramgarh Alwar (Raj)",
+        "AWL Agri Business ltd (Adani Wilmar Ltd.)\nJaipur-Kota Highway, SILOR",
+        "Chambal Fertilisers and Chemicals Ltd., P.O. Gadepan- 325208, Kota",
+        "Godrej Agrovet Limited"
+      ],
+      "csr_statewide_count": 6,
+      "csr_total_available_count": 11,
+      "csr_specific_by_theme": {
+        "formal_education": 3,
+        "wash": 5,
+        "school_hardware": 4,
+        "other_school_initiative": 5,
+        "anganwadi": 3
+      },
+      "csr_statewide_by_theme": {
+        "formal_education": 3,
+        "wash": 1,
+        "school_hardware": 3,
+        "other_school_initiative": 4,
+        "anganwadi": 0
+      },
+      "total_school_count": 1233,
+      "schools_needing_help_count": 1144,
+      "toilet_required_count": 6,
+      "classroom_repair_needed_count": 1110,
+      "building_dilapidated_count": 26,
+      "new_classroom_requirement_count": 292,
+      "needs_help_no_specific_csr": false
+    },
+    "Chittaurgarh": {
+      "csr_specific_count": 13,
+      "csr_specific_companies": [
+        "Aditya (Ultratech) Cement Works Ltd, Sawa-\nShambupura Road, Adityapuram, Chittorgarh-312622",
+        "Ambuja Cement Foundation, Unit- Marwar Mundwa, Nagaur\nCourier Address- 21-22, Ganpati Plaza Complex, Near Bhagat Chauraha, Tehsil- Beawar, Ajmer-305901",
+        "Asahi India Glass Limited F-3, Soniyana,\nChittorgarh, Rajasthan",
+        "Birla Corporation Limited Units : Birla Cement Works & Chanderia Cement Works,\nMadhav Nagar,Sector-III, Chanderia, Chittorgarh \u2013 312021-Rajasthan,",
+        "Hindustan Zinc Limited, Chanderiya Lead-Zinc Smelter, P.O. Putholi, Chittorgarh (Rajasthan) -\n312021",
+        "Hindustan Zinc Ltd., Rampura Agucha, District-\nBhilwara ( Rajasthan) 311001",
+        "J.K.White Cement Works (Unit of JK Cement Ltd.), P.O. Gotan, Nagaur- 342902",
+        "JK Cement Works Nimbahera & Mangrol",
+        "NUVOCO",
+        "Nitin Spinners Limited, 16- 17 Km. Stone, Chittor Road, Hamirgarh, Bhilwara- 311001",
+        "Nuclear Power Corporation Of India Ltd. Rawatbhata Rajasthan Site, PO-Anushakti, Rawatbhata, District - Chittaurgarh",
+        "UltraTech Nathdwara Cement Limited Nathdwara Cement Works AdityaNagar,Pindwara\nDis.Sirohi (Rajasthan)",
+        "Wonder Cement Limited"
+      ],
+      "csr_statewide_count": 6,
+      "csr_total_available_count": 19,
+      "csr_specific_by_theme": {
+        "formal_education": 11,
+        "wash": 12,
+        "school_hardware": 12,
+        "other_school_initiative": 10,
+        "anganwadi": 8
+      },
+      "csr_statewide_by_theme": {
+        "formal_education": 3,
+        "wash": 1,
+        "school_hardware": 3,
+        "other_school_initiative": 4,
+        "anganwadi": 0
+      },
+      "total_school_count": 1742,
+      "schools_needing_help_count": 1378,
+      "toilet_required_count": 37,
+      "classroom_repair_needed_count": 1226,
+      "building_dilapidated_count": 67,
+      "new_classroom_requirement_count": 314,
+      "needs_help_no_specific_csr": false
+    },
+    "Churu": {
+      "csr_specific_count": 2,
+      "csr_specific_companies": [
+        "Ambuja Cement Foundation- Rabriyawas. Address-Village Rabriyawas, Tehsil Jaitaran, District Pali ( Rajastrhan)",
+        "GENUS POWER INFRASTRUCTURES\nLIMITED, G- 123, Sector-63 NA Noida Gautam Buddha Nagar, Uttar Pradesh, 201307, India"
+      ],
+      "csr_statewide_count": 6,
+      "csr_total_available_count": 8,
+      "csr_specific_by_theme": {
+        "formal_education": 2,
+        "wash": 2,
+        "school_hardware": 1,
+        "other_school_initiative": 0,
+        "anganwadi": 1
+      },
+      "csr_statewide_by_theme": {
+        "formal_education": 3,
+        "wash": 1,
+        "school_hardware": 3,
+        "other_school_initiative": 4,
+        "anganwadi": 0
+      },
+      "total_school_count": 1523,
+      "schools_needing_help_count": 1227,
+      "toilet_required_count": 65,
+      "classroom_repair_needed_count": 1142,
+      "building_dilapidated_count": 29,
+      "new_classroom_requirement_count": 626,
+      "needs_help_no_specific_csr": false
+    },
+    "Dausa": {
+      "csr_specific_count": 0,
+      "csr_specific_companies": [],
+      "csr_statewide_count": 6,
+      "csr_total_available_count": 6,
+      "csr_specific_by_theme": {
+        "formal_education": 0,
+        "wash": 0,
+        "school_hardware": 0,
+        "other_school_initiative": 0,
+        "anganwadi": 0
+      },
+      "csr_statewide_by_theme": {
+        "formal_education": 3,
+        "wash": 1,
+        "school_hardware": 3,
+        "other_school_initiative": 4,
+        "anganwadi": 0
+      },
+      "total_school_count": 1943,
+      "schools_needing_help_count": 1360,
+      "toilet_required_count": 37,
+      "classroom_repair_needed_count": 1228,
+      "building_dilapidated_count": 106,
+      "new_classroom_requirement_count": 746,
+      "needs_help_no_specific_csr": true
+    },
+    "Deeg": {
+      "csr_specific_count": 0,
+      "csr_specific_companies": [],
+      "csr_statewide_count": 6,
+      "csr_total_available_count": 6,
+      "csr_specific_by_theme": {
+        "formal_education": 0,
+        "wash": 0,
+        "school_hardware": 0,
+        "other_school_initiative": 0,
+        "anganwadi": 0
+      },
+      "csr_statewide_by_theme": {
+        "formal_education": 3,
+        "wash": 1,
+        "school_hardware": 3,
+        "other_school_initiative": 4,
+        "anganwadi": 0
+      },
+      "total_school_count": 875,
+      "schools_needing_help_count": 638,
+      "toilet_required_count": 27,
+      "classroom_repair_needed_count": 545,
+      "building_dilapidated_count": 57,
+      "new_classroom_requirement_count": 343,
+      "needs_help_no_specific_csr": true
+    },
+    "Dhaulpur": {
+      "csr_specific_count": 2,
+      "csr_specific_companies": [
+        "Lupin Limited, Bharatpur Branch-\nLupin Human Welfare & Research Organization, 239, Krishna Nagar, Bharatpur",
+        "Matura refinery , (mathura) uttarpradesh281005"
+      ],
+      "csr_statewide_count": 6,
+      "csr_total_available_count": 8,
+      "csr_specific_by_theme": {
+        "formal_education": 1,
+        "wash": 1,
+        "school_hardware": 1,
+        "other_school_initiative": 1,
+        "anganwadi": 0
+      },
+      "csr_statewide_by_theme": {
+        "formal_education": 3,
+        "wash": 1,
+        "school_hardware": 3,
+        "other_school_initiative": 4,
+        "anganwadi": 0
+      },
+      "total_school_count": 1154,
+      "schools_needing_help_count": 1044,
+      "toilet_required_count": 12,
+      "classroom_repair_needed_count": 928,
+      "building_dilapidated_count": 19,
+      "new_classroom_requirement_count": 609,
+      "needs_help_no_specific_csr": false
+    },
+    "Didwana-Kuchaman": {
+      "csr_specific_count": 0,
+      "csr_specific_companies": [],
+      "csr_statewide_count": 6,
+      "csr_total_available_count": 6,
+      "csr_specific_by_theme": {
+        "formal_education": 0,
+        "wash": 0,
+        "school_hardware": 0,
+        "other_school_initiative": 0,
+        "anganwadi": 0
+      },
+      "csr_statewide_by_theme": {
+        "formal_education": 3,
+        "wash": 1,
+        "school_hardware": 3,
+        "other_school_initiative": 4,
+        "anganwadi": 0
+      },
+      "total_school_count": 1497,
+      "schools_needing_help_count": 1175,
+      "toilet_required_count": 1,
+      "classroom_repair_needed_count": 1114,
+      "building_dilapidated_count": 22,
+      "new_classroom_requirement_count": 217,
+      "needs_help_no_specific_csr": true
+    },
+    "Dungarpur": {
+      "csr_specific_count": 0,
+      "csr_specific_companies": [],
+      "csr_statewide_count": 6,
+      "csr_total_available_count": 6,
+      "csr_specific_by_theme": {
+        "formal_education": 0,
+        "wash": 0,
+        "school_hardware": 0,
+        "other_school_initiative": 0,
+        "anganwadi": 0
+      },
+      "csr_statewide_by_theme": {
+        "formal_education": 3,
+        "wash": 1,
+        "school_hardware": 3,
+        "other_school_initiative": 4,
+        "anganwadi": 0
+      },
+      "total_school_count": 2400,
+      "schools_needing_help_count": 1989,
+      "toilet_required_count": 186,
+      "classroom_repair_needed_count": 1515,
+      "building_dilapidated_count": 188,
+      "new_classroom_requirement_count": 906,
+      "needs_help_no_specific_csr": true
+    },
+    "Ganganagar": {
+      "csr_specific_count": 6,
+      "csr_specific_companies": [
+        "Ambuja Cement Foundation- Rabriyawas. Address-Village Rabriyawas, Tehsil Jaitaran, District Pali ( Rajastrhan)",
+        "Khandelia Oil & General Mills Pvt. Ltd., Udyog Vihar, Sri Ganganagar.",
+        "Patanjali Food .Ltd., a 67, 70, RIICO Industrial Area,sriganganagar",
+        "Suratgarh Super Critical Thermal Power Plant, Prabhat nagar, STPS Colony, Suratgarh-\n335804Sriganganangar.",
+        "Suratgarh Super Thermal Power Station, STPS Colony, Suratgarh- 335804Sriganganangar.",
+        "kalpataru power transmission ltd. Padampur,\nsriganganagar"
+      ],
+      "csr_statewide_count": 6,
+      "csr_total_available_count": 12,
+      "csr_specific_by_theme": {
+        "formal_education": 3,
+        "wash": 1,
+        "school_hardware": 3,
+        "other_school_initiative": 0,
+        "anganwadi": 1
+      },
+      "csr_statewide_by_theme": {
+        "formal_education": 3,
+        "wash": 1,
+        "school_hardware": 3,
+        "other_school_initiative": 4,
+        "anganwadi": 0
+      },
+      "total_school_count": 2075,
+      "schools_needing_help_count": 1556,
+      "toilet_required_count": 0,
+      "classroom_repair_needed_count": 1082,
+      "building_dilapidated_count": 91,
+      "new_classroom_requirement_count": 884,
+      "needs_help_no_specific_csr": false
+    },
+    "Hanumangarh": {
+      "csr_specific_count": 1,
+      "csr_specific_companies": [
+        "Ambuja Cement Foundation- Rabriyawas. Address-Village Rabriyawas, Tehsil Jaitaran, District Pali ( Rajastrhan)"
+      ],
+      "csr_statewide_count": 6,
+      "csr_total_available_count": 7,
+      "csr_specific_by_theme": {
+        "formal_education": 1,
+        "wash": 1,
+        "school_hardware": 0,
+        "other_school_initiative": 0,
+        "anganwadi": 1
+      },
+      "csr_statewide_by_theme": {
+        "formal_education": 3,
+        "wash": 1,
+        "school_hardware": 3,
+        "other_school_initiative": 4,
+        "anganwadi": 0
+      },
+      "total_school_count": 1603,
+      "schools_needing_help_count": 886,
+      "toilet_required_count": 50,
+      "classroom_repair_needed_count": 755,
+      "building_dilapidated_count": 20,
+      "new_classroom_requirement_count": 346,
+      "needs_help_no_specific_csr": false
+    },
+    "Jaipur": {
+      "csr_specific_count": 31,
+      "csr_specific_companies": [
+        "ARL Infratech Ltd. \"Akshat House\", A-27/13A, Kanti Chandra Road, Banipark, Jaipur",
+        "ASHIANA HOUSING LTD.BHIWADI",
+        "AU Small Finance Bank",
+        "Aditya (Ultratech) Cement Works Ltd, Sawa-\nShambupura Road, Adityapuram, Chittorgarh-312622",
+        "Aksh Optifibre Ltd, Fiber and Cable Division, F1075-81, Phase-III, RIICO Industrial area, Bhiwadi -301019 (Alwar & Reengus)",
+        "Ambuja Cement Foundation- Rabriyawas. Address-Village Rabriyawas, Tehsil Jaitaran, District Pali ( Rajastrhan)",
+        "Bosch Limited SP-663, RIICO Sitapura Industrial\nArea Jaipur-302022",
+        "Coloured Rocks Trading pvt",
+        "Compucom Software Limited,                 IT: 14-15, EPIP, Sitapura, Jaipur- 302022\nRajasthan,India",
+        "DEREWALA NDUSTRIES LIMITED\nPLOT NO. C-69, FLAT NO. 304, PARADISE REGENCY SAROJINI MARG, C-SCHEME, JAIPUR, 302001",
+        "EIH Ltd.( Unit The Oberoi Vanyavilas), 7 Sham Nath Marg, Delhi- 110054\nThe Oberoi Vanyavilas, Ranthambhore Road,\nSawai Mahdhopur- 322001",
+        "GENUS POWER INFRASTRUCTURES\nLIMITED, G- 123, Sector-63 NA Noida Gautam Buddha Nagar, Uttar Pradesh, 201307, India",
+        "Goel Construction Company Private Limited having registered office at 230, City Centre, S.C. Road, Jaipur- 302001, Rajasthan",
+        "Gravita India Limited \"Saurabh\", Chittora Road, Harsulia Mode, Diggi-Malpura Road, Tehsil- Phagi, Jaipur- 303904",
+        "Hero Moto Corp Ltd., Plot No. SPL-1, RIICO Industrial Area, Phase-2, Kukas, Jaipur- 302028",
+        "JCB India Limited, Plot No. DTA-006-001-002, Village Bagru Khurd, Mahindra World City, Tehsil- Sanganer, Jaipur- 302037",
+        "Jaipur Rugs Company Pvt. Ltd, Mansarovar Ind area",
+        "Lotus Dairy Products Pvt. Ltd., 5th & 6th Floor, City Plaza, Banipark, Jhotwara Road, Jaipur-302016",
+        "Mahindra world city Jaipur.Ltd. 4th Floor,411 Neelkanth tower ,Bhawani Singh Road C-Scheme,Jaipur",
+        "Manglam Build-Developers Limited\n6th Floor, Apex Mall, Lal Kothi, Tonk Road, Jaipur",
+        "Mayur Uniquoters Limited, 28, 4th Floor, Lakshmi Complex, M.I.Road, Jaipur-302001",
+        "National Engineering Industries Ltd",
+        "Patanjali Foods Ltd Village Haripura Kota Road\nBaran",
+        "Pinkcity Jewelhouse Pvt Ltd 76, Dhuleshwar Gardens, C- Scheme, Jaipur 302001",
+        "RSWM Limited, Mayur Nagar,Lodha Banswara-327001",
+        "Rajasthan Knowledge Corporation Ltd., 7A, Jhalana Institutional Area, Behind RTO, Jaipur",
+        "Rajasthan State Beverasges Corporation Limited, Vitta Bhawan, Janpath, Near Vidhan sabha",
+        "Udaipur Mineral Development Syndicate Private Limited\nAdd- Golcha Trade Centre , MI Road , Jaipur-\n302001, Rajasthan",
+        "Ultratech Cement Ltd. (Unit- Kotputli Cement Works) Mohanpura, Kotputli, Jaipur- 303108",
+        "Vaibhav Global Limited, K6B Fateh Tiba, Adarsh Nagar, Jaipur - 302004",
+        "Vinayak Jewels (India) Pvt. Ltd, H-58 (A) & (B), H-59, H-60 & H-61, SEZ-II, G&J Zone, RIICO,\nSitapura, Jaipur- 302022"
+      ],
+      "csr_statewide_count": 6,
+      "csr_total_available_count": 37,
+      "csr_specific_by_theme": {
+        "formal_education": 17,
+        "wash": 10,
+        "school_hardware": 10,
+        "other_school_initiative": 10,
+        "anganwadi": 4
+      },
+      "csr_statewide_by_theme": {
+        "formal_education": 3,
+        "wash": 1,
+        "school_hardware": 3,
+        "other_school_initiative": 4,
+        "anganwadi": 0
+      },
+      "total_school_count": 3930,
+      "schools_needing_help_count": 2666,
+      "toilet_required_count": 55,
+      "classroom_repair_needed_count": 2436,
+      "building_dilapidated_count": 96,
+      "new_classroom_requirement_count": 1174,
+      "needs_help_no_specific_csr": false
+    },
+    "Jaisalmer": {
+      "csr_specific_count": 5,
+      "csr_specific_companies": [
+        "J.K.Cement Works, Jaisalmer",
+        "JSW Energy (Barmer) Limited, PO & Village-\nBhadresh, District- Barmer, Rajasthan- 344001",
+        "Mangalam Cement Ltd Adtiya Nagar Morak Kota 326520",
+        "Rajasthan State Mines & Minerals Limited",
+        "Wonder Cement Limited, Jaisalmer"
+      ],
+      "csr_statewide_count": 6,
+      "csr_total_available_count": 11,
+      "csr_specific_by_theme": {
+        "formal_education": 4,
+        "wash": 1,
+        "school_hardware": 4,
+        "other_school_initiative": 3,
+        "anganwadi": 1
+      },
+      "csr_statewide_by_theme": {
+        "formal_education": 3,
+        "wash": 1,
+        "school_hardware": 3,
+        "other_school_initiative": 4,
+        "anganwadi": 0
+      },
+      "total_school_count": 1366,
+      "schools_needing_help_count": 1202,
+      "toilet_required_count": 58,
+      "classroom_repair_needed_count": 1144,
+      "building_dilapidated_count": 43,
+      "new_classroom_requirement_count": 491,
+      "needs_help_no_specific_csr": false
+    },
+    "Jalor": {
+      "csr_specific_count": 1,
+      "csr_specific_companies": [
+        "Cairn Oil & Gas Vedanta Ltd.\nASF Center | 362- 363 | Jwala Mill Road | Udyog Vihar- IV |\nGurgaon 122015 | Haryana | India"
+      ],
+      "csr_statewide_count": 6,
+      "csr_total_available_count": 7,
+      "csr_specific_by_theme": {
+        "formal_education": 1,
+        "wash": 1,
+        "school_hardware": 1,
+        "other_school_initiative": 1,
+        "anganwadi": 1
+      },
+      "csr_statewide_by_theme": {
+        "formal_education": 3,
+        "wash": 1,
+        "school_hardware": 3,
+        "other_school_initiative": 4,
+        "anganwadi": 0
+      },
+      "total_school_count": 2198,
+      "schools_needing_help_count": 1614,
+      "toilet_required_count": 43,
+      "classroom_repair_needed_count": 1565,
+      "building_dilapidated_count": 15,
+      "new_classroom_requirement_count": 588,
+      "needs_help_no_specific_csr": false
+    },
+    "Jhalawar": {
+      "csr_specific_count": 4,
+      "csr_specific_companies": [
+        "Chambal Fertilisers and Chemicals Ltd., P.O. Gadepan- 325208, Kota",
+        "DCM Shriram Ltd., Sriram Nagar, Kota",
+        "Mangalam Cement Ltd Adtiya Nagar Morak Kota 326520",
+        "Sutlej Textiles & Industries Ltd., Rajasthan Textiles Mills\nPachpahar Road, Bhawanimandi- 326502"
+      ],
+      "csr_statewide_count": 6,
+      "csr_total_available_count": 10,
+      "csr_specific_by_theme": {
+        "formal_education": 1,
+        "wash": 2,
+        "school_hardware": 4,
+        "other_school_initiative": 2,
+        "anganwadi": 1
+      },
+      "csr_statewide_by_theme": {
+        "formal_education": 3,
+        "wash": 1,
+        "school_hardware": 3,
+        "other_school_initiative": 4,
+        "anganwadi": 0
+      },
+      "total_school_count": 1671,
+      "schools_needing_help_count": 1457,
+      "toilet_required_count": 50,
+      "classroom_repair_needed_count": 1302,
+      "building_dilapidated_count": 217,
+      "new_classroom_requirement_count": 668,
+      "needs_help_no_specific_csr": false
+    },
+    "Jhunjhunun": {
+      "csr_specific_count": 3,
+      "csr_specific_companies": [
+        "Ambuja Cement Foundation- Rabriyawas. Address-Village Rabriyawas, Tehsil Jaitaran, District Pali ( Rajastrhan)",
+        "Hindustan Cooper Ltd., Khetdi Cooper Complex,\nKhetri Nagar, Jhunjunu.",
+        "Manglam Build-Developers Limited\n6th Floor, Apex Mall, Lal Kothi, Tonk Road, Jaipur"
+      ],
+      "csr_statewide_count": 6,
+      "csr_total_available_count": 9,
+      "csr_specific_by_theme": {
+        "formal_education": 3,
+        "wash": 2,
+        "school_hardware": 1,
+        "other_school_initiative": 1,
+        "anganwadi": 1
+      },
+      "csr_statewide_by_theme": {
+        "formal_education": 3,
+        "wash": 1,
+        "school_hardware": 3,
+        "other_school_initiative": 4,
+        "anganwadi": 0
+      },
+      "total_school_count": 1945,
+      "schools_needing_help_count": 1161,
+      "toilet_required_count": 6,
+      "classroom_repair_needed_count": 1012,
+      "building_dilapidated_count": 28,
+      "new_classroom_requirement_count": 349,
+      "needs_help_no_specific_csr": false
+    },
+    "Jodhpur": {
+      "csr_specific_count": 7,
+      "csr_specific_companies": [
+        "ASHIANA HOUSING LTD.BHIWADI",
+        "Aditya (Ultratech) Cement Works Ltd, Sawa-\nShambupura Road, Adityapuram, Chittorgarh-312622",
+        "Ambuja Cement Foundation- Rabriyawas. Address-Village Rabriyawas, Tehsil Jaitaran, District Pali ( Rajastrhan)",
+        "Cairn Oil & Gas Vedanta Ltd.\nASF Center | 362- 363 | Jwala Mill Road | Udyog Vihar- IV |\nGurgaon 122015 | Haryana | India",
+        "JSW Energy (Barmer) Limited, PO & Village-\nBhadresh, District- Barmer, Rajasthan- 344001",
+        "Ultratech Cement Ltd. (Unit- Kotputli Cement Works) Mohanpura, Kotputli, Jaipur- 303108",
+        "Varah Infra Ltd,Umesh Smriti, 6, Jalam Vikas Scheme, Paota B Road,  Jodhpur."
+      ],
+      "csr_statewide_count": 6,
+      "csr_total_available_count": 13,
+      "csr_specific_by_theme": {
+        "formal_education": 5,
+        "wash": 5,
+        "school_hardware": 4,
+        "other_school_initiative": 4,
+        "anganwadi": 6
+      },
+      "csr_statewide_by_theme": {
+        "formal_education": 3,
+        "wash": 1,
+        "school_hardware": 3,
+        "other_school_initiative": 4,
+        "anganwadi": 0
+      },
+      "total_school_count": 2645,
+      "schools_needing_help_count": 2015,
+      "toilet_required_count": 0,
+      "classroom_repair_needed_count": 1984,
+      "building_dilapidated_count": 17,
+      "new_classroom_requirement_count": 325,
+      "needs_help_no_specific_csr": false
+    },
+    "Karauli": {
+      "csr_specific_count": 1,
+      "csr_specific_companies": [
+        "Ambuja Cement Foundation- Rabriyawas. Address-Village Rabriyawas, Tehsil Jaitaran, District Pali ( Rajastrhan)"
+      ],
+      "csr_statewide_count": 6,
+      "csr_total_available_count": 7,
+      "csr_specific_by_theme": {
+        "formal_education": 1,
+        "wash": 1,
+        "school_hardware": 0,
+        "other_school_initiative": 0,
+        "anganwadi": 1
+      },
+      "csr_statewide_by_theme": {
+        "formal_education": 3,
+        "wash": 1,
+        "school_hardware": 3,
+        "other_school_initiative": 4,
+        "anganwadi": 0
+      },
+      "total_school_count": 1491,
+      "schools_needing_help_count": 1324,
+      "toilet_required_count": 16,
+      "classroom_repair_needed_count": 1240,
+      "building_dilapidated_count": 22,
+      "new_classroom_requirement_count": 509,
+      "needs_help_no_specific_csr": false
+    },
+    "Khairthal-Tijara": {
+      "csr_specific_count": 1,
+      "csr_specific_companies": [
+        "Siegwerk India Pvt. Ltd. Bhiwadi Alwar Road"
+      ],
+      "csr_statewide_count": 6,
+      "csr_total_available_count": 7,
+      "csr_specific_by_theme": {
+        "formal_education": 0,
+        "wash": 0,
+        "school_hardware": 1,
+        "other_school_initiative": 1,
+        "anganwadi": 0
+      },
+      "csr_statewide_by_theme": {
+        "formal_education": 3,
+        "wash": 1,
+        "school_hardware": 3,
+        "other_school_initiative": 4,
+        "anganwadi": 0
+      },
+      "total_school_count": 883,
+      "schools_needing_help_count": 669,
+      "toilet_required_count": 6,
+      "classroom_repair_needed_count": 617,
+      "building_dilapidated_count": 15,
+      "new_classroom_requirement_count": 306,
+      "needs_help_no_specific_csr": false
+    },
+    "Kota": {
+      "csr_specific_count": 14,
+      "csr_specific_companies": [
+        "Ambuja Cement Foundation, Unit- Marwar Mundwa, Nagaur\nCourier Address- 21-22, Ganpati Plaza Complex, Near Bhagat Chauraha, Tehsil- Beawar, Ajmer-305901",
+        "Ambuja Cement Foundation- Rabriyawas. Address-Village Rabriyawas, Tehsil Jaitaran, District Pali ( Rajastrhan)",
+        "Associated Stone Industries (ASI) House Kudayla Industrial Area Ramganjmandi Kota",
+        "Chambal Fertilisers and Chemicals Ltd., P.O. Gadepan- 325208, Kota",
+        "DCM Shriram Ltd., Sriram Nagar, Kota",
+        "Goyal Protein Ltd. Kasar, Kota",
+        "Goyal veg oils ltd, kasar, kota",
+        "Mahesh Edibale Oil Manufactures Pvt Ltd, Kota",
+        "Mangalam Cement Ltd Adtiya Nagar Morak Kota 326520",
+        "Multimetals Ltd. Plot No 6 & 7 Heavy Industrial\n/area Kansua road Kota 324003",
+        "OM Metals Infraprojects B-117, 118 IPIA road\nno. 5 Kota",
+        "Patanjali Foods Ltd Village Haripura Kota Road\nBaran",
+        "Shri Ram Rayons, Shri Ram Nagar, Kota-324004",
+        "World of Stones Private Limited (Formally Known as Shree Agencies Private Limited)Address: 8th Floor, A-14 (A),\nIndraprasth Industrial Area, Kota, Rajasthan"
+      ],
+      "csr_statewide_count": 6,
+      "csr_total_available_count": 20,
+      "csr_specific_by_theme": {
+        "formal_education": 5,
+        "wash": 5,
+        "school_hardware": 10,
+        "other_school_initiative": 5,
+        "anganwadi": 2
+      },
+      "csr_statewide_by_theme": {
+        "formal_education": 3,
+        "wash": 1,
+        "school_hardware": 3,
+        "other_school_initiative": 4,
+        "anganwadi": 0
+      },
+      "total_school_count": 1137,
+      "schools_needing_help_count": 970,
+      "toilet_required_count": 54,
+      "classroom_repair_needed_count": 895,
+      "building_dilapidated_count": 32,
+      "new_classroom_requirement_count": 525,
+      "needs_help_no_specific_csr": false
+    },
+    "Kotputli-Behror": {
+      "csr_specific_count": 0,
+      "csr_specific_companies": [],
+      "csr_statewide_count": 6,
+      "csr_total_available_count": 6,
+      "csr_specific_by_theme": {
+        "formal_education": 0,
+        "wash": 0,
+        "school_hardware": 0,
+        "other_school_initiative": 0,
+        "anganwadi": 0
+      },
+      "csr_statewide_by_theme": {
+        "formal_education": 3,
+        "wash": 1,
+        "school_hardware": 3,
+        "other_school_initiative": 4,
+        "anganwadi": 0
+      },
+      "total_school_count": 1247,
+      "schools_needing_help_count": 718,
+      "toilet_required_count": 4,
+      "classroom_repair_needed_count": 649,
+      "building_dilapidated_count": 3,
+      "new_classroom_requirement_count": 258,
+      "needs_help_no_specific_csr": true
+    },
+    "Nagaur": {
+      "csr_specific_count": 5,
+      "csr_specific_companies": [
+        "Ambuja Cement Foundation, Unit- Marwar Mundwa, Nagaur\nCourier Address- 21-22, Ganpati Plaza Complex, Near Bhagat Chauraha, Tehsil- Beawar, Ajmer-305901",
+        "Ambuja Cement Foundation- Rabriyawas. Address-Village Rabriyawas, Tehsil Jaitaran, District Pali ( Rajastrhan)",
+        "J.K.White Cement Works (Unit of JK Cement Ltd.), P.O. Gotan, Nagaur- 342902",
+        "JK Cement Works Nimbahera & Mangrol",
+        "Rajasthan State Mines & Minerals Limited"
+      ],
+      "csr_statewide_count": 6,
+      "csr_total_available_count": 11,
+      "csr_specific_by_theme": {
+        "formal_education": 4,
+        "wash": 4,
+        "school_hardware": 4,
+        "other_school_initiative": 3,
+        "anganwadi": 2
+      },
+      "csr_statewide_by_theme": {
+        "formal_education": 3,
+        "wash": 1,
+        "school_hardware": 3,
+        "other_school_initiative": 4,
+        "anganwadi": 0
+      },
+      "total_school_count": 1607,
+      "schools_needing_help_count": 1428,
+      "toilet_required_count": 1,
+      "classroom_repair_needed_count": 1411,
+      "building_dilapidated_count": 2,
+      "new_classroom_requirement_count": 223,
+      "needs_help_no_specific_csr": false
+    },
+    "Pali": {
+      "csr_specific_count": 5,
+      "csr_specific_companies": [
+        "Ambuja Cement Foundation- Rabriyawas. Address-Village Rabriyawas, Tehsil Jaitaran, District Pali ( Rajastrhan)",
+        "Intech Organics Limited 143, Village Biratia\nKalan, Tehsil Raipur",
+        "Maharaja Shree Umaid Mills Ltd. Jodhpur Road, Pali- 306401",
+        "NUVOCO",
+        "PG Foils ltd, village Pipalia Kalan"
+      ],
+      "csr_statewide_count": 6,
+      "csr_total_available_count": 11,
+      "csr_specific_by_theme": {
+        "formal_education": 3,
+        "wash": 2,
+        "school_hardware": 2,
+        "other_school_initiative": 3,
+        "anganwadi": 3
+      },
+      "csr_statewide_by_theme": {
+        "formal_education": 3,
+        "wash": 1,
+        "school_hardware": 3,
+        "other_school_initiative": 4,
+        "anganwadi": 0
+      },
+      "total_school_count": 1286,
+      "schools_needing_help_count": 1092,
+      "toilet_required_count": 54,
+      "classroom_repair_needed_count": 1060,
+      "building_dilapidated_count": 6,
+      "new_classroom_requirement_count": 291,
+      "needs_help_no_specific_csr": false
+    },
+    "Phalodi": {
+      "csr_specific_count": 1,
+      "csr_specific_companies": [
+        "Ambuja Cement Foundation- Rabriyawas. Address-Village Rabriyawas, Tehsil Jaitaran, District Pali ( Rajastrhan)"
+      ],
+      "csr_statewide_count": 6,
+      "csr_total_available_count": 7,
+      "csr_specific_by_theme": {
+        "formal_education": 1,
+        "wash": 1,
+        "school_hardware": 0,
+        "other_school_initiative": 0,
+        "anganwadi": 1
+      },
+      "csr_statewide_by_theme": {
+        "formal_education": 3,
+        "wash": 1,
+        "school_hardware": 3,
+        "other_school_initiative": 4,
+        "anganwadi": 0
+      },
+      "total_school_count": 1580,
+      "schools_needing_help_count": 1169,
+      "toilet_required_count": 0,
+      "classroom_repair_needed_count": 1095,
+      "building_dilapidated_count": 5,
+      "new_classroom_requirement_count": 479,
+      "needs_help_no_specific_csr": false
+    },
+    "Pratapgarh": {
+      "csr_specific_count": 1,
+      "csr_specific_companies": [
+        "NUVOCO"
+      ],
+      "csr_statewide_count": 6,
+      "csr_total_available_count": 7,
+      "csr_specific_by_theme": {
+        "formal_education": 1,
+        "wash": 1,
+        "school_hardware": 1,
+        "other_school_initiative": 1,
+        "anganwadi": 1
+      },
+      "csr_statewide_by_theme": {
+        "formal_education": 3,
+        "wash": 1,
+        "school_hardware": 3,
+        "other_school_initiative": 4,
+        "anganwadi": 0
+      },
+      "total_school_count": 1690,
+      "schools_needing_help_count": 1243,
+      "toilet_required_count": 19,
+      "classroom_repair_needed_count": 1144,
+      "building_dilapidated_count": 265,
+      "new_classroom_requirement_count": 607,
+      "needs_help_no_specific_csr": false
+    },
+    "Rajsamand": {
+      "csr_specific_count": 6,
+      "csr_specific_companies": [
+        "Ambuja Cement Foundation- Rabriyawas. Address-Village Rabriyawas, Tehsil Jaitaran, District Pali ( Rajastrhan)",
+        "Hindustan Zinc Limited, Chanderiya Lead-Zinc Smelter, P.O. Putholi, Chittorgarh (Rajasthan) -\n312021",
+        "Hindustan Zinc Ltd., Rampura Agucha, District-\nBhilwara ( Rajasthan) 311001",
+        "J.K.Tyre & Industries Ltd,P.O. Tyre Factory, Jaykaygram, Kankroli, Rajsamand",
+        "NUVOCO",
+        "UltraTech Nathdwara Cement Limited Nathdwara Cement Works AdityaNagar,Pindwara\nDis.Sirohi (Rajasthan)"
+      ],
+      "csr_statewide_count": 6,
+      "csr_total_available_count": 12,
+      "csr_specific_by_theme": {
+        "formal_education": 6,
+        "wash": 6,
+        "school_hardware": 4,
+        "other_school_initiative": 4,
+        "anganwadi": 4
+      },
+      "csr_statewide_by_theme": {
+        "formal_education": 3,
+        "wash": 1,
+        "school_hardware": 3,
+        "other_school_initiative": 4,
+        "anganwadi": 0
+      },
+      "total_school_count": 1629,
+      "schools_needing_help_count": 1222,
+      "toilet_required_count": 7,
+      "classroom_repair_needed_count": 1145,
+      "building_dilapidated_count": 28,
+      "new_classroom_requirement_count": 569,
+      "needs_help_no_specific_csr": false
+    },
+    "Salumbar": {
+      "csr_specific_count": 1,
+      "csr_specific_companies": [
+        "Hindustan Zinc Ltd., Rampura Agucha, District-\nBhilwara ( Rajasthan) 311001"
+      ],
+      "csr_statewide_count": 6,
+      "csr_total_available_count": 7,
+      "csr_specific_by_theme": {
+        "formal_education": 1,
+        "wash": 1,
+        "school_hardware": 1,
+        "other_school_initiative": 1,
+        "anganwadi": 0
+      },
+      "csr_statewide_by_theme": {
+        "formal_education": 3,
+        "wash": 1,
+        "school_hardware": 3,
+        "other_school_initiative": 4,
+        "anganwadi": 0
+      },
+      "total_school_count": 895,
+      "schools_needing_help_count": 811,
+      "toilet_required_count": 39,
+      "classroom_repair_needed_count": 686,
+      "building_dilapidated_count": 6,
+      "new_classroom_requirement_count": 362,
+      "needs_help_no_specific_csr": false
+    },
+    "Sawai Madhopur": {
+      "csr_specific_count": 1,
+      "csr_specific_companies": [
+        "EIH Ltd.( Unit The Oberoi Vanyavilas), 7 Sham Nath Marg, Delhi- 110054\nThe Oberoi Vanyavilas, Ranthambhore Road,\nSawai Mahdhopur- 322001"
+      ],
+      "csr_statewide_count": 6,
+      "csr_total_available_count": 7,
+      "csr_specific_by_theme": {
+        "formal_education": 1,
+        "wash": 0,
+        "school_hardware": 0,
+        "other_school_initiative": 0,
+        "anganwadi": 0
+      },
+      "csr_statewide_by_theme": {
+        "formal_education": 3,
+        "wash": 1,
+        "school_hardware": 3,
+        "other_school_initiative": 4,
+        "anganwadi": 0
+      },
+      "total_school_count": 1342,
+      "schools_needing_help_count": 707,
+      "toilet_required_count": 6,
+      "classroom_repair_needed_count": 588,
+      "building_dilapidated_count": 55,
+      "new_classroom_requirement_count": 500,
+      "needs_help_no_specific_csr": false
+    },
+    "Sikar": {
+      "csr_specific_count": 6,
+      "csr_specific_companies": [
+        "Aditya (Ultratech) Cement Works Ltd, Sawa-\nShambupura Road, Adityapuram, Chittorgarh-312622",
+        "Ambuja Cement Foundation- Rabriyawas. Address-Village Rabriyawas, Tehsil Jaitaran, District Pali ( Rajastrhan)",
+        "RSWM LTD  MANDAWA SHIKAR, 515, SHARAT BOSE ROAD , UDAIPUR\n/KAPLKATA",
+        "RSWM Limited, Mayur Nagar,Lodha Banswara-327001",
+        "UltraTech cement Ltd. ( Unit Neem Ka Thana cement works )",
+        "Ultratech Cement Ltd. (Unit- Kotputli Cement Works) Mohanpura, Kotputli, Jaipur- 303108"
+      ],
+      "csr_statewide_count": 6,
+      "csr_total_available_count": 12,
+      "csr_specific_by_theme": {
+        "formal_education": 5,
+        "wash": 3,
+        "school_hardware": 2,
+        "other_school_initiative": 2,
+        "anganwadi": 3
+      },
+      "csr_statewide_by_theme": {
+        "formal_education": 3,
+        "wash": 1,
+        "school_hardware": 3,
+        "other_school_initiative": 4,
+        "anganwadi": 0
+      },
+      "total_school_count": 2243,
+      "schools_needing_help_count": 1661,
+      "toilet_required_count": 194,
+      "classroom_repair_needed_count": 1464,
+      "building_dilapidated_count": 29,
+      "new_classroom_requirement_count": 647,
+      "needs_help_no_specific_csr": false
+    },
+    "Sirohi": {
+      "csr_specific_count": 8,
+      "csr_specific_companies": [
+        "Aditya (Ultratech) Cement Works Ltd, Sawa-\nShambupura Road, Adityapuram, Chittorgarh-312622",
+        "Bhansali Engineering Polymers Limited, Abu Road Plant: Plot No. SP-138-143, Ambaji Industrial Area,Abu Road, Dist: Sirohi, Rajasthan \u2013 307026",
+        "JK Lakshmi Cement Ltd. Post : Jkpuram\nTehsil : Pindwara\nPin code No. 307019",
+        "Modern Insulators ltd, Abu Road, Dist. Sirohi, Rajasthan",
+        "UltraTech Nathdwara Cement Limited Nathdwara Cement Works AdityaNagar,Pindwara\nDis.Sirohi (Rajasthan)",
+        "UltraTech cement Ltd. ( Unit Neem Ka Thana cement works )",
+        "Ultratech Cement Ltd. (Unit- Kotputli Cement Works) Mohanpura, Kotputli, Jaipur- 303108",
+        "Wolkem Industries Limited /Wolkem India Ltd Near Railway Station,Sirohi Road ,Sirohi"
+      ],
+      "csr_statewide_count": 6,
+      "csr_total_available_count": 14,
+      "csr_specific_by_theme": {
+        "formal_education": 7,
+        "wash": 5,
+        "school_hardware": 3,
+        "other_school_initiative": 4,
+        "anganwadi": 3
+      },
+      "csr_statewide_by_theme": {
+        "formal_education": 3,
+        "wash": 1,
+        "school_hardware": 3,
+        "other_school_initiative": 4,
+        "anganwadi": 0
+      },
+      "total_school_count": 862,
+      "schools_needing_help_count": 712,
+      "toilet_required_count": 50,
+      "classroom_repair_needed_count": 649,
+      "building_dilapidated_count": 27,
+      "new_classroom_requirement_count": 97,
+      "needs_help_no_specific_csr": false
+    },
+    "Tonk": {
+      "csr_specific_count": 1,
+      "csr_specific_companies": [
+        "Kalpataru Projects International Biomass Division, VPO-Khatoli, Tehsil Uniara Distt Tonk"
+      ],
+      "csr_statewide_count": 6,
+      "csr_total_available_count": 7,
+      "csr_specific_by_theme": {
+        "formal_education": 0,
+        "wash": 0,
+        "school_hardware": 0,
+        "other_school_initiative": 0,
+        "anganwadi": 0
+      },
+      "csr_statewide_by_theme": {
+        "formal_education": 3,
+        "wash": 1,
+        "school_hardware": 3,
+        "other_school_initiative": 4,
+        "anganwadi": 0
+      },
+      "total_school_count": 2444,
+      "schools_needing_help_count": 1364,
+      "toilet_required_count": 8,
+      "classroom_repair_needed_count": 1186,
+      "building_dilapidated_count": 47,
+      "new_classroom_requirement_count": 604,
+      "needs_help_no_specific_csr": false
+    },
+    "Udaipur": {
+      "csr_specific_count": 24,
+      "csr_specific_companies": [
+        "Aditya (Ultratech) Cement Works Ltd, Sawa-\nShambupura Road, Adityapuram, Chittorgarh-312622",
+        "Ambuja Cement Foundation- Rabriyawas. Address-Village Rabriyawas, Tehsil Jaitaran, District Pali ( Rajastrhan)",
+        "Choksi Heraeus Private Ltd, A-195-196, F-Road, Mewar Industrial Area, Madri, Udaipur- 313003",
+        "EIH Ltd.( Unit The Oberoi Vanyavilas), 7 Sham Nath Marg, Delhi- 110054\nThe Oberoi Vanyavilas, Ranthambhore Road,\nSawai Mahdhopur- 322001",
+        "HARMONY PLASTICS PVT LTD  F-334-339,\nRIICO KALADWAS",
+        "Hindustan Zinc Limited, Chanderiya Lead-Zinc Smelter, P.O. Putholi, Chittorgarh (Rajasthan) -\n312021",
+        "Hindustan Zinc Ltd., Rampura Agucha, District-\nBhilwara ( Rajasthan) 311001",
+        "Hindustan Zinc Ltd., Yashad Bhawan, Udaipur-313004",
+        "MEWAR POLYTEX LIMITED , 207 A , MIA\nUDAIPUR",
+        "Manglam Build-Developers Limited\n6th Floor, Apex Mall, Lal Kothi, Tonk Road, Jaipur",
+        "NUVOCO",
+        "PACIFIC INDUSTRIES LTD 19C OLD FATEHPURA UDAIPUR",
+        "PI Industries Ltd,Two Horizon Centre, 28-1601, 16th FI, Golf Course Road, DLF Phase-V, Sector 43, Gurugram- 122009",
+        "RAVINDRAQ HERAEUS PVT LTD   A-196(A)\n, MIA , MADRI UDAIPUR",
+        "RSWM LTD  MANDAWA SHIKAR, 515, SHARAT BOSE ROAD , UDAIPUR\n/KAPLKATA",
+        "RSWM Limited, Mayur Nagar,Lodha Banswara-327001",
+        "Rajasthan State Mines & Minerals Limited",
+        "Rajasthan state mines & minerals itd. ,4-meera marg ,udaipur 313001",
+        "Reliance Chemotex Industries Ltd., Village Kanpur, P.O. Box No. 73, Udaipur- 313003",
+        "Sun polytex private limited, mewar indistrial\narea, modri, udaipur, rajasthan",
+        "UltraTech Nathdwara Cement Limited Nathdwara Cement Works AdityaNagar,Pindwara\nDis.Sirohi (Rajasthan)",
+        "Ultratech Cement Ltd. (Unit- Kotputli Cement Works) Mohanpura, Kotputli, Jaipur- 303108",
+        "WESTERN DRUGS LIMITED F- 271(A)  MIA , MADRI UDAIPUR",
+        "WOLKEM INDIA LIMITED , E-101, MIA ,\nMADRI UDAIPUR( RAJ)"
+      ],
+      "csr_statewide_count": 6,
+      "csr_total_available_count": 30,
+      "csr_specific_by_theme": {
+        "formal_education": 19,
+        "wash": 12,
+        "school_hardware": 12,
+        "other_school_initiative": 8,
+        "anganwadi": 8
+      },
+      "csr_statewide_by_theme": {
+        "formal_education": 3,
+        "wash": 1,
+        "school_hardware": 3,
+        "other_school_initiative": 4,
+        "anganwadi": 0
+      },
+      "total_school_count": 2818,
+      "schools_needing_help_count": 2376,
+      "toilet_required_count": 76,
+      "classroom_repair_needed_count": 1914,
+      "building_dilapidated_count": 343,
+      "new_classroom_requirement_count": 1070,
+      "needs_help_no_specific_csr": false
+    }
+  }
+}
