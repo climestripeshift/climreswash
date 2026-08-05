@@ -26,6 +26,7 @@ import ElNinoPage from "@/pages/ElNinoPage";
 import SHVRRajasthanPage from "@/pages/SHVRRajasthanPage";
 import JJMRajasthanPage from "@/pages/JJMRajasthanPage";
 import CSRRajasthanPage from "@/pages/CSRRajasthanPage";
+import CSRCostAssumptionsPage from "@/pages/CSRCostAssumptionsPage";
 
 function Router() {
   return (
@@ -52,6 +53,7 @@ function Router() {
       <Route path="/shvr-rajasthan" component={SHVRRajasthanPage} />
       <Route path="/jjm-rajasthan" component={JJMRajasthanPage} />
       <Route path="/csr-rajasthan" component={CSRRajasthanPage} />
+      <Route path="/csr-rajasthan/costs" component={CSRCostAssumptionsPage} />
       <Route component={NotFound} />
     </Switch>
   );

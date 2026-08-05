@@ -1,12 +1,13 @@
-import { useState, useMemo, Fragment } from "react";
+import { useState, useMemo, useEffect, Fragment } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { ArrowLeft, Loader2, Search, ChevronDown, ChevronRight } from "lucide-react";
+import { ArrowLeft, Loader2, Search, ChevronDown, ChevronRight, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { type UnitCosts, loadUnitCosts, estimateFundingRequired, formatINR } from "@/lib/csrCostAssumptions";
 
 const THEMES = [
   { key: "formal_education", label: "Formal Education", icon: "📖" },
@@ -51,11 +52,12 @@ interface Company {
   annual_report_link: string | null;
 }
 
-type MetricKey = "need" | "csr_specific" | "csr_total";
+type MetricKey = "need" | "csr_specific" | "csr_total" | "funding";
 const METRICS: { key: MetricKey; label: string; icon: string; invert: boolean }[] = [
   { key: "need", label: "Schools Needing Help", icon: "🆘", invert: true },   // high = bad -> red
   { key: "csr_specific", label: "CSR (District-Specific)", icon: "🏭", invert: false }, // high = good -> green
   { key: "csr_total", label: "CSR (incl. Statewide)", icon: "🌐", invert: false },
+  { key: "funding", label: "Funding Required", icon: "💰", invert: true }, // high = bad -> red
 ];
 
 const RAMP: [number, number, number][] = [[239, 68, 68], [249, 115, 22], [234, 179, 8], [132, 204, 22], [34, 197, 94]];
@@ -67,9 +69,10 @@ function gradientColor(t: number) {
   const a = RAMP[lo], b = RAMP[hi];
   return `rgb(${a.map((c, i) => Math.round(c + f * (b[i] - c))).join(",")})`;
 }
-function metricValue(v: DistrictStats | undefined, metric: MetricKey, theme: ThemeKey | "all"): number | null {
+function metricValue(v: DistrictStats | undefined, metric: MetricKey, theme: ThemeKey | "all", costs: UnitCosts): number | null {
   if (!v) return null;
   if (metric === "need") return v.schools_needing_help_count;
+  if (metric === "funding") return estimateFundingRequired(v, costs);
   if (theme !== "all") {
     return metric === "csr_specific" ? v.csr_specific_by_theme[theme] : v.csr_specific_by_theme[theme] + v.csr_statewide_by_theme[theme];
   }
@@ -110,8 +113,8 @@ function CompanyPanel({ companies }: { companies: Company[] }) {
   );
 }
 
-function DistrictTable({ data, companies }: { data: DistrictSummary; companies: Company[] }) {
-  const [sortBy, setSortBy] = useState<"need" | "csr">("need");
+function DistrictTable({ data, companies, costs }: { data: DistrictSummary; companies: Company[]; costs: UnitCosts }) {
+  const [sortBy, setSortBy] = useState<"need" | "csr" | "funding">("need");
   const [gapOnly, setGapOnly] = useState(false);
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -135,9 +138,11 @@ function DistrictTable({ data, companies }: { data: DistrictSummary; companies: 
     }
     return r;
   }, [data, gapOnly, search]);
-  const sorted = useMemo(() => [...rows].sort((a, b) =>
-    sortBy === "need" ? b.v.schools_needing_help_count - a.v.schools_needing_help_count
-      : b.v.csr_total_available_count - a.v.csr_total_available_count), [rows, sortBy]);
+  const sorted = useMemo(() => [...rows].sort((a, b) => {
+    if (sortBy === "need") return b.v.schools_needing_help_count - a.v.schools_needing_help_count;
+    if (sortBy === "funding") return estimateFundingRequired(b.v, costs) - estimateFundingRequired(a.v, costs);
+    return b.v.csr_total_available_count - a.v.csr_total_available_count;
+  }), [rows, sortBy, costs]);
 
   const pageRows = sorted.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
   const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
@@ -170,6 +175,9 @@ function DistrictTable({ data, companies }: { data: DistrictSummary; companies: 
               <th className="px-3 py-2 font-medium text-right">Repair</th>
               <th className="px-3 py-2 font-medium text-right">Dilapidated</th>
               <th className="px-3 py-2 font-medium text-right">New Room</th>
+              <th className="px-3 py-2 font-medium text-right cursor-pointer hover:text-foreground" onClick={() => setSortBy("funding")}>
+                💰 Funding Required{sortBy === "funding" && " ▾"}
+              </th>
               <th className="px-3 py-2 font-medium text-right cursor-pointer hover:text-foreground" onClick={() => setSortBy("csr")}>
                 CSR (specific / statewide){sortBy === "csr" && " ▾"}
               </th>
@@ -188,6 +196,7 @@ function DistrictTable({ data, companies }: { data: DistrictSummary; companies: 
                   <td className="px-3 py-1.5 text-right text-muted-foreground">{v.classroom_repair_needed_count.toLocaleString()}</td>
                   <td className="px-3 py-1.5 text-right text-muted-foreground">{v.building_dilapidated_count.toLocaleString()}</td>
                   <td className="px-3 py-1.5 text-right text-muted-foreground">{v.new_classroom_requirement_count.toLocaleString()}</td>
+                  <td className="px-3 py-1.5 text-right font-semibold">{formatINR(estimateFundingRequired(v, costs))}</td>
                   <td className="px-3 py-1.5 text-right">
                     <span className={v.csr_specific_count === 0 ? "text-red-400 font-semibold" : "text-emerald-400 font-semibold"}>{v.csr_specific_count}</span>
                     <span className="text-muted-foreground"> / {v.csr_statewide_count}</span>
@@ -195,7 +204,7 @@ function DistrictTable({ data, companies }: { data: DistrictSummary; companies: 
                 </tr>
                 {expanded === district && (
                   <tr>
-                    <td colSpan={9} className="p-0 bg-muted/10 border-b border-border/10">
+                    <td colSpan={10} className="p-0 bg-muted/10 border-b border-border/10">
                       <div className="text-[10px] text-muted-foreground px-3 pt-2">
                         {v.csr_specific_count} companies specifically active here, plus {statewideCompanies.length} statewide companies available to any district:
                       </div>
@@ -220,6 +229,16 @@ function DistrictTable({ data, companies }: { data: DistrictSummary; companies: 
 export default function CSRRajasthanPage() {
   const [metric, setMetric] = useState<MetricKey>("need");
   const [themeFilter, setThemeFilter] = useState<ThemeKey | "all">("all");
+  const [costs, setCosts] = useState<UnitCosts>(() => loadUnitCosts());
+
+  // re-read on focus so coming back from the cost-assumptions page (a separate page
+  // precisely so it doesn't share this page's data-fetch) picks up new values without
+  // a full reload -- localStorage writes elsewhere don't trigger a React re-render here
+  useEffect(() => {
+    const onFocus = () => setCosts(loadUnitCosts());
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, []);
 
   const summaryQ = useQuery<DistrictSummary>({
     queryKey: ["csr-district-summary"],
@@ -241,11 +260,11 @@ export default function CSRRajasthanPage() {
     if (!summaryQ.data) return 0;
     let max = 0;
     for (const v of Object.values(summaryQ.data.by_district)) {
-      const val = metricValue(v, metric, themeFilter) ?? 0;
+      const val = metricValue(v, metric, themeFilter, costs) ?? 0;
       if (val > max) max = val;
     }
     return max;
-  }, [summaryQ.data, metric, themeFilter]);
+  }, [summaryQ.data, metric, themeFilter, costs]);
 
   const districtGeo = useMemo(() => {
     if (!districtBoundaryQ.data || !summaryQ.data) return null;
@@ -254,11 +273,11 @@ export default function CSRRajasthanPage() {
       features: districtBoundaryQ.data.features.map((f: any) => {
         const district = f.properties.NAME;
         const stats = summaryQ.data!.by_district[district];
-        const value = metricValue(stats, metric, themeFilter);
+        const value = metricValue(stats, metric, themeFilter, costs);
         return { ...f, properties: { ...f.properties, district, value, need: stats?.schools_needing_help_count ?? null, csrSpecific: stats?.csr_specific_count ?? null } };
       }),
     };
-  }, [districtBoundaryQ.data, summaryQ.data, metric, themeFilter]);
+  }, [districtBoundaryQ.data, summaryQ.data, metric, themeFilter, costs]);
 
   const activeMetric = METRICS.find((m) => m.key === metric)!;
   const isLoading = summaryQ.isLoading || companiesQ.isLoading || districtBoundaryQ.isLoading;
@@ -307,6 +326,13 @@ export default function CSRRajasthanPage() {
               {THEMES.map((t) => <option key={t.key} value={t.key}>{t.icon} {t.label}</option>)}
             </select>
           </div>
+          <div className="flex-1" />
+          <Link href="/csr-rajasthan/costs">
+            <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded text-[11px] font-medium bg-muted/60 text-muted-foreground hover:bg-muted">
+              <Settings2 className="h-3 w-3" />
+              Unit costs: 🚽{formatINR(costs.toilet)} · 🛠️{formatINR(costs.classroomRepair)} · 🏚️{formatINR(costs.dilapidatedBuilding)} · 🏗️{formatINR(costs.newClassroom)}
+            </button>
+          </Link>
         </div>
 
         <div className="h-[55vh] rounded-lg overflow-hidden border border-border/40 relative">
@@ -325,14 +351,14 @@ export default function CSRRajasthanPage() {
                   .csr-district-label::before { display: none; }
                 `}</style>
                 {districtGeo && (
-                  <GeoJSON key={`csr-${metric}-${themeFilter}`} data={districtGeo as any}
+                  <GeoJSON key={`csr-${metric}-${themeFilter}-${JSON.stringify(costs)}`} data={districtGeo as any}
                     style={(feature: any) => ({
                       fillColor: metricColor(feature.properties.value, maxValue, activeMetric.invert),
                       fillOpacity: 0.75, color: "#1e293b", weight: 1, renderer: canvasRenderer,
                     })}
                     onEachFeature={(feature: any, leafletLayer: any) => {
                       const p = feature.properties;
-                      const label = p.value != null ? p.value.toLocaleString() : "—";
+                      const label = p.value == null ? "—" : metric === "funding" ? formatINR(p.value) : p.value.toLocaleString();
                       leafletLayer.bindTooltip(`${p.district}<br/>${label}`,
                         { permanent: true, direction: "center", className: "csr-district-label" });
                     }} />
@@ -343,7 +369,7 @@ export default function CSRRajasthanPage() {
                 <div className="h-2.5 w-full rounded-sm mb-1" style={{ background: `linear-gradient(to right, ${(activeMetric.invert ? [...RAMP].reverse() : RAMP).map((c) => `rgb(${c.join(",")})`).join(", ")})` }} />
                 <div className="flex justify-between text-[9px] text-muted-foreground mb-1.5">
                   <span>{activeMetric.invert ? "0 (best)" : "0"}</span>
-                  <span>{maxValue.toLocaleString()}{activeMetric.invert ? " (worst)" : " (best)"}</span>
+                  <span>{metric === "funding" ? formatINR(maxValue) : maxValue.toLocaleString()}{activeMetric.invert ? " (worst)" : " (best)"}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div className="w-2.5 h-2.5 rounded-sm" style={{ background: "#374151" }} />
@@ -355,7 +381,7 @@ export default function CSRRajasthanPage() {
         </div>
 
         {summaryQ.data && companiesQ.data && (
-          <DistrictTable data={summaryQ.data} companies={companiesQ.data} />
+          <DistrictTable data={summaryQ.data} companies={companiesQ.data} costs={costs} />
         )}
       </div>
     </div>
