@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, Fragment } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
@@ -167,9 +167,9 @@ function DistrictTable({ data, companies, costs }: { data: DistrictSummary; comp
             </tr>
           </thead>
           <tbody>
-            {pageRows.map(({ district, v }) => (
-              <Fragment key={district}>
-                <tr className={`border-b border-border/10 hover:bg-muted/20 cursor-pointer ${v.needs_help_no_specific_csr ? "bg-red-500/5" : ""}`}
+            {pageRows.flatMap(({ district, v }) => {
+              const rows = [
+                <tr key={district} className={`border-b border-border/10 hover:bg-muted/20 cursor-pointer ${v.needs_help_no_specific_csr ? "bg-red-500/5" : ""}`}
                   onClick={() => setExpanded(expanded === district ? null : district)}>
                   <td className="px-3 py-1.5">{expanded === district ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}</td>
                   <td className="px-3 py-1.5 font-medium">{district}{v.needs_help_no_specific_csr && <span className="ml-1.5 text-red-400" title="Needs help, no district-specific CSR">⚠️</span>}</td>
@@ -186,19 +186,22 @@ function DistrictTable({ data, companies, costs }: { data: DistrictSummary; comp
                     <span className={v.csr_specific_count === 0 ? "text-red-400 font-semibold" : "text-emerald-400 font-semibold"}>{v.csr_specific_count}</span>
                     <span className="text-muted-foreground"> / {v.csr_statewide_count}</span>
                   </td>
-                </tr>
-                {expanded === district && (
-                  <tr>
+                </tr>,
+              ];
+              if (expanded === district) {
+                rows.push(
+                  <tr key={`${district}-panel`}>
                     <td colSpan={10} className="p-0 bg-muted/10 border-b border-border/10">
                       <div className="text-[10px] text-muted-foreground px-3 pt-2">
                         {v.csr_specific_count} companies specifically active here, plus {statewideCompanies.length} statewide companies available to any district:
                       </div>
                       <CompanyPanel companies={companiesByDistrict[district] ?? []} />
                     </td>
-                  </tr>
-                )}
-              </Fragment>
-            ))}
+                  </tr>,
+                );
+              }
+              return rows;
+            })}
           </tbody>
         </table>
       </div>

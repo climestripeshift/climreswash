@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, Fragment } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Search, ChevronDown, ChevronRight, X, Plus, Loader2 } from "lucide-react";
 import { THEMES, type ThemeKey, type Company } from "@/lib/csrTypes";
@@ -270,48 +270,49 @@ export default function CSRCompaniesTab({ companies, districts }: { companies: C
               </tr>
             </thead>
             <tbody>
-              {pageRows.map((c) => {
+              {pageRows.flatMap((c) => {
                 const companyTags = tags[c.name] ?? [];
-                return (
-                  <Fragment key={c.name}>
-                    <tr className="border-b border-border/10 hover:bg-muted/20 cursor-pointer"
-                      onClick={() => setExpanded(expanded === c.name ? null : c.name)}>
-                      <td className="px-3 py-1.5">{expanded === c.name ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}</td>
-                      <td className="px-3 py-1.5 font-medium max-w-xs truncate" title={c.name}>{c.name}</td>
-                      <td className="px-3 py-1.5">
-                        {c.is_statewide ? (
-                          <span className="px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-400 text-[10px] font-semibold">STATEWIDE (all 41)</span>
-                        ) : (
-                          <span className="text-muted-foreground">{c.districts.slice(0, 3).join(", ")}{c.districts.length > 3 && ` +${c.districts.length - 3} more`}</span>
-                        )}
+                const rows = [
+                  <tr key={c.name} className="border-b border-border/10 hover:bg-muted/20 cursor-pointer"
+                    onClick={() => setExpanded(expanded === c.name ? null : c.name)}>
+                    <td className="px-3 py-1.5">{expanded === c.name ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}</td>
+                    <td className="px-3 py-1.5 font-medium max-w-xs truncate" title={c.name}>{c.name}</td>
+                    <td className="px-3 py-1.5">
+                      {c.is_statewide ? (
+                        <span className="px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-400 text-[10px] font-semibold">STATEWIDE (all 41)</span>
+                      ) : (
+                        <span className="text-muted-foreground">{c.districts.slice(0, 3).join(", ")}{c.districts.length > 3 && ` +${c.districts.length - 3} more`}</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-1.5">
+                      <div className="flex flex-wrap gap-1">
+                        {THEMES.filter((t) => c.themes[t.key]).map((t) => <span key={t.key} title={t.label}>{t.icon}</span>)}
+                      </div>
+                    </td>
+                    <td className="px-3 py-1.5 text-muted-foreground max-w-[140px] truncate" title={c.contact_info ?? ""}>{c.contact_person ?? "—"}</td>
+                    <td className="px-3 py-1.5 text-muted-foreground max-w-[100px] truncate" title={c.budget_raw ?? ""}>{c.budget_raw ?? "—"}</td>
+                    <td className="px-3 py-1.5 text-right">
+                      <span className={companyTags.length > 0 ? "text-emerald-400 font-semibold" : "text-muted-foreground"}>{companyTags.length}</span>
+                    </td>
+                  </tr>,
+                ];
+                if (expanded === c.name) {
+                  rows.push(
+                    <tr key={`${c.name}-panel`}>
+                      <td colSpan={7} className="p-0 bg-muted/10 border-b border-border/10">
+                        <TaggingPanel
+                          company={c}
+                          schools={schoolsQ.data}
+                          schoolsLoading={schoolsQ.isLoading}
+                          tags={companyTags}
+                          onTag={(s) => handleTag(c.name, s)}
+                          onUntag={(udise) => handleUntag(c.name, udise)}
+                        />
                       </td>
-                      <td className="px-3 py-1.5">
-                        <div className="flex flex-wrap gap-1">
-                          {THEMES.filter((t) => c.themes[t.key]).map((t) => <span key={t.key} title={t.label}>{t.icon}</span>)}
-                        </div>
-                      </td>
-                      <td className="px-3 py-1.5 text-muted-foreground max-w-[140px] truncate" title={c.contact_info ?? ""}>{c.contact_person ?? "—"}</td>
-                      <td className="px-3 py-1.5 text-muted-foreground max-w-[100px] truncate" title={c.budget_raw ?? ""}>{c.budget_raw ?? "—"}</td>
-                      <td className="px-3 py-1.5 text-right">
-                        <span className={companyTags.length > 0 ? "text-emerald-400 font-semibold" : "text-muted-foreground"}>{companyTags.length}</span>
-                      </td>
-                    </tr>
-                    {expanded === c.name && (
-                      <tr>
-                        <td colSpan={7} className="p-0 bg-muted/10 border-b border-border/10">
-                          <TaggingPanel
-                            company={c}
-                            schools={schoolsQ.data}
-                            schoolsLoading={schoolsQ.isLoading}
-                            tags={companyTags}
-                            onTag={(s) => handleTag(c.name, s)}
-                            onUntag={(udise) => handleUntag(c.name, udise)}
-                          />
-                        </td>
-                      </tr>
-                    )}
-                  </Fragment>
-                );
+                    </tr>,
+                  );
+                }
+                return rows;
               })}
             </tbody>
           </table>
