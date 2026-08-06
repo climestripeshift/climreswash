@@ -39,6 +39,18 @@ NOT treated as a full blanket (we don't know which 23) -- companies
 using that language are counted in csr_broad_unspecified_count instead,
 kept separate from both the specific and statewide buckets.
 
+Repair cost specifically comes from REAL data, not a flat per-unit
+estimate: ACR_Raiparing List.xlsx (the same file join_shvr_infrastructure_
+needs.py joins for classroom_repair_needed) has its own per-school
+"amount required for major repair" column (in Rs. Lakh), summed here by
+district -- classroom_repair_actual_cost_rs. Covers 50,818 of the
+registry's 49,565 matched classroom_repair_needed_count schools (the raw
+file has a few more rows than survive the UDISE-dedup join elsewhere on
+this platform; close enough for a funding estimate, not close enough to
+call it exact). Toilet, dilapidated-building, and new-classroom costs
+have no equivalent source file, so those stay flat unit-cost estimates
+the user sets on /csr-rajasthan/costs.
+
 Run: python scripts/build_csr_district_map.py
 """
 import json
@@ -52,6 +64,7 @@ from join_shvr_infrastructure_needs import canonical_district
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = Path.home() / "UNICEF RAJASTHAN/2026/wins/CSR/CSR data Analysis -Final.xlsx"
+REPAIR_COST_SRC = Path.home() / "UNICEF RAJASTHAN/2026/wins/CSR/fwd_/ACR_Raiparing List.xlsx"
 SCHOOLS = ROOT / "client/public/data/shvr_schools_infra_rajasthan.json"
 DISTRICTS_GEO = ROOT / "client/public/data/rajasthan_districts_current.geojson"
 
@@ -157,6 +170,36 @@ def split_other_districts(raw: str) -> list[str]:
 
 def yes(v) -> bool:
     return str(v or "").strip().upper() == "YES"
+
+
+def load_repair_actual_cost(current_districts: set[str]) -> dict[str, float]:
+    """Real per-district classroom-repair cost (₹), summed from ACR_Raiparing List.xlsx's
+    own "amount required for major repair" column (Rs. Lakh) -- not derived from the
+    UDISE-matched school registry, just grouped by that row's own district column."""
+    if not REPAIR_COST_SRC.exists():
+        print(f"  WARNING: {REPAIR_COST_SRC} not found -- repair cost will fall back to the "
+              f"flat per-unit estimate for every district")
+        return {}
+    wb = openpyxl.load_workbook(REPAIR_COST_SRC, data_only=True)
+    ws = wb.active
+    cost_by_district: dict[str, float] = defaultdict(float)
+    rows_used = 0
+    unresolved: dict[str, int] = defaultdict(int)
+    for row in ws.iter_rows(min_row=4, values_only=True):
+        district_raw, amount_lakh = row[1], row[9]
+        if not district_raw or not isinstance(amount_lakh, (int, float)):
+            continue
+        d = canonical_district(str(district_raw))
+        if d not in current_districts:
+            unresolved[str(district_raw).strip()] += 1
+            continue
+        cost_by_district[d] += amount_lakh * 100_000  # Rs. Lakh -> Rs.
+        rows_used += 1
+    print(f"  Repair cost: {rows_used} rows summed across {len(cost_by_district)} districts "
+          f"(total {sum(cost_by_district.values())/1e7:.1f} Cr)")
+    if unresolved:
+        print(f"  WARNING: repair cost rows with unresolved district: {dict(unresolved)}")
+    return dict(cost_by_district)
 
 
 def main():
@@ -288,6 +331,9 @@ def main():
         if toilet or repair or dilapidated or new_classroom:
             n["schools_needing_help_count"] += 1
 
+    print("\nLoading real classroom-repair cost data...")
+    repair_cost_by_district = load_repair_actual_cost(current_districts)
+
     all_districts = sorted(current_districts)
     by_district = {}
     for d in all_districts:
@@ -307,6 +353,7 @@ def main():
             "csr_specific_by_theme": theme_counts,
             "csr_statewide_by_theme": theme_counts_statewide,
             **need,
+            "classroom_repair_actual_cost_rs": round(repair_cost_by_district.get(d, 0)),
             "needs_help_no_specific_csr": need["schools_needing_help_count"] > 0 and len(specific) == 0,
         }
 
@@ -320,7 +367,10 @@ def main():
                     "csr_statewide_count is the same number for every district (companies whose "
                     "coverage language reads as \"all of Rajasthan\"); csr_broad_unspecified "
                     "companies (\"23 districts\", unspecified) aren't counted toward any single "
-                    "district since which ones isn't stated.",
+                    "district since which ones isn't stated. classroom_repair_actual_cost_rs is "
+                    "REAL data (summed from ACR_Raiparing List.xlsx's own per-school repair-cost "
+                    "column, not a flat per-unit estimate) -- use it instead of "
+                    "classroom_repair_needed_count * (a manual unit cost) when estimating funding.",
             "total_companies": len(companies),
             "statewide_companies": statewide,
             "broad_unspecified_companies": broad,

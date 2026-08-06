@@ -12,7 +12,12 @@
 
 export interface UnitCosts {
   toilet: number;              // ₹ per toilet_required_count unit
-  classroomRepair: number;     // ₹ per classroom needing repair
+  // ₹ per classroom needing repair -- FALLBACK ONLY. Repair cost normally comes from real
+  // data (classroom_repair_actual_cost_rs, summed from ACR_Raiparing List.xlsx's own
+  // per-school cost column by build_csr_district_map.py), not this flat estimate. Only
+  // used if a district is somehow missing from that real data. Not shown as an editable
+  // field on the cost-assumptions page for that reason.
+  classroomRepair: number;
   dilapidatedBuilding: number; // ₹ per school flagged building_dilapidated (full reconstruction)
   newClassroom: number;        // ₹ per new classroom required
 }
@@ -51,13 +56,20 @@ export function resetUnitCosts() {
 export interface NeedCounts {
   toilet_required_count: number;
   classroom_repair_needed_count: number;
+  classroom_repair_actual_cost_rs?: number; // real data -- see UnitCosts.classroomRepair comment
   building_dilapidated_count: number;
   new_classroom_requirement_count: number;
 }
 
+export function repairCost(need: NeedCounts, costs: UnitCosts): number {
+  return need.classroom_repair_actual_cost_rs && need.classroom_repair_actual_cost_rs > 0
+    ? need.classroom_repair_actual_cost_rs
+    : need.classroom_repair_needed_count * costs.classroomRepair;
+}
+
 export function estimateFundingRequired(need: NeedCounts, costs: UnitCosts): number {
   return need.toilet_required_count * costs.toilet
-    + need.classroom_repair_needed_count * costs.classroomRepair
+    + repairCost(need, costs)
     + need.building_dilapidated_count * costs.dilapidatedBuilding
     + need.new_classroom_requirement_count * costs.newClassroom;
 }

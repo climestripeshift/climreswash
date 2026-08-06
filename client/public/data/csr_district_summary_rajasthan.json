@@ -1,7 +1,7 @@
 {
   "meta": {
     "source": "/Users/adityajain/UNICEF RAJASTHAN/2026/wins/CSR/CSR data Analysis -Final.xlsx",
-    "note": "District resolution of the free-text \"CSR in other districts\" column is best-effort (see DISTRICT_ALIAS in build_csr_district_map.py) -- Bhiwadi in particular is mapped to Alwar as a judgment call, not a confirmed admin fact. csr_statewide_count is the same number for every district (companies whose coverage language reads as \"all of Rajasthan\"); csr_broad_unspecified companies (\"23 districts\", unspecified) aren't counted toward any single district since which ones isn't stated.",
+    "note": "District resolution of the free-text \"CSR in other districts\" column is best-effort (see DISTRICT_ALIAS in build_csr_district_map.py) -- Bhiwadi in particular is mapped to Alwar as a judgment call, not a confirmed admin fact. csr_statewide_count is the same number for every district (companies whose coverage language reads as \"all of Rajasthan\"); csr_broad_unspecified companies (\"23 districts\", unspecified) aren't counted toward any single district since which ones isn't stated. classroom_repair_actual_cost_rs is REAL data (summed from ACR_Raiparing List.xlsx's own per-school repair-cost column, not a flat per-unit estimate) -- use it instead of classroom_repair_needed_count * (a manual unit cost) when estimating funding.",
     "total_companies": 157,
     "statewide_companies": 6,
     "broad_unspecified_companies": 0,
@@ -49,6 +49,7 @@
       "classroom_repair_needed_count": 1039,
       "building_dilapidated_count": 35,
       "new_classroom_requirement_count": 384,
+      "classroom_repair_actual_cost_rs": 1086274000,
       "needs_help_no_specific_csr": false
     },
     "Alwar": {
@@ -131,6 +132,7 @@
       "classroom_repair_needed_count": 1256,
       "building_dilapidated_count": 33,
       "new_classroom_requirement_count": 658,
+      "classroom_repair_actual_cost_rs": 2999030000,
       "needs_help_no_specific_csr": false
     },
     "Balotara": {
@@ -158,6 +160,7 @@
       "classroom_repair_needed_count": 1238,
       "building_dilapidated_count": 39,
       "new_classroom_requirement_count": 459,
+      "classroom_repair_actual_cost_rs": 508178000,
       "needs_help_no_specific_csr": true
     },
     "Banswara": {
@@ -191,6 +194,7 @@
       "classroom_repair_needed_count": 1798,
       "building_dilapidated_count": 104,
       "new_classroom_requirement_count": 967,
+      "classroom_repair_actual_cost_rs": 1160819000,
       "needs_help_no_specific_csr": false
     },
     "Baran": {
@@ -227,6 +231,7 @@
       "classroom_repair_needed_count": 954,
       "building_dilapidated_count": 92,
       "new_classroom_requirement_count": 653,
+      "classroom_repair_actual_cost_rs": 1222195000,
       "needs_help_no_specific_csr": false
     },
     "Barmer": {
@@ -259,6 +264,7 @@
       "classroom_repair_needed_count": 2203,
       "building_dilapidated_count": 32,
       "new_classroom_requirement_count": 707,
+      "classroom_repair_actual_cost_rs": 665155000,
       "needs_help_no_specific_csr": false
     },
     "Beawar": {
@@ -292,6 +298,7 @@
       "classroom_repair_needed_count": 945,
       "building_dilapidated_count": 20,
       "new_classroom_requirement_count": 343,
+      "classroom_repair_actual_cost_rs": 474545000,
       "needs_help_no_specific_csr": false
     },
     "Bharatpur": {
@@ -321,6 +328,7 @@
       "classroom_repair_needed_count": 800,
       "building_dilapidated_count": 10,
       "new_classroom_requirement_count": 436,
+      "classroom_repair_actual_cost_rs": 747164000,
       "needs_help_no_specific_csr": false
     },
     "Bhilwara": {
@@ -359,6 +367,7 @@
       "classroom_repair_needed_count": 2098,
       "building_dilapidated_count": 98,
       "new_classroom_requirement_count": 692,
+      "classroom_repair_actual_cost_rs": 1306220000,
       "needs_help_no_specific_csr": false
     },
     "Bikaner": {
@@ -393,6 +402,7 @@
       "classroom_repair_needed_count": 1403,
       "building_dilapidated_count": 35,
       "new_classroom_requirement_count": 498,
+      "classroom_repair_actual_cost_rs": 597450000,
       "needs_help_no_specific_csr": false
     },
     "Bundi": {
@@ -426,6 +436,7 @@
       "classroom_repair_needed_count": 1110,
       "building_dilapidated_count": 26,
       "new_classroom_requirement_count": 292,
+      "classroom_repair_actual_cost_rs": 570625000,
       "needs_help_no_specific_csr": false
     },
     "Chittaurgarh": {
@@ -467,6 +478,7 @@
       "classroom_repair_needed_count": 1226,
       "building_dilapidated_count": 67,
       "new_classroom_requirement_count": 314,
+      "classroom_repair_actual_cost_rs": 1199437000,
       "needs_help_no_specific_csr": false
     },
     "Churu": {
@@ -497,6 +509,7 @@
       "classroom_repair_needed_count": 1142,
       "building_dilapidated_count": 29,
       "new_classroom_requirement_count": 626,
+      "classroom_repair_actual_cost_rs": 1049231000,
       "needs_help_no_specific_csr": false
     },
     "Dausa": {
@@ -524,6 +537,7 @@
       "classroom_repair_needed_count": 1228,
       "building_dilapidated_count": 106,
       "new_classroom_requirement_count": 746,
+      "classroom_repair_actual_cost_rs": 1632150000,
       "needs_help_no_specific_csr": true
     },
     "Deeg": {
@@ -551,6 +565,7 @@
       "classroom_repair_needed_count": 545,
       "building_dilapidated_count": 57,
       "new_classroom_requirement_count": 343,
+      "classroom_repair_actual_cost_rs": 495595000,
       "needs_help_no_specific_csr": true
     },
     "Dhaulpur": {
@@ -581,6 +596,7 @@
       "classroom_repair_needed_count": 928,
       "building_dilapidated_count": 19,
       "new_classroom_requirement_count": 609,
+      "classroom_repair_actual_cost_rs": 567081000,
       "needs_help_no_specific_csr": false
     },
     "Didwana-Kuchaman": {
@@ -608,6 +624,7 @@
       "classroom_repair_needed_count": 1114,
       "building_dilapidated_count": 22,
       "new_classroom_requirement_count": 217,
+      "classroom_repair_actual_cost_rs": 639782000,
       "needs_help_no_specific_csr": true
     },
     "Dungarpur": {
@@ -635,6 +652,7 @@
       "classroom_repair_needed_count": 1515,
       "building_dilapidated_count": 188,
       "new_classroom_requirement_count": 906,
+      "classroom_repair_actual_cost_rs": 1380575000,
       "needs_help_no_specific_csr": true
     },
     "Ganganagar": {
@@ -669,6 +687,7 @@
       "classroom_repair_needed_count": 1082,
       "building_dilapidated_count": 91,
       "new_classroom_requirement_count": 884,
+      "classroom_repair_actual_cost_rs": 1441200000,
       "needs_help_no_specific_csr": false
     },
     "Hanumangarh": {
@@ -698,6 +717,7 @@
       "classroom_repair_needed_count": 755,
       "building_dilapidated_count": 20,
       "new_classroom_requirement_count": 346,
+      "classroom_repair_actual_cost_rs": 619095000,
       "needs_help_no_specific_csr": false
     },
     "Jaipur": {
@@ -757,6 +777,7 @@
       "classroom_repair_needed_count": 2436,
       "building_dilapidated_count": 96,
       "new_classroom_requirement_count": 1174,
+      "classroom_repair_actual_cost_rs": 4341713000,
       "needs_help_no_specific_csr": false
     },
     "Jaisalmer": {
@@ -790,6 +811,7 @@
       "classroom_repair_needed_count": 1144,
       "building_dilapidated_count": 43,
       "new_classroom_requirement_count": 491,
+      "classroom_repair_actual_cost_rs": 624000000,
       "needs_help_no_specific_csr": false
     },
     "Jalor": {
@@ -819,6 +841,7 @@
       "classroom_repair_needed_count": 1565,
       "building_dilapidated_count": 15,
       "new_classroom_requirement_count": 588,
+      "classroom_repair_actual_cost_rs": 1207070000,
       "needs_help_no_specific_csr": false
     },
     "Jhalawar": {
@@ -851,6 +874,7 @@
       "classroom_repair_needed_count": 1302,
       "building_dilapidated_count": 217,
       "new_classroom_requirement_count": 668,
+      "classroom_repair_actual_cost_rs": 895607000,
       "needs_help_no_specific_csr": false
     },
     "Jhunjhunun": {
@@ -882,6 +906,7 @@
       "classroom_repair_needed_count": 1012,
       "building_dilapidated_count": 28,
       "new_classroom_requirement_count": 349,
+      "classroom_repair_actual_cost_rs": 608112000,
       "needs_help_no_specific_csr": false
     },
     "Jodhpur": {
@@ -917,6 +942,7 @@
       "classroom_repair_needed_count": 1984,
       "building_dilapidated_count": 17,
       "new_classroom_requirement_count": 325,
+      "classroom_repair_actual_cost_rs": 1335123000,
       "needs_help_no_specific_csr": false
     },
     "Karauli": {
@@ -946,6 +972,7 @@
       "classroom_repair_needed_count": 1240,
       "building_dilapidated_count": 22,
       "new_classroom_requirement_count": 509,
+      "classroom_repair_actual_cost_rs": 1122585000,
       "needs_help_no_specific_csr": false
     },
     "Khairthal-Tijara": {
@@ -975,6 +1002,7 @@
       "classroom_repair_needed_count": 617,
       "building_dilapidated_count": 15,
       "new_classroom_requirement_count": 306,
+      "classroom_repair_actual_cost_rs": 345690000,
       "needs_help_no_specific_csr": false
     },
     "Kota": {
@@ -1017,6 +1045,7 @@
       "classroom_repair_needed_count": 895,
       "building_dilapidated_count": 32,
       "new_classroom_requirement_count": 525,
+      "classroom_repair_actual_cost_rs": 1008581546,
       "needs_help_no_specific_csr": false
     },
     "Kotputli-Behror": {
@@ -1044,6 +1073,7 @@
       "classroom_repair_needed_count": 649,
       "building_dilapidated_count": 3,
       "new_classroom_requirement_count": 258,
+      "classroom_repair_actual_cost_rs": 733064000,
       "needs_help_no_specific_csr": true
     },
     "Nagaur": {
@@ -1077,6 +1107,7 @@
       "classroom_repair_needed_count": 1411,
       "building_dilapidated_count": 2,
       "new_classroom_requirement_count": 223,
+      "classroom_repair_actual_cost_rs": 922105000,
       "needs_help_no_specific_csr": false
     },
     "Pali": {
@@ -1110,6 +1141,7 @@
       "classroom_repair_needed_count": 1060,
       "building_dilapidated_count": 6,
       "new_classroom_requirement_count": 291,
+      "classroom_repair_actual_cost_rs": 869495000,
       "needs_help_no_specific_csr": false
     },
     "Phalodi": {
@@ -1139,6 +1171,7 @@
       "classroom_repair_needed_count": 1095,
       "building_dilapidated_count": 5,
       "new_classroom_requirement_count": 479,
+      "classroom_repair_actual_cost_rs": 1379000000,
       "needs_help_no_specific_csr": false
     },
     "Pratapgarh": {
@@ -1168,6 +1201,7 @@
       "classroom_repair_needed_count": 1144,
       "building_dilapidated_count": 265,
       "new_classroom_requirement_count": 607,
+      "classroom_repair_actual_cost_rs": 701675000,
       "needs_help_no_specific_csr": false
     },
     "Rajsamand": {
@@ -1202,6 +1236,7 @@
       "classroom_repair_needed_count": 1145,
       "building_dilapidated_count": 28,
       "new_classroom_requirement_count": 569,
+      "classroom_repair_actual_cost_rs": 1116196000,
       "needs_help_no_specific_csr": false
     },
     "Salumbar": {
@@ -1231,6 +1266,7 @@
       "classroom_repair_needed_count": 686,
       "building_dilapidated_count": 6,
       "new_classroom_requirement_count": 362,
+      "classroom_repair_actual_cost_rs": 585950000,
       "needs_help_no_specific_csr": false
     },
     "Sawai Madhopur": {
@@ -1260,6 +1296,7 @@
       "classroom_repair_needed_count": 588,
       "building_dilapidated_count": 55,
       "new_classroom_requirement_count": 500,
+      "classroom_repair_actual_cost_rs": 824967000,
       "needs_help_no_specific_csr": false
     },
     "Sikar": {
@@ -1294,6 +1331,7 @@
       "classroom_repair_needed_count": 1464,
       "building_dilapidated_count": 29,
       "new_classroom_requirement_count": 647,
+      "classroom_repair_actual_cost_rs": 1113867000,
       "needs_help_no_specific_csr": false
     },
     "Sirohi": {
@@ -1330,6 +1368,7 @@
       "classroom_repair_needed_count": 649,
       "building_dilapidated_count": 27,
       "new_classroom_requirement_count": 97,
+      "classroom_repair_actual_cost_rs": 883050000,
       "needs_help_no_specific_csr": false
     },
     "Tonk": {
@@ -1359,6 +1398,7 @@
       "classroom_repair_needed_count": 1186,
       "building_dilapidated_count": 47,
       "new_classroom_requirement_count": 604,
+      "classroom_repair_actual_cost_rs": 1205958000,
       "needs_help_no_specific_csr": false
     },
     "Udaipur": {
@@ -1411,6 +1451,7 @@
       "classroom_repair_needed_count": 1914,
       "building_dilapidated_count": 343,
       "new_classroom_requirement_count": 1070,
+      "classroom_repair_actual_cost_rs": 3398000000,
       "needs_help_no_specific_csr": false
     }
   }

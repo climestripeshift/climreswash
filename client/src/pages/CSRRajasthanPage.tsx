@@ -29,6 +29,7 @@ interface DistrictStats {
   schools_needing_help_count: number;
   toilet_required_count: number;
   classroom_repair_needed_count: number;
+  classroom_repair_actual_cost_rs: number;
   building_dilapidated_count: number;
   new_classroom_requirement_count: number;
   needs_help_no_specific_csr: boolean;
@@ -172,7 +173,7 @@ function DistrictTable({ data, companies, costs }: { data: DistrictSummary; comp
                 Needing Help{sortBy === "need" && " ▾"}
               </th>
               <th className="px-3 py-2 font-medium text-right">Toilet</th>
-              <th className="px-3 py-2 font-medium text-right">Repair</th>
+              <th className="px-3 py-2 font-medium text-right" title="Cost is real data (ACR repair-cost sheet), not an estimate">Repair (cost)</th>
               <th className="px-3 py-2 font-medium text-right">Dilapidated</th>
               <th className="px-3 py-2 font-medium text-right">New Room</th>
               <th className="px-3 py-2 font-medium text-right cursor-pointer hover:text-foreground" onClick={() => setSortBy("funding")}>
@@ -193,7 +194,9 @@ function DistrictTable({ data, companies, costs }: { data: DistrictSummary; comp
                   <td className="px-3 py-1.5 text-right text-muted-foreground">{v.total_school_count.toLocaleString()}</td>
                   <td className="px-3 py-1.5 text-right font-semibold">{v.schools_needing_help_count.toLocaleString()}</td>
                   <td className="px-3 py-1.5 text-right text-muted-foreground">{v.toilet_required_count.toLocaleString()}</td>
-                  <td className="px-3 py-1.5 text-right text-muted-foreground">{v.classroom_repair_needed_count.toLocaleString()}</td>
+                  <td className="px-3 py-1.5 text-right text-muted-foreground">
+                    {v.classroom_repair_needed_count.toLocaleString()} <span className="text-[10px]">({formatINR(v.classroom_repair_actual_cost_rs)})</span>
+                  </td>
                   <td className="px-3 py-1.5 text-right text-muted-foreground">{v.building_dilapidated_count.toLocaleString()}</td>
                   <td className="px-3 py-1.5 text-right text-muted-foreground">{v.new_classroom_requirement_count.toLocaleString()}</td>
                   <td className="px-3 py-1.5 text-right font-semibold">{formatINR(estimateFundingRequired(v, costs))}</td>
@@ -330,7 +333,7 @@ export default function CSRRajasthanPage() {
           <Link href="/csr-rajasthan/costs">
             <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded text-[11px] font-medium bg-muted/60 text-muted-foreground hover:bg-muted">
               <Settings2 className="h-3 w-3" />
-              Unit costs: 🚽{formatINR(costs.toilet)} · 🛠️{formatINR(costs.classroomRepair)} · 🏚️{formatINR(costs.dilapidatedBuilding)} · 🏗️{formatINR(costs.newClassroom)}
+              Unit costs: 🚽{formatINR(costs.toilet)} · 🛠️real data · 🏚️{formatINR(costs.dilapidatedBuilding)} · 🏗️{formatINR(costs.newClassroom)}
             </button>
           </Link>
         </div>
