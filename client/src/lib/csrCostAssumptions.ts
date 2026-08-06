@@ -46,7 +46,13 @@ export function loadUnitCosts(): UnitCosts {
 }
 
 export function saveUnitCosts(costs: UnitCosts) {
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(costs));
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(costs));
+  } catch (e) {
+    // Confirmed happening in Replit's preview webview even for small payloads -- don't let
+    // a quota error crash the save button's click handler, just keep the value in memory.
+    console.warn(`csrCostAssumptions: localStorage.setItem failed (${(e as Error)?.name ?? e})`);
+  }
 }
 
 export function resetUnitCosts() {

@@ -7,6 +7,15 @@
 // Persisted to localStorage, same rationale as csrCostAssumptions.ts -- this is a personal
 // working list for whoever's doing outreach, not shared/synced data, and there's no backend
 // write endpoint on this static-data platform to persist it to instead.
+//
+// IMPORTANT: localStorage.setItem can throw (QuotaExceededError) -- confirmed happening in
+// Replit's preview webview specifically, which appears to allow a much smaller quota than a
+// normal desktop browser tab (auto-tagging a few thousand small records was enough to hit
+// it there, though it's well under localStorage's usual ~5-10MB elsewhere). An uncaught
+// throw here previously aborted the *entire* React state update that called it, silently
+// discarding the in-memory tag change too -- every write below is wrapped so persistence
+// failing degrades to "works for this session, won't survive a reload" instead of "looks
+// like tagging just does nothing."
 
 export interface TaggedSchool {
   udise_code: string;
@@ -17,6 +26,24 @@ export interface TaggedSchool {
 export type SchoolTags = Record<string, TaggedSchool[]>; // company name -> tagged schools
 
 const STORAGE_KEY = "csr_school_tags_v1";
+
+/** True if the most recent save() call failed to persist (e.g. quota exceeded) --
+ * the in-memory data is still correct, it just won't survive a reload. */
+let lastSaveFailed = false;
+export function didLastTagSaveFail() {
+  return lastSaveFailed;
+}
+
+function trySet(key: string, value: string): boolean {
+  try {
+    window.localStorage.setItem(key, value);
+    return true;
+  } catch (e) {
+    console.warn(`csrSchoolTags: localStorage.setItem("${key}") failed (${(e as Error)?.name ?? e}) -- `
+      + `continuing in-memory only, this won't survive a reload.`);
+    return false;
+  }
+}
 
 export function loadSchoolTags(): SchoolTags {
   if (typeof window === "undefined") return {};
@@ -29,7 +56,7 @@ export function loadSchoolTags(): SchoolTags {
 }
 
 export function saveSchoolTags(tags: SchoolTags) {
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(tags));
+  lastSaveFailed = !trySet(STORAGE_KEY, JSON.stringify(tags));
 }
 
 export function tagSchool(tags: SchoolTags, company: string, school: TaggedSchool): SchoolTags {
@@ -78,10 +105,11 @@ export function loadAutoTaggedSet(): Set<string> {
 export function markAutoTagged(company: string) {
   const set = loadAutoTaggedSet();
   set.add(company);
-  window.localStorage.setItem(AUTO_TAG_STORAGE_KEY, JSON.stringify(Array.from(set)));
+  trySet(AUTO_TAG_STORAGE_KEY, JSON.stringify(Array.from(set)));
 }
 
-// Safety ceiling per company, purely to protect localStorage's ~5-10MB per-origin quota --
-// a handful of very broad companies could otherwise auto-tag tens of thousands of schools.
-// Essentially never hit for a company scoped to a normal handful of districts.
-export const AUTO_TAG_CAP = 3000;
+// Safety ceiling per company. Lowered from an earlier 3000 after that amount alone was
+// enough to blow Replit's preview-webview localStorage quota -- 500 is a large enough
+// worklist to be a genuine district-wide need list while leaving real headroom before
+// hitting quota issues again, and multiple companies can still each get their own 500.
+export const AUTO_TAG_CAP = 500;

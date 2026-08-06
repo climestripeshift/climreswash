@@ -1,10 +1,10 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Search, ChevronDown, ChevronRight, X, Plus, Loader2 } from "lucide-react";
 import { THEMES, type ThemeKey, type Company } from "@/lib/csrTypes";
 import {
   type SchoolTags, type TaggedSchool, loadSchoolTags, tagSchool, untagSchool,
-  bulkTagSchools, loadAutoTaggedSet, markAutoTagged, AUTO_TAG_CAP,
+  bulkTagSchools, loadAutoTaggedSet, markAutoTagged, AUTO_TAG_CAP, didLastTagSaveFail,
 } from "@/lib/csrSchoolTags";
 
 interface SchoolLite {
@@ -173,7 +173,15 @@ export default function CSRCompaniesTab({ companies, districts }: { companies: C
   const [expanded, setExpanded] = useState<string | null>(null);
   const [page, setPage] = useState(0);
   const [tags, setTags] = useState<SchoolTags>(() => loadSchoolTags());
+  // saveSchoolTags()/didLastTagSaveFail() are synchronous, but setTags(updaterFn) isn't --
+  // React doesn't call the updater until its own commit phase, so checking
+  // didLastTagSaveFail() right after calling setTags reads a stale (pre-write) value. This
+  // ref always holds the latest tags so handlers can compute the next value and call
+  // saveSchoolTags() synchronously themselves, then check the result immediately.
+  const tagsRef = useRef(tags);
+  useEffect(() => { tagsRef.current = tags; }, [tags]);
   const [autoTagged, setAutoTagged] = useState<Set<string>>(() => loadAutoTaggedSet());
+  const [saveFailed, setSaveFailed] = useState(false);
 
   // Lazy-loaded: the full school registry is ~70MB, no reason to fetch it until the user
   // actually opens a company's tagging panel for the first time.
@@ -199,9 +207,11 @@ export default function CSRCompaniesTab({ companies, districts }: { companies: C
 
     const needy = allNeedySchoolsInDistricts(schoolsQ.data, company.districts).slice(0, AUTO_TAG_CAP);
     const toTag: TaggedSchool[] = needy.map((s) => ({ udise_code: s.udise_code, name: s.name, district: s.district }));
-    setTags((t) => bulkTagSchools(t, expanded, toTag));
+    const next = bulkTagSchools(tagsRef.current, expanded, toTag);
+    setTags(next);
     markAutoTagged(expanded);
     setAutoTagged((s) => new Set(s).add(expanded));
+    if (didLastTagSaveFail()) setSaveFailed(true);
   }, [expanded, schoolsQ.data, companies, autoTagged]);
 
   const filtered = useMemo(() => {
@@ -224,11 +234,26 @@ export default function CSRCompaniesTab({ companies, districts }: { companies: C
   const pageRows = sorted.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
   const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
 
-  const handleTag = (company: string, school: TaggedSchool) => setTags((t) => tagSchool(t, company, school));
-  const handleUntag = (company: string, udise: string) => setTags((t) => untagSchool(t, company, udise));
+  const handleTag = (company: string, school: TaggedSchool) => {
+    const next = tagSchool(tagsRef.current, company, school);
+    setTags(next);
+    if (didLastTagSaveFail()) setSaveFailed(true);
+  };
+  const handleUntag = (company: string, udise: string) => {
+    const next = untagSchool(tagsRef.current, company, udise);
+    setTags(next);
+    if (didLastTagSaveFail()) setSaveFailed(true);
+  };
 
   return (
     <div className="space-y-3">
+      {saveFailed && (
+        <div className="px-3 py-2 rounded-lg border border-amber-500/30 bg-amber-500/10 text-[11px] text-amber-500 dark:text-amber-400">
+          ⚠️ Couldn't save tags to this browser's storage (quota exceeded) — they're still working for this
+          session, but won't survive a reload. This can happen in some embedded/preview browser windows; try a
+          regular browser tab if it matters that these persist.
+        </div>
+      )}
       <div className="border border-border/40 rounded-lg overflow-hidden">
         <div className="p-3 border-b border-border/30 flex flex-wrap gap-2 items-center bg-muted/20">
           <div className="relative flex-1 min-w-[200px]">
