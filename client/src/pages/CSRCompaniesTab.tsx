@@ -38,14 +38,34 @@ function TaggingPanel({ company, schools, schoolsLoading, tags, onTag, onUntag }
   const [search, setSearch] = useState("");
   const [districtFilter, setDistrictFilter] = useState<string>(company.districts[0] ?? "All");
   const taggedCodes = useMemo(() => new Set(tags.map((t) => t.udise_code)), [tags]);
+  const hasCompanyDistricts = company.districts.length > 0;
+  const q = search.trim().toLowerCase();
 
-  const results = useMemo(() => {
-    if (!schools || search.trim().length < 2) return [];
-    const q = search.trim().toLowerCase();
-    return schools
-      .filter((s) => (districtFilter === "All" || s.district === districtFilter) && s.name.toLowerCase().includes(q))
-      .slice(0, SEARCH_RESULTS_LIMIT);
-  }, [schools, search, districtFilter]);
+  // Districts are already known per company and need flags already known per school, so
+  // the panel auto-suggests needy schools in the company's own districts rather than
+  // requiring the user to type a name first -- search just narrows that candidate pool
+  // (or, for a pure-statewide company with no specific district list, search is the only
+  // way in, since "all 41 districts' schools" is too large a pool to dump by default).
+  const { candidates, matchCount, requiresSearch } = useMemo(() => {
+    if (!schools) return { candidates: [] as SchoolLite[], matchCount: 0, requiresSearch: false };
+    let pool = schools;
+    const requiresSearch = !hasCompanyDistricts && districtFilter === "All";
+    if (requiresSearch && !q) return { candidates: [], matchCount: 0, requiresSearch: true };
+
+    if (hasCompanyDistricts) {
+      const scope = districtFilter === "All" ? new Set(company.districts) : new Set([districtFilter]);
+      pool = pool.filter((s) => scope.has(s.district));
+    } else if (districtFilter !== "All") {
+      pool = pool.filter((s) => s.district === districtFilter);
+    }
+    if (q) pool = pool.filter((s) => s.name.toLowerCase().includes(q));
+    // without a search term, only show schools with an actual documented need -- that's
+    // the whole point of suggesting candidates instead of dumping every school in scope
+    if (!q) pool = pool.filter((s) => needBadges(s).length > 0);
+
+    const sorted = [...pool].sort((a, b) => needBadges(b).length - needBadges(a).length || a.name.localeCompare(b.name));
+    return { candidates: sorted.slice(0, SEARCH_RESULTS_LIMIT), matchCount: sorted.length, requiresSearch: false };
+  }, [schools, q, districtFilter, hasCompanyDistricts, company.districts]);
 
   return (
     <div className="p-3 space-y-3">
@@ -54,7 +74,7 @@ function TaggingPanel({ company, schools, schoolsLoading, tags, onTag, onUntag }
           Tagged schools ({tags.length})
         </div>
         {tags.length === 0 ? (
-          <div className="text-[11px] text-muted-foreground">None yet — search below to tag a school to this company.</div>
+          <div className="text-[11px] text-muted-foreground">None yet — pick one from the suggestions below.</div>
         ) : (
           <div className="space-y-1">
             {tags.map((t) => (
@@ -70,29 +90,34 @@ function TaggingPanel({ company, schools, schoolsLoading, tags, onTag, onUntag }
       </div>
 
       <div>
-        <div className="text-[11px] font-semibold text-muted-foreground mb-1.5">Tag a school</div>
+        <div className="text-[11px] font-semibold text-muted-foreground mb-1.5">
+          {hasCompanyDistricts ? "Needy schools in this company's districts" : "Tag a school"}
+        </div>
         <div className="flex gap-2 mb-2">
           <div className="relative flex-1">
             <Search className="absolute left-2 top-1.5 h-3 w-3 text-muted-foreground" />
             <input value={search} onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search school name (2+ characters)..."
+              placeholder={hasCompanyDistricts ? "Narrow by school name (optional)..." : "Search school name (required — statewide company)..."}
               className="w-full pl-6 pr-2 py-1 rounded-md border border-border/50 bg-background text-[11px] outline-none" />
           </div>
           <select value={districtFilter} onChange={(e) => setDistrictFilter(e.target.value)}
             className="rounded-md border border-border/50 bg-background px-2 py-1 text-[11px] outline-none">
-            <option value="All">All districts</option>
+            <option value="All">{hasCompanyDistricts ? "All of this company's districts" : "All districts (type a name first)"}</option>
             {company.districts.map((d) => <option key={d} value={d}>{d}</option>)}
           </select>
         </div>
         {schoolsLoading ? (
           <div className="text-[11px] text-muted-foreground flex items-center gap-1.5"><Loader2 className="h-3 w-3 animate-spin" />Loading school registry…</div>
-        ) : search.trim().length < 2 ? (
-          <div className="text-[11px] text-muted-foreground">Type at least 2 characters to search.</div>
-        ) : results.length === 0 ? (
-          <div className="text-[11px] text-muted-foreground">No matches.</div>
+        ) : requiresSearch ? (
+          <div className="text-[11px] text-muted-foreground">This company covers all districts statewide — type a school name or pick one district to browse.</div>
+        ) : candidates.length === 0 ? (
+          <div className="text-[11px] text-muted-foreground">{q ? "No matches." : "No documented need found for schools in scope — try searching by name instead."}</div>
         ) : (
           <div className="space-y-1 max-h-48 overflow-y-auto">
-            {results.map((s) => {
+            {!q && matchCount > candidates.length && (
+              <div className="text-[10px] text-muted-foreground pb-1">Showing top {candidates.length} of {matchCount} needy schools, most needs first — search to narrow.</div>
+            )}
+            {candidates.map((s) => {
               const already = taggedCodes.has(s.udise_code);
               return (
                 <div key={s.udise_code} className="flex items-center justify-between px-2 py-1 rounded hover:bg-muted/30 text-[11px]">
