@@ -1,9 +1,10 @@
-import { useState, useMemo, Fragment } from "react";
+import { useState, useMemo, useEffect, Fragment } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Search, ChevronDown, ChevronRight, X, Plus, Loader2 } from "lucide-react";
 import { THEMES, type ThemeKey, type Company } from "@/lib/csrTypes";
 import {
   type SchoolTags, type TaggedSchool, loadSchoolTags, tagSchool, untagSchool,
+  bulkTagSchools, loadAutoTaggedSet, markAutoTagged, AUTO_TAG_CAP,
 } from "@/lib/csrSchoolTags";
 
 interface SchoolLite {
@@ -21,6 +22,7 @@ interface SchoolLite {
 
 const PAGE_SIZE = 25;
 const SEARCH_RESULTS_LIMIT = 40;
+const TAGGED_PAGE_SIZE = 100;
 
 function needBadges(s: SchoolLite) {
   const badges: { icon: string; title: string }[] = [];
@@ -31,12 +33,22 @@ function needBadges(s: SchoolLite) {
   return badges;
 }
 
+// Shared by the suggestion list (which slices this down for display) and the auto-tag
+// effect (which uses the full thing, capped) -- every school with a documented need in
+// the given districts, most-needs-first.
+function allNeedySchoolsInDistricts(schools: SchoolLite[], districts: string[]): SchoolLite[] {
+  const scope = new Set(districts);
+  const pool = schools.filter((s) => scope.has(s.district) && needBadges(s).length > 0);
+  return pool.sort((a, b) => needBadges(b).length - needBadges(a).length || a.name.localeCompare(b.name));
+}
+
 function TaggingPanel({ company, schools, schoolsLoading, tags, onTag, onUntag }: {
   company: Company; schools: SchoolLite[] | undefined; schoolsLoading: boolean;
   tags: TaggedSchool[]; onTag: (s: TaggedSchool) => void; onUntag: (udise: string) => void;
 }) {
   const [search, setSearch] = useState("");
   const [districtFilter, setDistrictFilter] = useState<string>(company.districts[0] ?? "All");
+  const [tagsShown, setTagsShown] = useState(TAGGED_PAGE_SIZE);
   const taggedCodes = useMemo(() => new Set(tags.map((t) => t.udise_code)), [tags]);
   const hasCompanyDistricts = company.districts.length > 0;
   const q = search.trim().toLowerCase();
@@ -69,6 +81,12 @@ function TaggingPanel({ company, schools, schoolsLoading, tags, onTag, onUntag }
 
   return (
     <div className="p-3 space-y-3">
+      {hasCompanyDistricts && (
+        <div className="text-[10px] text-muted-foreground bg-muted/30 rounded px-2 py-1.5">
+          Every school with a documented need in {company.name.split(",")[0]}'s districts was auto-tagged below —
+          untag any that don't belong, or use the search further down to add others.
+        </div>
+      )}
       <div>
         <div className="text-[11px] font-semibold text-muted-foreground mb-1.5">
           Tagged schools ({tags.length})
@@ -76,8 +94,8 @@ function TaggingPanel({ company, schools, schoolsLoading, tags, onTag, onUntag }
         {tags.length === 0 ? (
           <div className="text-[11px] text-muted-foreground">None yet — pick one from the suggestions below.</div>
         ) : (
-          <div className="space-y-1">
-            {tags.map((t) => (
+          <div className="space-y-1 max-h-64 overflow-y-auto">
+            {tags.slice(0, tagsShown).map((t) => (
               <div key={t.udise_code} className="flex items-center justify-between px-2 py-1 rounded bg-emerald-500/10 text-[11px]">
                 <span>{t.name} <span className="text-muted-foreground">· {t.district}</span></span>
                 <button onClick={() => onUntag(t.udise_code)} className="text-muted-foreground hover:text-red-400">
@@ -85,6 +103,12 @@ function TaggingPanel({ company, schools, schoolsLoading, tags, onTag, onUntag }
                 </button>
               </div>
             ))}
+            {tags.length > tagsShown && (
+              <button onClick={() => setTagsShown((n) => n + TAGGED_PAGE_SIZE)}
+                className="text-[10px] text-emerald-400 hover:underline px-2 py-1">
+                Show {Math.min(TAGGED_PAGE_SIZE, tags.length - tagsShown)} more ({tags.length - tagsShown} remaining)
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -149,6 +173,7 @@ export default function CSRCompaniesTab({ companies, districts }: { companies: C
   const [expanded, setExpanded] = useState<string | null>(null);
   const [page, setPage] = useState(0);
   const [tags, setTags] = useState<SchoolTags>(() => loadSchoolTags());
+  const [autoTagged, setAutoTagged] = useState<Set<string>>(() => loadAutoTaggedSet());
 
   // Lazy-loaded: the full school registry is ~70MB, no reason to fetch it until the user
   // actually opens a company's tagging panel for the first time.
@@ -158,6 +183,26 @@ export default function CSRCompaniesTab({ companies, districts }: { companies: C
     staleTime: Infinity,
     enabled: expanded !== null,
   });
+
+  // Auto-tag every needy school in the expanded company's districts, once, the first time
+  // its panel is ever opened -- districts are already known per company and need flags
+  // already known per school, so there's no reason to make the user manually build this
+  // list one click at a time. Only runs once per company ever (see markAutoTagged); a
+  // user who untags some afterward won't have them silently reappear on re-expand. Pure
+  // statewide companies (no specific district on record) are skipped -- "every needy
+  // school in Rajasthan" isn't a usable worklist.
+  useEffect(() => {
+    if (!expanded || !schoolsQ.data) return;
+    if (autoTagged.has(expanded)) return;
+    const company = companies.find((c) => c.name === expanded);
+    if (!company || company.districts.length === 0) return;
+
+    const needy = allNeedySchoolsInDistricts(schoolsQ.data, company.districts).slice(0, AUTO_TAG_CAP);
+    const toTag: TaggedSchool[] = needy.map((s) => ({ udise_code: s.udise_code, name: s.name, district: s.district }));
+    setTags((t) => bulkTagSchools(t, expanded, toTag));
+    markAutoTagged(expanded);
+    setAutoTagged((s) => new Set(s).add(expanded));
+  }, [expanded, schoolsQ.data, companies, autoTagged]);
 
   const filtered = useMemo(() => {
     let r = companies;

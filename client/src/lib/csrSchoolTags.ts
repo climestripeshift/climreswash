@@ -45,3 +45,43 @@ export function untagSchool(tags: SchoolTags, company: string, udiseCode: string
   saveSchoolTags(next);
   return next;
 }
+
+// Bulk tag (used for auto-tagging every needy school in a company's districts on first
+// expand) -- sets the full list at once rather than N individual tagSchool() calls, and
+// dedupes by udise_code. Doesn't check "already tagged" per-school since this is meant to
+// run once against an empty/near-empty list (see AUTO_TAG_STORAGE_KEY below); if the
+// company already has some manual tags, those are merged in rather than overwritten.
+export function bulkTagSchools(tags: SchoolTags, company: string, newSchools: TaggedSchool[]): SchoolTags {
+  const existing = tags[company] ?? [];
+  const byCode = new Map(existing.map((s) => [s.udise_code, s]));
+  for (const s of newSchools) if (!byCode.has(s.udise_code)) byCode.set(s.udise_code, s);
+  const next = { ...tags, [company]: Array.from(byCode.values()) };
+  saveSchoolTags(next);
+  return next;
+}
+
+// Tracks which companies have already been auto-tagged, so it only runs once ever per
+// company -- otherwise re-expanding a panel after the user deliberately untagged some
+// schools would just silently re-add them all.
+const AUTO_TAG_STORAGE_KEY = "csr_auto_tagged_companies_v1";
+
+export function loadAutoTaggedSet(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const raw = window.localStorage.getItem(AUTO_TAG_STORAGE_KEY);
+    return new Set(raw ? JSON.parse(raw) : []);
+  } catch {
+    return new Set();
+  }
+}
+
+export function markAutoTagged(company: string) {
+  const set = loadAutoTaggedSet();
+  set.add(company);
+  window.localStorage.setItem(AUTO_TAG_STORAGE_KEY, JSON.stringify(Array.from(set)));
+}
+
+// Safety ceiling per company, purely to protect localStorage's ~5-10MB per-origin quota --
+// a handful of very broad companies could otherwise auto-tag tens of thousands of schools.
+// Essentially never hit for a company scoped to a normal handful of districts.
+export const AUTO_TAG_CAP = 3000;
