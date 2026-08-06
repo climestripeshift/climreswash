@@ -8,15 +8,8 @@ import { ArrowLeft, Loader2, Search, ChevronDown, ChevronRight, Settings2 } from
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { type UnitCosts, loadUnitCosts, estimateFundingRequired, formatINR } from "@/lib/csrCostAssumptions";
-
-const THEMES = [
-  { key: "formal_education", label: "Formal Education", icon: "📖" },
-  { key: "wash", label: "WASH", icon: "🚰" },
-  { key: "school_hardware", label: "School Hardware", icon: "🏗️" },
-  { key: "other_school_initiative", label: "Other (ICT/Sports)", icon: "🏀" },
-  { key: "anganwadi", label: "Anganwadi", icon: "👶" },
-] as const;
-type ThemeKey = typeof THEMES[number]["key"];
+import { THEMES, type ThemeKey, type Company } from "@/lib/csrTypes";
+import CSRCompaniesTab from "@/pages/CSRCompaniesTab";
 
 interface DistrictStats {
   csr_specific_count: number;
@@ -40,17 +33,6 @@ interface DistrictSummary {
     unresolved_tokens: Record<string, number>;
   };
   by_district: Record<string, DistrictStats>;
-}
-interface Company {
-  name: string;
-  contact_person: string | null;
-  contact_info: string | null;
-  primary_district_raw: string | null;
-  districts: string[];
-  is_statewide: boolean;
-  themes: Record<ThemeKey, boolean>;
-  budget_raw: string | null;
-  annual_report_link: string | null;
 }
 
 type MetricKey = "need" | "csr_specific" | "csr_total" | "funding";
@@ -230,6 +212,7 @@ function DistrictTable({ data, companies, costs }: { data: DistrictSummary; comp
 }
 
 export default function CSRRajasthanPage() {
+  const [tab, setTab] = useState<"map" | "companies">("map");
   const [metric, setMetric] = useState<MetricKey>("need");
   const [themeFilter, setThemeFilter] = useState<ThemeKey | "all">("all");
   const [costs, setCosts] = useState<UnitCosts>(() => loadUnitCosts());
@@ -282,6 +265,8 @@ export default function CSRRajasthanPage() {
     };
   }, [districtBoundaryQ.data, summaryQ.data, metric, themeFilter, costs]);
 
+  const districts = useMemo(() => Object.keys(summaryQ.data?.by_district ?? {}).sort(), [summaryQ.data]);
+
   const activeMetric = METRICS.find((m) => m.key === metric)!;
   const isLoading = summaryQ.isLoading || companiesQ.isLoading || districtBoundaryQ.isLoading;
 
@@ -311,6 +296,27 @@ export default function CSRRajasthanPage() {
       )}
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="flex items-center gap-2 border-b border-border/30 pb-3">
+          <button onClick={() => setTab("map")}
+            className={`px-3 py-1.5 rounded text-xs font-medium ${tab === "map" ? "bg-emerald-600 text-white" : "bg-muted/60 text-muted-foreground"}`}>
+            🗺️ Map &amp; Districts
+          </button>
+          <button onClick={() => setTab("companies")}
+            className={`px-3 py-1.5 rounded text-xs font-medium ${tab === "companies" ? "bg-emerald-600 text-white" : "bg-muted/60 text-muted-foreground"}`}>
+            🏢 Companies &amp; Tagging
+          </button>
+        </div>
+
+        {tab === "companies" ? (
+          companiesQ.data ? (
+            <CSRCompaniesTab companies={companiesQ.data} districts={districts} />
+          ) : (
+            <div className="text-xs text-muted-foreground py-8 text-center flex items-center justify-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" /> Loading companies…
+            </div>
+          )
+        ) : (
+        <>
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">Map metric:</span>
@@ -385,6 +391,8 @@ export default function CSRRajasthanPage() {
 
         {summaryQ.data && companiesQ.data && (
           <DistrictTable data={summaryQ.data} companies={companiesQ.data} costs={costs} />
+        )}
+        </>
         )}
       </div>
     </div>
