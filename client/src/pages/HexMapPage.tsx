@@ -90,7 +90,7 @@ const ATTRIBUTES: AttrDef[] = [
   { key: "sbm_twin_pit_pct",        label: "SBM Twin-Pit Toilet %",  icon: "🚽", category: "wash", desc: "% IHHL with twin-pit design (flood-safe, recommended) — SBM Phase 2 IMIS" },
   { key: "sbm_single_pit_pct",      label: "SBM Single-Pit Toilet %",icon: "🚽", category: "wash", desc: "% IHHL with single-pit design (flood-vulnerable) — SBM Phase 2 IMIS" },
   { key: "sbm_septic_soak_pct",     label: "SBM Septic+Soak %",      icon: "🚽", category: "wash", desc: "% IHHL with septic tank + soak pit (properly treated) — SBM Phase 2 IMIS" },
-  { key: "sbm_septic_nosoak_pct",   label: "SBM Septic (No Soak Pit) %", icon: "🚽", category: "wash", desc: "% IHHL with septic tank but NO soak pit (effluent not properly absorbed/treated) — SBM Phase 2 IMIS. This is the dominant category nationally (~88% avg), unlike the small septic+soak share." },
+  { key: "sbm_septic_nosoak_pct",   label: "SBM Not Individually Verified %", icon: "❓", category: "wash", desc: "SBM's own \"septic tank, no soak pit\" bucket — but data-audited: in 491 of 557 districts, the 5 toilet-type categories' sum exceeds total registered latrines, and this bucket sits at/near the total-latrine count almost everywhere while the actually-surveyed count (toilet_type_entered) is far smaller. That means most of this % is toilets never individually field-verified, defaulting here administratively — NOT a confirmed finding that they're poorly built. Treat as a data-completeness gap, not a WASH outcome." },
   { key: "sbm_total_ihhl",          label: "SBM Total IHHL",         icon: "🏠", category: "wash", desc: "Total Individual Household Latrines registered — SBM Phase 2 IMIS" },
   // Population vulnerability layers
   { key: "wash_wasting_pct",        label: "Child Wasting (acute)",   icon: "📉", category: "wash", desc: "Acute malnutrition — wasting in children under 5 (NFHS-5 district)" },
@@ -135,10 +135,12 @@ const ATTR_RAMP: Record<string, [number,number,number][]> = {
   menstrual_hygiene_pct: GREENS, clean_fuel_pct: GREENS, ors_diarrhoea_pct: GREENS,
   antenatal_4visit_pct: GREENS, child_marriage_pct: RISK,
   // SBM -- twin-pit and septic+soak are both "properly handled" outcomes (green=more is
-  // good); single-pit and septic-without-soak-pit both mean waste isn't safely contained
-  // or treated (red=more is bad). sbm_total_ihhl is a raw count, stays neutral.
+  // good); single-pit means waste isn't safely contained (red=more is bad).
+  // septic_nosoak is data-audited to be mostly an unverified/default bucket rather than a
+  // genuine finding (see its ATTRIBUTES description) -- neutral blue, no good/bad claim.
+  // sbm_total_ihhl is a raw count, stays neutral.
   sbm_twin_pit_pct: GREENS, sbm_single_pit_pct: RISK,
-  sbm_septic_soak_pct: GREENS, sbm_septic_nosoak_pct: RISK, sbm_total_ihhl: ORANGES,
+  sbm_septic_soak_pct: GREENS, sbm_septic_nosoak_pct: BLUES, sbm_total_ihhl: ORANGES,
   // Future
   risk_ssp245_2050: RISK, risk_ssp585_2030: RISK, risk_ssp585_2050: RISK,
   heat_days_ssp585_2050: ORANGES, severe_heat_days_ssp585_2050: RISK,
@@ -1150,7 +1152,10 @@ const LAYER_DIRECTION: Record<string, "good" | "bad"> = {
   menstrual_hygiene_pct: "good", clean_fuel_pct: "good", ors_diarrhoea_pct: "good", antenatal_4visit_pct: "good", child_marriage_pct: "bad",
   // SBM toilet types -- twin-pit and septic+soak are safely-contained/treated outcomes;
   // single-pit and septic-without-soak-pit both mean waste isn't safely handled
-  sbm_twin_pit_pct: "good", sbm_septic_soak_pct: "good", sbm_single_pit_pct: "bad", sbm_septic_nosoak_pct: "bad",
+  // sbm_septic_nosoak_pct deliberately excluded -- data-audited to be mostly an
+  // "unverified, defaults here" bucket rather than a genuine WASH outcome, see its
+  // description. Showing a good/bad direction for it would overstate what's known.
+  sbm_twin_pit_pct: "good", sbm_septic_soak_pct: "good", sbm_single_pit_pct: "bad",
 };
 
 function Legend({ attr }: { attr: string }) {
