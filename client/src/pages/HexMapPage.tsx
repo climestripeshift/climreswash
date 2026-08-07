@@ -816,13 +816,16 @@ const RISK_LABEL: Record<string, string> = {
   flashflood_risk: "Flash Flood", sealevel_risk: "Sea Level", fire_risk: "Fire",
 };
 
-function HexInfoPanel({ props, ranking, confidence, onClose }: {
+function HexInfoPanel({ props, ranking, confidence, villages, villagesLoading, onClose }: {
   props: any;
   ranking: any | null;
   confidence: { p5: number; p95: number; mean: number; sd: number } | null;
+  villages: { count: number; villages: { name: string; place: string | null; population: number | null }[] } | null;
+  villagesLoading: boolean;
   onClose: () => void;
 }) {
   const [tab, setTab] = useState<"data" | "actions">("data");
+  const [villagesExpanded, setVillagesExpanded] = useState(false);
   const hasRanking = !!ranking;
   const ciWidth = confidence ? confidence.p95 - confidence.p5 : null;
   const ciLabel = ciWidth != null ? (ciWidth < 1.5 ? "High" : ciWidth < 3 ? "Moderate" : "Low") : null;
@@ -866,6 +869,31 @@ function HexInfoPanel({ props, ranking, confidence, onClose }: {
           <div className="flex justify-between"><span className="text-muted-foreground">👶 Children &lt;5</span><span className="font-medium">{(props.pop_children_under_5 ?? 0).toLocaleString()}</span></div>
           <div className="flex justify-between"><span className="text-muted-foreground">🧓 Elderly 60+</span><span className="font-medium">{(props.pop_elderly_60plus ?? 0).toLocaleString()}</span></div>
           <div className="flex justify-between"><span className="text-muted-foreground">👩 Women 15-49</span><span className="font-medium">{(props.pop_women_15_49 ?? 0).toLocaleString()}</span></div>
+          <div className="border-t border-border/30 my-1 pt-1" />
+          <div>
+            <button className="flex justify-between w-full" onClick={() => setVillagesExpanded((v) => !v)}>
+              <span className="text-muted-foreground">🏘️ Villages in this hex</span>
+              <span className="font-medium">
+                {villagesLoading ? "…" : villages ? `${villages.count.toLocaleString()} ${villagesExpanded ? "▾" : "▸"}` : "0"}
+              </span>
+            </button>
+            {villagesExpanded && villages && (
+              <div className="mt-1 max-h-32 overflow-y-auto space-y-0.5 pl-1 border-l border-border/30">
+                {villages.villages.slice(0, 200).map((v, i) => (
+                  <div key={i} className="text-[10px] text-muted-foreground flex justify-between gap-2">
+                    <span className="truncate">{v.name}{v.place && v.place !== "village" && <span className="italic"> ({v.place})</span>}</span>
+                    {v.population != null && <span className="shrink-0">{v.population.toLocaleString()}</span>}
+                  </div>
+                ))}
+                {villages.villages.length > 200 && (
+                  <div className="text-[9px] text-muted-foreground italic">+{villages.villages.length - 200} more</div>
+                )}
+                <div className="text-[9px] text-muted-foreground italic pt-0.5">
+                  From OpenStreetMap — real but not exhaustive coverage, one hex can span many villages.
+                </div>
+              </div>
+            )}
+          </div>
           <div className="border-t border-border/30 my-1 pt-1" />
           {Object.entries(RISK_LABEL).map(([k, label]) => {
             const v = props[k];
@@ -1570,6 +1598,17 @@ export default function HexMapPage() {
     staleTime: Infinity,
   });
 
+  // Which real villages/hamlets/towns (OSM place nodes) fall inside each hex -- doesn't
+  // change any risk score, this hex is still one ~252km² cell, just tells you what's in
+  // it. Lazy: only fetched the first time a hex is actually clicked, since this file is
+  // much bigger than hex_confidence.json and most sessions won't need it at all.
+  const hexVillagesQ = useQuery<Record<string, { count: number; villages: { name: string; place: string | null; population: number | null }[] }>>({
+    queryKey: ["hex-villages"],
+    queryFn: () => fetch("/data/india_hex_villages.json").then((r) => r.json()),
+    staleTime: Infinity,
+    enabled: clickedHex !== null,
+  });
+
   const rankByDistrict = useMemo(() => {
     const m: Record<string, any> = {};
     for (const r of rankQ.data ?? []) m[r.district] = r;
@@ -1767,7 +1806,9 @@ export default function HexMapPage() {
           {/* Clicked hex info */}
           {clickedHex && (
             <div className="absolute top-3 right-3 z-[800]">
-              <HexInfoPanel props={clickedHex} ranking={rankByDistrict[clickedHex.district_name] ?? null} confidence={confidenceQ.data?.[clickedHex.h3_id] ?? null} onClose={() => setClickedHex(null)} />
+              <HexInfoPanel props={clickedHex} ranking={rankByDistrict[clickedHex.district_name] ?? null} confidence={confidenceQ.data?.[clickedHex.h3_id] ?? null}
+                villages={hexVillagesQ.data?.[clickedHex.h3_id] ?? null} villagesLoading={hexVillagesQ.isLoading}
+                onClose={() => setClickedHex(null)} />
             </div>
           )}
 
