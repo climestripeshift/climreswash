@@ -89,7 +89,8 @@ const ATTRIBUTES: AttrDef[] = [
   // SBM Phase 2 toilet types (sbm_toilet_types.json — joined by district)
   { key: "sbm_twin_pit_pct",        label: "SBM Twin-Pit Toilet %",  icon: "🚽", category: "wash", desc: "% IHHL with twin-pit design (flood-safe, recommended) — SBM Phase 2 IMIS" },
   { key: "sbm_single_pit_pct",      label: "SBM Single-Pit Toilet %",icon: "🚽", category: "wash", desc: "% IHHL with single-pit design (flood-vulnerable) — SBM Phase 2 IMIS" },
-  { key: "sbm_septic_soak_pct",     label: "SBM Septic+Soak %",      icon: "🚽", category: "wash", desc: "% IHHL with septic tank + soak pit — SBM Phase 2 IMIS" },
+  { key: "sbm_septic_soak_pct",     label: "SBM Septic+Soak %",      icon: "🚽", category: "wash", desc: "% IHHL with septic tank + soak pit (properly treated) — SBM Phase 2 IMIS" },
+  { key: "sbm_septic_nosoak_pct",   label: "SBM Septic (No Soak Pit) %", icon: "🚽", category: "wash", desc: "% IHHL with septic tank but NO soak pit (effluent not properly absorbed/treated) — SBM Phase 2 IMIS. This is the dominant category nationally (~88% avg), unlike the small septic+soak share." },
   { key: "sbm_total_ihhl",          label: "SBM Total IHHL",         icon: "🏠", category: "wash", desc: "Total Individual Household Latrines registered — SBM Phase 2 IMIS" },
   // Population vulnerability layers
   { key: "wash_wasting_pct",        label: "Child Wasting (acute)",   icon: "📉", category: "wash", desc: "Acute malnutrition — wasting in children under 5 (NFHS-5 district)" },
@@ -133,9 +134,11 @@ const ATTR_RAMP: Record<string, [number,number,number][]> = {
   // NFHS extra
   menstrual_hygiene_pct: GREENS, clean_fuel_pct: GREENS, ors_diarrhoea_pct: GREENS,
   antenatal_4visit_pct: GREENS, child_marriage_pct: RISK,
-  // SBM
+  // SBM -- twin-pit and septic+soak are both "properly handled" outcomes (green=more is
+  // good); single-pit and septic-without-soak-pit both mean waste isn't safely contained
+  // or treated (red=more is bad). sbm_total_ihhl is a raw count, stays neutral.
   sbm_twin_pit_pct: GREENS, sbm_single_pit_pct: RISK,
-  sbm_septic_soak_pct: BLUES, sbm_total_ihhl: ORANGES,
+  sbm_septic_soak_pct: GREENS, sbm_septic_nosoak_pct: RISK, sbm_total_ihhl: ORANGES,
   // Future
   risk_ssp245_2050: RISK, risk_ssp585_2030: RISK, risk_ssp585_2050: RISK,
   heat_days_ssp585_2050: ORANGES, severe_heat_days_ssp585_2050: RISK,
@@ -170,7 +173,7 @@ const FIXED_DOMAIN: Record<string, [number, number]> = {
   antenatal_4visit_pct: [0, 100], child_marriage_pct: [0, 60],
   // SBM
   sbm_twin_pit_pct: [0, 100], sbm_single_pit_pct: [0, 100],
-  sbm_septic_soak_pct: [0, 100], sbm_total_ihhl: [0, 500000],
+  sbm_septic_soak_pct: [0, 100], sbm_septic_nosoak_pct: [0, 100], sbm_total_ihhl: [0, 500000],
   // Future projections
   risk_ssp245_2050: [0, 10], risk_ssp585_2030: [0, 10], risk_ssp585_2050: [0, 10],
   heat_days_ssp585_2050: [0, 135], severe_heat_days_ssp585_2050: [0, 30],
@@ -1035,10 +1038,119 @@ function HexInfoPanel({ props, ranking, confidence, villages, villagesLoading, o
   );
 }
 
+// ── SBM district-name matching ──────────────────────────────────────────────────
+// sbm_toilet_types.json is keyed by the district names SBM's own portal uses, which are
+// frequently NOT what the hex grid's india.json district source uses -- different
+// English transliterations of the same district (Bellary/Ballari, Mysore/Mysuru),
+// spacing/punctuation differences (Uttarkashi/Uttar Kashi), or genuine renames
+// (Allahabad/Prayagraj). Raw exact-match was landing at 59% (425/720 state|district
+// combos) -- most of the rest weren't scraper failures, they're this exact problem.
+//
+// SBM_DISTRICT_ALIAS below covers every rename VERIFIED against SBM's own district
+// list for that state (i.e. the target name actually exists in the data, not a guess).
+// Two categories deliberately NOT aliased here, left as honest gaps instead of wrong
+// matches:
+//  - Real administrative SPLITS (Andhra Pradesh's 2022 13->26 district reorganization,
+//    Telangana's Warangal/Hanamkonda split, Chhattisgarh's 2022 new districts) -- these
+//    aren't 1:1 renames, a naive alias would misattribute one new district's data to
+//    several old ones, the same class of problem the Rajasthan CSR/JJM work handled by
+//    NOT guessing.
+//  - Districts genuinely absent from SBM Phase 2's own data even within a covered state
+//    (e.g. Uttarakhand only reports 7 of 13 districts; several Gujarat/Tamil Nadu
+//    districts aren't in the source at all) -- no alias fixes a real data gap.
+//  - Punjab, Haryana, Delhi, Puducherry, Andaman & Nicobar are entirely absent from SBM
+//    Phase 2 as a state -- structural, not a naming issue.
+const SBM_DISTRICT_ALIAS: Record<string, string> = {
+  // Karnataka (Kannada-spelling renames, boundaries unchanged)
+  "KARNATAKA|BAGALKOT": "KARNATAKA|BAGALKOTE", "KARNATAKA|BELGAUM": "KARNATAKA|BELAGAVI",
+  "KARNATAKA|BELLARY": "KARNATAKA|BALLARI", "KARNATAKA|BIJAPUR": "KARNATAKA|VIJAYAPURA",
+  "KARNATAKA|CHAMARAJANAGAR": "KARNATAKA|CHAMARAJANAGARA", "KARNATAKA|CHIKMAGALUR": "KARNATAKA|CHIKKAMAGALURU",
+  "KARNATAKA|DAVANAGERE": "KARNATAKA|DAVANGERE", "KARNATAKA|GULBARGA": "KARNATAKA|KALABURAGI",
+  "KARNATAKA|MYSORE": "KARNATAKA|MYSURU", "KARNATAKA|SHIMOGA": "KARNATAKA|SHIVAMOGGA",
+  "KARNATAKA|TUMKUR": "KARNATAKA|TUMAKURU", "KARNATAKA|BANGALORE": "KARNATAKA|BENGALURU URBAN",
+  "KARNATAKA|BANGALORE RURAL": "KARNATAKA|BENGALURU RURAL",
+  // Maharashtra
+  "MAHARASHTRA|AHMADNAGAR": "MAHARASHTRA|AHMEDNAGAR", "MAHARASHTRA|AURANGABAD": "MAHARASHTRA|CHHATRAPATI SAMBHAJINAGAR",
+  "MAHARASHTRA|BID": "MAHARASHTRA|BEED", "MAHARASHTRA|BULDANA": "MAHARASHTRA|BULDHANA",
+  "MAHARASHTRA|GONDIYA": "MAHARASHTRA|GONDIA", "MAHARASHTRA|OSMANABAD": "MAHARASHTRA|DHARASHIV",
+  "MAHARASHTRA|RAIGARH": "MAHARASHTRA|RAIGAD",
+  // Gujarat (only districts confirmed present in SBM's Gujarat list -- ~12 Gujarat
+  // districts are absent from SBM entirely and aren't aliased below)
+  "GUJARAT|AHMADABAD": "GUJARAT|AHMEDABAD", "GUJARAT|ARAVALI": "GUJARAT|ARVALLI",
+  "GUJARAT|CHHOTA UDAIPUR": "GUJARAT|CHHOTAUDEPUR", "GUJARAT|DOHAD": "GUJARAT|DAHOD",
+  "GUJARAT|THE DANGS": "GUJARAT|DANGS", "GUJARAT|BANASKANTHA": "GUJARAT|BANAS KANTHA",
+  "GUJARAT|SABARKANTHA": "GUJARAT|SABAR KANTHA",
+  // West Bengal
+  "WEST BENGAL|KOCH BIHAR": "WEST BENGAL|COOCH BEHAR", "WEST BENGAL|MALDAH": "WEST BENGAL|MALDA",
+  "WEST BENGAL|HUGLI": "WEST BENGAL|HOOGHLY", // Howrah is absent from SBM's WB data entirely, no alias possible
+  "WEST BENGAL|DARJILING": "WEST BENGAL|DARJEELING", "WEST BENGAL|PURULIYA": "WEST BENGAL|PURULIA",
+  "WEST BENGAL|NORTH TWENTY FOUR PARGANAS": "WEST BENGAL|NORTH 24 PARGANAS",
+  "WEST BENGAL|SOUTH TWENTY FOUR PARGANAS": "WEST BENGAL|SOUTH 24 PARGANAS",
+  "WEST BENGAL|PURBA BARDDHAMAN": "WEST BENGAL|PURBA BARDHAMAN", "WEST BENGAL|PASCHIM BARDDHAMAN": "WEST BENGAL|PASCHIM BARDHAMAN",
+  // Odisha
+  "ODISHA|BAUDH": "ODISHA|BOUDH", "ODISHA|DEBAGARH": "ODISHA|DEOGARH",
+  "ODISHA|SUBARNAPUR": "ODISHA|SONEPUR", "ODISHA|NABARANGAPUR": "ODISHA|NABARANGPUR",
+  // Uttarakhand (Garhwal/Tehri Garhwal/Almora/Champawat/Nainital/Rudraprayag are genuinely
+  // absent from SBM entirely -- 7 of 13 districts covered, not a naming issue)
+  "UTTARAKHAND|UTTARKASHI": "UTTARAKHAND|UTTAR KASHI", "UTTARAKHAND|UDHAM SINGH NAGAR": "UTTARAKHAND|UDAM SINGH NAGAR",
+  // Jharkhand
+  "JHARKHAND|PASHCHIMI SINGHBHUM": "JHARKHAND|WEST SINGHBHUM", "JHARKHAND|PURBI SINGHBHUM": "JHARKHAND|EAST SINGHBUM",
+  "JHARKHAND|SARAIKELA-KHARSAWAN": "JHARKHAND|SARAIKELA KHARSAWAN", "JHARKHAND|SAHIBGANJ": "JHARKHAND|SAHEBGANJ",
+  "JHARKHAND|KODARMA": "JHARKHAND|KODERMA",
+  // Bihar
+  "BIHAR|PURBA CHAMPARAN": "BIHAR|PURBI CHAMPARAN",
+  // Uttar Pradesh -- SBM's own UP coverage is thin (26 of 75 districts), so most renamed
+  // districts (Ayodhya, Amroha, Hathras, Kasganj, Shamli) aren't in the source at all even
+  // post-rename; only these two verified targets actually exist in the data
+  "UTTAR PRADESH|ALLAHABAD": "UTTAR PRADESH|PRAYAGRAJ",
+  "UTTAR PRADESH|SANT RAVIDAS NAGAR (BHADOHI)": "UTTAR PRADESH|BHADOHI",
+  // Jammu & Kashmir
+  "JAMMU & KASHMIR|BANDIPORE": "JAMMU & KASHMIR|BANDIPORA", "JAMMU & KASHMIR|BARAMULA": "JAMMU & KASHMIR|BARAMULLA",
+  "JAMMU & KASHMIR|PUNCH": "JAMMU & KASHMIR|POONCH", "JAMMU & KASHMIR|BADGAM": "JAMMU & KASHMIR|BUDGAM",
+  "JAMMU & KASHMIR|SHUPIYAN": "JAMMU & KASHMIR|SHOPIAN",
+  // Ladakh
+  "LADAKH|LEH(LADAKH)": "LADAKH|LEH LADAKH",
+  // Telangana
+  "TELANGANA|RANGAREDDY": "TELANGANA|RANGA REDDY", "TELANGANA|KOMARAM BHEEM": "TELANGANA|KUMURAM BHEEM ASIFABAD",
+  "TELANGANA|JAYASHANKAR": "TELANGANA|JAYASHANKAR BHUPALAPALLY", "TELANGANA|JOGULAMBA": "TELANGANA|JOGULAMBA GADWAL",
+  "TELANGANA|BHADRADRI": "TELANGANA|BHADRADRI KOTHAGUDEM", "TELANGANA|YADADRI BHONGIRI": "TELANGANA|YADADRI BHUVANAGIRI",
+};
+
+function sbmLookupKeys(state: string, district: string): string[] {
+  const raw = `${(state ?? "").toUpperCase()}|${(district ?? "").toUpperCase()}`;
+  const keys = [raw];
+  if (SBM_DISTRICT_ALIAS[raw]) keys.push(SBM_DISTRICT_ALIAS[raw]);
+  return keys;
+}
+
 // ── Legend ─────────────────────────────────────────────────────────────────────
 
 const LEGEND_OVERRIDES: Record<string, { icon: string; label: string }> = {
   heat_peak_score: { icon: "🔥", label: "Heatwave — Peak season" },
+};
+
+// Explicit "does a higher number mean better or worse" per layer -- shown directly on
+// the legend rather than left for the user to infer from color alone. Deliberately a
+// hand-checked table, not inferred from which color ramp a layer happens to use: several
+// layers (flood_risk, heat_risk, jjm_fhtc_pct, wash_water_pct...) use a thematic color
+// (blue for water, orange for heat) rather than the green/red good/bad ramp, so ramp
+// identity alone isn't a reliable signal of direction.
+const LAYER_DIRECTION: Record<string, "good" | "bad"> = {
+  // hazard / risk / burden scores -- higher is always worse
+  flood_risk: "bad", heat_risk: "bad", heat_peak_score: "bad", cyclone_risk: "bad", drought_risk: "bad",
+  wetbulb_risk: "bad", landslide_risk: "bad", coldwave_risk: "bad", flashflood_risk: "bad",
+  sealevel_risk: "bad", fire_risk: "bad", pollution_risk: "bad", hex_risk: "bad", cascade_count: "bad",
+  hazard_count_5: "bad", hazard_count_3: "bad", total_burden_days: "bad", multi_hazard_days: "bad",
+  weighted_burden_children: "bad", weighted_burden_elderly: "bad", gw_stress_score: "bad", pm25_annual: "bad",
+  risk_ssp245_2050: "bad", risk_ssp585_2030: "bad", risk_ssp585_2050: "bad",
+  heat_days_ssp585_2050: "bad", severe_heat_days_ssp585_2050: "bad", wet_bulb_days_ssp585_2050: "bad", flood_days_ssp585_2050: "bad",
+  // WASH access / outcome measures
+  adaptive_capacity: "good", jjm_fhtc_pct: "good", wash_sanitation_pct: "good", wash_water_pct: "good", wash_health_pct: "good",
+  wash_stunting_pct: "bad", wash_diarrhoea_pct: "bad", wash_anaemia_pct: "bad", wash_wasting_pct: "bad",
+  menstrual_hygiene_pct: "good", clean_fuel_pct: "good", ors_diarrhoea_pct: "good", antenatal_4visit_pct: "good", child_marriage_pct: "bad",
+  // SBM toilet types -- twin-pit and septic+soak are safely-contained/treated outcomes;
+  // single-pit and septic-without-soak-pit both mean waste isn't safely handled
+  sbm_twin_pit_pct: "good", sbm_septic_soak_pct: "good", sbm_single_pit_pct: "bad", sbm_septic_nosoak_pct: "bad",
 };
 
 function Legend({ attr }: { attr: string }) {
@@ -1080,6 +1192,7 @@ function Legend({ attr }: { attr: string }) {
   const stops = Array.from({ length: 5 }, (_, i) => gradientColor(ramp, i / 4));
   const [lo, hi] = FIXED_DOMAIN[attr] ?? [0, 10];
   const fmt = (v: number) => attr === "elevation_mean" ? `${Math.round(v)}m` : v.toFixed(2);
+  const direction = LAYER_DIRECTION[attr];
 
   return (
     <div className="bg-background/90 backdrop-blur border border-border/40 rounded-lg p-2.5 shadow-lg w-44">
@@ -1088,6 +1201,11 @@ function Legend({ attr }: { attr: string }) {
       <div className="flex justify-between text-[9px] text-muted-foreground">
         <span>{fmt(lo)}</span><span>{fmt(hi)}</span>
       </div>
+      {direction && (
+        <p className={`text-[9px] font-medium mt-1 ${direction === "good" ? "text-emerald-400" : "text-red-400"}`}>
+          {direction === "good" ? "↑ Higher = Better" : "↑ Higher = Worse"}
+        </p>
+      )}
     </div>
   );
 }
@@ -1670,13 +1788,16 @@ export default function HexMapPage() {
         const p = f.properties;
         const fut  = futMap[p.h3_id] ?? {};
         const nfhs = nfhsMap[p.district_name] ?? {};
-        const sbmKey = `${(p.state ?? "").toUpperCase()}|${(p.district_name ?? "").toUpperCase()}`;
-        const sbm  = sbmMap[sbmKey] ?? {};
+        let sbm: any = {};
+        for (const key of sbmLookupKeys(p.state, p.district_name)) {
+          if (sbmMap[key]) { sbm = sbmMap[key]; break; }
+        }
         const sbmPrefixed = sbm.twin_pit_pct != null ? {
-          sbm_twin_pit_pct:    sbm.twin_pit_pct,
-          sbm_single_pit_pct:  sbm.single_pit_pct,
-          sbm_septic_soak_pct: sbm.septic_soak_pct,
-          sbm_total_ihhl:      sbm.total_ihhl,
+          sbm_twin_pit_pct:      sbm.twin_pit_pct,
+          sbm_single_pit_pct:    sbm.single_pit_pct,
+          sbm_septic_soak_pct:   sbm.septic_soak_pct,
+          sbm_septic_nosoak_pct: sbm.septic_nosoak_pct,
+          sbm_total_ihhl:        sbm.total_ihhl,
         } : {};
         return { ...f, properties: { ...p, ...fut, ...nfhs, ...sbmPrefixed } };
       }),
