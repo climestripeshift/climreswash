@@ -42,8 +42,8 @@ function allNeedySchoolsInDistricts(schools: SchoolLite[], districts: string[]):
   return pool.sort((a, b) => needBadges(b).length - needBadges(a).length || a.name.localeCompare(b.name));
 }
 
-function TaggingPanel({ company, schools, schoolsLoading, tags, onTag, onUntag }: {
-  company: Company; schools: SchoolLite[] | undefined; schoolsLoading: boolean;
+function TaggingPanel({ company, needInScope, schools, schoolsLoading, tags, onTag, onUntag }: {
+  company: Company; needInScope: number; schools: SchoolLite[] | undefined; schoolsLoading: boolean;
   tags: TaggedSchool[]; onTag: (s: TaggedSchool) => void; onUntag: (udise: string) => void;
 }) {
   const [search, setSearch] = useState("");
@@ -83,8 +83,15 @@ function TaggingPanel({ company, schools, schoolsLoading, tags, onTag, onUntag }
     <div className="p-3 space-y-3">
       {hasCompanyDistricts && (
         <div className="text-[10px] text-muted-foreground bg-muted/30 rounded px-2 py-1.5">
-          Every school with a documented need in {company.name.split(",")[0]}'s districts was auto-tagged below —
-          untag any that don't belong, or use the search further down to add others.
+          {needInScope > AUTO_TAG_CAP ? (
+            <>{company.name.split(",")[0]}'s districts have <strong>{needInScope.toLocaleString()}</strong> schools with a
+            documented need in total — the worklist below is capped at the first <strong>{AUTO_TAG_CAP}</strong> (most-needs-first)
+            to keep this manageable and protect browser storage; the rest are still findable via search.</>
+          ) : (
+            <>Every school with a documented need in {company.name.split(",")[0]}'s districts
+            ({needInScope.toLocaleString()} total) was auto-tagged below — untag any that don't belong,
+            or use the search further down to add others.</>
+          )}
         </div>
       )}
       <div>
@@ -165,11 +172,13 @@ function TaggingPanel({ company, schools, schoolsLoading, tags, onTag, onUntag }
   );
 }
 
-export default function CSRCompaniesTab({ companies, districts }: { companies: Company[]; districts: string[] }) {
+export default function CSRCompaniesTab({ companies, districts, districtNeedCounts }: {
+  companies: Company[]; districts: string[]; districtNeedCounts: Record<string, number>;
+}) {
   const [search, setSearch] = useState("");
   const [districtFilter, setDistrictFilter] = useState("All");
   const [themeFilter, setThemeFilter] = useState<ThemeKey | "all">("all");
-  const [sortBy, setSortBy] = useState<"name" | "districts" | "tagged">("districts");
+  const [sortBy, setSortBy] = useState<"name" | "districts" | "need" | "tagged">("need");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [page, setPage] = useState(0);
   const [tags, setTags] = useState<SchoolTags>(() => loadSchoolTags());
@@ -225,11 +234,17 @@ export default function CSRCompaniesTab({ companies, districts }: { companies: C
     return r;
   }, [companies, districtFilter, themeFilter, search]);
 
+  // Real total, not the (500-capped) auto-tag worklist size -- computed from the already-
+  // loaded district summary, not the lazily-fetched school registry, so it's available for
+  // every company immediately without expanding anything.
+  const needInScope = (company: Company) => company.districts.reduce((sum, d) => sum + (districtNeedCounts[d] ?? 0), 0);
+
   const sorted = useMemo(() => [...filtered].sort((a, b) => {
     if (sortBy === "name") return a.name.localeCompare(b.name);
     if (sortBy === "tagged") return (tags[b.name]?.length ?? 0) - (tags[a.name]?.length ?? 0);
+    if (sortBy === "need") return needInScope(b) - needInScope(a);
     return b.districts.length - a.districts.length;
-  }), [filtered, sortBy, tags]);
+  }), [filtered, sortBy, tags, districtNeedCounts]);
 
   const pageRows = sorted.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
   const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
@@ -289,7 +304,12 @@ export default function CSRCompaniesTab({ companies, districts }: { companies: C
                 <th className="px-3 py-2 font-medium">Themes</th>
                 <th className="px-3 py-2 font-medium">Contact</th>
                 <th className="px-3 py-2 font-medium">Budget</th>
-                <th className="px-3 py-2 font-medium text-right cursor-pointer hover:text-foreground" onClick={() => setSortBy("tagged")}>
+                <th className="px-3 py-2 font-medium text-right cursor-pointer hover:text-foreground" onClick={() => setSortBy("need")}
+                  title="Real total, from the district summary -- not capped">
+                  Schools Needing Help{sortBy === "need" && " ▾"}
+                </th>
+                <th className="px-3 py-2 font-medium text-right cursor-pointer hover:text-foreground" onClick={() => setSortBy("tagged")}
+                  title="Auto-tag worklist, capped at 500/company">
                   Tagged Schools{sortBy === "tagged" && " ▾"}
                 </th>
               </tr>
@@ -297,6 +317,7 @@ export default function CSRCompaniesTab({ companies, districts }: { companies: C
             <tbody>
               {pageRows.flatMap((c) => {
                 const companyTags = tags[c.name] ?? [];
+                const need = needInScope(c);
                 const rows = [
                   <tr key={c.name} className="border-b border-border/10 hover:bg-muted/20 cursor-pointer"
                     onClick={() => setExpanded(expanded === c.name ? null : c.name)}>
@@ -316,17 +337,21 @@ export default function CSRCompaniesTab({ companies, districts }: { companies: C
                     </td>
                     <td className="px-3 py-1.5 text-muted-foreground max-w-[140px] truncate" title={c.contact_info ?? ""}>{c.contact_person ?? "—"}</td>
                     <td className="px-3 py-1.5 text-muted-foreground max-w-[100px] truncate" title={c.budget_raw ?? ""}>{c.budget_raw ?? "—"}</td>
+                    <td className="px-3 py-1.5 text-right text-muted-foreground">{need > 0 ? need.toLocaleString() : "—"}</td>
                     <td className="px-3 py-1.5 text-right">
-                      <span className={companyTags.length > 0 ? "text-emerald-400 font-semibold" : "text-muted-foreground"}>{companyTags.length}</span>
+                      <span className={companyTags.length > 0 ? "text-emerald-400 font-semibold" : "text-muted-foreground"}>
+                        {companyTags.length.toLocaleString()}{companyTags.length >= AUTO_TAG_CAP && companyTags.length < need && <span title="Capped -- see the column to the left for the real total">*</span>}
+                      </span>
                     </td>
                   </tr>,
                 ];
                 if (expanded === c.name) {
                   rows.push(
                     <tr key={`${c.name}-panel`}>
-                      <td colSpan={7} className="p-0 bg-muted/10 border-b border-border/10">
+                      <td colSpan={8} className="p-0 bg-muted/10 border-b border-border/10">
                         <TaggingPanel
                           company={c}
+                          needInScope={need}
                           schools={schoolsQ.data}
                           schoolsLoading={schoolsQ.isLoading}
                           tags={companyTags}

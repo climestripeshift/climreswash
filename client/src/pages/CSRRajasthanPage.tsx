@@ -270,6 +270,15 @@ export default function CSRRajasthanPage() {
 
   const districts = useMemo(() => Object.keys(summaryQ.data?.by_district ?? {}).sort(), [summaryQ.data]);
 
+  // Cheap to compute (already-loaded district summary, no need to touch the 70MB school
+  // registry) -- lets the Companies tab show each company's real total need in scope
+  // immediately, distinct from the (capped, lazy-loaded) auto-tag worklist count.
+  const districtNeedCounts = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const [d, v] of Object.entries(summaryQ.data?.by_district ?? {})) m[d] = v.schools_needing_help_count;
+    return m;
+  }, [summaryQ.data]);
+
   const activeMetric = METRICS.find((m) => m.key === metric)!;
   const isLoading = summaryQ.isLoading || companiesQ.isLoading || districtBoundaryQ.isLoading;
 
@@ -312,7 +321,7 @@ export default function CSRRajasthanPage() {
 
         {tab === "companies" ? (
           companiesQ.data ? (
-            <CSRCompaniesTab companies={companiesQ.data} districts={districts} />
+            <CSRCompaniesTab companies={companiesQ.data} districts={districts} districtNeedCounts={districtNeedCounts} />
           ) : (
             <div className="text-xs text-muted-foreground py-8 text-center flex items-center justify-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin" /> Loading companies…
