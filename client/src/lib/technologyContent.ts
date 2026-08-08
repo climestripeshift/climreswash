@@ -13,11 +13,18 @@ export interface TechnologyInfo {
   costLevel: 'Low' | 'Medium' | 'High';
   relatedHazards: string[];
   typology: string[];
+  // Design population range this technology is built to serve, e.g. a twin-pit toilet
+  // serves one household while a UASB reactor serves a small town -- real engineering
+  // scale, not a guess. Powers the Population Load filter on the technology list page.
+  populationLoad: { min: number; max: number; label: string };
   // Climate-hazard suitability from the WASH Technology Climate Matrix
   hazardSuitability?: Record<string, HazardSuitability>;
   // Context note from the matrix (typology / setting)
   matrixContext?: string;
   matrixCategory?: string;
+  // Admin-uploaded technical drawing (see AdminDashboard's Technologies tab), overlaid
+  // client-side from /api/technologies by slug -- not part of the static entries below.
+  diagramUrl?: string;
 }
 
 export const technologyContent: Record<string, TechnologyInfo> = {
@@ -50,6 +57,7 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     costLevel: 'Low',
     relatedHazards: ['Flood', 'Drought'],
     typology: ['Plains / Alluvial', 'Desert / Arid', 'Rocky / Hilly'],
+    populationLoad: { min: 5, max: 10, label: "Household (5-10 people)" },
     matrixCategory: 'Pit-based',
     matrixContext: 'Flood-prone & seasonally waterlogged areas; pits raised 0.6–1 m; alternating pit design',
     hazardSuitability: {
@@ -94,6 +102,7 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     costLevel: 'Medium',
     relatedHazards: ['Flood', 'Drought', 'Groundwater Depletion'],
     typology: ['Plains / Alluvial', 'Coastal', 'Rain Intensive'],
+    populationLoad: { min: 5, max: 50, label: "Household to small institution (5-50 people)" },
     matrixCategory: 'Septic',
     matrixContext: 'Low water table areas; semi-urban; requires periodic desludging',
     hazardSuitability: {
@@ -139,6 +148,7 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     costLevel: 'Low',
     relatedHazards: ['Drought', 'Dust Storm', 'Heatwave'],
     typology: ['Desert / Arid', 'Plains / Alluvial'],
+    populationLoad: { min: 5, max: 15, label: "Household (5-15 people)" },
     hazardSuitability: {
       'Flood': 'not_suitable',
       'Flash Flood': 'not_suitable',
@@ -181,7 +191,8 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     maintenanceLevel: 'Medium',
     costLevel: 'High',
     relatedHazards: ['Drought', 'Heatwave'],
-    typology: ['Plains / Alluvial', 'Rain Intensive', 'Coastal']
+    typology: ['Plains / Alluvial', 'Rain Intensive', 'Coastal'],
+    populationLoad: { min: 50, max: 1000, label: "Community / cluster (50-1,000 people)" },
   },
   'solid-waste': {
     slug: 'solid-waste',
@@ -211,7 +222,8 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     maintenanceLevel: 'Medium',
     costLevel: 'Medium',
     relatedHazards: ['Flood', 'Heatwave', 'Cyclone'],
-    typology: ['Plains / Alluvial', 'Coastal', 'Rain Intensive']
+    typology: ['Plains / Alluvial', 'Coastal', 'Rain Intensive'],
+    populationLoad: { min: 500, max: 100000, label: "Community to municipal (500-100,000+ people)" },
   },
   'rainwater-harvesting': {
     slug: 'rainwater-harvesting',
@@ -241,7 +253,8 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     maintenanceLevel: 'Low',
     costLevel: 'Medium',
     relatedHazards: ['Drought', 'Groundwater Depletion'],
-    typology: ['Rain Intensive', 'Plains / Alluvial', 'Rocky / Hilly']
+    typology: ['Rain Intensive', 'Plains / Alluvial', 'Rocky / Hilly'],
+    populationLoad: { min: 5, max: 500, label: "Household to community (5-500 people)" },
   },
   'bore-well': {
     slug: 'bore-well',
@@ -270,7 +283,8 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     maintenanceLevel: 'Medium',
     costLevel: 'Medium',
     relatedHazards: ['Drought', 'Groundwater Depletion', 'Heatwave'],
-    typology: ['Desert / Arid', 'Rocky / Hilly', 'Plains / Alluvial']
+    typology: ['Desert / Arid', 'Rocky / Hilly', 'Plains / Alluvial'],
+    populationLoad: { min: 5, max: 300, label: "Household to community (5-300 people)" },
   },
   'flood-resilient-sanitation': {
     slug: 'flood-resilient-sanitation',
@@ -300,6 +314,7 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     costLevel: 'High',
     relatedHazards: ['Flood', 'Cyclone'],
     typology: ['Flood Prone', 'Coastal', 'Rain Intensive'],
+    populationLoad: { min: 20, max: 500, label: "Community shelter / cluster (20-500 people)" },
     matrixCategory: 'Flood-specific',
     matrixContext: 'Perennial flood zones / riverine communities; anchored floating structure; elevated pit design',
     hazardSuitability: {
@@ -344,7 +359,8 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     maintenanceLevel: 'Low',
     costLevel: 'High',
     relatedHazards: ['Drought', 'Heatwave', 'Dust Storm'],
-    typology: ['Desert / Arid', 'Plains / Alluvial', 'Rocky / Hilly']
+    typology: ['Desert / Arid', 'Plains / Alluvial', 'Rocky / Hilly'],
+    populationLoad: { min: 5, max: 500, label: "Household/farm to community (5-500 people)" },
   },
   'watershed-management': {
     slug: 'watershed-management',
@@ -374,7 +390,8 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     maintenanceLevel: 'Low',
     costLevel: 'Medium',
     relatedHazards: ['Drought', 'Flood', 'Groundwater Depletion'],
-    typology: ['Rocky / Hilly', 'Desert / Arid', 'Plains / Alluvial']
+    typology: ['Rocky / Hilly', 'Desert / Arid', 'Plains / Alluvial'],
+    populationLoad: { min: 500, max: 10000, label: "Village catchment (500-10,000 people)" },
   },
   'early-warning-system': {
     slug: 'early-warning-system',
@@ -404,7 +421,8 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     maintenanceLevel: 'Medium',
     costLevel: 'Medium',
     relatedHazards: ['Flood', 'Heatwave', 'Cyclone', 'Cold Wave', 'Dust Storm', 'Drought'],
-    typology: ['Flood Prone', 'Coastal', 'Desert / Arid', 'Plains / Alluvial', 'Rocky / Hilly', 'Rain Intensive']
+    typology: ['Flood Prone', 'Coastal', 'Desert / Arid', 'Plains / Alluvial', 'Rocky / Hilly', 'Rain Intensive'],
+    populationLoad: { min: 1000, max: 50000, label: "Village to block level (1,000-50,000 people)" },
   },
   'drought-resistant-crops': {
     slug: 'drought-resistant-crops',
@@ -434,7 +452,8 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     maintenanceLevel: 'Low',
     costLevel: 'Low',
     relatedHazards: ['Drought', 'Heatwave', 'Groundwater Depletion'],
-    typology: ['Desert / Arid', 'Plains / Alluvial', 'Rocky / Hilly']
+    typology: ['Desert / Arid', 'Plains / Alluvial', 'Rocky / Hilly'],
+    populationLoad: { min: 50, max: 5000, label: "Farming community (50-5,000 people)" },
   },
 
   // ── New technologies from Toilet Technology Climate Matrix ──────────────
@@ -467,6 +486,7 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     costLevel: 'Low',
     relatedHazards: ['Heatwave', 'Drought'],
     typology: ['Desert / Arid', 'Plains / Alluvial'],
+    populationLoad: { min: 5, max: 10, label: "Household (5-10 people)" },
     matrixCategory: 'Pit-based',
     matrixContext: 'Hot/humid climates; ventilation pipe reduces flies & odour',
     hazardSuitability: {
@@ -513,6 +533,7 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     costLevel: 'Medium',
     relatedHazards: ['Cold Wave', 'Drought'],
     typology: ['Rocky / Hilly', 'Plains / Alluvial'],
+    populationLoad: { min: 5, max: 15, label: "Household (5-15 people)" },
     matrixCategory: 'Anaerobic',
     matrixContext: 'Cold climates, plains; DRDO anaerobic digestion; suitable near frost conditions',
     hazardSuitability: {
@@ -559,6 +580,7 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     costLevel: 'Medium',
     relatedHazards: ['Flood', 'Heatwave'],
     typology: ['Coastal', 'Flood Prone', 'Rain Intensive'],
+    populationLoad: { min: 50, max: 1000, label: "Community / institutional (50-1,000 people)" },
     matrixCategory: 'Nature-based',
     matrixContext: 'Wetland/coastal zones; natural treatment using aquatic plants',
     hazardSuitability: {
@@ -605,6 +627,7 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     costLevel: 'Low',
     relatedHazards: ['Drought', 'Heatwave'],
     typology: ['Desert / Arid', 'Rocky / Hilly'],
+    populationLoad: { min: 5, max: 10, label: "Household (5-10 people)" },
     matrixCategory: 'Dry',
     matrixContext: 'Water-scarce / drought areas; no water needed; produces fertiliser',
     hazardSuitability: {
@@ -651,6 +674,7 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     costLevel: 'Low',
     relatedHazards: ['Drought', 'Heatwave'],
     typology: ['Desert / Arid', 'Rocky / Hilly'],
+    populationLoad: { min: 5, max: 10, label: "Household (5-10 people)" },
     matrixCategory: 'Dry',
     matrixContext: 'Arid / drought zones; separates urine for use as fertiliser',
     hazardSuitability: {
@@ -697,6 +721,7 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     costLevel: 'Low',
     relatedHazards: ['Cyclone', 'Earthquake'],
     typology: ['Plains / Alluvial', 'Rain Intensive'],
+    populationLoad: { min: 5, max: 8, label: "Household (5-8 people)" },
     matrixCategory: 'Eco/Emergency',
     matrixContext: 'Cyclone/post-disaster areas; shallow pit + tree planting; relocatable',
     hazardSuitability: {
@@ -743,6 +768,7 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     costLevel: 'Medium',
     relatedHazards: ['Flood', 'Cyclone', 'Earthquake'],
     typology: ['Plains / Alluvial', 'Coastal', 'Flood Prone'],
+    populationLoad: { min: 50, max: 5000, label: "Community to dense urban (50-5,000 people)" },
     matrixCategory: 'Urban/Emergency',
     matrixContext: 'Dense urban informal settlements; sealed containers collected regularly',
     hazardSuitability: {
@@ -789,6 +815,7 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     costLevel: 'Medium',
     relatedHazards: ['Cold Wave'],
     typology: ['Rocky / Hilly'],
+    populationLoad: { min: 5, max: 15, label: "Household, high-rise (5-15 people)" },
     matrixCategory: 'Terrain-specific',
     matrixContext: 'Hilly / rocky terrain; extended drop pipe into deep pit',
     hazardSuitability: {
@@ -834,6 +861,7 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     costLevel: 'Low',
     relatedHazards: ['Earthquake', 'Cyclone'],
     typology: ['Plains / Alluvial'],
+    populationLoad: { min: 20, max: 500, label: "Emergency camp / cluster (20-500 people)" },
     matrixCategory: 'Emergency',
     matrixContext: 'Post-disaster temporary; mass displacement; rapid deployment',
     hazardSuitability: {
@@ -878,6 +906,7 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     costLevel: 'High',
     relatedHazards: [],
     typology: ['Plains / Alluvial'],
+    populationLoad: { min: 5000, max: 500000, label: "Town to city (5,000-500,000+ people)" },
     matrixCategory: 'Sewered',
     matrixContext: 'Urban with piped water & sewer network; not suitable for water-scarce areas',
     hazardSuitability: {
@@ -919,6 +948,7 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     costLevel: 'Low',
     relatedHazards: ['Flood', 'Heatwave', 'Drought', 'Cyclone'],
     typology: ['Plains / Alluvial', 'Desert / Arid', 'Rocky / Hilly', 'Coastal', 'Rain Intensive', 'Flood Prone'],
+    populationLoad: { min: 50, max: 2000, label: "Institutional / community (50-2,000 people)" },
     matrixCategory: 'Liquid Waste — Primary',
     matrixContext: 'Universal first-stage treatment; underground placement ensures climate resilience across all zones',
     hazardSuitability: { 'Flood': 'recommended', 'Heatwave': 'recommended', 'Drought': 'recommended', 'Cyclone': 'recommended', 'Cold Wave': 'recommended', 'Dust Storm': 'recommended' },
@@ -943,6 +973,7 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     costLevel: 'Low',
     relatedHazards: ['Heatwave', 'Drought', 'Cyclone'],
     typology: ['Plains / Alluvial', 'Desert / Arid', 'Rocky / Hilly', 'Coastal', 'Rain Intensive', 'Flood Prone'],
+    populationLoad: { min: 5, max: 100, label: "Household to small institution (5-100 people)" },
     matrixCategory: 'Liquid Waste — Primary',
     matrixContext: 'Universal pre-treatment; seal tank lids and inlet/outlet in flood-prone zones',
     hazardSuitability: { 'Flood': 'conditional', 'Heatwave': 'recommended', 'Drought': 'recommended', 'Cyclone': 'recommended', 'Cold Wave': 'recommended', 'Dust Storm': 'recommended' },
@@ -967,6 +998,7 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     costLevel: 'Medium',
     relatedHazards: ['Heatwave'],
     typology: ['Plains / Alluvial', 'Rain Intensive', 'Flood Prone'],
+    populationLoad: { min: 5, max: 100, label: "Household to small community (5-100 people)" },
     matrixCategory: 'Liquid Waste — Primary + Energy',
     matrixContext: 'Optimal in warm tropical zones; fixed-dome design provides flood and cyclone resilience',
     hazardSuitability: { 'Flood': 'conditional', 'Heatwave': 'recommended', 'Drought': 'not_suitable', 'Cyclone': 'conditional', 'Cold Wave': 'not_suitable' },
@@ -991,6 +1023,7 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     costLevel: 'Medium',
     relatedHazards: ['Flood', 'Heatwave', 'Drought', 'Cyclone'],
     typology: ['Plains / Alluvial', 'Desert / Arid', 'Rocky / Hilly', 'Coastal', 'Rain Intensive', 'Flood Prone'],
+    populationLoad: { min: 50, max: 2000, label: "Institutional / community (50-2,000 people)" },
     matrixCategory: 'Liquid Waste — Secondary Anaerobic',
     matrixContext: 'Universal secondary treatment; underground placement ensures climate resilience in all hazard contexts',
     hazardSuitability: { 'Flood': 'recommended', 'Heatwave': 'recommended', 'Drought': 'recommended', 'Cyclone': 'recommended', 'Cold Wave': 'recommended', 'Dust Storm': 'recommended' },
@@ -1015,6 +1048,7 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     costLevel: 'Medium',
     relatedHazards: ['Flood', 'Heatwave', 'Drought', 'Cyclone'],
     typology: ['Plains / Alluvial', 'Desert / Arid', 'Rocky / Hilly', 'Coastal', 'Rain Intensive', 'Flood Prone'],
+    populationLoad: { min: 50, max: 1000, label: "Institutional / community (50-1,000 people)" },
     matrixCategory: 'Liquid Waste — Secondary Anaerobic',
     matrixContext: 'Underground enclosed design; suitable for all hazard contexts; used as DEWATS component',
     hazardSuitability: { 'Flood': 'recommended', 'Heatwave': 'recommended', 'Drought': 'recommended', 'Cyclone': 'recommended', 'Cold Wave': 'recommended' },
@@ -1039,6 +1073,7 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     costLevel: 'Medium',
     relatedHazards: ['Heatwave'],
     typology: ['Plains / Alluvial', 'Rain Intensive', 'Flood Prone'],
+    populationLoad: { min: 2000, max: 50000, label: "Small town (2,000-50,000 people)" },
     matrixCategory: 'Liquid Waste — Secondary Anaerobic',
     matrixContext: 'Best in warm tropical zones; above-ground components need wind bracing in cyclone-prone areas',
     hazardSuitability: { 'Flood': 'conditional', 'Heatwave': 'recommended', 'Drought': 'conditional', 'Cyclone': 'not_suitable', 'Cold Wave': 'not_suitable' },
@@ -1063,6 +1098,7 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     costLevel: 'Low',
     relatedHazards: ['Heatwave'],
     typology: ['Plains / Alluvial', 'Desert / Arid', 'Rocky / Hilly', 'Coastal', 'Rain Intensive', 'Flood Prone'],
+    populationLoad: { min: 50, max: 2000, label: "Community / institutional (50-2,000 people)" },
     matrixCategory: 'Liquid Waste — Tertiary Nature-Based',
     matrixContext: 'Raise bed berms 0.5–1 m above flood line; select drought-tolerant reed species for arid zones',
     hazardSuitability: { 'Flood': 'conditional', 'Heatwave': 'recommended', 'Drought': 'not_suitable', 'Cyclone': 'conditional', 'Cold Wave': 'conditional' },
@@ -1087,6 +1123,7 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     costLevel: 'Medium',
     relatedHazards: ['Heatwave'],
     typology: ['Plains / Alluvial', 'Desert / Arid', 'Rocky / Hilly', 'Coastal', 'Rain Intensive', 'Flood Prone'],
+    populationLoad: { min: 50, max: 2000, label: "Community / institutional (50-2,000 people)" },
     matrixCategory: 'Liquid Waste — Tertiary Nature-Based',
     matrixContext: 'Raised bed construction; suitable for all zones; combine with horizontal CW for complete nutrient removal',
     hazardSuitability: { 'Flood': 'conditional', 'Heatwave': 'recommended', 'Drought': 'not_suitable', 'Cyclone': 'conditional', 'Cold Wave': 'conditional' },
@@ -1111,6 +1148,7 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     costLevel: 'Low',
     relatedHazards: ['Heatwave'],
     typology: ['Desert / Arid', 'Plains / Alluvial'],
+    populationLoad: { min: 2000, max: 50000, label: "Town (2,000-50,000 people)" },
     matrixCategory: 'Liquid Waste — Tertiary Pond',
     matrixContext: 'Best in hot arid and sunny zones; embankment strengthening needed in cyclone-prone areas; poor choice for flood plains',
     hazardSuitability: { 'Flood': 'not_suitable', 'Heatwave': 'recommended', 'Drought': 'not_suitable', 'Cyclone': 'not_suitable', 'Cold Wave': 'not_suitable' },
@@ -1135,6 +1173,7 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     costLevel: 'Low',
     relatedHazards: ['Heatwave'],
     typology: ['Plains / Alluvial', 'Rain Intensive'],
+    populationLoad: { min: 1000, max: 20000, label: "Town (1,000-20,000 people)" },
     matrixCategory: 'Liquid Waste — Tertiary Pond',
     matrixContext: 'Tropical zones only; pond embankments needed in flood areas; harvest before cyclone events',
     hazardSuitability: { 'Flood': 'not_suitable', 'Heatwave': 'recommended', 'Drought': 'conditional', 'Cyclone': 'not_suitable', 'Cold Wave': 'not_suitable' },
@@ -1159,6 +1198,7 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     costLevel: 'Low',
     relatedHazards: ['Heatwave'],
     typology: ['Desert / Arid', 'Plains / Alluvial'],
+    populationLoad: { min: 2000, max: 50000, label: "Town (2,000-50,000 people)" },
     matrixCategory: 'Liquid Waste — Tertiary Polishing',
     matrixContext: 'Hot sunny zones only; embankment protection in flood-prone areas; not suitable for cold or heavily clouded regions',
     hazardSuitability: { 'Flood': 'not_suitable', 'Heatwave': 'recommended', 'Drought': 'not_suitable', 'Cyclone': 'not_suitable', 'Cold Wave': 'not_suitable' },
@@ -1183,6 +1223,7 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     costLevel: 'Low',
     relatedHazards: ['Flood', 'Heatwave', 'Cyclone'],
     typology: ['Plains / Alluvial', 'Desert / Arid', 'Rocky / Hilly', 'Coastal', 'Rain Intensive', 'Flood Prone'],
+    populationLoad: { min: 50, max: 2000, label: "Community / institutional (50-2,000 people)" },
     matrixCategory: 'Liquid Waste — Tertiary Polishing',
     matrixContext: 'Enclosed/underground; climate-resilient in all zones; backwash water availability needed in drought zones',
     hazardSuitability: { 'Flood': 'recommended', 'Heatwave': 'recommended', 'Drought': 'conditional', 'Cyclone': 'recommended', 'Cold Wave': 'recommended' },
@@ -1207,6 +1248,7 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     costLevel: 'Low',
     relatedHazards: ['Heatwave'],
     typology: ['Plains / Alluvial', 'Rain Intensive', 'Coastal'],
+    populationLoad: { min: 50, max: 2000, label: "Community / institutional (50-2,000 people)" },
     matrixCategory: 'Liquid Waste — Tertiary Nature-Based',
     matrixContext: 'Humid tropical zones; not recommended for drought-prone or cyclone-exposed sites without plant replacement plan',
     hazardSuitability: { 'Flood': 'conditional', 'Heatwave': 'recommended', 'Drought': 'not_suitable', 'Cyclone': 'conditional', 'Cold Wave': 'not_suitable' },
@@ -1231,6 +1273,7 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     costLevel: 'Low',
     relatedHazards: ['Drought'],
     typology: ['Desert / Arid', 'Plains / Alluvial'],
+    populationLoad: { min: 5, max: 20, label: "Household (5-20 people)" },
     matrixCategory: 'Liquid Waste — On-site Greywater',
     matrixContext: 'Optimal in semi-arid and arid zones; avoid in flood-prone and high water table areas; greywater only',
     hazardSuitability: { 'Flood': 'not_suitable', 'Heatwave': 'conditional', 'Drought': 'recommended', 'Cyclone': 'conditional', 'Cold Wave': 'conditional' },
@@ -1255,6 +1298,7 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     costLevel: 'Medium',
     relatedHazards: ['Drought', 'Cyclone'],
     typology: ['Desert / Arid', 'Plains / Alluvial'],
+    populationLoad: { min: 5, max: 500, label: "Household to institution (5-500 people)" },
     matrixCategory: 'Liquid Waste — Greywater Recycling',
     matrixContext: 'Best in water-scarce drought-prone urban/peri-urban areas; enclosed unit provides cyclone and flood protection',
     hazardSuitability: { 'Flood': 'conditional', 'Heatwave': 'conditional', 'Drought': 'recommended', 'Cyclone': 'recommended', 'Cold Wave': 'conditional' },
@@ -1279,6 +1323,7 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     costLevel: 'High',
     relatedHazards: ['Heatwave', 'Drought'],
     typology: ['Desert / Arid', 'Plains / Alluvial'],
+    populationLoad: { min: 5000, max: 200000, label: "City-level FSSM (5,000-200,000+ people)" },
     matrixCategory: 'Liquid Waste — FSSM',
     matrixContext: 'Optimal in hot arid zones; covered shed required for cyclone and flood zones; thermophilic process benefits from heat',
     hazardSuitability: { 'Flood': 'conditional', 'Heatwave': 'recommended', 'Drought': 'recommended', 'Cyclone': 'conditional', 'Cold Wave': 'not_suitable' },
@@ -1303,6 +1348,7 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     costLevel: 'High',
     relatedHazards: ['Heatwave'],
     typology: ['Plains / Alluvial', 'Rain Intensive'],
+    populationLoad: { min: 2000, max: 100000, label: "Town-level FSSM (2,000-100,000+ people)" },
     matrixCategory: 'Liquid Waste — FSSM Dewatering',
     matrixContext: 'Raise beds above flood line; thrives in tropical zones; monsoon extension reduces drying efficiency',
     hazardSuitability: { 'Flood': 'conditional', 'Heatwave': 'recommended', 'Drought': 'conditional', 'Cyclone': 'conditional', 'Cold Wave': 'not_suitable' },
@@ -1327,6 +1373,7 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     costLevel: 'High',
     relatedHazards: ['Heatwave'],
     typology: ['Desert / Arid'],
+    populationLoad: { min: 2000, max: 100000, label: "Town-level FSSM (2,000-100,000+ people)" },
     matrixCategory: 'Liquid Waste — FSSM Dewatering',
     matrixContext: 'Best in hot arid zones; add roof cover for monsoon resilience; avoid in flood-prone and cyclone-exposed sites',
     hazardSuitability: { 'Flood': 'not_suitable', 'Heatwave': 'recommended', 'Drought': 'conditional', 'Cyclone': 'not_suitable', 'Cold Wave': 'not_suitable' },
@@ -1351,6 +1398,7 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     costLevel: 'Medium',
     relatedHazards: ['Flood', 'Heatwave', 'Drought', 'Cyclone'],
     typology: ['Plains / Alluvial', 'Desert / Arid', 'Rocky / Hilly', 'Coastal', 'Rain Intensive', 'Flood Prone'],
+    populationLoad: { min: 500, max: 5000, label: "Institutional / small town (500-5,000 people)" },
     matrixCategory: 'Liquid Waste — Integrated System',
     matrixContext: 'Universal; underground anaerobic stages highly climate-resilient; raise CW berms in flood zones; select reed species by climate zone',
     hazardSuitability: { 'Flood': 'recommended', 'Heatwave': 'recommended', 'Drought': 'recommended', 'Cyclone': 'recommended', 'Cold Wave': 'recommended', 'Dust Storm': 'recommended' },
@@ -1375,6 +1423,7 @@ export const technologyContent: Record<string, TechnologyInfo> = {
     costLevel: 'High',
     relatedHazards: ['Flood', 'Cyclone'],
     typology: ['Plains / Alluvial', 'Desert / Arid', 'Rocky / Hilly', 'Coastal', 'Rain Intensive', 'Flood Prone'],
+    populationLoad: { min: 5, max: 500, label: "Household to institutional, packaged (5-500 people)" },
     matrixCategory: 'Liquid Waste — Integrated System',
     matrixContext: 'Buried FRP tank climate-resilient for flood/cyclone; needs electricity — not suitable for off-grid settings; all climate zones with power supply',
     hazardSuitability: { 'Flood': 'recommended', 'Heatwave': 'conditional', 'Drought': 'conditional', 'Cyclone': 'recommended', 'Cold Wave': 'conditional' },

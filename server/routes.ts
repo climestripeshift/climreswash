@@ -6,12 +6,49 @@ import { fromError } from "zod-validation-error";
 import { recomputeAllAlerts } from "./earlyWarning";
 import { loginHandler, logoutHandler, meHandler, requireAdmin } from "./auth";
 import { importCVIData } from "./importCVI";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+import express from "express";
+
+// Technology technical-drawing uploads. Stored outside client/public and dist -- those
+// are Vite-build artifacts (client/public gets bundled at build time, dist is a
+// snapshot serveStatic() serves from in production) so anything written there after a
+// build effectively vanishes on the next deploy. This directory is served directly by
+// Express (see the /uploads static route below), independent of the build pipeline, so
+// uploads persist across rebuilds/redeploys.
+const UPLOADS_DIR = path.resolve(import.meta.dirname, "..", "uploads", "technology");
+fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+
+const diagramUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, UPLOADS_DIR),
+    filename: (req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase();
+      const safeId = req.params.id.replace(/[^a-z0-9-]/gi, "");
+      cb(null, `${safeId}-${Date.now()}${ext}`);
+    },
+  }),
+  limits: { fileSize: 8 * 1024 * 1024 }, // 8MB -- generous for a diagram scan/export, not a video
+  fileFilter: (_req, file, cb) => {
+    const allowed = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
+    if (!allowed.includes(file.mimetype)) {
+      return cb(new Error("Only PNG, JPEG, WebP, or SVG images are allowed"));
+    }
+    cb(null, true);
+  },
+});
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  
+
+  // Serve admin-uploaded technology drawings. Registered here (before the dev-mode
+  // Vite middleware / prod serveStatic catch-all get attached in server/index.ts) so
+  // it takes priority over both.
+  app.use("/uploads", express.static(path.resolve(import.meta.dirname, "..", "uploads")));
+
   // Country Routes (aggregate level)
   app.get("/api/countries", async (_req, res) => {
     try {
@@ -628,6 +665,45 @@ export async function registerRoutes(
       const deleted = await storage.deleteTechnology(req.params.id);
       if (!deleted) return res.status(404).json({ error: "Not found" });
       res.status(204).send();
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Technical drawing upload -- the technology row must already exist (created via the
+  // POST/PATCH routes above) since this only sets diagramUrl on it, it doesn't create
+  // one from scratch (there's no title/category/etc to create a valid row with here).
+  app.post("/api/technologies/:id/diagram", requireAdmin, (req, res) => {
+    diagramUpload.single("file")(req, res, async (err: any) => {
+      if (err) return res.status(400).json({ error: err.message });
+      if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+      try {
+        const existing = await storage.getTechnology(req.params.id);
+        if (!existing) {
+          fs.unlink(req.file.path, () => {}); // clean up the orphaned upload
+          return res.status(404).json({ error: "Technology not found -- save it first, then upload a drawing" });
+        }
+        const oldPath = existing.diagramUrl ? path.join(UPLOADS_DIR, path.basename(existing.diagramUrl)) : null;
+        const diagramUrl = `/uploads/technology/${req.file.filename}`;
+        const updated = await storage.updateTechnology(req.params.id, { diagramUrl });
+        if (oldPath && fs.existsSync(oldPath)) fs.unlink(oldPath, () => {}); // replace, don't accumulate
+        res.json(updated);
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    });
+  });
+
+  app.delete("/api/technologies/:id/diagram", requireAdmin, async (req, res) => {
+    try {
+      const existing = await storage.getTechnology(req.params.id);
+      if (!existing) return res.status(404).json({ error: "Not found" });
+      if (existing.diagramUrl) {
+        const oldPath = path.join(UPLOADS_DIR, path.basename(existing.diagramUrl));
+        if (fs.existsSync(oldPath)) fs.unlink(oldPath, () => {});
+      }
+      const updated = await storage.updateTechnology(req.params.id, { diagramUrl: null });
+      res.json(updated);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }

@@ -18,6 +18,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchDistricts, deleteDistrict, fetchIntegrations, updateIntegration } from "@/lib/api";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { DistrictData } from "@/lib/types";
+import { getAllTechnologies } from "@/lib/technologyContent";
 
 const ALL_HAZARDS = ['Drought', 'Flood', 'Heatwave', 'Cyclone', 'Cold Wave', 'Dust Storm', 'Groundwater Depletion'] as const;
 
@@ -71,6 +72,79 @@ async function saveTechnology(id: string | null, data: any) {
 async function deleteTech(id: string) {
   const res = await fetch(`/api/technologies/${id}`, { method: 'DELETE' });
   if (!res.ok && res.status !== 204) throw new Error('Delete failed');
+}
+
+async function uploadTechDiagram(id: string, file: File) {
+  const body = new FormData();
+  body.append('file', file);
+  const res = await fetch(`/api/technologies/${id}/diagram`, { method: 'POST', body });
+  if (!res.ok) throw new Error((await res.json().catch(() => null))?.error || 'Upload failed');
+  return res.json();
+}
+
+async function deleteTechDiagram(id: string) {
+  const res = await fetch(`/api/technologies/${id}/diagram`, { method: 'DELETE' });
+  if (!res.ok) throw new Error('Failed to remove drawing');
+  return res.json();
+}
+
+function DiagramUploader({ techId, diagramUrl }: { techId: string; diagramUrl: string | null | undefined }) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [preview, setPreview] = useState<string | null>(diagramUrl ?? null);
+
+  const uploadMutation = useMutation({
+    mutationFn: (file: File) => uploadTechDiagram(techId, file),
+    onSuccess: (updated) => {
+      setPreview(updated.diagramUrl);
+      queryClient.invalidateQueries({ queryKey: ['technologies'] });
+      queryClient.invalidateQueries({ queryKey: ['tech-diagrams'] });
+      toast({ title: 'Drawing uploaded', description: 'Now visible on the public technology page.' });
+    },
+    onError: (e: any) => toast({ title: 'Upload failed', description: e.message, variant: 'destructive' }),
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: () => deleteTechDiagram(techId),
+    onSuccess: () => {
+      setPreview(null);
+      queryClient.invalidateQueries({ queryKey: ['technologies'] });
+      queryClient.invalidateQueries({ queryKey: ['tech-diagrams'] });
+      toast({ title: 'Drawing removed' });
+    },
+  });
+
+  return (
+    <div className="space-y-2">
+      <Label className="text-xs font-semibold">Technical Drawing</Label>
+      {preview ? (
+        <div className="flex items-start gap-3">
+          <img src={preview} alt="Technology diagram" className="h-28 w-40 object-cover rounded border border-border bg-muted" />
+          <div className="flex flex-col gap-1.5">
+            <label className="cursor-pointer">
+              <Button variant="outline" size="sm" asChild disabled={uploadMutation.isPending}>
+                <span><Upload className="h-3.5 w-3.5 mr-1.5" />{uploadMutation.isPending ? 'Uploading...' : 'Replace'}</span>
+              </Button>
+              <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="hidden"
+                onChange={e => e.target.files?.[0] && uploadMutation.mutate(e.target.files[0])} />
+            </label>
+            <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => removeMutation.mutate()} disabled={removeMutation.isPending}>
+              <Trash2 className="h-3.5 w-3.5 mr-1.5" />Remove
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <label className="cursor-pointer inline-block">
+          <div className={`flex items-center gap-2 px-3 py-2 rounded border border-dashed text-xs text-muted-foreground hover:border-primary/50 hover:text-foreground transition-colors ${uploadMutation.isPending ? 'opacity-60' : ''}`}>
+            <Upload className="h-3.5 w-3.5" />
+            {uploadMutation.isPending ? 'Uploading...' : 'Upload a cross-section / schematic (PNG, JPEG, WebP, or SVG, up to 8MB)'}
+          </div>
+          <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="hidden"
+            onChange={e => e.target.files?.[0] && uploadMutation.mutate(e.target.files[0])} disabled={uploadMutation.isPending} />
+        </label>
+      )}
+    </div>
+  );
 }
 
 function ArrayInput({ label, value, onChange }: { label: string; value: string[]; onChange: (v: string[]) => void }) {
@@ -145,6 +219,14 @@ function TechEditor({ tech, onClose }: { tech: any | null; onClose: () => void }
         </div>
       </div>
       <Separator />
+
+      {isNew ? (
+        <p className="text-xs text-muted-foreground bg-secondary/50 rounded px-3 py-2">
+          Save the technology first, then a "Technical Drawing" upload option will appear here.
+        </p>
+      ) : (
+        <DiagramUploader techId={tech.id} diagramUrl={tech.diagramUrl} />
+      )}
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1">
@@ -696,6 +778,14 @@ function TechnologyManagerTab() {
     queryFn: fetchTechnologies,
   });
 
+  // The technology library (technologyContent.ts, 42 entries -- what the public
+  // /technology page actually reads) is a different, larger set than what's in this DB
+  // table (only what's been created here). "Import" lets an admin pick any library
+  // entry that doesn't have a DB row yet and pre-fill the editor from it, rather than
+  // re-typing everything by hand just to attach a drawing or population-load override.
+  const dbSlugs = new Set((techs as any[]).map(t => t.slug));
+  const importable = getAllTechnologies().filter(t => !dbSlugs.has(t.slug));
+
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteTech(id),
     onSuccess: () => {
@@ -752,10 +842,24 @@ function TechnologyManagerTab() {
             ))}
           </div>
         </div>
-        <Button size="sm" onClick={() => setAddingNew(true)}>
-          <Plus className="h-3.5 w-3.5 mr-1.5" />
-          Add Technology
-        </Button>
+        <div className="flex items-center gap-2">
+          {importable.length > 0 && (
+            <Select onValueChange={slug => setEditingTech(importable.find(t => t.slug === slug))}>
+              <SelectTrigger className="h-8 text-xs w-56">
+                <SelectValue placeholder={`Import from Library (${importable.length})`} />
+              </SelectTrigger>
+              <SelectContent>
+                {importable.map(t => (
+                  <SelectItem key={t.slug} value={t.slug} className="text-xs">{t.title}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <Button size="sm" onClick={() => setAddingNew(true)}>
+            <Plus className="h-3.5 w-3.5 mr-1.5" />
+            Add Technology
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -768,7 +872,10 @@ function TechnologyManagerTab() {
             <CardHeader className="pb-2 pt-4 px-4">
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <CardTitle className="text-sm leading-tight">{t.title}</CardTitle>
+                  <CardTitle className="text-sm leading-tight flex items-center gap-1.5">
+                    {t.title}
+                    {t.diagramUrl && <span title="Has a technical drawing">📐</span>}
+                  </CardTitle>
                   <div className="flex items-center gap-2 mt-1.5">
                     <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium capitalize ${CATEGORY_COLORS[t.category] || ''}`}>
                       {t.category}

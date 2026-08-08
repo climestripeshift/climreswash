@@ -6,3 +6,6 @@ vite.config.ts.*
 *.tar.gz
 .env
 .env.*
+
+# Admin-uploaded technology drawings -- runtime content, not source (see server/routes.ts)
+/uploads/

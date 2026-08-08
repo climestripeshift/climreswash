@@ -245,6 +245,11 @@ export const technologies = pgTable("technologies", {
   costLevel: varchar("cost_level", { length: 20 }).notNull(),
   relatedHazards: text("related_hazards").array().notNull(),
   typology: text("typology").array().notNull(),
+  // Admin-uploaded technical drawing (cross-section/schematic), see server routes.ts
+  // POST /api/technologies/:id/diagram. Nullable -- most rows won't have one uploaded
+  // yet. Path under /uploads/technology/, served directly by Express (not the Vite
+  // build), so uploads persist across rebuilds.
+  diagramUrl: varchar("diagram_url", { length: 500 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

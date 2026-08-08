@@ -50,6 +50,33 @@ const TYPOLOGY_ICONS: Record<string, string> = {
   'Coastal': '🏖️',
 };
 
+// Design-population bands, matched against each technology's populationLoad range —
+// technology choice genuinely changes with scale (a twin-pit toilet doesn't work for a
+// town, a UASB reactor is overkill for one household), so this filters by that directly
+// rather than treating all 42 technologies as interchangeable regardless of population served.
+const POPULATION_BANDS: { key: string; label: string; icon: string; min: number; max: number }[] = [
+  { key: 'household', label: 'Household', icon: '🏠', min: 1, max: 15 },
+  { key: 'community',  label: 'Community',  icon: '🏘️', min: 15, max: 2000 },
+  { key: 'town',       label: 'Town',       icon: '🏙️', min: 2000, max: 20000 },
+  { key: 'city',       label: 'City / Municipal', icon: '🌆', min: 20000, max: Infinity },
+];
+
+function loadOverlapsBand(load: { min: number; max: number }, band: { min: number; max: number }): boolean {
+  return load.max >= band.min && load.min <= band.max;
+}
+
+// Admin-uploaded diagrams live in the technologies DB table (see AdminDashboard's
+// Technologies tab + server routes.ts), separate from the static content below --
+// fetched here and merged onto the static entries by slug at render time.
+async function fetchTechDiagrams(): Promise<Record<string, string>> {
+  const res = await fetch('/api/technologies');
+  if (!res.ok) return {};
+  const rows: { slug: string; diagramUrl?: string | null }[] = await res.json();
+  const map: Record<string, string> = {};
+  for (const r of rows) if (r.diagramUrl) map[r.slug] = r.diagramUrl;
+  return map;
+}
+
 const HAZARD_COLORS: Record<string, string> = {
   'Drought': '#f97316',
   'Flood': '#3b82f6',
@@ -367,7 +394,10 @@ function PageHeader({ showTechLink = false }: { showTechLink?: boolean }) {
   );
 }
 
-function TechnologyDetail({ tech }: { tech: TechnologyInfo }) {
+function TechnologyDetail({ tech: baseTech }: { tech: TechnologyInfo }) {
+  const diagramsQ = useQuery({ queryKey: ['tech-diagrams'], queryFn: fetchTechDiagrams, staleTime: 60_000 });
+  const tech = diagramsQ.data?.[baseTech.slug] ? { ...baseTech, diagramUrl: diagramsQ.data[baseTech.slug] } : baseTech;
+
   const getCategoryIcon = (category: string) => {
     switch (category) {
       case 'sanitation': return <Bath className="h-5 w-5" />;
@@ -426,6 +456,10 @@ function TechnologyDetail({ tech }: { tech: TechnologyInfo }) {
                     <DollarSign className="h-3 w-3 mr-1" />
                     {tech.costLevel} Cost
                   </Badge>
+                  <Badge className="bg-purple-500/10 text-purple-600" data-testid="badge-population-load">
+                    <span className="mr-1">{POPULATION_BANDS.find(b => loadOverlapsBand(tech.populationLoad, b))?.icon ?? '👥'}</span>
+                    {tech.populationLoad.label}
+                  </Badge>
                 </div>
               </div>
               <CardDescription className="text-base mt-2" data-testid="text-technology-description">
@@ -433,6 +467,33 @@ function TechnologyDetail({ tech }: { tech: TechnologyInfo }) {
               </CardDescription>
             </CardHeader>
           </Card>
+
+          {/* Technical drawing -- admin-uploaded, see /admin > Technologies. Only shown
+              once someone has actually uploaded one for this technology. */}
+          {tech.diagramUrl ? (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <span>📐</span> Technical Drawing
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <img
+                  src={tech.diagramUrl}
+                  alt={`${tech.title} technical drawing`}
+                  className="w-full max-h-[520px] object-contain rounded-lg border border-border bg-muted"
+                  data-testid="img-technology-diagram"
+                />
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="border-dashed">
+              <CardContent className="py-6 text-center text-sm text-muted-foreground">
+                No technical drawing uploaded yet for this technology.{' '}
+                <Link href="/admin" className="text-[#00AEEF] hover:underline">Add one from the admin panel</Link>.
+              </CardContent>
+            </Card>
+          )}
 
           <div className="grid md:grid-cols-2 gap-6">
             <Card>
@@ -583,7 +644,12 @@ function TechnologyDetail({ tech }: { tech: TechnologyInfo }) {
 }
 
 function TechnologyIndex() {
-  const allTech = getAllTechnologies();
+  const diagramsQ = useQuery({ queryKey: ['tech-diagrams'], queryFn: fetchTechDiagrams, staleTime: 60_000 });
+  const allTech = useMemo(() => {
+    const diagrams = diagramsQ.data;
+    if (!diagrams) return getAllTechnologies();
+    return getAllTechnologies().map(t => diagrams[t.slug] ? { ...t, diagramUrl: diagrams[t.slug] } : t);
+  }, [diagramsQ.data]);
   const search = useSearch();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedHazards, setSelectedHazards] = useState<string[]>(() => {
@@ -591,6 +657,7 @@ function TechnologyIndex() {
     return hazard && (ALL_HAZARDS as readonly string[]).includes(hazard) ? [hazard] : [];
   });
   const [selectedTypologies, setSelectedTypologies] = useState<string[]>([]);
+  const [selectedLoadBand, setSelectedLoadBand] = useState<string | null>(null);
   const [activeMatrixHazard, setActiveMatrixHazard] = useState<string | null>(null);
   const [showMap, setShowMap] = useState(true);
   const [clickedDistrict, setClickedDistrict] = useState<ClickedDistrict | null>(null);
@@ -617,6 +684,7 @@ function TechnologyIndex() {
   const clearFilters = () => {
     setSelectedHazards([]);
     setSelectedTypologies([]);
+    setSelectedLoadBand(null);
     setSearchQuery('');
     setClickedDistrict(null);
     setActiveMatrixHazard(null);
@@ -633,14 +701,17 @@ function TechnologyIndex() {
     const matchesTypology = selectedTypologies.length === 0 ||
       selectedTypologies.some(t => tech.typology.includes(t));
 
+    const activeBand = POPULATION_BANDS.find(b => b.key === selectedLoadBand);
+    const matchesLoad = !activeBand || loadOverlapsBand(tech.populationLoad, activeBand);
+
     // Matrix suitability filter — show only recommended or conditional for the active hazard
     const matchesSuitability = !activeMatrixHazard ||
       (tech.hazardSuitability && tech.hazardSuitability[activeMatrixHazard] !== 'not_suitable');
 
-    return matchesSearch && matchesHazard && matchesTypology && matchesSuitability;
+    return matchesSearch && matchesHazard && matchesTypology && matchesLoad && matchesSuitability;
   });
 
-  const activeFilterCount = selectedHazards.length + selectedTypologies.length + (searchQuery ? 1 : 0) + (activeMatrixHazard ? 1 : 0);
+  const activeFilterCount = selectedHazards.length + selectedTypologies.length + (selectedLoadBand ? 1 : 0) + (searchQuery ? 1 : 0) + (activeMatrixHazard ? 1 : 0);
 
   const categoryOrder = ['sanitation', 'water', 'waste', 'adaptation'] as const;
   const categoryLabels = {
@@ -757,6 +828,32 @@ function TechnologyIndex() {
             </div>
             <p className="text-[11px] text-muted-foreground">
               Typology filters the <strong>technology list</strong> and <strong>highlights matching districts on the map</strong> (when no hazard is selected).
+            </p>
+          </div>
+
+          {/* Population Load Filter */}
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2.5">
+              By Population Load
+            </div>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {POPULATION_BANDS.map(b => (
+                <button
+                  key={b.key}
+                  onClick={() => setSelectedLoadBand(prev => prev === b.key ? null : b.key)}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                    selectedLoadBand === b.key
+                      ? 'bg-purple-500 text-white border-purple-500 shadow-sm'
+                      : 'bg-background text-foreground border-border hover:border-purple-400 hover:text-purple-600'
+                  }`}
+                  data-testid={`filter-load-${b.key}`}
+                >
+                  <span>{b.icon}</span> {b.label}
+                </button>
+              ))}
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              Filters by the population a technology is designed to serve — a household toilet and a town-scale treatment plant aren't interchangeable.
             </p>
           </div>
 
@@ -956,12 +1053,15 @@ function TechnologyCard({ tech, selectedHazards, selectedTypologies, activeMatri
 
   return (
     <Link href={`/technology/${tech.slug}`} data-testid={`link-technology-${tech.slug}`}>
-      <Card className={`h-full hover:shadow-lg transition-all cursor-pointer group ${
+      <Card className={`h-full hover:shadow-lg transition-all cursor-pointer group overflow-hidden ${
         suitability === 'recommended' ? 'border-green-400/60 hover:border-green-400' :
         suitability === 'conditional' ? 'border-yellow-400/60 hover:border-yellow-400' :
         suitability === 'not_suitable' ? 'border-red-400/30 opacity-70 hover:border-red-400/50' :
         'hover:border-[#00AEEF]/50'
       }`}>
+        {tech.diagramUrl && (
+          <img src={tech.diagramUrl} alt={`${tech.title} diagram`} className="w-full h-32 object-cover border-b border-border bg-muted" />
+        )}
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-2">
             <CardTitle className="text-base group-hover:text-[#00AEEF] transition-colors leading-tight">{tech.title}</CardTitle>
@@ -1024,6 +1124,9 @@ function TechnologyCard({ tech, selectedHazards, selectedTypologies, activeMatri
                 {tech.matrixCategory}
               </span>
             )}
+          </div>
+          <div className="text-[10px] text-purple-600 flex items-center gap-1">
+            {POPULATION_BANDS.find(b => loadOverlapsBand(tech.populationLoad, b))?.icon ?? '👥'} {tech.populationLoad.label}
           </div>
         </CardContent>
       </Card>
