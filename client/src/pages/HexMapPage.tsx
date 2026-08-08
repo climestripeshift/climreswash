@@ -51,6 +51,7 @@ const ATTRIBUTES: AttrDef[] = [
   { key: "elevation_mean",    label: "Elevation (SRTM)",    icon: "⛰️",  category: "terrain", desc: "Mean elevation per hex — real SRTM 90m data" },
   { key: "ndvi_mean",         label: "Vegetation (NDVI)",   icon: "🌿",  category: "terrain", desc: "Mean annual NDVI — real MODIS 2023 data" },
   { key: "land_use",          label: "Land Use (ESA)",      icon: "🗺️",  category: "terrain", desc: "Dominant land cover — real ESA WorldCover 2021" },
+  { key: "soil_sand_pct",     label: "Soil Sand %",         icon: "🏖️",  category: "terrain", desc: "Real topsoil (0-5cm) sand content — ISRIC SoilGrids 250m, sampled per hex. Feeds flood/drought/flashflood/fire risk (sandier = better rain infiltration, but also more drought/fire susceptibility) — replaced a flat land-use-based guess that gave every same-land-use hex nationally an identical value." },
   { key: "dist_to_river_km",  label: "Distance to River",   icon: "🏞️",  category: "terrain", desc: "Distance to nearest OSM major river channel (km) — closer = higher flood exposure & surface-water dependency" },
 
   // Climate hazards
@@ -118,6 +119,9 @@ const RISK:    [number,number,number][] = [[34,197,94],[234,179,8],[249,115,22],
 
 const ATTR_RAMP: Record<string, [number,number,number][]> = {
   elevation_mean: VIRIDIS, ndvi_mean: GREENS, population: ORANGES, dist_to_river_km: BLUES,
+  soil_sand_pct: ORANGES, // neutral terrain property, not shown in LAYER_DIRECTION -- more
+  // sand helps flood/flashflood drainage but hurts drought/fire susceptibility, no single
+  // "higher is better/worse" answer
   hazard_count_5: RISK, hazard_count_3: RISK,
   pop_children_under_5: ORANGES, pop_elderly_60plus: ORANGES, pop_women_15_49: ORANGES,
   flood_risk: BLUES, heat_risk: ORANGES, heat_peak_score: ORANGES, cyclone_risk: RISK, drought_risk: ORANGES,
@@ -159,6 +163,7 @@ const FIXED_DOMAIN: Record<string, [number, number]> = {
   hazard_count_5: [0, 5], hazard_count_3: [0, 6],
   pop_children_under_5: [0, 500000], pop_elderly_60plus: [0, 500000], pop_women_15_49: [0, 1500000],
   elevation_mean: [0, 5000], ndvi_mean: [0, 0.8], land_use: [0, 1], dist_to_river_km: [0, 100],
+  soil_sand_pct: [0, 100],
   flood_risk: [0, 10], heat_risk: [0, 10], heat_peak_score: [0, 10], cyclone_risk: [0, 10],
   drought_risk: [0, 10], wetbulb_risk: [0, 10], landslide_risk: [0, 10],
   coldwave_risk: [0, 10], flashflood_risk: [0, 10], sealevel_risk: [0, 10],
@@ -1780,13 +1785,21 @@ export default function HexMapPage() {
     staleTime: Infinity,
   });
 
-  // Merge future (by h3_id), NFHS5 extra (by district_name), and SBM (by STATE|DISTRICT)
+  const soilSandQ = useQuery<Record<string, number>>({
+    queryKey: ["hex-soil-sand"],
+    queryFn: () => fetch("/data/hex_soil_sand.json").then((r) => r.json()),
+    staleTime: Infinity,
+  });
+
+  // Merge future (by h3_id), NFHS5 extra (by district_name), SBM (by STATE|DISTRICT),
+  // and soil sand % (by h3_id)
   const mergedGeoData = useMemo(() => {
     if (!hexQ.data) return hexQ.data;
     const futMap: Record<string, any> = {};
     for (const f of futureQ.data ?? []) futMap[f.h3_id] = f;
     const nfhsMap: Record<string, any> = nfhs5ExtraQ.data ?? {};
     const sbmMap: Record<string, any> = sbmQ.data ?? {};
+    const soilMap: Record<string, number> = soilSandQ.data ?? {};
     return {
       ...hexQ.data,
       features: hexQ.data.features.map((f: any) => {
@@ -1804,10 +1817,11 @@ export default function HexMapPage() {
           sbm_septic_nosoak_pct: sbm.septic_nosoak_pct,
           sbm_total_ihhl:        sbm.total_ihhl,
         } : {};
-        return { ...f, properties: { ...p, ...fut, ...nfhs, ...sbmPrefixed } };
+        const soil = soilMap[p.h3_id] != null ? { soil_sand_pct: soilMap[p.h3_id] } : {};
+        return { ...f, properties: { ...p, ...fut, ...nfhs, ...sbmPrefixed, ...soil } };
       }),
     };
-  }, [hexQ.data, futureQ.data, nfhs5ExtraQ.data, sbmQ.data]);
+  }, [hexQ.data, futureQ.data, nfhs5ExtraQ.data, sbmQ.data, soilSandQ.data]);
 
   const features: any[] = (mergedGeoData ?? hexQ.data)?.features ?? [];
 
