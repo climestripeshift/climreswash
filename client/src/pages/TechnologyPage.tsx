@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useMemo } from "react";
 import { useRoute, Link, useSearch } from "wouter";
 import { getTechnologyBySlug, getAllTechnologies, ALL_HAZARDS, ALL_TYPOLOGIES, TechnologyInfo, MATRIX_HAZARDS, MATRIX_HAZARD_ICONS, MATRIX_HAZARD_COLORS, HazardSuitability } from "@/lib/technologyContent";
-import { CAPACITY_MODELS, NON_PHYSICAL_SCALE, computePopulationServed, describeFormula, defaultPopulationServed, populationLoadLabel } from "@/lib/technologyCapacity";
+import { CAPACITY_MODELS, NON_PHYSICAL_SCALE, computePopulationServed, describeFormula, populationLoadRange, populationLoadLabel } from "@/lib/technologyCapacity";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
 import {
   ArrowLeft,
   CheckCircle,
@@ -52,20 +53,35 @@ const TYPOLOGY_ICONS: Record<string, string> = {
   'Coastal': '🏖️',
 };
 
-// Design-population bands, matched against each technology's computed default population
-// served (see technologyCapacity.ts) — technology choice genuinely changes with scale (a
-// twin-pit toilet doesn't work for a town, a UASB reactor is overkill for one household),
-// so this filters by a real capacity calculation, not a hand-picked label.
-const POPULATION_BANDS: { key: string; label: string; icon: string; min: number; max: number }[] = [
-  { key: 'household', label: 'Household', icon: '🏠', min: 1, max: 15 },
-  { key: 'community',  label: 'Community',  icon: '🏘️', min: 15, max: 2000 },
-  { key: 'town',       label: 'Town',       icon: '🏙️', min: 2000, max: 20000 },
-  { key: 'city',       label: 'City / Municipal', icon: '🌆', min: 20000, max: Infinity },
-];
+// Each technology has a FIXED load range (min-max people it's realistically built to
+// serve — see technologyCapacity.ts's populationLoadRange). The Population Load slider
+// below picks a single target population on a log scale (the range spans ~1 to 500,000,
+// where a linear slider would be unusable) and filters to technologies whose range
+// covers it — the way an engineer actually picks a technology for a given scale,
+// rather than treating all 42 as interchangeable.
+const POP_SLIDER_MIN = 1;
+const POP_SLIDER_MAX = 500000;
+const POP_SLIDER_STEPS = 1000;
 
-function bandForSlug(slug: string) {
-  const pop = defaultPopulationServed(slug);
-  return POPULATION_BANDS.find(b => pop >= b.min && pop <= b.max) ?? POPULATION_BANDS[0];
+function sliderPosToPopulation(pos: number): number {
+  const t = pos / POP_SLIDER_STEPS;
+  const logMin = Math.log10(POP_SLIDER_MIN);
+  const logMax = Math.log10(POP_SLIDER_MAX);
+  return Math.round(10 ** (logMin + t * (logMax - logMin)));
+}
+
+function populationToSliderPos(pop: number): number {
+  const logMin = Math.log10(POP_SLIDER_MIN);
+  const logMax = Math.log10(POP_SLIDER_MAX);
+  const t = (Math.log10(Math.max(POP_SLIDER_MIN, pop)) - logMin) / (logMax - logMin);
+  return Math.round(t * POP_SLIDER_STEPS);
+}
+
+function iconForPopulation(pop: number): string {
+  if (pop <= 15) return '🏠';
+  if (pop <= 2000) return '🏘️';
+  if (pop <= 20000) return '🏙️';
+  return '🌆';
 }
 
 // Admin-uploaded diagrams live in the technologies DB table (see AdminDashboard's
@@ -424,7 +440,6 @@ function CapacityCalculator({ slug }: { slug: string }) {
   }
 
   const population = computePopulationServed(model, param);
-  const band = POPULATION_BANDS.find(b => population >= b.min && population <= b.max) ?? POPULATION_BANDS[0];
 
   return (
     <Card>
@@ -441,15 +456,19 @@ function CapacityCalculator({ slug }: { slug: string }) {
             <div className="flex items-center gap-2">
               <Input
                 type="number"
-                min={0}
+                min={model.minParam}
+                max={model.maxParam}
                 step="any"
                 value={param}
-                onChange={e => setParam(Math.max(0, Number(e.target.value) || 0))}
+                onChange={e => setParam(Math.min(model.maxParam, Math.max(model.minParam, Number(e.target.value) || model.minParam)))}
                 className="w-36 h-9"
                 data-testid="input-capacity-param"
               />
               <span className="text-sm text-muted-foreground">{model.paramUnit}</span>
             </div>
+            <p className="text-[10px] text-muted-foreground">
+              Realistic range: {model.minParam}-{model.maxParam}{model.paramUnit}
+            </p>
           </div>
           <Button variant="ghost" size="sm" className="text-xs" onClick={() => setParam(model.defaultParam)}>
             Reset to reference default ({model.defaultParam}{model.paramUnit})
@@ -457,12 +476,14 @@ function CapacityCalculator({ slug }: { slug: string }) {
         </div>
 
         <div className="flex items-center gap-3 bg-purple-500/10 rounded-lg px-4 py-3">
-          <span className="text-2xl">{band.icon}</span>
+          <span className="text-2xl">{iconForPopulation(population)}</span>
           <div>
             <div className="text-lg font-bold text-purple-700 dark:text-purple-400" data-testid="text-computed-population">
               ≈{Math.round(population).toLocaleString()} people served
             </div>
-            <div className="text-xs text-muted-foreground">{band.label}-scale installation</div>
+            <div className="text-xs text-muted-foreground">
+              Fixed real-world range for this technology: {populationLoadLabel(slug)}
+            </div>
           </div>
         </div>
 
@@ -539,8 +560,8 @@ function TechnologyDetail({ tech: baseTech }: { tech: TechnologyInfo }) {
                     {tech.costLevel} Cost
                   </Badge>
                   <Badge className="bg-purple-500/10 text-purple-600" data-testid="badge-population-load">
-                    <span className="mr-1">{bandForSlug(tech.slug).icon}</span>
-                    {bandForSlug(tech.slug).label}
+                    <span className="mr-1">{iconForPopulation(populationLoadRange(tech.slug)[0])}</span>
+                    {populationLoadLabel(tech.slug)}
                   </Badge>
                 </div>
               </div>
@@ -741,7 +762,7 @@ function TechnologyIndex() {
     return hazard && (ALL_HAZARDS as readonly string[]).includes(hazard) ? [hazard] : [];
   });
   const [selectedTypologies, setSelectedTypologies] = useState<string[]>([]);
-  const [selectedLoadBand, setSelectedLoadBand] = useState<string | null>(null);
+  const [loadSliderPos, setLoadSliderPos] = useState<number | null>(null); // null = filter off
   const [activeMatrixHazard, setActiveMatrixHazard] = useState<string | null>(null);
   const [showMap, setShowMap] = useState(true);
   const [clickedDistrict, setClickedDistrict] = useState<ClickedDistrict | null>(null);
@@ -768,11 +789,13 @@ function TechnologyIndex() {
   const clearFilters = () => {
     setSelectedHazards([]);
     setSelectedTypologies([]);
-    setSelectedLoadBand(null);
+    setLoadSliderPos(null);
     setSearchQuery('');
     setClickedDistrict(null);
     setActiveMatrixHazard(null);
   };
+
+  const targetPopulation = loadSliderPos !== null ? sliderPosToPopulation(loadSliderPos) : null;
 
   const filtered = allTech.filter(tech => {
     const matchesSearch = !searchQuery ||
@@ -785,7 +808,10 @@ function TechnologyIndex() {
     const matchesTypology = selectedTypologies.length === 0 ||
       selectedTypologies.some(t => tech.typology.includes(t));
 
-    const matchesLoad = !selectedLoadBand || bandForSlug(tech.slug).key === selectedLoadBand;
+    const matchesLoad = targetPopulation === null || (() => {
+      const [min, max] = populationLoadRange(tech.slug);
+      return targetPopulation >= min && targetPopulation <= max;
+    })();
 
     // Matrix suitability filter — show only recommended or conditional for the active hazard
     const matchesSuitability = !activeMatrixHazard ||
@@ -794,7 +820,7 @@ function TechnologyIndex() {
     return matchesSearch && matchesHazard && matchesTypology && matchesLoad && matchesSuitability;
   });
 
-  const activeFilterCount = selectedHazards.length + selectedTypologies.length + (selectedLoadBand ? 1 : 0) + (searchQuery ? 1 : 0) + (activeMatrixHazard ? 1 : 0);
+  const activeFilterCount = selectedHazards.length + selectedTypologies.length + (loadSliderPos !== null ? 1 : 0) + (searchQuery ? 1 : 0) + (activeMatrixHazard ? 1 : 0);
 
   const categoryOrder = ['sanitation', 'water', 'waste', 'adaptation'] as const;
   const categoryLabels = {
@@ -916,27 +942,37 @@ function TechnologyIndex() {
 
           {/* Population Load Filter */}
           <div>
-            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2.5">
-              By Population Load
-            </div>
-            <div className="flex flex-wrap gap-2 mb-2">
-              {POPULATION_BANDS.map(b => (
+            <div className="flex items-center justify-between mb-2.5">
+              <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                By Population Load
+              </div>
+              {loadSliderPos !== null && (
                 <button
-                  key={b.key}
-                  onClick={() => setSelectedLoadBand(prev => prev === b.key ? null : b.key)}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
-                    selectedLoadBand === b.key
-                      ? 'bg-purple-500 text-white border-purple-500 shadow-sm'
-                      : 'bg-background text-foreground border-border hover:border-purple-400 hover:text-purple-600'
-                  }`}
-                  data-testid={`filter-load-${b.key}`}
+                  onClick={() => setLoadSliderPos(null)}
+                  className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
                 >
-                  <span>{b.icon}</span> {b.label}
+                  <X className="h-3 w-3" /> Clear
                 </button>
-              ))}
+              )}
             </div>
-            <p className="text-[11px] text-muted-foreground">
-              Filters by the population a technology is designed to serve — a household toilet and a town-scale treatment plant aren't interchangeable.
+            <div className="flex items-center gap-4">
+              <Slider
+                min={0}
+                max={POP_SLIDER_STEPS}
+                step={1}
+                value={[loadSliderPos ?? populationToSliderPos(200)]}
+                onValueChange={([v]) => setLoadSliderPos(v)}
+                className="flex-1"
+                data-testid="slider-population-load"
+              />
+              <div className="shrink-0 w-40 text-sm font-semibold text-purple-600 flex items-center gap-1.5">
+                <span>{iconForPopulation(targetPopulation ?? 200)}</span>
+                {(targetPopulation ?? 200).toLocaleString()} people
+              </div>
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-2">
+              Each technology has a fixed real-world size range (e.g. a twin-pit is built 0.5-2.5m³, not any size you like) — this
+              shows which ones are actually built for the population you pick, not an editable estimate.
             </p>
           </div>
 
@@ -1209,7 +1245,7 @@ function TechnologyCard({ tech, selectedHazards, selectedTypologies, activeMatri
             )}
           </div>
           <div className="text-[10px] text-purple-600 flex items-center gap-1" title={populationLoadLabel(tech.slug)}>
-            {bandForSlug(tech.slug).icon} {populationLoadLabel(tech.slug)}
+            {iconForPopulation(populationLoadRange(tech.slug)[0])} {populationLoadLabel(tech.slug)}
           </div>
         </CardContent>
       </Card>

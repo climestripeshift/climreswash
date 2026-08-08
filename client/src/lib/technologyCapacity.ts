@@ -1,13 +1,17 @@
 /**
- * Real capacity formulas for WASH technologies -- replaces the earlier hardcoded
- * populationLoad range (a judgment call about "typical deployment scale", not a
- * computation) with an actual design-norm-based calculator: population served =
- * f(a physical design parameter you can measure or look up for a real installation).
+ * Real capacity formulas for WASH technologies. Each technology has a FIXED, standard
+ * real-world size range (minParam-maxParam) -- e.g. a twin-pit is built somewhere
+ * between a 0.5m³ and a 2.5m³ pit in practice, not "whatever size you want." That range
+ * maps to a population LOAD RANGE (min-max people served), used by the Population Load
+ * slider on the technology list page: pick a population, see which technologies have a
+ * load range that covers it, exactly the way an engineer would pick "twin-pit for 100
+ * people, DEWATS for 1,000, sewered flush for 50,000."
  *
  * Each technology is assigned one FormulaKind. A kind is a reusable calculation
  * (e.g. "volume / (per-capita accumulation rate x design period)") parameterized by
  * published per-capita design norms, not technology-specific magic numbers -- the only
- * thing that varies per technology is which norm applies and what the input dimension is.
+ * thing that varies per technology is which norm applies, what the input dimension is,
+ * and the realistic min/max size for that dimension.
  *
  * Sources (India-context defaults, cited per formula group below):
  *  - CPHEEO Manual on Sewerage and Sewage Treatment Systems, 2013 (Ministry of Housing
@@ -23,18 +27,18 @@
  *    sanitation people-per-facility ratios.
  *  - Solid Waste Management Rules 2016 (MoEFCC) -- per-capita waste generation.
  *
- * These are the standard reference-design defaults, not a substitute for a site-specific
+ * These are standard reference-design norms, not a substitute for a site-specific
  * engineering study -- soil type, climate, occupancy pattern, and local regulations all
- * shift the real number. The calculator lets you override the design parameter with your
- * installation's actual dimension; the constants (accumulation rate, HRT, etc.) are held
- * fixed at the cited norm.
+ * shift the real number. minParam/maxParam bound the range of sizes actually built in
+ * practice for that technology; beyond maxParam you'd normally move to multiple units or
+ * a different, more appropriate technology rather than one oversized installation.
  */
 
 export type FormulaKind =
   | 'pit'            // solids accumulation: volume / (accum rate x design period)
   | 'septic'         // IS 2470: volume / ((flow x retention) + (sludge rate x desludge interval))
   | 'reactor'        // hydraulic retention time: volume / (per-capita flow x HRT)
-  | 'wetland'         // area norm: area / (m2 per person)
+  | 'wetland'        // area norm: area / (m2 per person)
   | 'pond'           // area norm: area / (m2 per person)
   | 'bed'            // FSSM drying bed area norm: area / (m2 per person)
   | 'water-supply'   // yield vs demand: daily supply (L/day) / per-capita demand (Lpcd)
@@ -45,7 +49,9 @@ export interface CapacityModel {
   kind: FormulaKind;
   paramLabel: string;
   paramUnit: string;
-  defaultParam: number;   // a realistic single-installation default, used for the filter band
+  defaultParam: number;   // a realistic single-installation default, shown as the calculator's starting value
+  minParam: number;       // smallest realistic real-world size for this technology (not zero)
+  maxParam: number;       // largest realistic size before you'd normally use multiple units or switch technology
   source: string;         // citation for the constants used
   // Kind-specific constants (only the ones relevant to `kind` are set)
   accumRate?: number;      // m3/person/year (pit)
@@ -119,54 +125,54 @@ const SPHERE_SOURCE = 'Sphere Handbook (2018), Minimum Standards in WASH: 1 shar
 const SWM_SOURCE = 'Solid Waste Management Rules 2016 (MoEFCC): ≈0.4 kg/person/day municipal solid waste generation (Indian town average)';
 
 export const CAPACITY_MODELS: Record<string, CapacityModel> = {
-  'twin-pit': { kind: 'pit', paramLabel: 'Volume per pit', paramUnit: 'm³', defaultParam: 1.0, accumRate: 0.067, designPeriod: 3, source: SBM_PIT_SOURCE },
-  'vip': { kind: 'pit', paramLabel: 'Pit volume', paramUnit: 'm³', defaultParam: 1.7, accumRate: 0.067, designPeriod: 5, source: SBM_PIT_SOURCE + '; VIP single pit sized for a longer 5-yr design life' },
-  'uddt': { kind: 'pit', paramLabel: 'Vault volume', paramUnit: 'm³', defaultParam: 0.9, accumRate: 0.06, designPeriod: 3, source: SBM_PIT_SOURCE + '; urine diversion reduces solids volume slightly' },
-  'composting-dry': { kind: 'pit', paramLabel: 'Chamber volume', paramUnit: 'm³', defaultParam: 0.8, accumRate: 0.07, designPeriod: 2, source: SBM_PIT_SOURCE + '; dry composting, shorter 2-yr cycle before harvesting compost' },
-  'arborloo': { kind: 'pit', paramLabel: 'Pit volume', paramUnit: 'm³', defaultParam: 0.35, accumRate: 0.07, designPeriod: 1, source: SBM_PIT_SOURCE + '; shallow pit moved annually to plant a tree over it' },
-  'skyloo': { kind: 'pit', paramLabel: 'Vault volume (per household)', paramUnit: 'm³', defaultParam: 1.0, accumRate: 0.067, designPeriod: 3, source: SBM_PIT_SOURCE + '; elevated vault, same accumulation basis as twin-pit' },
-  'flood-resilient-sanitation': { kind: 'pit', paramLabel: 'Raised-pit volume', paramUnit: 'm³', defaultParam: 1.2, accumRate: 0.067, designPeriod: 3, source: SBM_PIT_SOURCE + '; elevated 0.6-1m above flood level, same accumulation basis' },
+  'twin-pit': { kind: 'pit', paramLabel: 'Volume per pit', paramUnit: 'm³', defaultParam: 1.0, minParam: 0.5, maxParam: 2.5, accumRate: 0.067, designPeriod: 3, source: SBM_PIT_SOURCE },
+  'vip': { kind: 'pit', paramLabel: 'Pit volume', paramUnit: 'm³', defaultParam: 1.7, minParam: 0.8, maxParam: 3, accumRate: 0.067, designPeriod: 5, source: SBM_PIT_SOURCE + '; VIP single pit sized for a longer 5-yr design life' },
+  'uddt': { kind: 'pit', paramLabel: 'Vault volume', paramUnit: 'm³', defaultParam: 0.9, minParam: 0.4, maxParam: 2, accumRate: 0.06, designPeriod: 3, source: SBM_PIT_SOURCE + '; urine diversion reduces solids volume slightly' },
+  'composting-dry': { kind: 'pit', paramLabel: 'Chamber volume', paramUnit: 'm³', defaultParam: 0.8, minParam: 0.4, maxParam: 2, accumRate: 0.07, designPeriod: 2, source: SBM_PIT_SOURCE + '; dry composting, shorter 2-yr cycle before harvesting compost' },
+  'arborloo': { kind: 'pit', paramLabel: 'Pit volume', paramUnit: 'm³', defaultParam: 0.35, minParam: 0.2, maxParam: 0.6, accumRate: 0.07, designPeriod: 1, source: SBM_PIT_SOURCE + '; shallow pit moved annually to plant a tree over it' },
+  'skyloo': { kind: 'pit', paramLabel: 'Vault volume (per household)', paramUnit: 'm³', defaultParam: 1.0, minParam: 0.5, maxParam: 2.5, accumRate: 0.067, designPeriod: 3, source: SBM_PIT_SOURCE + '; elevated vault, same accumulation basis as twin-pit' },
+  'flood-resilient-sanitation': { kind: 'pit', paramLabel: 'Raised-pit volume', paramUnit: 'm³', defaultParam: 1.2, minParam: 0.6, maxParam: 3, accumRate: 0.067, designPeriod: 3, source: SBM_PIT_SOURCE + '; elevated 0.6-1m above flood level, same accumulation basis' },
 
-  'soak-pit': { kind: 'wetland', paramLabel: 'Infiltration surface area', paramUnit: 'm²', defaultParam: 3, areaPerCapita: 0.8, source: 'CPHEEO Manual, on-site sullage disposal: ≈0.8 m² infiltration area per person for greywater in moderately permeable soil' },
-  'greywater-garden': { kind: 'wetland', paramLabel: 'Leach/planted bed area', paramUnit: 'm²', defaultParam: 4, areaPerCapita: 0.8, source: 'CPHEEO Manual, on-site sullage disposal: ≈0.8 m² infiltration area per person' },
+  'soak-pit': { kind: 'wetland', paramLabel: 'Infiltration surface area', paramUnit: 'm²', defaultParam: 3, minParam: 1.5, maxParam: 10, areaPerCapita: 0.8, source: 'CPHEEO Manual, on-site sullage disposal: ≈0.8 m² infiltration area per person for greywater in moderately permeable soil' },
+  'greywater-garden': { kind: 'wetland', paramLabel: 'Leach/planted bed area', paramUnit: 'm²', defaultParam: 4, minParam: 1.5, maxParam: 10, areaPerCapita: 0.8, source: 'CPHEEO Manual, on-site sullage disposal: ≈0.8 m² infiltration area per person' },
 
-  'septic-tank': { kind: 'septic', paramLabel: 'Tank volume', paramUnit: 'm³', defaultParam: 1.0, flowPerCapita: 0.10, retentionDays: 1, accumRate: 0.03, designPeriod: 2, source: IS2470_SOURCE },
-  'septic-tank-improved': { kind: 'septic', paramLabel: 'Tank volume', paramUnit: 'm³', defaultParam: 1.2, flowPerCapita: 0.10, retentionDays: 1, accumRate: 0.03, designPeriod: 3, source: IS2470_SOURCE + '; improved design extends desludging interval to 3 yr' },
+  'septic-tank': { kind: 'septic', paramLabel: 'Tank volume', paramUnit: 'm³', defaultParam: 1.0, minParam: 0.5, maxParam: 15, flowPerCapita: 0.10, retentionDays: 1, accumRate: 0.03, designPeriod: 2, source: IS2470_SOURCE },
+  'septic-tank-improved': { kind: 'septic', paramLabel: 'Tank volume', paramUnit: 'm³', defaultParam: 1.2, minParam: 0.6, maxParam: 18, flowPerCapita: 0.10, retentionDays: 1, accumRate: 0.03, designPeriod: 3, source: IS2470_SOURCE + '; improved design extends desludging interval to 3 yr' },
 
-  'dewats': { kind: 'reactor', paramLabel: 'Total system volume (settler+ABR+AF+wetland combined)', paramUnit: 'm³', defaultParam: 40, flowPerCapita: 0.08, hrtDays: 1, source: DEWATS_SOURCE },
-  'dewats-full-train': { kind: 'reactor', paramLabel: 'Total treatment-train volume', paramUnit: 'm³', defaultParam: 400, flowPerCapita: 0.08, hrtDays: 1, source: DEWATS_SOURCE + '; full multi-stage train sized for institutional/small-town scale' },
-  'settler-sedimentation-tank': { kind: 'reactor', paramLabel: 'Settler volume', paramUnit: 'm³', defaultParam: 4, flowPerCapita: 0.08, hrtDays: 0.125, source: DEWATS_SOURCE + '; primary settler HRT ≈3 hours' },
-  'anaerobic-baffled-reactor': { kind: 'reactor', paramLabel: 'ABR volume', paramUnit: 'm³', defaultParam: 60, flowPerCapita: 0.08, hrtDays: 1.5, source: DEWATS_SOURCE + '; ABR HRT ≈36-48 hours' },
-  'anaerobic-filter': { kind: 'reactor', paramLabel: 'Filter volume', paramUnit: 'm³', defaultParam: 30, flowPerCapita: 0.08, hrtDays: 1, source: DEWATS_SOURCE + '; AF as polishing stage, HRT ≈1 day' },
-  'uasb-reactor': { kind: 'reactor', paramLabel: 'Reactor volume', paramUnit: 'm³', defaultParam: 150, flowPerCapita: 0.08, hrtDays: 0.33, source: DEWATS_SOURCE + '; UASB is high-rate, HRT ≈6-8 hours' },
-  'biogas-digester-kvic': { kind: 'reactor', paramLabel: 'Digester volume', paramUnit: 'm³', defaultParam: 2, flowPerCapita: 0.005, hrtDays: 40, source: 'KVIC/Deenbandhu design manual: ≈40-day retention for methanogenesis, sized on night-soil + kitchen waste input (~5 L/person/day)' },
-  'bio-digester': { kind: 'reactor', paramLabel: 'Digester tank volume', paramUnit: 'm³', defaultParam: 1.5, flowPerCapita: 0.008, hrtDays: 35, source: 'DRDO bio-digester design (psychrophilic bacteria, used by Indian Railways/Army): ≈35-day retention at ambient/cold temperature, toilet-integrated tank' },
-  'johkasou': { kind: 'reactor', paramLabel: 'Unit volume', paramUnit: 'm³', defaultParam: 3, flowPerCapita: 0.20, hrtDays: 0.33, source: 'Japan Johkasou design standard (MLIT): packaged units rated in "nin-so" (person-equivalent), ≈200 Lpcd design flow, ≈8-hour retention' },
+  'dewats': { kind: 'reactor', paramLabel: 'Total system volume (settler+ABR+AF+wetland combined)', paramUnit: 'm³', defaultParam: 40, minParam: 10, maxParam: 200, flowPerCapita: 0.08, hrtDays: 1, source: DEWATS_SOURCE },
+  'dewats-full-train': { kind: 'reactor', paramLabel: 'Total treatment-train volume', paramUnit: 'm³', defaultParam: 400, minParam: 100, maxParam: 2000, flowPerCapita: 0.08, hrtDays: 1, source: DEWATS_SOURCE + '; full multi-stage train sized for institutional/small-town scale' },
+  'settler-sedimentation-tank': { kind: 'reactor', paramLabel: 'Settler volume', paramUnit: 'm³', defaultParam: 4, minParam: 1, maxParam: 20, flowPerCapita: 0.08, hrtDays: 0.125, source: DEWATS_SOURCE + '; primary settler HRT ≈3 hours' },
+  'anaerobic-baffled-reactor': { kind: 'reactor', paramLabel: 'ABR volume', paramUnit: 'm³', defaultParam: 60, minParam: 10, maxParam: 300, flowPerCapita: 0.08, hrtDays: 1.5, source: DEWATS_SOURCE + '; ABR HRT ≈36-48 hours' },
+  'anaerobic-filter': { kind: 'reactor', paramLabel: 'Filter volume', paramUnit: 'm³', defaultParam: 30, minParam: 5, maxParam: 150, flowPerCapita: 0.08, hrtDays: 1, source: DEWATS_SOURCE + '; AF as polishing stage, HRT ≈1 day' },
+  'uasb-reactor': { kind: 'reactor', paramLabel: 'Reactor volume', paramUnit: 'm³', defaultParam: 150, minParam: 20, maxParam: 1000, flowPerCapita: 0.08, hrtDays: 0.33, source: DEWATS_SOURCE + '; UASB is high-rate, HRT ≈6-8 hours' },
+  'biogas-digester-kvic': { kind: 'reactor', paramLabel: 'Digester volume', paramUnit: 'm³', defaultParam: 2, minParam: 1, maxParam: 6, flowPerCapita: 0.005, hrtDays: 40, source: 'KVIC/Deenbandhu design manual: ≈40-day retention for methanogenesis, sized on night-soil + kitchen waste input (~5 L/person/day)' },
+  'bio-digester': { kind: 'reactor', paramLabel: 'Digester tank volume', paramUnit: 'm³', defaultParam: 1.5, minParam: 0.6, maxParam: 3, flowPerCapita: 0.008, hrtDays: 35, source: 'DRDO bio-digester design (psychrophilic bacteria, used by Indian Railways/Army): ≈35-day retention at ambient/cold temperature, toilet-integrated tank' },
+  'johkasou': { kind: 'reactor', paramLabel: 'Unit volume', paramUnit: 'm³', defaultParam: 3, minParam: 1, maxParam: 20, flowPerCapita: 0.20, hrtDays: 0.33, source: 'Japan Johkasou design standard (MLIT): packaged units rated in "nin-so" (person-equivalent), ≈200 Lpcd design flow, ≈8-hour retention' },
 
-  'constructed-wetland': { kind: 'wetland', paramLabel: 'Wetland bed area', paramUnit: 'm²', defaultParam: 16, areaPerCapita: 2, source: CW_SOURCE },
-  'constructed-wetland-horizontal': { kind: 'wetland', paramLabel: 'Bed area', paramUnit: 'm²', defaultParam: 16, areaPerCapita: 2, source: CW_SOURCE },
-  'constructed-wetland-vertical': { kind: 'wetland', paramLabel: 'Bed area', paramUnit: 'm²', defaultParam: 10, areaPerCapita: 1, source: CW_SOURCE + '; vertical-flow beds oxygenate better, ≈1 m²/person' },
-  'root-zone-treatment': { kind: 'wetland', paramLabel: 'Root-zone bed area', paramUnit: 'm²', defaultParam: 16, areaPerCapita: 2, source: CW_SOURCE },
-  'sand-gravel-filter': { kind: 'wetland', paramLabel: 'Filter bed area', paramUnit: 'm²', defaultParam: 4, areaPerCapita: 0.5, source: DEWATS_SOURCE + '; slow sand/gravel filter, low-rate loading ≈0.5 m²/person' },
+  'constructed-wetland': { kind: 'wetland', paramLabel: 'Wetland bed area', paramUnit: 'm²', defaultParam: 16, minParam: 4, maxParam: 400, areaPerCapita: 2, source: CW_SOURCE },
+  'constructed-wetland-horizontal': { kind: 'wetland', paramLabel: 'Bed area', paramUnit: 'm²', defaultParam: 16, minParam: 4, maxParam: 400, areaPerCapita: 2, source: CW_SOURCE },
+  'constructed-wetland-vertical': { kind: 'wetland', paramLabel: 'Bed area', paramUnit: 'm²', defaultParam: 10, minParam: 2, maxParam: 300, areaPerCapita: 1, source: CW_SOURCE + '; vertical-flow beds oxygenate better, ≈1 m²/person' },
+  'root-zone-treatment': { kind: 'wetland', paramLabel: 'Root-zone bed area', paramUnit: 'm²', defaultParam: 16, minParam: 4, maxParam: 400, areaPerCapita: 2, source: CW_SOURCE },
+  'sand-gravel-filter': { kind: 'wetland', paramLabel: 'Filter bed area', paramUnit: 'm²', defaultParam: 4, minParam: 1, maxParam: 100, areaPerCapita: 0.5, source: DEWATS_SOURCE + '; slow sand/gravel filter, low-rate loading ≈0.5 m²/person' },
 
-  'waste-stabilization-pond': { kind: 'pond', paramLabel: 'Total pond area (anaerobic+facultative+maturation)', paramUnit: 'm²', defaultParam: 8000, areaPerCapita: 4, source: WSP_SOURCE },
-  'duckweed-pond': { kind: 'pond', paramLabel: 'Pond surface area', paramUnit: 'm²', defaultParam: 5000, areaPerCapita: 2.5, source: WSP_SOURCE + '; duckweed cover improves treatment efficiency per m² over open facultative ponds' },
-  'polishing-pond': { kind: 'pond', paramLabel: 'Pond surface area', paramUnit: 'm²', defaultParam: 2000, areaPerCapita: 1, source: WSP_SOURCE + '; tertiary/maturation stage only, smaller area than primary treatment ponds' },
+  'waste-stabilization-pond': { kind: 'pond', paramLabel: 'Total pond area (anaerobic+facultative+maturation)', paramUnit: 'm²', defaultParam: 8000, minParam: 400, maxParam: 40000, areaPerCapita: 4, source: WSP_SOURCE },
+  'duckweed-pond': { kind: 'pond', paramLabel: 'Pond surface area', paramUnit: 'm²', defaultParam: 5000, minParam: 250, maxParam: 25000, areaPerCapita: 2.5, source: WSP_SOURCE + '; duckweed cover improves treatment efficiency per m² over open facultative ponds' },
+  'polishing-pond': { kind: 'pond', paramLabel: 'Pond surface area', paramUnit: 'm²', defaultParam: 2000, minParam: 100, maxParam: 10000, areaPerCapita: 1, source: WSP_SOURCE + '; tertiary/maturation stage only, smaller area than primary treatment ponds' },
 
-  'planted-drying-bed': { kind: 'bed', paramLabel: 'Bed area', paramUnit: 'm²', defaultParam: 60, areaPerCapita: 0.025, source: FSSM_SOURCE + '; planted beds, continuous loading' },
-  'unplanted-drying-bed-solar': { kind: 'bed', paramLabel: 'Bed area', paramUnit: 'm²', defaultParam: 100, areaPerCapita: 0.03, source: FSSM_SOURCE + '; unplanted solar beds need bed rotation/rest periods, slightly more area per person' },
-  'faecal-sludge-co-composting': { kind: 'bed', paramLabel: 'Composting pad area', paramUnit: 'm²', defaultParam: 150, areaPerCapita: 0.03, source: FSSM_SOURCE },
+  'planted-drying-bed': { kind: 'bed', paramLabel: 'Bed area', paramUnit: 'm²', defaultParam: 60, minParam: 10, maxParam: 2500, areaPerCapita: 0.025, source: FSSM_SOURCE + '; planted beds, continuous loading' },
+  'unplanted-drying-bed-solar': { kind: 'bed', paramLabel: 'Bed area', paramUnit: 'm²', defaultParam: 100, minParam: 15, maxParam: 3000, areaPerCapita: 0.03, source: FSSM_SOURCE + '; unplanted solar beds need bed rotation/rest periods, slightly more area per person' },
+  'faecal-sludge-co-composting': { kind: 'bed', paramLabel: 'Composting pad area', paramUnit: 'm²', defaultParam: 150, minParam: 15, maxParam: 6000, areaPerCapita: 0.03, source: FSSM_SOURCE },
 
-  'rainwater-harvesting': { kind: 'water-supply', paramLabel: 'Reliable daily yield', paramUnit: 'L/day', defaultParam: 275, demandLpcd: 55, source: WATER_SOURCE },
-  'bore-well': { kind: 'water-supply', paramLabel: 'Pump/handpump yield', paramUnit: 'L/day', defaultParam: 2750, demandLpcd: 55, source: WATER_SOURCE },
-  'solar-water-pump': { kind: 'water-supply', paramLabel: 'Pump output', paramUnit: 'L/day', defaultParam: 5000, demandLpcd: 55, source: WATER_SOURCE },
-  'greywater-recycling-unit': { kind: 'water-supply', paramLabel: 'Treatment capacity', paramUnit: 'L/day', defaultParam: 1000, demandLpcd: 50, source: 'CPHEEO Manual on-site sullage generation: ≈50 Lpcd greywater fraction (not total supply demand)' },
-  'sewered-flush': { kind: 'water-supply', paramLabel: 'Connected treatment plant capacity', paramUnit: 'L/day', defaultParam: 1000000, demandLpcd: 135, source: 'CPHEEO Manual on Sewerage & Sewage Treatment (2013): urban design flow 135 Lpcd; STP capacity in MLD × 1,000,000 = L/day (e.g. a 5 MLD plant → enter 5000000)' },
+  'rainwater-harvesting': { kind: 'water-supply', paramLabel: 'Reliable daily yield', paramUnit: 'L/day', defaultParam: 275, minParam: 55, maxParam: 5500, demandLpcd: 55, source: WATER_SOURCE },
+  'bore-well': { kind: 'water-supply', paramLabel: 'Pump/handpump yield', paramUnit: 'L/day', defaultParam: 2750, minParam: 275, maxParam: 27500, demandLpcd: 55, source: WATER_SOURCE },
+  'solar-water-pump': { kind: 'water-supply', paramLabel: 'Pump output', paramUnit: 'L/day', defaultParam: 5000, minParam: 275, maxParam: 55000, demandLpcd: 55, source: WATER_SOURCE },
+  'greywater-recycling-unit': { kind: 'water-supply', paramLabel: 'Treatment capacity', paramUnit: 'L/day', defaultParam: 1000, minParam: 250, maxParam: 25000, demandLpcd: 50, source: 'CPHEEO Manual on-site sullage generation: ≈50 Lpcd greywater fraction (not total supply demand)' },
+  'sewered-flush': { kind: 'water-supply', paramLabel: 'Connected treatment plant capacity', paramUnit: 'L/day', defaultParam: 1000000, minParam: 135000, maxParam: 67500000, demandLpcd: 135, source: 'CPHEEO Manual on Sewerage & Sewage Treatment (2013): urban design flow 135 Lpcd; STP capacity in MLD × 1,000,000 = L/day (e.g. a 5 MLD plant → enter 5000000)' },
 
-  'emergency-latrine': { kind: 'per-unit', paramLabel: 'Number of latrine stances', paramUnit: 'stances', defaultParam: 1, peoplePerUnit: 20, source: SPHERE_SOURCE },
-  'cbs': { kind: 'per-unit', paramLabel: 'Number of container-toilet units', paramUnit: 'units', defaultParam: 1, peoplePerUnit: 5, source: 'CBS practice (e.g. Sanergy, X-Runner): 1 container unit per household, ≈5 people/household (Census 2011 India average)' },
+  'emergency-latrine': { kind: 'per-unit', paramLabel: 'Number of latrine stances', paramUnit: 'stances', defaultParam: 1, minParam: 1, maxParam: 25, peoplePerUnit: 20, source: SPHERE_SOURCE },
+  'cbs': { kind: 'per-unit', paramLabel: 'Number of container-toilet units', paramUnit: 'units', defaultParam: 1, minParam: 1, maxParam: 1000, peoplePerUnit: 5, source: 'CBS practice (e.g. Sanergy, X-Runner): 1 container unit per household, ≈5 people/household (Census 2011 India average)' },
 
-  'solid-waste': { kind: 'waste-collection', paramLabel: 'Daily collection capacity', paramUnit: 'kg/day', defaultParam: 400, wastePerCapitaKgDay: 0.4, source: SWM_SOURCE },
+  'solid-waste': { kind: 'waste-collection', paramLabel: 'Daily collection capacity', paramUnit: 'kg/day', defaultParam: 400, minParam: 40, maxParam: 40000, wastePerCapitaKgDay: 0.4, source: SWM_SOURCE },
 };
 
 // Technologies without a clean single physical-capacity formula (policy/coverage-scale
@@ -185,21 +191,22 @@ const NON_PHYSICAL_RANGE: Record<string, [number, number]> = {
   'drought-resistant-crops': [50, 5000],
 };
 
-// Population served at this technology's default design parameter -- used to place it
-// in a Population Load filter band. A real computed number (see computePopulationServed),
-// not a hardcoded guess; the 3 non-physical entries fall back to a labeled typical range.
-export function defaultPopulationServed(slug: string): number {
+// The technology's fixed load range: [population at minParam, population at maxParam].
+// This is what the Population Load slider filters against -- a real range built from the
+// realistic min/max size for that technology, not an arbitrarily resizable number.
+export function populationLoadRange(slug: string): [number, number] {
   const model = CAPACITY_MODELS[slug];
-  if (model) return computePopulationServed(model, model.defaultParam);
-  const range = NON_PHYSICAL_RANGE[slug];
-  return range ? Math.round((range[0] + range[1]) / 2) : 0;
+  if (model) {
+    return [
+      Math.round(computePopulationServed(model, model.minParam)),
+      Math.round(computePopulationServed(model, model.maxParam)),
+    ];
+  }
+  return NON_PHYSICAL_RANGE[slug] ?? [0, 0];
 }
 
 export function populationLoadLabel(slug: string): string {
-  const model = CAPACITY_MODELS[slug];
-  if (model) {
-    const pop = Math.round(computePopulationServed(model, model.defaultParam));
-    return `≈${pop.toLocaleString()} people at default ${model.defaultParam}${model.paramUnit} ${model.paramLabel.toLowerCase()}`;
-  }
-  return NON_PHYSICAL_SCALE[slug] ?? '';
+  const [min, max] = populationLoadRange(slug);
+  if (min === max) return `≈${min.toLocaleString()} people`;
+  return `${min.toLocaleString()}-${max.toLocaleString()} people`;
 }
