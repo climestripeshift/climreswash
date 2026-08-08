@@ -46,6 +46,7 @@ const ATTRIBUTES: AttrDef[] = [
   { key: "pop_children_under_5", label: "Children Under 5",  icon: "👶", category: "demographics", desc: "Children aged 0-4 (WorldPop × Census age ratios)" },
   { key: "pop_elderly_60plus",   label: "Elderly 60+",       icon: "🧓", category: "demographics", desc: "Population aged 60+ (WorldPop × Census age ratios)" },
   { key: "pop_women_15_49",      label: "Women 15-49",       icon: "👩", category: "demographics", desc: "Women of reproductive age (WorldPop × Census age ratios)" },
+  { key: "rural_urban_class",    label: "Rural / Urban Mix", icon: "🏙️", category: "demographics", desc: "Splits each hex's population into a rural component (real named villages, Survey of India) and an urban residual (city/town population no village boundary covers). Rural hexes (≥85% village-accounted) are fine at 252km² resolution as-is. Urban and Composite hexes are candidates for finer-than-hex breakdown — a single hex average is smoothing a city's distinct risk profile together with surrounding farmland." },
 
   // Terrain
   { key: "elevation_mean",    label: "Elevation (SRTM)",    icon: "⛰️",  category: "terrain", desc: "Mean elevation per hex — real SRTM 90m data" },
@@ -157,6 +158,16 @@ const LAND_USE_COLORS: Record<string, string> = {
   snow: "#dbeafe", mangrove: "#52b788",
 };
 
+// Rural: fine as-is. Urban/Composite: candidates for finer-than-hex breakdown (see
+// compute_rural_urban_mix.py). Negligible: too sparse for the ratio to be meaningful.
+const RURAL_URBAN_COLORS: Record<string, string> = {
+  rural: "#4d9d5c", composite: "#c084fc", urban: "#d62828", negligible: "#cbd5e1",
+};
+const RURAL_URBAN_LABELS: Record<string, string> = {
+  rural: "Rural (village-accounted)", composite: "Composite (mixed)",
+  urban: "Urban (village data can't see)", negligible: "Negligible population",
+};
+
 // Fixed absolute domains — green always means safe, red always means danger
 const FIXED_DOMAIN: Record<string, [number, number]> = {
   hex_risk: [0, 10], population: [0, 5000000], cascade_count: [0, 4], data_confidence: [0, 1],
@@ -242,6 +253,7 @@ function getHexDataConfidence(props: any): { level: ConfLevel; reason: string; d
 
 function hexColor(props: any, attr: string) {
   if (attr === "land_use") return LAND_USE_COLORS[props.land_use] ?? "#94a3b8";
+  if (attr === "rural_urban_class") return RURAL_URBAN_COLORS[props.rural_urban_class] ?? "#94a3b8";
   if (attr === "data_confidence") {
     const { level } = getHexDataConfidence(props);
     return level === 'high' ? '#22c55e' : level === 'medium' ? '#f59e0b' : '#ef4444';
@@ -260,7 +272,7 @@ interface CrossFilter {
   value: number;
 }
 
-const FILTERABLE_KEYS = ATTRIBUTES.filter((a) => a.key !== "land_use").map((a) => ({ key: a.key, label: a.label, icon: a.icon }));
+const FILTERABLE_KEYS = ATTRIBUTES.filter((a) => a.key !== "land_use" && a.key !== "rural_urban_class").map((a) => ({ key: a.key, label: a.label, icon: a.icon }));
 
 // ── Sidebar ───────────────────────────────────────────────────────────────────
 
@@ -895,6 +907,21 @@ function HexInfoPanel({ props, ranking, confidence, villages, villagesLoading, o
           <div className="flex justify-between"><span className="text-muted-foreground">👶 Children &lt;5</span><span className="font-medium">{(props.pop_children_under_5 ?? 0).toLocaleString()}</span></div>
           <div className="flex justify-between"><span className="text-muted-foreground">🧓 Elderly 60+</span><span className="font-medium">{(props.pop_elderly_60plus ?? 0).toLocaleString()}</span></div>
           <div className="flex justify-between"><span className="text-muted-foreground">👩 Women 15-49</span><span className="font-medium">{(props.pop_women_15_49 ?? 0).toLocaleString()}</span></div>
+          {props.rural_urban_class && (
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">🏙️ Rural / Urban</span>
+              <span className="font-medium flex items-center gap-1">
+                <span className="w-2 h-2 rounded-sm" style={{ background: RURAL_URBAN_COLORS[props.rural_urban_class] }} />
+                {props.rural_urban_class === "rural" ? "Rural" : props.rural_urban_class === "urban" ? "Urban" : props.rural_urban_class === "composite" ? "Composite" : "—"}
+              </span>
+            </div>
+          )}
+          {(props.rural_urban_class === "urban" || props.rural_urban_class === "composite") && (
+            <div className="text-[9px] text-muted-foreground italic -mt-0.5">
+              {(props.urban_pop ?? 0).toLocaleString()} of {(props.population ?? 0).toLocaleString()} live outside any named village —
+              this hex is a candidate for finer-than-hex breakdown.
+            </div>
+          )}
           <div className="border-t border-border/30 my-1 pt-1" />
           <div>
             <button className="flex justify-between w-full" onClick={() => setVillagesExpanded((v) => !v)}>
@@ -1204,6 +1231,23 @@ function Legend({ attr }: { attr: string }) {
             </div>
           ))}
         </div>
+      </div>
+    );
+  }
+
+  if (attr === "rural_urban_class") {
+    return (
+      <div className="bg-background/90 backdrop-blur border border-border/40 rounded-lg p-2.5 shadow-lg w-52">
+        <p className="text-[10px] font-semibold mb-1.5">🏙️ Rural / Urban Mix</p>
+        {(["rural", "composite", "urban", "negligible"] as const).map((cls) => (
+          <div key={cls} className="flex items-center gap-1.5 mb-0.5">
+            <div className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ background: RURAL_URBAN_COLORS[cls] }} />
+            <span className="text-[9px] text-muted-foreground">{RURAL_URBAN_LABELS[cls]}</span>
+          </div>
+        ))}
+        <p className="text-[9px] text-muted-foreground italic pt-1 border-t border-border/30 mt-1">
+          Urban + Composite = candidates for finer-than-hex breakdown
+        </p>
       </div>
     );
   }
@@ -1816,8 +1860,16 @@ export default function HexMapPage() {
     staleTime: Infinity,
   });
 
+  // Rural/urban/composite classification -- see compute_rural_urban_mix.py.
+  // [rural_pop, urban_pop, class] per hex, class in rural/urban/composite/negligible.
+  const ruralUrbanQ = useQuery<Record<string, [number, number, string]>>({
+    queryKey: ["hex-rural-urban"],
+    queryFn: () => fetch("/data/hex_rural_urban.json").then((r) => r.json()),
+    staleTime: Infinity,
+  });
+
   // Merge future (by h3_id), NFHS5 extra (by district_name), SBM (by STATE|DISTRICT),
-  // and soil sand % (by h3_id)
+  // soil sand % (by h3_id), and rural/urban mix (by h3_id)
   const mergedGeoData = useMemo(() => {
     if (!hexQ.data) return hexQ.data;
     const futMap: Record<string, any> = {};
@@ -1825,6 +1877,7 @@ export default function HexMapPage() {
     const nfhsMap: Record<string, any> = nfhs5ExtraQ.data ?? {};
     const sbmMap: Record<string, any> = sbmQ.data ?? {};
     const soilMap: Record<string, number> = soilSandQ.data ?? {};
+    const ruralUrbanMap: Record<string, [number, number, string]> = ruralUrbanQ.data ?? {};
     return {
       ...hexQ.data,
       features: hexQ.data.features.map((f: any) => {
@@ -1843,10 +1896,12 @@ export default function HexMapPage() {
           sbm_total_ihhl:        sbm.total_ihhl,
         } : {};
         const soil = soilMap[p.h3_id] != null ? { soil_sand_pct: soilMap[p.h3_id] } : {};
-        return { ...f, properties: { ...p, ...fut, ...nfhs, ...sbmPrefixed, ...soil } };
+        const ru = ruralUrbanMap[p.h3_id];
+        const ruralUrban = ru ? { rural_pop: ru[0], urban_pop: ru[1], rural_urban_class: ru[2] } : {};
+        return { ...f, properties: { ...p, ...fut, ...nfhs, ...sbmPrefixed, ...soil, ...ruralUrban } };
       }),
     };
-  }, [hexQ.data, futureQ.data, nfhs5ExtraQ.data, sbmQ.data, soilSandQ.data]);
+  }, [hexQ.data, futureQ.data, nfhs5ExtraQ.data, sbmQ.data, soilSandQ.data, ruralUrbanQ.data]);
 
   const features: any[] = (mergedGeoData ?? hexQ.data)?.features ?? [];
 
