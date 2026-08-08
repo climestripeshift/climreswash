@@ -1,12 +1,14 @@
 import { useState, useCallback, useRef, useMemo } from "react";
 import { useRoute, Link, useSearch } from "wouter";
 import { getTechnologyBySlug, getAllTechnologies, ALL_HAZARDS, ALL_TYPOLOGIES, TechnologyInfo, MATRIX_HAZARDS, MATRIX_HAZARD_ICONS, MATRIX_HAZARD_COLORS, HazardSuitability } from "@/lib/technologyContent";
+import { CAPACITY_MODELS, NON_PHYSICAL_SCALE, computePopulationServed, describeFormula, defaultPopulationServed, populationLoadLabel } from "@/lib/technologyCapacity";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   ArrowLeft,
   CheckCircle,
@@ -50,10 +52,10 @@ const TYPOLOGY_ICONS: Record<string, string> = {
   'Coastal': '🏖️',
 };
 
-// Design-population bands, matched against each technology's populationLoad range —
-// technology choice genuinely changes with scale (a twin-pit toilet doesn't work for a
-// town, a UASB reactor is overkill for one household), so this filters by that directly
-// rather than treating all 42 technologies as interchangeable regardless of population served.
+// Design-population bands, matched against each technology's computed default population
+// served (see technologyCapacity.ts) — technology choice genuinely changes with scale (a
+// twin-pit toilet doesn't work for a town, a UASB reactor is overkill for one household),
+// so this filters by a real capacity calculation, not a hand-picked label.
 const POPULATION_BANDS: { key: string; label: string; icon: string; min: number; max: number }[] = [
   { key: 'household', label: 'Household', icon: '🏠', min: 1, max: 15 },
   { key: 'community',  label: 'Community',  icon: '🏘️', min: 15, max: 2000 },
@@ -61,8 +63,9 @@ const POPULATION_BANDS: { key: string; label: string; icon: string; min: number;
   { key: 'city',       label: 'City / Municipal', icon: '🌆', min: 20000, max: Infinity },
 ];
 
-function loadOverlapsBand(load: { min: number; max: number }, band: { min: number; max: number }): boolean {
-  return load.max >= band.min && load.min <= band.max;
+function bandForSlug(slug: string) {
+  const pop = defaultPopulationServed(slug);
+  return POPULATION_BANDS.find(b => pop >= b.min && pop <= b.max) ?? POPULATION_BANDS[0];
 }
 
 // Admin-uploaded diagrams live in the technologies DB table (see AdminDashboard's
@@ -394,6 +397,85 @@ function PageHeader({ showTechLink = false }: { showTechLink?: boolean }) {
   );
 }
 
+// Real capacity calculator: population served = design parameter ÷ published per-capita
+// design norm (CPHEEO/IS 2470/BORDA/Sphere — see technologyCapacity.ts for citations),
+// not a hand-picked range. Editable so it reflects an actual installation's dimensions,
+// not just the reference default.
+function CapacityCalculator({ slug }: { slug: string }) {
+  const model = CAPACITY_MODELS[slug];
+  const [param, setParam] = useState<number>(model?.defaultParam ?? 0);
+
+  if (!model) {
+    return (
+      <Card className="border-amber-500/30 bg-amber-500/5">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <span>👥</span> Population Served
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">{NON_PHYSICAL_SCALE[slug] ?? 'Not applicable.'}</p>
+          <p className="text-xs text-muted-foreground/70 mt-2 italic">
+            This isn't sized by a per-person design formula the way a treatment unit is — see the note above.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const population = computePopulationServed(model, param);
+  const band = POPULATION_BANDS.find(b => population >= b.min && population <= b.max) ?? POPULATION_BANDS[0];
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <span>🧮</span> Population Served Calculator
+        </CardTitle>
+        <CardDescription className="text-xs">{model.source}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="flex items-end gap-4 flex-wrap">
+          <div className="space-y-1">
+            <Label className="text-xs">{model.paramLabel}</Label>
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                min={0}
+                step="any"
+                value={param}
+                onChange={e => setParam(Math.max(0, Number(e.target.value) || 0))}
+                className="w-36 h-9"
+                data-testid="input-capacity-param"
+              />
+              <span className="text-sm text-muted-foreground">{model.paramUnit}</span>
+            </div>
+          </div>
+          <Button variant="ghost" size="sm" className="text-xs" onClick={() => setParam(model.defaultParam)}>
+            Reset to reference default ({model.defaultParam}{model.paramUnit})
+          </Button>
+        </div>
+
+        <div className="flex items-center gap-3 bg-purple-500/10 rounded-lg px-4 py-3">
+          <span className="text-2xl">{band.icon}</span>
+          <div>
+            <div className="text-lg font-bold text-purple-700 dark:text-purple-400" data-testid="text-computed-population">
+              ≈{Math.round(population).toLocaleString()} people served
+            </div>
+            <div className="text-xs text-muted-foreground">{band.label}-scale installation</div>
+          </div>
+        </div>
+
+        <p className="text-[11px] text-muted-foreground italic">{describeFormula(model)}</p>
+        <p className="text-[11px] text-muted-foreground">
+          This is a reference-design estimate. Real capacity depends on soil type, occupancy pattern, local
+          regulations, and site conditions — treat it as a sizing starting point, not a substitute for a site survey.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
 function TechnologyDetail({ tech: baseTech }: { tech: TechnologyInfo }) {
   const diagramsQ = useQuery({ queryKey: ['tech-diagrams'], queryFn: fetchTechDiagrams, staleTime: 60_000 });
   const tech = diagramsQ.data?.[baseTech.slug] ? { ...baseTech, diagramUrl: diagramsQ.data[baseTech.slug] } : baseTech;
@@ -457,8 +539,8 @@ function TechnologyDetail({ tech: baseTech }: { tech: TechnologyInfo }) {
                     {tech.costLevel} Cost
                   </Badge>
                   <Badge className="bg-purple-500/10 text-purple-600" data-testid="badge-population-load">
-                    <span className="mr-1">{POPULATION_BANDS.find(b => loadOverlapsBand(tech.populationLoad, b))?.icon ?? '👥'}</span>
-                    {tech.populationLoad.label}
+                    <span className="mr-1">{bandForSlug(tech.slug).icon}</span>
+                    {bandForSlug(tech.slug).label}
                   </Badge>
                 </div>
               </div>
@@ -467,6 +549,8 @@ function TechnologyDetail({ tech: baseTech }: { tech: TechnologyInfo }) {
               </CardDescription>
             </CardHeader>
           </Card>
+
+          <CapacityCalculator slug={tech.slug} />
 
           {/* Technical drawing -- admin-uploaded, see /admin > Technologies. Only shown
               once someone has actually uploaded one for this technology. */}
@@ -701,8 +785,7 @@ function TechnologyIndex() {
     const matchesTypology = selectedTypologies.length === 0 ||
       selectedTypologies.some(t => tech.typology.includes(t));
 
-    const activeBand = POPULATION_BANDS.find(b => b.key === selectedLoadBand);
-    const matchesLoad = !activeBand || loadOverlapsBand(tech.populationLoad, activeBand);
+    const matchesLoad = !selectedLoadBand || bandForSlug(tech.slug).key === selectedLoadBand;
 
     // Matrix suitability filter — show only recommended or conditional for the active hazard
     const matchesSuitability = !activeMatrixHazard ||
@@ -1125,8 +1208,8 @@ function TechnologyCard({ tech, selectedHazards, selectedTypologies, activeMatri
               </span>
             )}
           </div>
-          <div className="text-[10px] text-purple-600 flex items-center gap-1">
-            {POPULATION_BANDS.find(b => loadOverlapsBand(tech.populationLoad, b))?.icon ?? '👥'} {tech.populationLoad.label}
+          <div className="text-[10px] text-purple-600 flex items-center gap-1" title={populationLoadLabel(tech.slug)}>
+            {bandForSlug(tech.slug).icon} {populationLoadLabel(tech.slug)}
           </div>
         </CardContent>
       </Card>
