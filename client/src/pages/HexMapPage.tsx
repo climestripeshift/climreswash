@@ -819,6 +819,22 @@ function SetupCanvas() {
 
 // ── Hex info panel ────────────────────────────────────────────────────────────
 
+// One village record, serialized as a positional array to keep the ~640K-village
+// national file small (see attach_village_boundaries_to_hexes.py docstring):
+// [name, gp, gp_code, block, district, population, households].
+// "district" non-null means it's a real Survey of India boundary polygon (via NWDP)
+// -- gp/block/population/households are real government data. district null means
+// it's an OSM fallback point (for hexes SoI didn't cover -- Uttarakhand + gaps),
+// name-only, population almost always null. GP-name coverage varies genuinely by
+// state in the source data itself (populated in Kerala/TN/Karnataka/Bihar, blank in
+// Rajasthan/Goa/Maharashtra/WB) -- not a bug, so render it as "GP: —" rather than
+// hiding the row.
+type VillageArr = [
+  name: string, gp: string | null, gp_code: string | null, block: string | null,
+  district: string | null, population: number | null, households: number | null,
+];
+type VillageHexEntry = { count: number; source: "soi" | "osm" | "mixed"; villages: VillageArr[] };
+
 const INST_ICONS: Record<string, string> = { school: "🏫", anganwadi: "🌸", household: "🏠" };
 const RISK_LABEL: Record<string, string> = {
   flood_risk: "Flood", heat_risk: "Heat", cyclone_risk: "Cyclone", drought_risk: "Drought",
@@ -830,7 +846,7 @@ function HexInfoPanel({ props, ranking, confidence, villages, villagesLoading, o
   props: any;
   ranking: any | null;
   confidence: { p5: number; p95: number; mean: number; sd: number } | null;
-  villages: { count: number; villages: { name: string; place: string | null; population: number | null }[] } | null;
+  villages: VillageHexEntry | null;
   villagesLoading: boolean;
   onClose: () => void;
 }) {
@@ -888,18 +904,27 @@ function HexInfoPanel({ props, ranking, confidence, villages, villagesLoading, o
               </span>
             </button>
             {villagesExpanded && villages && (
-              <div className="mt-1 max-h-32 overflow-y-auto space-y-0.5 pl-1 border-l border-border/30">
-                {villages.villages.slice(0, 200).map((v, i) => (
-                  <div key={i} className="text-[10px] text-muted-foreground flex justify-between gap-2">
-                    <span className="truncate">{v.name}{v.place && v.place !== "village" && <span className="italic"> ({v.place})</span>}</span>
-                    {v.population != null && <span className="shrink-0">{v.population.toLocaleString()}</span>}
+              <div className="mt-1 max-h-40 overflow-y-auto space-y-1 pl-1 border-l border-border/30">
+                {villages.villages.slice(0, 200).map(([name, gp, , block, district, population], i) => (
+                  <div key={i} className="text-[10px]">
+                    <div className="text-muted-foreground flex justify-between gap-2">
+                      <span className="truncate">{name}</span>
+                      {population != null && <span className="shrink-0 font-medium">{population.toLocaleString()}</span>}
+                    </div>
+                    {district && (
+                      <div className="text-[9px] text-muted-foreground/70 truncate">
+                        {gp ? `GP: ${gp}` : "GP: —"}{block ? ` · ${block}` : ""}{`, ${district}`}
+                      </div>
+                    )}
                   </div>
                 ))}
                 {villages.villages.length > 200 && (
                   <div className="text-[9px] text-muted-foreground italic">+{villages.villages.length - 200} more</div>
                 )}
                 <div className="text-[9px] text-muted-foreground italic pt-0.5">
-                  From OpenStreetMap — real but not exhaustive coverage, one hex can span many villages.
+                  {villages.source === "soi" && "Survey of India village boundaries (via NWDP) — real Gram Panchayat/block linkage where the source reports it."}
+                  {villages.source === "osm" && "From OpenStreetMap — real but not exhaustive coverage, no official GP linkage."}
+                  {villages.source === "mixed" && "Mix of Survey of India boundaries and OpenStreetMap fallback points."}
                 </div>
               </div>
             )}
@@ -1730,7 +1755,7 @@ export default function HexMapPage() {
   // change any risk score, this hex is still one ~252km² cell, just tells you what's in
   // it. Lazy: only fetched the first time a hex is actually clicked, since this file is
   // much bigger than hex_confidence.json and most sessions won't need it at all.
-  const hexVillagesQ = useQuery<Record<string, { count: number; villages: { name: string; place: string | null; population: number | null }[] }>>({
+  const hexVillagesQ = useQuery<Record<string, VillageHexEntry>>({
     queryKey: ["hex-villages"],
     queryFn: () => fetch("/data/india_hex_villages.json").then((r) => r.json()),
     staleTime: Infinity,
