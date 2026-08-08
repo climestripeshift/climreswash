@@ -170,7 +170,13 @@ def compute_hex_risk(row, lat: float, lon: float, wash_by_state: dict, state_ac:
     params    = LAND_USE_PARAMS.get(lu, DEFAULT_PARAMS)
     tree_pct  = max(params["tree_pct"], ndvi * 100 * 0.8)
     built_pct = params["built_pct"]
-    sand_pct  = params["sand_pct"]
+    # Real per-hex soil sand % (ISRIC SoilGrids, see fetch_soilgrids_sand.py) takes
+    # priority over the flat land-use lookup -- every "crop" hex used to get an
+    # identical 25% regardless of whether it's Thar desert sand or Gangetic clay.
+    # Falls back to the land-use guess for any hex SoilGrids didn't cover (e.g. a
+    # water-only pixel at the sampled point).
+    real_sand = row.get("real_sand_pct")
+    sand_pct  = float(real_sand) if real_sand is not None else params["sand_pct"]
     slope     = float(row.get("slope_deg", 0) or 0) or estimate_slope(elev)
     dist_w    = float(row.get("dist_water_m", 0) or 0) or estimate_dist_water(lu, elev)
     dist_coast = estimate_coast_dist(lat, lon, elev)

@@ -18,6 +18,7 @@ from risk.hex_risk import RISK_COLS, build_wash_state_context, compute_hex_risk
 ROOT         = Path(__file__).resolve().parent.parent
 HEX_FILE     = ROOT / "client/public/data/india_hex_grid.geojson"
 DISTRICTS    = ROOT / "client/public/data/india.json"
+SOIL_SAND    = ROOT / "client/public/data/hex_soil_sand.json"
 
 
 def main():
@@ -83,6 +84,20 @@ def main():
             w = wash_by_state[s]
             print(f"    {s}: AC={state_ac[s]} (toilet={w['toilet_pct']}%, water={w['piped_water_pct']}%, "
                   f"health={w['health_access_pct']}%, poverty={w['poverty_pct']}%)")
+
+    # 3b. Load real per-hex soil sand % (ISRIC SoilGrids -- see fetch_soilgrids_sand.py).
+    # compute_hex_risk() prefers this over its flat land-use-based guess when present.
+    print("Loading real soil sand % (SoilGrids)...")
+    if SOIL_SAND.exists():
+        soil_map = json.loads(SOIL_SAND.read_text())
+        hexes["real_sand_pct"] = hexes["h3_id"].map(soil_map)
+        n_real = hexes["real_sand_pct"].notna().sum()
+        print(f"  {n_real}/{len(hexes)} hexes have real soil data "
+              f"({100*n_real/len(hexes):.1f}%) -- rest fall back to the land-use guess")
+    else:
+        print(f"  {SOIL_SAND.name} not found -- all hexes fall back to the land-use guess "
+              f"(run scripts/fetch_soilgrids_sand.py first for real data)")
+        hexes["real_sand_pct"] = None
 
     # 4. Estimate distance to coast (rough: hexes near sea level + near edges)
     print("Estimating coastal proximity...")
