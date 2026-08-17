@@ -30,6 +30,7 @@ const CATEGORIES = [
   { id: "climate",      label: "Climate Hazards",     icon: "🌀" },
   { id: "geographic",   label: "Geographic Hazards",  icon: "🏔️" },
   { id: "wash",         label: "WASH & Capacity",     icon: "🚰" },
+  { id: "historical",   label: "Historical Trends",   icon: "📜" },
   { id: "future",       label: "Future Projections",  icon: "🔮" },
 ];
 
@@ -100,6 +101,13 @@ const ATTRIBUTES: AttrDef[] = [
   { key: "weighted_burden_children",label: "Child Burden Days",       icon: "👶", category: "overview", desc: "Annual hazard burden days weighted by children-under-5 population" },
   { key: "weighted_burden_elderly", label: "Elderly Burden Days",     icon: "👴", category: "overview", desc: "Annual hazard burden days weighted by elderly (60+) population" },
 
+  // Historical trends (ERA5 1940-2024, district-level — merged from
+  // district_historical_climatology.json by district_id)
+  { key: "hist_rainfall_trend",  label: "Rainfall Trend (1940-2024)", icon: "🌧️", category: "historical", desc: "Real observed change in annual rainfall, mm/decade — ERA5 reanalysis (Copernicus/ECMWF, CC-BY 4.0), linear trend over 85 years of district-centroid data. Negative = drying, positive = wetter — direction of concern depends on the district's baseline (a drought-prone area getting drier is bad; a flood-prone area getting wetter is also bad). National fetch is ongoing — districts not yet processed show as neutral gray, not zero." },
+  { key: "hist_temp_trend",      label: "Temperature Trend (1940-2024)", icon: "🌡️", category: "historical", desc: "Real observed warming, °C/decade — ERA5 reanalysis, linear trend in annual mean daily-max temperature over 85 years. Higher = faster warming. National fetch is ongoing — districts not yet processed show as neutral gray, not zero." },
+  { key: "hist_hotdays_trend",   label: "Extreme Heat Days Trend", icon: "🔥", category: "historical", desc: "Change in days/year above 40°C, days/decade — ERA5 reanalysis, 85-year trend. Higher = extreme heat becoming more frequent. National fetch is ongoing — districts not yet processed show as neutral gray, not zero." },
+  { key: "hist_rainfall_cv", label: "Monsoon Reliability (CV)", icon: "🎲", category: "historical", desc: "Coefficient of variation of annual rainfall (std ÷ mean) over 1940-2024 — higher means a more erratic, less predictable monsoon from year to year, independent of the trend direction. ERA5 reanalysis. National fetch is ongoing — districts not yet processed show as neutral gray, not zero." },
+
   // Future projections (CMIP6 NEX-GDDP — merged from india_hex_future.json)
   { key: "risk_ssp245_2050",             label: "Risk 2050 (SSP2-4.5)",     icon: "🔮", category: "future", desc: "Projected risk score 2050 under SSP2-4.5 moderate emissions" },
   { key: "risk_ssp585_2030",             label: "Risk 2030 (SSP5-8.5)",     icon: "🔮", category: "future", desc: "Near-term 2030 risk under SSP5-8.5 high emissions" },
@@ -117,6 +125,9 @@ const GREENS:  [number,number,number][] = [[255,255,255],[199,233,192],[116,196,
 const BLUES:   [number,number,number][] = [[240,249,255],[189,215,231],[107,174,214],[33,113,181],[8,48,107]];
 const ORANGES: [number,number,number][] = [[255,255,229],[254,217,142],[254,153,41],[217,95,14],[153,52,4]];
 const RISK:    [number,number,number][] = [[34,197,94],[234,179,8],[249,115,22],[239,68,68],[153,27,27]];
+// Diverging brown->teal (ColorBrewer BrBG), standard for precipitation trend/anomaly maps:
+// brown = drying, teal = wetter. Centered at the domain's midpoint, not strictly good/bad.
+const BRBG:    [number,number,number][] = [[140,81,10],[223,194,125],[245,245,245],[128,205,193],[1,102,94]];
 
 const ATTR_RAMP: Record<string, [number,number,number][]> = {
   elevation_mean: VIRIDIS, ndvi_mean: GREENS, population: ORANGES, dist_to_river_km: BLUES,
@@ -146,6 +157,10 @@ const ATTR_RAMP: Record<string, [number,number,number][]> = {
   // sbm_total_ihhl is a raw count, stays neutral.
   sbm_twin_pit_pct: GREENS, sbm_single_pit_pct: RISK,
   sbm_septic_soak_pct: GREENS, sbm_septic_nosoak_pct: BLUES, sbm_total_ihhl: ORANGES,
+  // Historical (1940-2024, ERA5) -- rainfall trend is diverging (drying vs wetter, neither
+  // is universally good/bad, see its ATTRIBUTES description); temp/hot-days/CV are all
+  // "higher = more concerning" so a sequential ramp fits.
+  hist_rainfall_trend: BRBG, hist_temp_trend: ORANGES, hist_hotdays_trend: RISK, hist_rainfall_cv: ORANGES,
   // Future
   risk_ssp245_2050: RISK, risk_ssp585_2030: RISK, risk_ssp585_2050: RISK,
   heat_days_ssp585_2050: ORANGES, severe_heat_days_ssp585_2050: RISK,
@@ -192,6 +207,9 @@ const FIXED_DOMAIN: Record<string, [number, number]> = {
   // SBM
   sbm_twin_pit_pct: [0, 100], sbm_single_pit_pct: [0, 100],
   sbm_septic_soak_pct: [0, 100], sbm_septic_nosoak_pct: [0, 100], sbm_total_ihhl: [0, 500000],
+  // Historical (1940-2024, ERA5) -- provisional bounds, will be tightened to the real
+  // national distribution once the full 735-district fetch completes
+  hist_rainfall_trend: [-100, 100], hist_temp_trend: [0, 0.6], hist_hotdays_trend: [-2, 8], hist_rainfall_cv: [0.1, 0.5],
   // Future projections
   risk_ssp245_2050: [0, 10], risk_ssp585_2030: [0, 10], risk_ssp585_2050: [0, 10],
   heat_days_ssp585_2050: [0, 135], severe_heat_days_ssp585_2050: [0, 30],
@@ -258,6 +276,10 @@ function hexColor(props: any, attr: string) {
     const { level } = getHexDataConfidence(props);
     return level === 'high' ? '#22c55e' : level === 'medium' ? '#f59e0b' : '#ef4444';
   }
+  // Historical layers are still backfilling (735-district national fetch in progress) --
+  // a district with no data yet must render as neutral "no data", not silently fall
+  // through to 0 and get colored like a real (often misleadingly "good") value.
+  if (attr.startsWith("hist_") && props[attr] == null) return "#e2e8f0";
   const val = props[attr] ?? 0;
   const [lo, hi] = FIXED_DOMAIN[attr] ?? [0, 10];
   const t = hi > lo ? (val - lo) / (hi - lo) : 0;
@@ -864,6 +886,7 @@ function HexInfoPanel({ props, ranking, confidence, villages, villagesLoading, o
 }) {
   const [tab, setTab] = useState<"data" | "actions">("data");
   const [villagesExpanded, setVillagesExpanded] = useState(false);
+  const [historyExpanded, setHistoryExpanded] = useState(false);
   const hasRanking = !!ranking;
   const ciWidth = confidence ? confidence.p95 - confidence.p5 : null;
   const ciLabel = ciWidth != null ? (ciWidth < 1.5 ? "High" : ciWidth < 3 ? "Moderate" : "Low") : null;
@@ -920,6 +943,59 @@ function HexInfoPanel({ props, ranking, confidence, villages, villagesLoading, o
             <div className="text-[9px] text-muted-foreground italic -mt-0.5">
               {(props.urban_pop ?? 0).toLocaleString()} of {(props.population ?? 0).toLocaleString()} live outside any named village —
               this hex is a candidate for finer-than-hex breakdown.
+            </div>
+          )}
+          {props.hist_rainfall_mean != null && (
+            <div>
+              <button className="flex justify-between w-full" onClick={() => setHistoryExpanded((v) => !v)}>
+                <span className="text-muted-foreground">📜 Historical Climate (1940-2024)</span>
+                <span className="font-medium">{historyExpanded ? "▾" : "▸"}</span>
+              </button>
+              {historyExpanded && (
+                <div className="mt-1 space-y-0.5 pl-1 border-l border-border/30 text-[10px]">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Mean annual rainfall</span>
+                    <span className="font-medium">{props.hist_rainfall_mean?.toLocaleString()}mm</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Rainfall trend</span>
+                    <span className={`font-medium ${props.hist_rainfall_trend < 0 ? "text-amber-500" : "text-blue-400"}`}>
+                      {props.hist_rainfall_trend > 0 ? "+" : ""}{props.hist_rainfall_trend}mm/decade
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Monsoon reliability (CV)</span>
+                    <span className="font-medium">{props.hist_rainfall_cv}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Mean annual temp (max)</span>
+                    <span className="font-medium">{props.hist_temp_mean}°C</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Warming trend</span>
+                    <span className="font-medium text-red-400">+{props.hist_temp_trend}°C/decade</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Extreme heat days trend</span>
+                    <span className="font-medium">{props.hist_hotdays_trend > 0 ? "+" : ""}{props.hist_hotdays_trend} days/decade</span>
+                  </div>
+                  {props.hist_recent_vs_baseline_rainfall_pct != null && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Rain, 1995-2024 vs 1940-1969</span>
+                      <span className="font-medium">{props.hist_recent_vs_baseline_rainfall_pct > 0 ? "+" : ""}{props.hist_recent_vs_baseline_rainfall_pct}%</span>
+                    </div>
+                  )}
+                  {props.hist_recent_vs_baseline_temp_c != null && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Temp, 1995-2024 vs 1940-1969</span>
+                      <span className="font-medium">+{props.hist_recent_vs_baseline_temp_c}°C</span>
+                    </div>
+                  )}
+                  <p className="text-[9px] text-muted-foreground italic pt-0.5">
+                    ERA5 reanalysis (Copernicus/ECMWF, CC-BY 4.0), district-centroid, 85-year daily record.
+                  </p>
+                </div>
+              )}
             </div>
           )}
           <div className="border-t border-border/30 my-1 pt-1" />
@@ -1213,6 +1289,10 @@ const LAYER_DIRECTION: Record<string, "good" | "bad"> = {
   // "unverified, defaults here" bucket rather than a genuine WASH outcome, see its
   // description. Showing a good/bad direction for it would overstate what's known.
   sbm_twin_pit_pct: "good", sbm_septic_soak_pct: "good", sbm_single_pit_pct: "bad",
+  // Historical trends (1940-2024) -- hist_rainfall_trend deliberately excluded: whether
+  // drying or wetting is "bad" depends on the district's baseline (drought-prone areas
+  // drying further vs flood-prone areas getting wetter), no single direction fits.
+  hist_temp_trend: "bad", hist_hotdays_trend: "bad", hist_rainfall_cv: "bad",
 };
 
 function Legend({ attr }: { attr: string }) {
@@ -1868,8 +1948,17 @@ export default function HexMapPage() {
     staleTime: Infinity,
   });
 
+  // 85-year (1940-2024) historical climate trend, ERA5 via Open-Meteo -- see
+  // fetch_historical_climatology.py. District-level (not per-hex, matches
+  // NFHS-5 WASH data's join pattern), keyed by district_id.
+  const histClimateQ = useQuery<Record<string, any>>({
+    queryKey: ["district-historical-climatology"],
+    queryFn: () => fetch("/data/district_historical_climatology.json").then((r) => r.json()),
+    staleTime: Infinity,
+  });
+
   // Merge future (by h3_id), NFHS5 extra (by district_name), SBM (by STATE|DISTRICT),
-  // soil sand % (by h3_id), and rural/urban mix (by h3_id)
+  // soil sand % (by h3_id), rural/urban mix (by h3_id), and historical climatology (by district_id)
   const mergedGeoData = useMemo(() => {
     if (!hexQ.data) return hexQ.data;
     const futMap: Record<string, any> = {};
@@ -1878,6 +1967,7 @@ export default function HexMapPage() {
     const sbmMap: Record<string, any> = sbmQ.data ?? {};
     const soilMap: Record<string, number> = soilSandQ.data ?? {};
     const ruralUrbanMap: Record<string, [number, number, string]> = ruralUrbanQ.data ?? {};
+    const histMap: Record<string, any> = histClimateQ.data ?? {};
     return {
       ...hexQ.data,
       features: hexQ.data.features.map((f: any) => {
@@ -1898,10 +1988,21 @@ export default function HexMapPage() {
         const soil = soilMap[p.h3_id] != null ? { soil_sand_pct: soilMap[p.h3_id] } : {};
         const ru = ruralUrbanMap[p.h3_id];
         const ruralUrban = ru ? { rural_pop: ru[0], urban_pop: ru[1], rural_urban_class: ru[2] } : {};
-        return { ...f, properties: { ...p, ...fut, ...nfhs, ...sbmPrefixed, ...soil, ...ruralUrban } };
+        const hist = histMap[p.district_id];
+        const histPrefixed = hist ? {
+          hist_rainfall_trend: hist.rainfall_trend_mm_decade,
+          hist_temp_trend: hist.temp_trend_c_decade,
+          hist_hotdays_trend: hist.hot_days_trend_days_decade,
+          hist_rainfall_cv: hist.rainfall_cv,
+          hist_rainfall_mean: hist.rainfall_mean_mm,
+          hist_temp_mean: hist.temp_mean_c,
+          hist_recent_vs_baseline_rainfall_pct: hist.recent_vs_baseline_rainfall_pct,
+          hist_recent_vs_baseline_temp_c: hist.recent_vs_baseline_temp_c,
+        } : {};
+        return { ...f, properties: { ...p, ...fut, ...nfhs, ...sbmPrefixed, ...soil, ...ruralUrban, ...histPrefixed } };
       }),
     };
-  }, [hexQ.data, futureQ.data, nfhs5ExtraQ.data, sbmQ.data, soilSandQ.data, ruralUrbanQ.data]);
+  }, [hexQ.data, futureQ.data, nfhs5ExtraQ.data, sbmQ.data, soilSandQ.data, ruralUrbanQ.data, histClimateQ.data]);
 
   const features: any[] = (mergedGeoData ?? hexQ.data)?.features ?? [];
 
