@@ -2,9 +2,17 @@
 Production replacement for fetch_historical_climatology.py (which used
 Open-Meteo's free tier -- hit an unrecoverable rate-limit wall on the archive
 endpoint, made near-zero progress over several hours). Fetches ERA5
-historical rainfall + temperature per district directly from Copernicus's
-Climate Data Store, and produces the exact same output file, so no frontend
-changes are needed.
+historical rainfall + temperature directly from Copernicus's Climate Data
+Store, extracted PER HEX (all 12,705 of them), not per district.
+
+Per-hex, not per-district: each CDS request already returns a full-India
+0.25° grid regardless of how many points get sampled from it afterwards --
+so extracting 12,705 hex centroids instead of 735 district centroids costs
+ZERO additional API requests, same 240 total. district_historical_
+climatology.json (district-level, committed in an earlier version) is
+superseded by hex_historical_climatology.json, keyed directly by h3_id --
+also removes the need for the district_id join the district-level version
+required, hexes merge straight onto the map by their own key.
 
 SCOPE: 1995-2024 (30 years), not the full 1940-2024 (85 years) ERA5 offers.
 The full-range run was started and left overnight -- CDS's queue took 9.5
@@ -24,46 +32,41 @@ Requires a free Copernicus CDS account + API key in ~/.cdsapirc, and accepting
 the dataset's license once at https://cds.climate.copernicus.eu/datasets/
 derived-era5-single-levels-daily-statistics (both already done this session).
 
-ARCHITECTURE -- a completely different shape from the Open-Meteo version, and
-much more efficient: instead of one request per district (735 requests, most
-of which never got a turn), this fetches one full-India grid per (year,
-quarter, variable) and extracts ALL 735 districts from it at once. Every
-district gets data as each year completes, rather than a few districts
-getting complete 85-year histories while most get none.
-
 Chunk size was tuned empirically against CDS's actual behavior (not their
 docs, which don't state hard limits): a 2-variable request timed out
 in queue for 15+ min without even starting; a 1-variable/full-year request
 intermittently stalled 30+ min; a 1-variable/1-quarter (~90 days) request
-reliably completed in ~1-3 min. So: one variable, one quarter, per request.
+reliably completed in ~1-3 min in same-day testing. So: one variable, one
+quarter, per request -- temperature (daily_maximum) and precipitation
+(daily_sum) fetched separately since they need different daily statistics.
 
 30 years x 4 quarters x 2 variables = 240 requests. At ~2-3 min each in good
 conditions this is several hours, but CDS's actual queue depth has proven
 unpredictable (a single request took 9.5 hours overnight once) -- runs
 unattended across sessions regardless. Resumable at the YEAR level:
-district_annual_raw.json accumulates {district_id: {year: [rainfall_mm,
-tmax_mean_c, hot_days]}}, and district_historical_climatology.json (the
-file the frontend reads) is recomputed and rewritten after every completed
-year from however many years are available so far -- so coverage quality
-(trend confidence) grows smoothly for all 735 districts together, rather
-than coverage breadth growing district-by-district while most have nothing.
+hex_annual_raw.json accumulates {h3_id: {year: [rainfall_mm, tmax_mean_c,
+hot_days]}} (not committed -- large, regenerable), and
+hex_historical_climatology.json (the file the frontend reads) is recomputed
+and rewritten after every completed year from however many years are
+available so far -- so coverage quality (trend confidence) grows smoothly
+for all 12,705 hexes together, rather than coverage breadth growing one
+point at a time while most have nothing.
 
 Run: python scripts/fetch_historical_climatology_cds.py
 """
 import json
 import time
-from collections import defaultdict
 from pathlib import Path
 
 import cdsapi
-import geopandas as gpd
+import h3
 import numpy as np
 import xarray as xr
 
 ROOT = Path(__file__).resolve().parent.parent
-INDIA_GEO = ROOT / "client/public/data/india.json"
-RAW_OUT = ROOT / "data/raw/district_annual_raw.json"          # per-district-per-year accumulator (resumable state)
-FINAL_OUT = ROOT / "client/public/data/district_historical_climatology.json"  # same file the frontend reads
+HEX_PROPS = ROOT / "client/public/data/india_hex_props.json"
+RAW_OUT = ROOT / "data/raw/hex_annual_raw.json"                          # per-hex-per-year accumulator (resumable state, not committed)
+FINAL_OUT = ROOT / "client/public/data/hex_historical_climatology.json"  # the file the frontend reads
 
 YEARS = range(1995, 2025)
 QUARTERS = [("01", "02", "03"), ("04", "05", "06"), ("07", "08", "09"), ("10", "11", "12")]
@@ -117,10 +120,10 @@ def fetch_year_grid(variable: str, stat: str, year: int) -> xr.Dataset:
     return xr.concat(quarters, dim="valid_time")
 
 
-def nearest_grid_indices(lats: np.ndarray, lons: np.ndarray, district_lat: np.ndarray, district_lon: np.ndarray):
-    """Vectorized nearest-neighbor grid lookup for all districts at once."""
-    lat_idx = np.abs(lats[:, None] - district_lat[None, :]).argmin(axis=0)
-    lon_idx = np.abs(lons[:, None] - district_lon[None, :]).argmin(axis=0)
+def nearest_grid_indices(lats: np.ndarray, lons: np.ndarray, point_lat: np.ndarray, point_lon: np.ndarray):
+    """Vectorized nearest-neighbor grid lookup for all points at once."""
+    lat_idx = np.abs(lats[:, None] - point_lat[None, :]).argmin(axis=0)
+    lon_idx = np.abs(lons[:, None] - point_lon[None, :]).argmin(axis=0)
     return lat_idx, lon_idx
 
 
@@ -135,7 +138,7 @@ def linear_trend_per_decade(years: list[int], values: list[float]) -> float:
     return (num / den) * 10 if den else 0.0
 
 
-def summarize_district(year_data: dict[int, list]) -> dict | None:
+def summarize_hex(year_data: dict[int, list]) -> dict | None:
     years = sorted(year_data.keys())
     if len(years) < 5:
         return None
@@ -173,19 +176,19 @@ def summarize_district(year_data: dict[int, list]) -> dict | None:
 
 
 def main():
-    print(f"Loading {INDIA_GEO}...")
-    districts = gpd.read_file(str(INDIA_GEO))
-    districts["centroid"] = districts.geometry.centroid
-    district_ids = districts["ID"].tolist()
-    district_lat = districts["centroid"].y.values
-    district_lon = districts["centroid"].x.values
-    print(f"  {len(districts)} districts")
+    print(f"Loading {HEX_PROPS}...")
+    props = json.loads(HEX_PROPS.read_text())
+    h3_ids = [p["h3_id"] for p in props]
+    hex_lat = np.array([h3.cell_to_latlng(h)[0] for h in h3_ids])
+    hex_lon = np.array([h3.cell_to_latlng(h)[1] for h in h3_ids])
+    print(f"  {len(h3_ids)} hexes")
 
     RAW_OUT.parent.mkdir(parents=True, exist_ok=True)
     raw: dict[str, dict[str, list]] = json.loads(RAW_OUT.read_text()) if RAW_OUT.exists() else {}
     done_years = set()
     if raw:
-        # a year counts as "done" once present for all districts
+        # a year counts as "done" once present for any hex (all hexes get the same years,
+        # written together each pass)
         sample = next(iter(raw.values()))
         done_years = {int(y) for y in sample.keys()}
     print(f"  {len(done_years)} years already fetched: {sorted(done_years) if done_years else 'none'}")
@@ -205,12 +208,12 @@ def main():
 
         lats = temp_ds.latitude.values
         lons = temp_ds.longitude.values
-        lat_idx, lon_idx = nearest_grid_indices(lats, lons, district_lat, district_lon)
+        lat_idx, lon_idx = nearest_grid_indices(lats, lons, hex_lat, hex_lon)
 
         t2m = temp_ds["t2m"].values - 273.15   # Kelvin -> Celsius
         tp = precip_ds["tp"].values * 1000.0   # meters -> mm
 
-        for i, did in enumerate(district_ids):
+        for i, h3_id in enumerate(h3_ids):
             t_series = t2m[:, lat_idx[i], lon_idx[i]]
             p_series = tp[:, lat_idx[i], lon_idx[i]]
             t_series = t_series[~np.isnan(t_series)]
@@ -220,21 +223,23 @@ def main():
             annual_rainfall = float(np.sum(p_series))
             annual_tmax_mean = float(np.mean(t_series))
             hot_days = int(np.sum(t_series > HOT_DAY_THRESHOLD_C))
-            raw.setdefault(did, {})[str(year)] = [round(annual_rainfall, 1), round(annual_tmax_mean, 2), hot_days]
+            raw.setdefault(h3_id, {})[str(year)] = [round(annual_rainfall, 1), round(annual_tmax_mean, 2), hot_days]
 
-        RAW_OUT.write_text(json.dumps(raw))
-        print(f"[{year}] done, checkpointed ({len(raw)} districts have data)")
+        RAW_OUT.write_text(json.dumps(raw, separators=(",", ":")))
+        print(f"[{year}] done, checkpointed ({len(raw)} hexes have data)")
 
         # Recompute + rewrite the final output every year so coverage quality improves
-        # for all districts together (not most-districts-empty-until-the-end)
+        # for all hexes together (not most-hexes-empty-until-the-end)
         final = {}
-        for did, year_data in raw.items():
+        for h3_id, year_data in raw.items():
             year_data_int = {int(y): v for y, v in year_data.items()}
-            summary = summarize_district(year_data_int)
+            summary = summarize_hex(year_data_int)
             if summary:
-                final[did] = summary
-        FINAL_OUT.write_text(json.dumps(final))
-        print(f"[{year}] wrote {FINAL_OUT} ({len(final)} districts with a summary)")
+                final[h3_id] = summary
+        FINAL_OUT.write_text(json.dumps(final, separators=(",", ":")))
+        import os
+        print(f"[{year}] wrote {FINAL_OUT} ({len(final)} hexes with a summary, "
+              f"{os.path.getsize(FINAL_OUT)/1024/1024:.1f}MB)")
 
     print("\nAll years done.")
 

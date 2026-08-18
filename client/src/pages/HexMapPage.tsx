@@ -101,12 +101,12 @@ const ATTRIBUTES: AttrDef[] = [
   { key: "weighted_burden_children",label: "Child Burden Days",       icon: "👶", category: "overview", desc: "Annual hazard burden days weighted by children-under-5 population" },
   { key: "weighted_burden_elderly", label: "Elderly Burden Days",     icon: "👴", category: "overview", desc: "Annual hazard burden days weighted by elderly (60+) population" },
 
-  // Historical trends (ERA5 1995-2024, district-level — merged from
-  // district_historical_climatology.json by district_id)
-  { key: "hist_rainfall_trend",  label: "Rainfall Trend (1995-2024)", icon: "🌧️", category: "historical", desc: "Real observed change in annual rainfall, mm/decade — ERA5 reanalysis (Copernicus/ECMWF, CC-BY 4.0), linear trend over 30 years of district-centroid data. Negative = drying, positive = wetter — direction of concern depends on the district's baseline (a drought-prone area getting drier is bad; a flood-prone area getting wetter is also bad). National fetch is ongoing — districts not yet processed show as neutral gray, not zero." },
-  { key: "hist_temp_trend",      label: "Temperature Trend (1995-2024)", icon: "🌡️", category: "historical", desc: "Real observed warming, °C/decade — ERA5 reanalysis, linear trend in annual mean daily-max temperature over 30 years. Higher = faster warming. National fetch is ongoing — districts not yet processed show as neutral gray, not zero." },
-  { key: "hist_hotdays_trend",   label: "Extreme Heat Days Trend", icon: "🔥", category: "historical", desc: "Change in days/year above 40°C, days/decade — ERA5 reanalysis, 30-year trend. Higher = extreme heat becoming more frequent. National fetch is ongoing — districts not yet processed show as neutral gray, not zero." },
-  { key: "hist_rainfall_cv", label: "Monsoon Reliability (CV)", icon: "🎲", category: "historical", desc: "Coefficient of variation of annual rainfall (std ÷ mean) over 1995-2024 — higher means a more erratic, less predictable monsoon from year to year, independent of the trend direction. ERA5 reanalysis. National fetch is ongoing — districts not yet processed show as neutral gray, not zero." },
+  // Historical trends (ERA5 1995-2024, per-hex — merged from
+  // hex_historical_climatology.json by h3_id)
+  { key: "hist_rainfall_trend",  label: "Rainfall Trend (1995-2024)", icon: "🌧️", category: "historical", desc: "Real observed change in annual rainfall, mm/decade — ERA5 reanalysis (Copernicus/ECMWF, CC-BY 4.0), linear trend over 30 years of per-hex data. Negative = drying, positive = wetter — direction of concern depends on the district's baseline (a drought-prone area getting drier is bad; a flood-prone area getting wetter is also bad). National fetch is ongoing — hexes not yet processed show as neutral gray, not zero." },
+  { key: "hist_temp_trend",      label: "Temperature Trend (1995-2024)", icon: "🌡️", category: "historical", desc: "Real observed warming, °C/decade — ERA5 reanalysis, linear trend in annual mean daily-max temperature over 30 years. Higher = faster warming. National fetch is ongoing — hexes not yet processed show as neutral gray, not zero." },
+  { key: "hist_hotdays_trend",   label: "Extreme Heat Days Trend", icon: "🔥", category: "historical", desc: "Change in days/year above 40°C, days/decade — ERA5 reanalysis, 30-year trend. Higher = extreme heat becoming more frequent. National fetch is ongoing — hexes not yet processed show as neutral gray, not zero." },
+  { key: "hist_rainfall_cv", label: "Monsoon Reliability (CV)", icon: "🎲", category: "historical", desc: "Coefficient of variation of annual rainfall (std ÷ mean) over 1995-2024 — higher means a more erratic, less predictable monsoon from year to year, independent of the trend direction. ERA5 reanalysis. National fetch is ongoing — hexes not yet processed show as neutral gray, not zero." },
 
   // Future projections (CMIP6 NEX-GDDP — merged from india_hex_future.json)
   { key: "risk_ssp245_2050",             label: "Risk 2050 (SSP2-4.5)",     icon: "🔮", category: "future", desc: "Projected risk score 2050 under SSP2-4.5 moderate emissions" },
@@ -208,7 +208,7 @@ const FIXED_DOMAIN: Record<string, [number, number]> = {
   sbm_twin_pit_pct: [0, 100], sbm_single_pit_pct: [0, 100],
   sbm_septic_soak_pct: [0, 100], sbm_septic_nosoak_pct: [0, 100], sbm_total_ihhl: [0, 500000],
   // Historical (1995-2024, ERA5) -- provisional bounds, will be tightened to the real
-  // national distribution once the full 735-district fetch completes
+  // national distribution once the full 12,705-hex fetch completes
   hist_rainfall_trend: [-100, 100], hist_temp_trend: [0, 0.6], hist_hotdays_trend: [-2, 8], hist_rainfall_cv: [0.1, 0.5],
   // Future projections
   risk_ssp245_2050: [0, 10], risk_ssp585_2030: [0, 10], risk_ssp585_2050: [0, 10],
@@ -276,7 +276,7 @@ function hexColor(props: any, attr: string) {
     const { level } = getHexDataConfidence(props);
     return level === 'high' ? '#22c55e' : level === 'medium' ? '#f59e0b' : '#ef4444';
   }
-  // Historical layers are still backfilling (735-district national fetch in progress) --
+  // Historical layers are still backfilling (12,705-hex national fetch in progress) --
   // a district with no data yet must render as neutral "no data", not silently fall
   // through to 0 and get colored like a real (often misleadingly "good") value.
   if (attr.startsWith("hist_") && props[attr] == null) return "#e2e8f0";
@@ -992,7 +992,7 @@ function HexInfoPanel({ props, ranking, confidence, villages, villagesLoading, o
                     </div>
                   )}
                   <p className="text-[9px] text-muted-foreground italic pt-0.5">
-                    ERA5 reanalysis (Copernicus/ECMWF, CC-BY 4.0), district-centroid, 30-year daily record.
+                    ERA5 reanalysis (Copernicus/ECMWF, CC-BY 4.0), per-hex, 30-year daily record.
                   </p>
                 </div>
               )}
@@ -1949,16 +1949,17 @@ export default function HexMapPage() {
   });
 
   // 30-year (1995-2024) historical climate trend, ERA5 via Copernicus CDS -- see
-  // fetch_historical_climatology.py. District-level (not per-hex, matches
-  // NFHS-5 WASH data's join pattern), keyed by district_id.
+  // fetch_historical_climatology_cds.py. Per-hex (each CDS request already returns a
+  // full-India grid regardless of sample count, so hex-level costs no extra requests
+  // over district-level) -- keyed directly by h3_id, no join needed.
   const histClimateQ = useQuery<Record<string, any>>({
-    queryKey: ["district-historical-climatology"],
-    queryFn: () => fetch("/data/district_historical_climatology.json").then((r) => r.json()),
+    queryKey: ["hex-historical-climatology"],
+    queryFn: () => fetch("/data/hex_historical_climatology.json").then((r) => r.json()),
     staleTime: Infinity,
   });
 
   // Merge future (by h3_id), NFHS5 extra (by district_name), SBM (by STATE|DISTRICT),
-  // soil sand % (by h3_id), rural/urban mix (by h3_id), and historical climatology (by district_id)
+  // soil sand % (by h3_id), rural/urban mix (by h3_id), and historical climatology (by h3_id)
   const mergedGeoData = useMemo(() => {
     if (!hexQ.data) return hexQ.data;
     const futMap: Record<string, any> = {};
@@ -1988,7 +1989,7 @@ export default function HexMapPage() {
         const soil = soilMap[p.h3_id] != null ? { soil_sand_pct: soilMap[p.h3_id] } : {};
         const ru = ruralUrbanMap[p.h3_id];
         const ruralUrban = ru ? { rural_pop: ru[0], urban_pop: ru[1], rural_urban_class: ru[2] } : {};
-        const hist = histMap[p.district_id];
+        const hist = histMap[p.h3_id];
         const histPrefixed = hist ? {
           hist_rainfall_trend: hist.rainfall_trend_mm_decade,
           hist_temp_trend: hist.temp_trend_c_decade,
