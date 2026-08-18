@@ -7,26 +7,40 @@ hours per request with no way to predict which, because a full year of daily
 data per request pushed against CDS's undocumented cost/queue limits).
 
 The fix: use CDS's "ERA5 monthly averaged data on single levels" dataset
-instead of the daily-statistics one. It can serve the ENTIRE 1995-2024 range,
-both variables, all of India, in ONE request -- tested and confirmed: 90
-seconds, not hours. 30 years of monthly data is ~30x smaller than 30 years of
-daily data, which is almost certainly why CDS's queue treats it so much more
+instead of the daily-statistics one. It can serve the ENTIRE 1940-2024 range
+(the full 85 years ERA5 offers, not an artificially shortened window), both
+variables, all of India, in ONE request -- tested and confirmed: ~3 minutes,
+not hours or days. 85 years of monthly data is still tiny (~50-60MB)
+compared to what a single year of DAILY data cost against CDS's per-request
+limits, which is almost certainly why CDS's queue treats it so much more
 favorably.
 
 TRADE-OFF: monthly averages can't reproduce the "extreme heat days > 40C"
-count the daily version computed (that needs daily max temperature; this
+count a daily-resolution fetch could have (needs daily max temperature; this
 dataset only has monthly mean temperature). Dropped from the output rather
 than faked from a coarser proxy. Rainfall trend, rainfall reliability (CV),
 temperature trend, and the recent-vs-baseline comparison are all still
 computed correctly -- annual rainfall total = sum over 12 months of
 (monthly-mean daily rate x days in that month); annual mean temperature =
 mean of the 12 monthly means (a standard climatological metric in its own
-right, arguably more standard than the daily-max-based version was).
+right, arguably more standard than a daily-max-based version would be).
 
 Per-hex, not per-district: this dataset request has the SAME India-grid
 shape as the daily-statistics one did, so sampling all 12,705 hex centroids
 instead of a handful of district centroids costs nothing extra -- it's the
 same single request either way.
+
+OUTPUTS:
+  - hex_historical_climatology.json: per-hex trend summary (mean, trend,
+    CV, recent-vs-baseline) computed over the full 85-year record -- what
+    the static map layers read.
+  - hex_climate_timelapse.json: per-hex, per-YEAR raw annual rainfall (mm)
+    and mean temperature (C) -- what the animated timelapse control reads.
+    Shared "years" array plus two parallel per-hex value arrays (not an
+    array of {year, value} objects) to keep the file size down: 12,705
+    hexes x 85 years x 2 variables as bare numbers, positional by index
+    into the shared years list. Lazy-loaded client-side, only fetched if
+    someone actually opens the timelapse control.
 
 LICENSING: CC-BY 4.0 (Copernicus/ECMWF), same as the daily dataset -- free
 for commercial use and redistribution with attribution.
@@ -45,14 +59,18 @@ import xarray as xr
 
 ROOT = Path(__file__).resolve().parent.parent
 HEX_PROPS = ROOT / "client/public/data/india_hex_props.json"
-FINAL_OUT = ROOT / "client/public/data/hex_historical_climatology.json"
-TMP_DOWNLOAD = Path("/tmp/cds_monthly_30yr.nc")
-TMP_EXTRACT_DIR = Path("/tmp/cds_monthly_30yr_extracted")
+SUMMARY_OUT = ROOT / "client/public/data/hex_historical_climatology.json"
+TIMELAPSE_OUT = ROOT / "client/public/data/hex_climate_timelapse.json"
+TMP_DOWNLOAD = Path("/tmp/cds_monthly_85yr.nc")
+TMP_EXTRACT_DIR = Path("/tmp/cds_monthly_85yr_extracted")
 
-START_YEAR, END_YEAR = 1995, 2024
+START_YEAR, END_YEAR = 1940, 2024   # full ERA5 range -- the earlier 30-year cut was only
+# ever necessary for the daily-statistics dataset's per-request cost limits; the
+# monthly-means dataset fetches all 85 years in a single ~3min request, tested and
+# confirmed, so there's no reason to stay limited to 30
 INDIA_AREA = [38, 68, 6, 98]  # N, W, S, E
-BASELINE_YEARS = (1995, 2009)
-RECENT_YEARS = (2010, 2024)
+BASELINE_YEARS = (1940, 1969)
+RECENT_YEARS = (1995, 2024)
 
 
 def fetch_monthly_means() -> Path:
@@ -136,7 +154,7 @@ def summarize(rainfall_by_year: dict[int, float], temp_by_year: dict[int, float]
 
 
 def main():
-    print("Fetching ERA5 monthly means, 1995-2024, India, temp + precip (one request)...")
+    print(f"Fetching ERA5 monthly means, {START_YEAR}-{END_YEAR}, India, temp + precip (one request)...")
     zip_path = fetch_monthly_means()
     print(f"  downloaded {zip_path.stat().st_size / 1024 / 1024:.1f}MB")
 
@@ -145,7 +163,7 @@ def main():
 
     lats = temp_ds.latitude.values
     lons = temp_ds.longitude.values
-    times = temp_ds.valid_time.values  # 360 months, 1995-01 .. 2024-12
+    times = temp_ds.valid_time.values
 
     print(f"Loading {HEX_PROPS}...")
     props = json.loads(HEX_PROPS.read_text())
@@ -157,17 +175,19 @@ def main():
     lat_idx = np.abs(lats[:, None] - hex_lat[None, :]).argmin(axis=0)
     lon_idx = np.abs(lons[:, None] - hex_lon[None, :]).argmin(axis=0)
 
-    t2m = temp_ds["t2m"].values - 273.15   # Kelvin -> Celsius, shape (360, lat, lon)
-    tp = precip_ds["tp"].values * 1000.0   # meters/day -> mm/day, shape (360, lat, lon)
+    t2m = temp_ds["t2m"].values - 273.15   # Kelvin -> Celsius, shape (n_months, lat, lon)
+    tp = precip_ds["tp"].values * 1000.0   # meters/day -> mm/day, shape (n_months, lat, lon)
 
-    # Days in each of the 360 months, for converting mean daily rate -> monthly total
     days_in_month = np.array([
         calendar.monthrange(int(str(t)[:4]), int(str(t)[5:7]))[1] for t in times
     ])
     years_arr = np.array([int(str(t)[:4]) for t in times])
+    all_years = list(range(START_YEAR, END_YEAR + 1))
 
     print("Extracting + aggregating per hex...")
-    result = {}
+    summary_result = {}
+    timelapse_rainfall: dict[str, list] = {}
+    timelapse_temp: dict[str, list] = {}
     for i, h3_id in enumerate(h3_ids):
         t_series = t2m[:, lat_idx[i], lon_idx[i]]
         p_series = tp[:, lat_idx[i], lon_idx[i]]
@@ -182,15 +202,22 @@ def main():
             temp_by_year.setdefault(y, []).append(float(t_series[m]))
         temp_by_year_mean = {y: sum(v) / len(v) for y, v in temp_by_year.items()}
 
-        result[h3_id] = summarize(rainfall_by_year, temp_by_year_mean)
+        summary_result[h3_id] = summarize(rainfall_by_year, temp_by_year_mean)
+        timelapse_rainfall[h3_id] = [round(rainfall_by_year.get(y, 0.0)) for y in all_years]
+        timelapse_temp[h3_id] = [round(temp_by_year_mean.get(y, 0.0), 1) for y in all_years]
 
-    FINAL_OUT.write_text(json.dumps(result, separators=(",", ":")))
+    SUMMARY_OUT.write_text(json.dumps(summary_result, separators=(",", ":")))
     import os
-    print(f"\nDone. {len(result)}/{len(h3_ids)} hexes. Saved {FINAL_OUT} ({os.path.getsize(FINAL_OUT)/1024/1024:.1f}MB)")
+    print(f"\nSaved {SUMMARY_OUT} ({os.path.getsize(SUMMARY_OUT)/1024/1024:.1f}MB)")
 
-    vals = [v["rainfall_mean_mm"] for v in result.values()]
+    timelapse_payload = {"years": all_years, "rainfall": timelapse_rainfall, "temp": timelapse_temp}
+    TIMELAPSE_OUT.write_text(json.dumps(timelapse_payload, separators=(",", ":")))
+    print(f"Saved {TIMELAPSE_OUT} ({os.path.getsize(TIMELAPSE_OUT)/1024/1024:.1f}MB)")
+
+    print(f"\n{len(summary_result)}/{len(h3_ids)} hexes")
+    vals = [v["rainfall_mean_mm"] for v in summary_result.values()]
     print(f"  rainfall_mean_mm: {min(vals):.0f} - {max(vals):.0f}, national mean {sum(vals)/len(vals):.0f}")
-    vals = [v["temp_trend_c_decade"] for v in result.values()]
+    vals = [v["temp_trend_c_decade"] for v in summary_result.values()]
     print(f"  temp_trend_c_decade: {min(vals):.2f} - {max(vals):.2f}, national mean {sum(vals)/len(vals):.2f}")
 
 

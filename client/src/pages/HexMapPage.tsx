@@ -101,11 +101,11 @@ const ATTRIBUTES: AttrDef[] = [
   { key: "weighted_burden_children",label: "Child Burden Days",       icon: "👶", category: "overview", desc: "Annual hazard burden days weighted by children-under-5 population" },
   { key: "weighted_burden_elderly", label: "Elderly Burden Days",     icon: "👴", category: "overview", desc: "Annual hazard burden days weighted by elderly (60+) population" },
 
-  // Historical trends (ERA5 1995-2024, per-hex — merged from
+  // Historical trends (ERA5 1940-2024, per-hex — merged from
   // hex_historical_climatology.json by h3_id)
-  { key: "hist_rainfall_trend",  label: "Rainfall Trend (1995-2024)", icon: "🌧️", category: "historical", desc: "Real observed change in annual rainfall, mm/decade — ERA5 monthly-mean reanalysis (Copernicus/ECMWF, CC-BY 4.0), linear trend over 30 years, all 12,705 hexes. Negative = drying, positive = wetter — direction of concern depends on the area's baseline (a drought-prone area getting drier is bad; a flood-prone area getting wetter is also bad)." },
-  { key: "hist_temp_trend",      label: "Temperature Trend (1995-2024)", icon: "🌡️", category: "historical", desc: "Real observed warming, °C/decade — ERA5 monthly-mean reanalysis, linear trend in annual mean temperature over 30 years. Higher = faster warming." },
-  { key: "hist_rainfall_cv", label: "Monsoon Reliability (CV)", icon: "🎲", category: "historical", desc: "Coefficient of variation of annual rainfall (std ÷ mean) over 1995-2024 — higher means a more erratic, less predictable monsoon from year to year, independent of the trend direction. ERA5 monthly-mean reanalysis." },
+  { key: "hist_rainfall_trend",  label: "Rainfall Trend (1940-2024)", icon: "🌧️", category: "historical", desc: "Real observed change in annual rainfall, mm/decade — ERA5 monthly-mean reanalysis (Copernicus/ECMWF, CC-BY 4.0), linear trend over 85 years, all 12,705 hexes. Negative = drying, positive = wetter — direction of concern depends on the area's baseline (a drought-prone area getting drier is bad; a flood-prone area getting wetter is also bad)." },
+  { key: "hist_temp_trend",      label: "Temperature Trend (1940-2024)", icon: "🌡️", category: "historical", desc: "Real observed warming, °C/decade — ERA5 monthly-mean reanalysis, linear trend in annual mean temperature over 85 years. Higher = faster warming." },
+  { key: "hist_rainfall_cv", label: "Monsoon Reliability (CV)", icon: "🎲", category: "historical", desc: "Coefficient of variation of annual rainfall (std ÷ mean) over 1940-2024 — higher means a more erratic, less predictable monsoon from year to year, independent of the trend direction. ERA5 monthly-mean reanalysis." },
 
   // Future projections (CMIP6 NEX-GDDP — merged from india_hex_future.json)
   { key: "risk_ssp245_2050",             label: "Risk 2050 (SSP2-4.5)",     icon: "🔮", category: "future", desc: "Projected risk score 2050 under SSP2-4.5 moderate emissions" },
@@ -156,7 +156,7 @@ const ATTR_RAMP: Record<string, [number,number,number][]> = {
   // sbm_total_ihhl is a raw count, stays neutral.
   sbm_twin_pit_pct: GREENS, sbm_single_pit_pct: RISK,
   sbm_septic_soak_pct: GREENS, sbm_septic_nosoak_pct: BLUES, sbm_total_ihhl: ORANGES,
-  // Historical (1995-2024, ERA5) -- rainfall trend is diverging (drying vs wetter, neither
+  // Historical (1940-2024, ERA5) -- rainfall trend is diverging (drying vs wetter, neither
   // is universally good/bad, see its ATTRIBUTES description); temp/hot-days/CV are all
   // "higher = more concerning" so a sequential ramp fits.
   hist_rainfall_trend: BRBG, hist_temp_trend: ORANGES, hist_rainfall_cv: ORANGES,
@@ -206,10 +206,10 @@ const FIXED_DOMAIN: Record<string, [number, number]> = {
   // SBM
   sbm_twin_pit_pct: [0, 100], sbm_single_pit_pct: [0, 100],
   sbm_septic_soak_pct: [0, 100], sbm_septic_nosoak_pct: [0, 100], sbm_total_ihhl: [0, 500000],
-  // Historical (1995-2024, ERA5) -- p5-p95 of the real national distribution (12,705/12,705
+  // Historical (1940-2024, ERA5) -- p5-p95 of the real national distribution (12,705/12,705
   // hexes), not the full min-max, so a handful of extreme outliers (e.g. Meghalaya's
   // >11,000mm/yr rainfall) don't wash out the color scale for everywhere else
-  hist_rainfall_trend: [-120, 150], hist_temp_trend: [0, 0.45], hist_rainfall_cv: [0.1, 0.4],
+  hist_rainfall_trend: [-45, 30], hist_temp_trend: [0, 0.28], hist_rainfall_cv: [0.1, 0.46],
   // Future projections
   risk_ssp245_2050: [0, 10], risk_ssp585_2030: [0, 10], risk_ssp585_2050: [0, 10],
   heat_days_ssp585_2050: [0, 135], severe_heat_days_ssp585_2050: [0, 30],
@@ -267,6 +267,33 @@ function getHexDataConfidence(props: any): { level: ConfLevel; reason: string; d
 
   const reason = HAZARD_CONFIDENCE[worstKey]?.reason ?? 'Data quality unspecified';
   return { level, reason, dominant: domKey };
+}
+
+// Timelapse color domains -- real ANNUAL values (not the 85-year trend/mean), so these
+// are wider than the trend domains: national p1-p99 across all 85 years x 12,705 hexes.
+const TIMELAPSE_RAINFALL_DOMAIN: [number, number] = [0, 3500];
+const TIMELAPSE_TEMP_DOMAIN: [number, number] = [-10, 32];
+
+function timelapseHexColor(
+  h3_id: string, attr: string, year: number,
+  data: { years: number[]; rainfall: Record<string, number[]>; temp: Record<string, number[]> } | undefined,
+): string {
+  if (!data) return "#e2e8f0";
+  const yearIdx = data.years.indexOf(year);
+  if (yearIdx < 0) return "#e2e8f0";
+  if (attr === "hist_rainfall_trend") {
+    const val = data.rainfall[h3_id]?.[yearIdx];
+    if (val == null) return "#e2e8f0";
+    const [lo, hi] = TIMELAPSE_RAINFALL_DOMAIN;
+    return gradientColor(BLUES, (val - lo) / (hi - lo));
+  }
+  if (attr === "hist_temp_trend") {
+    const val = data.temp[h3_id]?.[yearIdx];
+    if (val == null) return "#e2e8f0";
+    const [lo, hi] = TIMELAPSE_TEMP_DOMAIN;
+    return gradientColor(ORANGES, (val - lo) / (hi - lo));
+  }
+  return "#e2e8f0";
 }
 
 function hexColor(props: any, attr: string) {
@@ -949,7 +976,7 @@ function HexInfoPanel({ props, ranking, confidence, villages, villagesLoading, o
           {props.hist_rainfall_mean != null && (
             <div>
               <button className="flex justify-between w-full" onClick={() => setHistoryExpanded((v) => !v)}>
-                <span className="text-muted-foreground">📜 Historical Climate (1995-2024)</span>
+                <span className="text-muted-foreground">📜 Historical Climate (1940-2024)</span>
                 <span className="font-medium">{historyExpanded ? "▾" : "▸"}</span>
               </button>
               {historyExpanded && (
@@ -980,18 +1007,18 @@ function HexInfoPanel({ props, ranking, confidence, villages, villagesLoading, o
                   </div>
                   {props.hist_recent_vs_baseline_rainfall_pct != null && (
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Rain, 2010-2024 vs 1995-2009</span>
+                      <span className="text-muted-foreground">Rain, 1995-2024 vs 1940-1969</span>
                       <span className="font-medium">{props.hist_recent_vs_baseline_rainfall_pct > 0 ? "+" : ""}{props.hist_recent_vs_baseline_rainfall_pct}%</span>
                     </div>
                   )}
                   {props.hist_recent_vs_baseline_temp_c != null && (
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Temp, 2010-2024 vs 1995-2009</span>
+                      <span className="text-muted-foreground">Temp, 1995-2024 vs 1940-1969</span>
                       <span className="font-medium">{props.hist_recent_vs_baseline_temp_c > 0 ? "+" : ""}{props.hist_recent_vs_baseline_temp_c}°C</span>
                     </div>
                   )}
                   <p className="text-[9px] text-muted-foreground italic pt-0.5">
-                    ERA5 monthly-mean reanalysis (Copernicus/ECMWF, CC-BY 4.0), per-hex, 30-year record.
+                    ERA5 monthly-mean reanalysis (Copernicus/ECMWF, CC-BY 4.0), per-hex, 85-year record.
                   </p>
                 </div>
               )}
@@ -1288,15 +1315,33 @@ const LAYER_DIRECTION: Record<string, "good" | "bad"> = {
   // "unverified, defaults here" bucket rather than a genuine WASH outcome, see its
   // description. Showing a good/bad direction for it would overstate what's known.
   sbm_twin_pit_pct: "good", sbm_septic_soak_pct: "good", sbm_single_pit_pct: "bad",
-  // Historical trends (1995-2024) -- hist_rainfall_trend deliberately excluded: whether
+  // Historical trends (1940-2024) -- hist_rainfall_trend deliberately excluded: whether
   // drying or wetting is "bad" depends on the district's baseline (drought-prone areas
   // drying further vs flood-prone areas getting wetter), no single direction fits.
   hist_temp_trend: "bad", hist_rainfall_cv: "bad",
 };
 
-function Legend({ attr }: { attr: string }) {
+function Legend({ attr, timelapseYear }: { attr: string; timelapseYear?: number | null }) {
   const meta = ATTRIBUTES.find((a) => a.key === attr) ?? LEGEND_OVERRIDES[attr];
   if (!meta) return null;
+
+  // In timelapse mode, colors reflect the real annual value for the selected year, not
+  // the 85-year trend the normal legend below would show -- a different domain/ramp.
+  if (timelapseYear != null && (attr === "hist_rainfall_trend" || attr === "hist_temp_trend")) {
+    const isRain = attr === "hist_rainfall_trend";
+    const [lo, hi] = isRain ? TIMELAPSE_RAINFALL_DOMAIN : TIMELAPSE_TEMP_DOMAIN;
+    const ramp = isRain ? BLUES : ORANGES;
+    const stops = ramp.map((c) => `rgb(${c.join(",")})`);
+    return (
+      <div className="bg-background/90 backdrop-blur border border-border/40 rounded-lg p-2.5 shadow-lg w-44">
+        <p className="text-[10px] font-semibold mb-1">{isRain ? "🌧️" : "🌡️"} {timelapseYear} {isRain ? "Rainfall" : "Temperature"}</p>
+        <div className="h-2.5 w-full rounded-sm mb-1" style={{ background: `linear-gradient(to right, ${stops.join(", ")})` }} />
+        <div className="flex justify-between text-[9px] text-muted-foreground">
+          <span>{isRain ? `${lo}mm` : `${lo}°C`}</span><span>{isRain ? `${hi}mm` : `${hi}°C`}</span>
+        </div>
+      </div>
+    );
+  }
 
   if (attr === "land_use") {
     return (
@@ -1764,6 +1809,7 @@ function SchoolsCoverageNote({ state }: { state: string }) {
 function HexMap({
   geoData, attr, selectedState, selectedDistrict, crossFilters, mapRef, onHexClick,
   showDistricts, showStates, showRivers, showSchools, onBoundaryClick, hasFutureData,
+  timelapseYear, timelapseData,
 }: {
   geoData: any; attr: string; selectedState: string; selectedDistrict: string;
   crossFilters: CrossFilter[];
@@ -1772,6 +1818,8 @@ function HexMap({
   showDistricts: boolean; showStates: boolean; showRivers: boolean; showSchools: boolean;
   onBoundaryClick: (type: "state" | "district", name: string, stateName: string) => void;
   hasFutureData: boolean;
+  timelapseYear: number | null;
+  timelapseData: { years: number[]; rainfall: Record<string, number[]>; temp: Record<string, number[]> } | undefined;
 }) {
   const geoJsonRef = useRef<LeafletGeoJSONLayer | null>(null);
 
@@ -1792,9 +1840,11 @@ function HexMap({
   }, [geoData, selectedState, selectedDistrict, crossFilters]);
 
   const styleFeature = useCallback((feature: any) => ({
-    fillColor: hexColor(feature.properties, attr),
+    fillColor: timelapseYear != null
+      ? timelapseHexColor(feature.properties.h3_id, attr, timelapseYear, timelapseData)
+      : hexColor(feature.properties, attr),
     fillOpacity: 0.75, color: "#64748b", weight: 0.3, renderer: canvasRenderer,
-  }), [attr]);
+  }), [attr, timelapseYear, timelapseData]);
 
   useEffect(() => { geoJsonRef.current?.setStyle(styleFeature); }, [styleFeature]);
 
@@ -1835,6 +1885,36 @@ export default function HexMapPage() {
   const [attr, setAttr]                       = useState("hex_risk");
   const [heatViewMode, setHeatViewMode]       = useState<"annual" | "peak">("annual");
   const effectiveAttr = attr === "heat_risk" && heatViewMode === "peak" ? "heat_peak_score" : attr;
+
+  // Timelapse: only meaningful for the two historical layers that have a real annual
+  // value (rainfall trend and temp trend) -- CV is a single 85-year statistic, no
+  // per-year value to animate.
+  const isTimelapseLayer = attr === "hist_rainfall_trend" || attr === "hist_temp_trend";
+  const [timelapseOn, setTimelapseOn] = useState(false);
+  const [timelapseYear, setTimelapseYear] = useState(2024);
+  const [timelapsePlaying, setTimelapsePlaying] = useState(false);
+  const timelapseActive = isTimelapseLayer && timelapseOn;
+
+  const timelapseQ = useQuery<{ years: number[]; rainfall: Record<string, number[]>; temp: Record<string, number[]> }>({
+    queryKey: ["hex-climate-timelapse"],
+    queryFn: () => fetch("/data/hex_climate_timelapse.json").then((r) => r.json()),
+    staleTime: Infinity,
+    enabled: timelapseActive,
+  });
+
+  useEffect(() => {
+    if (!timelapsePlaying) return;
+    const id = setInterval(() => {
+      setTimelapseYear((y) => (y >= 2024 ? 1940 : y + 1));
+    }, 400);
+    return () => clearInterval(id);
+  }, [timelapsePlaying]);
+
+  // Leaving the timelapse-eligible layers (or turning it off) stops playback so it
+  // doesn't keep silently advancing years against a layer that's no longer showing them
+  useEffect(() => {
+    if (!isTimelapseLayer) { setTimelapsePlaying(false); setTimelapseOn(false); }
+  }, [isTimelapseLayer]);
   const [selectedState, setSelectedState]     = useState(initialState);
   const [selectedDistrict, setSelectedDistrict] = useState(initialDistrict);
   const [clickedHex, setClickedHex]           = useState<any | null>(null);
@@ -1947,7 +2027,7 @@ export default function HexMapPage() {
     staleTime: Infinity,
   });
 
-  // 30-year (1995-2024) historical climate trend, ERA5 via Copernicus CDS -- see
+  // 85-year (1940-2024) historical climate trend, ERA5 via Copernicus CDS -- see
   // fetch_historical_climatology_cds.py. Per-hex (each CDS request already returns a
   // full-India grid regardless of sample count, so hex-level costs no extra requests
   // over district-level) -- keyed directly by h3_id, no join needed.
@@ -2114,7 +2194,8 @@ export default function HexMapPage() {
                 selectedDistrict={selectedDistrict} crossFilters={crossFilters}
                 mapRef={mapRef} onHexClick={(p) => { setClickedHex(p); setClickedBoundary(null); }}
                 showDistricts={showDistricts} showStates={showStates} showRivers={showRivers} showSchools={showSchools}
-                onBoundaryClick={handleBoundaryClick} hasFutureData={!!futureQ.data} />
+                onBoundaryClick={handleBoundaryClick} hasFutureData={!!futureQ.data}
+                timelapseYear={timelapseActive ? timelapseYear : null} timelapseData={timelapseQ.data} />
               {futureQ.isFetching && (
                 <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-[900] flex items-center gap-2 bg-background/90 border border-border rounded-full px-4 py-1.5 text-xs text-muted-foreground shadow-lg">
                   <Loader2 className="h-3 w-3 animate-spin" /> Loading future projections…
@@ -2152,10 +2233,60 @@ export default function HexMapPage() {
             </div>
           )}
 
+          {/* Timelapse control -- only for the two historical layers with a real annual
+              value (rainfall/temp trend); CV has no per-year value to animate */}
+          {isTimelapseLayer && (
+            <div className="absolute bottom-8 left-3 z-[800] mb-1" style={{ marginBottom: features.length > 0 ? "9rem" : 0 }}>
+              <div className="bg-background/90 backdrop-blur border border-border/40 rounded-lg p-2.5 shadow-lg w-64">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[10px] font-semibold flex items-center gap-1">🎬 Timelapse</span>
+                  <button
+                    onClick={() => { setTimelapseOn((v) => !v); setTimelapsePlaying(false); }}
+                    className={`text-[9px] px-2 py-0.5 rounded-full border font-medium transition-colors ${
+                      timelapseOn ? "bg-purple-500 text-white border-purple-500" : "bg-background border-border text-muted-foreground hover:text-foreground"
+                    }`}
+                    data-testid="button-timelapse-toggle"
+                  >
+                    {timelapseOn ? "On" : "Off"}
+                  </button>
+                </div>
+                {timelapseOn && (
+                  <>
+                    {timelapseQ.isLoading ? (
+                      <div className="text-[10px] text-muted-foreground py-2 text-center">Loading 85 years of data…</div>
+                    ) : (
+                      <>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setTimelapsePlaying((v) => !v)}
+                            className="shrink-0 w-6 h-6 rounded-full bg-purple-500 text-white flex items-center justify-center text-[10px]"
+                            data-testid="button-timelapse-play"
+                          >
+                            {timelapsePlaying ? "⏸" : "▶"}
+                          </button>
+                          <input
+                            type="range" min={1940} max={2024} step={1} value={timelapseYear}
+                            onChange={(e) => { setTimelapseYear(Number(e.target.value)); setTimelapsePlaying(false); }}
+                            className="flex-1 accent-purple-500"
+                            data-testid="slider-timelapse-year"
+                          />
+                          <span className="shrink-0 text-xs font-bold text-purple-600 w-10 text-right">{timelapseYear}</span>
+                        </div>
+                        <p className="text-[9px] text-muted-foreground mt-1">
+                          Real {attr === "hist_rainfall_trend" ? "annual rainfall" : "annual mean temperature"} for the year shown — not the 85-year trend.
+                        </p>
+                      </>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Legend */}
           {features.length > 0 && (
             <div className="absolute bottom-8 left-3 z-[800]">
-              <Legend attr={effectiveAttr} />
+              <Legend attr={effectiveAttr} timelapseYear={timelapseActive ? timelapseYear : null} />
             </div>
           )}
         </div>
