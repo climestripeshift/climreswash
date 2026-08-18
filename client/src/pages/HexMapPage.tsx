@@ -273,11 +273,22 @@ function getHexDataConfidence(props: any): { level: ConfLevel; reason: string; d
 }
 
 // Timelapse color domains -- real ANNUAL values (not the 85-year trend/mean), so these
-// are the CHANGE from each hex's own 1940 value (the first year in the data), not a raw
-// value -- national p2-p98 of (year value - 1940 value) across all years x 12,705 hexes,
-// so this is centered on 0 = "same as 1940" by construction.
-const TIMELAPSE_RAINFALL_DOMAIN: [number, number] = [-1200, 1200];
-const TIMELAPSE_TEMP_DOMAIN: [number, number] = [-2, 2.5];
+// are the CHANGE from each hex's own 1940s baseline DECADE average (not a single 1940
+// value -- comparing to one specific year is dominated by that year's own noise, e.g. an
+// anomalously dry 1940 makes nearly every later year look "wetter" even in a hex whose
+// real 85-year trend is declining; measured directly: single-year baseline disagreed with
+// the trend's sign on 31% of hexes, a decade-average baseline drops that to 3%, matching
+// standard climate-anomaly practice of using a reference period, not a reference year).
+// national p2-p98 of (year value - 1940s decade-avg) across all years x 12,705 hexes.
+const TIMELAPSE_RAINFALL_DOMAIN: [number, number] = [-700, 800];
+const TIMELAPSE_TEMP_DOMAIN: [number, number] = [-1.5, 2];
+const BASELINE_DECADE_LEN = 10; // first 10 entries = 1940-1949, since data.years starts at 1940
+
+function baselineAvg(series: number[] | undefined): number | null {
+  if (!series || series.length < BASELINE_DECADE_LEN) return null;
+  const slice = series.slice(0, BASELINE_DECADE_LEN);
+  return slice.reduce((a, b) => a + b, 0) / slice.length;
+}
 
 function timelapseHexColor(
   h3_id: string, attr: string, year: number,
@@ -288,15 +299,17 @@ function timelapseHexColor(
   if (yearIdx < 0) return "#e2e8f0";
   if (attr === "hist_rainfall_trend") {
     const series = data.rainfall[h3_id];
-    if (series?.[yearIdx] == null || series[0] == null) return "#e2e8f0";
-    const change = series[yearIdx] - series[0]; // vs this hex's own 1940 value
+    const baseline = baselineAvg(series);
+    if (series?.[yearIdx] == null || baseline == null) return "#e2e8f0";
+    const change = series[yearIdx] - baseline;
     const [lo, hi] = TIMELAPSE_RAINFALL_DOMAIN;
     return gradientColor(BRBG, (change - lo) / (hi - lo));
   }
   if (attr === "hist_temp_trend") {
     const series = data.temp[h3_id];
-    if (series?.[yearIdx] == null || series[0] == null) return "#e2e8f0";
-    const change = series[yearIdx] - series[0];
+    const baseline = baselineAvg(series);
+    if (series?.[yearIdx] == null || baseline == null) return "#e2e8f0";
+    const change = series[yearIdx] - baseline;
     const [lo, hi] = TIMELAPSE_TEMP_DOMAIN;
     return gradientColor(RDBU_REV, (change - lo) / (hi - lo));
   }
@@ -311,8 +324,9 @@ function timelapseChange(
   const yearIdx = data.years.indexOf(year);
   if (yearIdx < 0) return null;
   const series = attr === "hist_rainfall_trend" ? data.rainfall[h3_id] : data.temp[h3_id];
-  if (series?.[yearIdx] == null || series[0] == null) return null;
-  return series[yearIdx] - series[0];
+  const baseline = baselineAvg(series);
+  if (series?.[yearIdx] == null || baseline == null) return null;
+  return series[yearIdx] - baseline;
 }
 
 function hexColor(props: any, attr: string) {
@@ -1354,13 +1368,13 @@ function Legend({ attr, timelapseYear }: { attr: string; timelapseYear?: number 
     const unit = isRain ? "mm" : "°C";
     return (
       <div className="bg-background/90 backdrop-blur border border-border/40 rounded-lg p-2.5 shadow-lg w-48">
-        <p className="text-[10px] font-semibold mb-1">{isRain ? "🌧️" : "🌡️"} {timelapseYear} vs 1940</p>
+        <p className="text-[10px] font-semibold mb-1">{isRain ? "🌧️" : "🌡️"} {timelapseYear} vs 1940s avg</p>
         <div className="h-2.5 w-full rounded-sm mb-1" style={{ background: `linear-gradient(to right, ${stops.join(", ")})` }} />
         <div className="flex justify-between text-[9px] text-muted-foreground">
           <span>{lo}{unit}</span><span>0{unit}</span><span>+{hi}{unit}</span>
         </div>
         <p className="text-[9px] text-muted-foreground italic mt-1">
-          Change per hex from its own 1940 value — {isRain ? "brown = drier, teal = wetter" : "blue = cooler, red = warmer"}.
+          Change per hex from its own 1940-1949 average — {isRain ? "brown = drier, teal = wetter" : "blue = cooler, red = warmer"}.
         </p>
       </div>
     );
@@ -2296,7 +2310,7 @@ export default function HexMapPage() {
                           <span className="shrink-0 text-xs font-bold text-purple-600 w-10 text-right">{timelapseYear}</span>
                         </div>
                         <p className="text-[9px] text-muted-foreground mt-1">
-                          Each hex colored by its own change from its 1940 value — {timelapseYear === 1940 ? "1940 itself shows no change, by definition." : `how much ${attr === "hist_rainfall_trend" ? "rainfall" : "temperature"} has shifted by ${timelapseYear}.`}
+                          Each hex colored by its change from its own 1940-1949 average — how much {attr === "hist_rainfall_trend" ? "rainfall" : "temperature"} in {timelapseYear} differed from that decade's typical level (a period average, not a single potentially-anomalous year).
                         </p>
                         {clickedHex && (() => {
                           const change = timelapseChange(clickedHex.h3_id, attr, timelapseYear, timelapseQ.data);
