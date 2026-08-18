@@ -1,4 +1,13 @@
 """
+SUPERSEDED by fetch_historical_climatology_monthly.py -- kept for reference
+only, don't run this one. This script's daily-statistics CDS dataset proved
+technically reliable but its per-request queue time was wildly unpredictable
+(90 seconds to 9.5+ hours for a similarly-sized request, no way to tell which
+in advance), and the 240-request plan this script needed never got past the
+first year. The monthly-means version fetches the entire 30-year range in a
+SINGLE ~90-second request instead, at the cost of dropping the extreme-heat-
+days metric (needs daily data, monthly means can't produce it).
+
 Production replacement for fetch_historical_climatology.py (which used
 Open-Meteo's free tier -- hit an unrecoverable rate-limit wall on the archive
 endpoint, made near-zero progress over several hours). Fetches ERA5
