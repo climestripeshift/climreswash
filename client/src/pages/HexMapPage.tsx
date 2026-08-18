@@ -127,6 +127,9 @@ const RISK:    [number,number,number][] = [[34,197,94],[234,179,8],[249,115,22],
 // Diverging brown->teal (ColorBrewer BrBG), standard for precipitation trend/anomaly maps:
 // brown = drying, teal = wetter. Centered at the domain's midpoint, not strictly good/bad.
 const BRBG:    [number,number,number][] = [[140,81,10],[223,194,125],[245,245,245],[128,205,193],[1,102,94]];
+// Diverging blue->red (ColorBrewer RdBu, reversed), standard for temperature anomaly
+// maps: blue = cooler than baseline, red = warmer than baseline.
+const RDBU_REV: [number,number,number][] = [[33,102,172],[146,197,222],[247,247,247],[244,165,130],[178,24,43]];
 
 const ATTR_RAMP: Record<string, [number,number,number][]> = {
   elevation_mean: VIRIDIS, ndvi_mean: GREENS, population: ORANGES, dist_to_river_km: BLUES,
@@ -270,9 +273,11 @@ function getHexDataConfidence(props: any): { level: ConfLevel; reason: string; d
 }
 
 // Timelapse color domains -- real ANNUAL values (not the 85-year trend/mean), so these
-// are wider than the trend domains: national p1-p99 across all 85 years x 12,705 hexes.
-const TIMELAPSE_RAINFALL_DOMAIN: [number, number] = [0, 3500];
-const TIMELAPSE_TEMP_DOMAIN: [number, number] = [-10, 32];
+// are the CHANGE from each hex's own 1940 value (the first year in the data), not a raw
+// value -- national p2-p98 of (year value - 1940 value) across all years x 12,705 hexes,
+// so this is centered on 0 = "same as 1940" by construction.
+const TIMELAPSE_RAINFALL_DOMAIN: [number, number] = [-1200, 1200];
+const TIMELAPSE_TEMP_DOMAIN: [number, number] = [-2, 2.5];
 
 function timelapseHexColor(
   h3_id: string, attr: string, year: number,
@@ -282,18 +287,32 @@ function timelapseHexColor(
   const yearIdx = data.years.indexOf(year);
   if (yearIdx < 0) return "#e2e8f0";
   if (attr === "hist_rainfall_trend") {
-    const val = data.rainfall[h3_id]?.[yearIdx];
-    if (val == null) return "#e2e8f0";
+    const series = data.rainfall[h3_id];
+    if (series?.[yearIdx] == null || series[0] == null) return "#e2e8f0";
+    const change = series[yearIdx] - series[0]; // vs this hex's own 1940 value
     const [lo, hi] = TIMELAPSE_RAINFALL_DOMAIN;
-    return gradientColor(BLUES, (val - lo) / (hi - lo));
+    return gradientColor(BRBG, (change - lo) / (hi - lo));
   }
   if (attr === "hist_temp_trend") {
-    const val = data.temp[h3_id]?.[yearIdx];
-    if (val == null) return "#e2e8f0";
+    const series = data.temp[h3_id];
+    if (series?.[yearIdx] == null || series[0] == null) return "#e2e8f0";
+    const change = series[yearIdx] - series[0];
     const [lo, hi] = TIMELAPSE_TEMP_DOMAIN;
-    return gradientColor(ORANGES, (val - lo) / (hi - lo));
+    return gradientColor(RDBU_REV, (change - lo) / (hi - lo));
   }
   return "#e2e8f0";
+}
+
+function timelapseChange(
+  h3_id: string, attr: string, year: number,
+  data: { years: number[]; rainfall: Record<string, number[]>; temp: Record<string, number[]> } | undefined,
+): number | null {
+  if (!data) return null;
+  const yearIdx = data.years.indexOf(year);
+  if (yearIdx < 0) return null;
+  const series = attr === "hist_rainfall_trend" ? data.rainfall[h3_id] : data.temp[h3_id];
+  if (series?.[yearIdx] == null || series[0] == null) return null;
+  return series[yearIdx] - series[0];
 }
 
 function hexColor(props: any, attr: string) {
@@ -1330,15 +1349,19 @@ function Legend({ attr, timelapseYear }: { attr: string; timelapseYear?: number 
   if (timelapseYear != null && (attr === "hist_rainfall_trend" || attr === "hist_temp_trend")) {
     const isRain = attr === "hist_rainfall_trend";
     const [lo, hi] = isRain ? TIMELAPSE_RAINFALL_DOMAIN : TIMELAPSE_TEMP_DOMAIN;
-    const ramp = isRain ? BLUES : ORANGES;
+    const ramp = isRain ? BRBG : RDBU_REV;
     const stops = ramp.map((c) => `rgb(${c.join(",")})`);
+    const unit = isRain ? "mm" : "°C";
     return (
-      <div className="bg-background/90 backdrop-blur border border-border/40 rounded-lg p-2.5 shadow-lg w-44">
-        <p className="text-[10px] font-semibold mb-1">{isRain ? "🌧️" : "🌡️"} {timelapseYear} {isRain ? "Rainfall" : "Temperature"}</p>
+      <div className="bg-background/90 backdrop-blur border border-border/40 rounded-lg p-2.5 shadow-lg w-48">
+        <p className="text-[10px] font-semibold mb-1">{isRain ? "🌧️" : "🌡️"} {timelapseYear} vs 1940</p>
         <div className="h-2.5 w-full rounded-sm mb-1" style={{ background: `linear-gradient(to right, ${stops.join(", ")})` }} />
         <div className="flex justify-between text-[9px] text-muted-foreground">
-          <span>{isRain ? `${lo}mm` : `${lo}°C`}</span><span>{isRain ? `${hi}mm` : `${hi}°C`}</span>
+          <span>{lo}{unit}</span><span>0{unit}</span><span>+{hi}{unit}</span>
         </div>
+        <p className="text-[9px] text-muted-foreground italic mt-1">
+          Change per hex from its own 1940 value — {isRain ? "brown = drier, teal = wetter" : "blue = cooler, red = warmer"}.
+        </p>
       </div>
     );
   }
@@ -2273,8 +2296,21 @@ export default function HexMapPage() {
                           <span className="shrink-0 text-xs font-bold text-purple-600 w-10 text-right">{timelapseYear}</span>
                         </div>
                         <p className="text-[9px] text-muted-foreground mt-1">
-                          Real {attr === "hist_rainfall_trend" ? "annual rainfall" : "annual mean temperature"} for the year shown — not the 85-year trend.
+                          Each hex colored by its own change from its 1940 value — {timelapseYear === 1940 ? "1940 itself shows no change, by definition." : `how much ${attr === "hist_rainfall_trend" ? "rainfall" : "temperature"} has shifted by ${timelapseYear}.`}
                         </p>
+                        {clickedHex && (() => {
+                          const change = timelapseChange(clickedHex.h3_id, attr, timelapseYear, timelapseQ.data);
+                          if (change == null) return null;
+                          const unit = attr === "hist_rainfall_trend" ? "mm" : "°C";
+                          return (
+                            <div className="mt-1.5 pt-1.5 border-t border-border/30 flex justify-between items-center">
+                              <span className="text-[9px] text-muted-foreground truncate">{clickedHex.district_name ?? clickedHex.state}</span>
+                              <span className={`text-xs font-bold ${change < 0 ? "text-amber-500" : change > 0 ? "text-blue-400" : "text-muted-foreground"}`}>
+                                {change > 0 ? "+" : ""}{change.toFixed(attr === "hist_temp_trend" ? 1 : 0)}{unit}
+                              </span>
+                            </div>
+                          );
+                        })()}
                       </>
                     )}
                   </>
