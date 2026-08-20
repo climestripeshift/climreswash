@@ -113,7 +113,11 @@ const ATTRIBUTES: AttrDef[] = [
   { key: "risk_ssp585_2050",             label: "Risk 2050 (SSP5-8.5)",     icon: "🔴", category: "future", desc: "Worst-case projected risk score 2050 under SSP5-8.5" },
   { key: "heat_days_ssp585_2050",        label: "Heat Days 2050 (SSP5)",     icon: "🔥", category: "future", desc: "Total days/yr above heat threshold by 2050 (SSP5-8.5)" },
   { key: "severe_heat_days_ssp585_2050", label: "Severe Heat Days 2050",     icon: "🌡️", category: "future", desc: "Total days/yr above severe heat threshold by 2050 (SSP5-8.5)" },
-  { key: "wet_bulb_days_ssp585_2050",    label: "Wet-Bulb Days 2050 (SSP5)", icon: "💧", category: "future", desc: "Total days/yr above dangerous wet-bulb threshold by 2050 (SSP5-8.5)" },
+  // wet_bulb_days_ssp585_2050 layer temporarily removed: the underlying raster (gee_future_climatology.js)
+  // used a 28°C threshold that's actually the ZERO point of the live wet_bulb_score() gradient, not the
+  // dangerous cutoff (35°C is) -- inflated this to a national median of ~232 "dangerous" days/yr, which is
+  // implausible. Threshold fixed in the script (28->35); re-add this row once the corrected raster is
+  // regenerated in GEE and client/public/data/india_hex_future.json is rebuilt via compute_future_days.py.
   { key: "flood_days_ssp585_2050",       label: "Flood Days 2050 (SSP5)",    icon: "🌊", category: "future", desc: "Total extreme-rain/flood days/yr by 2050 (SSP5-8.5)" },
 ];
 

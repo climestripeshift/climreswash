@@ -89,8 +89,14 @@ var wind_days = era5_wind.map(function(img) {
 }).sum().divide(YEARS).clip(aoi);
 
 // ═══════════════════════════════════════════════════════════════════
-// 5. WET-BULB FREQUENCY — days/yr with T_wb > 28°C (ERA5-Land)
+// 5. WET-BULB FREQUENCY — days/yr with T_wb > 35°C (ERA5-Land)
 //    Simplified: T_wb ≈ T when RH is very high; use dewpoint approach
+//    35°C = human-survivability limit (Raymond et al. 2020), matching the
+//    score=10 endpoint of the live wet_bulb_score() formula in
+//    scripts/risk/formulas.py. Was wrongly 28°C (that formula's ZERO point,
+//    not its dangerous cutoff) -- inflated this frequency raster and, via
+//    gee_future_climatology.js which mirrors this threshold for delta-change,
+//    the 2030/2050 wet-bulb day-count projections too.
 // ═══════════════════════════════════════════════════════════════════
 var wb_days = era5.map(function(img) {
   var t = img.select('temperature_2m_max').subtract(273.15);
@@ -98,7 +104,7 @@ var wb_days = era5.map(function(img) {
   // Simple wet-bulb approximation: Tw ≈ T × atan(0.152 × sqrt(RH+8.3)) + ...
   // For frequency counting, use simplified: Tw ≈ T - (T-Td)/3
   var tw = t.subtract(t.subtract(td).divide(3));
-  return tw.gt(28).rename('wb_day');
+  return tw.gt(35).rename('wb_day');
 }).sum().divide(YEARS).clip(aoi);
 
 // ═══════════════════════════════════════════════════════════════════

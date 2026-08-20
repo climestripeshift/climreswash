@@ -20,12 +20,19 @@ var PERIODS = {
   'ssp585_2050': {start: '2041-01-01', end: '2061-01-01', years: 20, scenario: 'ssp585'},
 };
 
-// ═══ Thresholds — MUST match baseline gee_climatology.js exactly ═══
+// ═══ Thresholds — MUST match baseline gee_climatology.js exactly (see fix note below) ═══
 var FLOOD_THRESH = 50;       // mm/day
 var EXTREME_RAIN_THRESH = 100;
 var HEAT_THRESH_C = 40;      // °C (tasmax in K in CMIP6, subtract 273.15)
 var SEVERE_HEAT_THRESH_C = 45;
-var WET_BULB_THRESH_C = 28;
+// 35°C = the human-survivability limit (Raymond et al. 2020) -- the point beyond
+// which the body cannot cool itself via sweat evaporation even in perfect
+// conditions. This is also the score=10 endpoint of the live wet_bulb_score()
+// formula (scripts/risk/formulas.py), which uses 28°C only as the ZERO point of
+// its 0-10 gradient, not as a "dangerous" cutoff. Was wrongly set to 28 here,
+// which counted every day merely entering the danger gradient as "dangerous"
+// (produced a national median of ~232 dangerous days/year by 2050 -- implausible).
+var WET_BULB_THRESH_C = 35;
 
 // ═══ Function: compute frequencies for a period ═══
 function computeFreqs(periodKey) {
