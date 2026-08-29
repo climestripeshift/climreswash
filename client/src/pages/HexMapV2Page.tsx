@@ -952,6 +952,19 @@ function HexInfoPanel({ props, ranking, confidence, villages, villagesLoading, o
   const [tab, setTab] = useState<"data" | "actions">("data");
   const [villagesExpanded, setVillagesExpanded] = useState(false);
   const [historyExpanded, setHistoryExpanded] = useState(false);
+  const [nfhs6Expanded, setNfhs6Expanded] = useState(false);
+  const nfhs6Q = useQuery<{
+    meta: { n_districts: number; n_matched: number; source: string; note: string };
+    districts: Array<{ state: string; district: string; matched_factors: boolean;
+      factors: Record<string, number> | null;
+      indicators: Record<string, { label: string; nfhs6: number; nfhs5: number; delta: number; improved: boolean; small_sample: boolean }> }>;
+    correlations: Array<{ indicator: string; field: string; factor: string; r: number; n: number }>;
+  }>({
+    queryKey: ["nfhs6-district-trends"],
+    queryFn: () => fetch("/data/nfhs6_district_trends.json").then((r) => r.json()),
+    staleTime: Infinity,
+    enabled: nfhs6Expanded,
+  });
   const hasRanking = !!ranking;
   const ciWidth = confidence ? confidence.p95 - confidence.p5 : null;
   const ciLabel = ciWidth != null ? (ciWidth < 1.5 ? "High" : ciWidth < 3 ? "Moderate" : "Low") : null;
@@ -1059,6 +1072,51 @@ function HexInfoPanel({ props, ranking, confidence, villages, villagesLoading, o
                   </p>
                 </div>
               )}
+            </div>
+          )}
+          {props.district_name && (
+            <div>
+              <button className="flex justify-between w-full" onClick={() => setNfhs6Expanded((v) => !v)}>
+                <span className="text-muted-foreground">🏥 NFHS-5→6 District Trends</span>
+                <span className="font-medium">{nfhs6Expanded ? "▾" : "▸"}</span>
+              </button>
+              {nfhs6Expanded && (() => {
+                if (nfhs6Q.isLoading) return <div className="mt-1 text-[10px] text-muted-foreground">Loading NFHS-6 district compendiums…</div>;
+                if (nfhs6Q.isError || !nfhs6Q.data) return <div className="mt-1 text-[10px] text-red-400">Failed to load NFHS-6 district data</div>;
+                const norm = (s: string) => (s || "").toLowerCase().replace(/&/g, "and").replace(/[-_]/g, " ").trim();
+                const rec = nfhs6Q.data.districts.find(
+                  (d) => norm(d.district) === norm(props.district_name) && norm(d.state) === norm(props.state)
+                );
+                if (!rec) return <div className="mt-1 text-[10px] text-muted-foreground italic">No NFHS-6 district compendium matched for {props.district_name} — likely a newer/renamed district (e.g. post-2016 Telangana splits, UP's Prayagraj/Ayodhya renames) not yet in this platform's district boundaries.</div>;
+                const rows = Object.values(rec.indicators).filter((i) => !i.small_sample);
+                const topMovers = [...rows].sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta)).slice(0, 15);
+                const improvedCount = rows.filter((i) => i.improved).length;
+                return (
+                  <div className="mt-1 space-y-1 pl-1 border-l border-border/30 text-[10px]">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Indicators improved / worsened</span>
+                      <span className="font-medium"><span className="text-emerald-400">{improvedCount}</span> / <span className="text-red-400">{rows.length - improvedCount}</span> of {rows.length}</span>
+                    </div>
+                    {!rec.matched_factors && (
+                      <p className="text-amber-500 italic">Terrain/hazard correlation unavailable — district name didn't match this platform's hex boundaries.</p>
+                    )}
+                    <p className="text-muted-foreground italic pt-0.5">Top 15 movers, NFHS-5 (2019-21) → NFHS-6 (2023-24):</p>
+                    <div className="max-h-64 overflow-y-auto space-y-1 pr-1">
+                      {topMovers.map((ind, i) => (
+                        <div key={i} className="flex justify-between gap-2">
+                          <span className="text-muted-foreground leading-tight">{ind.label.replace(/\s*\(%\)\s*$/, "")}</span>
+                          <span className={`font-medium shrink-0 ${ind.improved ? "text-emerald-400" : "text-red-400"}`}>
+                            {ind.nfhs5}→{ind.nfhs6} ({ind.delta > 0 ? "+" : ""}{ind.delta})
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-[9px] text-muted-foreground italic pt-0.5">
+                      NFHS-6 (2023-24) vs NFHS-5 (2019-21) State/District Fact Sheet Compendiums, IIPS/MoHFW. Sanitation, cooking fuel, handwashing and anaemia aren't published in NFHS-6 — not shown here, not a gap in this parse.
+                    </p>
+                  </div>
+                );
+              })()}
             </div>
           )}
           <div className="border-t border-border/30 my-1 pt-1" />
@@ -1944,6 +2002,21 @@ export default function HexMapV2Page() {
     enabled: timelapseActive,
   });
 
+  // NFHS-5 -> NFHS-6 district trends + correlations vs this platform's terrain/
+  // hazard factors (scripts/compute_nfhs6_district_trends.py). Same query key as
+  // HexInfoPanel's per-district lookup -- react-query shares the cache, so
+  // opening this panel and clicking a hex both reuse one fetch.
+  const [corrPanelOpen, setCorrPanelOpen] = useState(false);
+  const nfhs6CorrQ = useQuery<{
+    meta: { n_districts: number; n_matched: number };
+    correlations: Array<{ indicator: string; field: string; factor: string; r: number; n: number }>;
+  }>({
+    queryKey: ["nfhs6-district-trends"],
+    queryFn: () => fetch("/data/nfhs6_district_trends.json").then((r) => r.json()),
+    staleTime: Infinity,
+    enabled: corrPanelOpen,
+  });
+
   useEffect(() => {
     if (!timelapsePlaying) return;
     const id = setInterval(() => {
@@ -2344,6 +2417,48 @@ export default function HexMapV2Page() {
               <Legend attr={effectiveAttr} timelapseYear={timelapseActive ? timelapseYear : null} />
             </div>
           )}
+
+          {/* NFHS-5->6 correlations panel */}
+          <div className="absolute bottom-8 right-3 z-[800] flex flex-col items-end gap-2">
+            {corrPanelOpen && (
+              <div className="bg-background/95 backdrop-blur border border-border/40 rounded-lg p-3 shadow-lg w-80 max-h-96 overflow-y-auto text-[10px]">
+                <p className="font-semibold mb-1.5 flex items-center gap-1">🏥 NFHS-5→6 vs. terrain/hazard</p>
+                {nfhs6CorrQ.isLoading ? (
+                  <p className="text-muted-foreground">Loading {`>`}600 district compendiums…</p>
+                ) : nfhs6CorrQ.isError || !nfhs6CorrQ.data ? (
+                  <p className="text-red-400">Failed to load</p>
+                ) : (
+                  <>
+                    <p className="text-muted-foreground mb-2">
+                      {nfhs6CorrQ.data.meta.n_matched} of {nfhs6CorrQ.data.meta.n_districts} districts matched to this platform's terrain/hazard hex data. Pearson r across all matched, non-suppressed districts; only |r|≥0.25 at n≥50 shown.
+                    </p>
+                    <div className="space-y-1.5">
+                      {nfhs6CorrQ.data.correlations.slice(0, 20).map((c, i) => (
+                        <div key={i} className="border-t border-border/20 pt-1.5 first:border-0 first:pt-0">
+                          <div className="flex justify-between gap-2">
+                            <span className="text-muted-foreground leading-tight">{c.indicator.replace(/\s*\(%\)\s*$/, "")} <span className="italic">({c.field === "delta" ? "Δ5→6" : "NFHS-6 level"})</span></span>
+                            <span className={`font-mono font-semibold shrink-0 ${c.r > 0 ? "text-emerald-400" : "text-red-400"}`}>r={c.r > 0 ? "+" : ""}{c.r}</span>
+                          </div>
+                          <div className="text-muted-foreground">vs {c.factor} · n={c.n}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-[9px] text-muted-foreground italic pt-2">
+                      Correlation, not causation — most pairs plausibly share a common driver (e.g. urbanization) rather than one directly causing the other.
+                    </p>
+                  </>
+                )}
+              </div>
+            )}
+            <button
+              onClick={() => setCorrPanelOpen((v) => !v)}
+              className={`px-2.5 py-1.5 rounded-lg border shadow-lg text-[10px] font-semibold flex items-center gap-1 ${
+                corrPanelOpen ? "bg-rose-500 text-white border-rose-500" : "bg-background/95 backdrop-blur border-border/40 text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              🏥 NFHS-6 Correlations
+            </button>
+          </div>
         </div>
       </div>
     </div>
