@@ -44,6 +44,8 @@ interface RiverPoint {
   current_severity: string;
   max_severity_7d: string;
   days: RiverDay[];
+  is_upstream?: boolean;
+  lead_distance_km?: number;
 }
 
 interface RiverForecast {
@@ -131,21 +133,28 @@ function RiverLayer({ points, showRivers }: { points: RiverPoint[]; showRivers: 
       {points.map((pt, i) => {
         const sev = pt.max_severity_7d;
         const color = SEV_COLOR[sev] || "#6b7280";
-        const radius = sev === "extreme" ? 12 : sev === "danger" ? 10 : sev === "warning" ? 8 : 6;
+        const upstream = !!pt.is_upstream;
+        const radius = (sev === "extreme" ? 12 : sev === "danger" ? 10 : sev === "warning" ? 8 : 6) + (upstream ? 2 : 0);
         const today = pt.days.find(d => d.discharge === pt.current_discharge) ?? pt.days[0];
         return (
           <CircleMarker
             key={i}
             center={[pt.lat, pt.lon]}
             radius={radius}
-            pathOptions={{ fillColor: color, color: "#fff", weight: 1.5, fillOpacity: 0.9 }}
+            pathOptions={upstream
+              ? { fillColor: color, color: "#a855f7", weight: 2.5, fillOpacity: 0.85, dashArray: "3 2" }
+              : { fillColor: color, color: "#fff", weight: 1.5, fillOpacity: 0.9 }}
           >
             <Tooltip sticky>
               <div className="text-xs">
-                <div className="font-bold">{pt.river} @ {pt.location}</div>
+                {upstream && <div className="text-purple-400 font-bold text-[10px] mb-0.5">⛰️ UPSTREAM WATCH — {pt.location}</div>}
+                <div className="font-bold">{pt.river} {upstream ? "" : `@ ${pt.location}`}</div>
                 <div style={{ color }} className="font-bold">{SEV_LABEL[sev]}</div>
                 <div>Now: {pt.current_discharge.toLocaleString()} m³/s</div>
                 {today?.p75 && <div>p75: {today.p75.toLocaleString()} m³/s</div>}
+                {upstream && pt.lead_distance_km && (
+                  <div className="text-purple-300 mt-0.5">~{pt.lead_distance_km}km to the plains — a rise here arrives there in hours, not days</div>
+                )}
                 <div className="text-gray-400 mt-0.5 text-[10px]">GloFAS · 7-day max severity</div>
               </div>
             </Tooltip>
@@ -289,8 +298,11 @@ function ForecastSidebar({
 
   const riverAlerts = useMemo(() => {
     if (!riverForecast) return [];
+    // Upstream headwater points surface at a lower bar ("elevated") than plains
+    // points ("warning") -- catching a rise there earlier is the whole point of
+    // watching the headwaters at all.
     return [...riverForecast.points]
-      .filter(p => SEV_ORDER.indexOf(p.max_severity_7d) >= SEV_ORDER.indexOf("warning"))
+      .filter(p => SEV_ORDER.indexOf(p.max_severity_7d) >= SEV_ORDER.indexOf(p.is_upstream ? "elevated" : "warning"))
       .sort((a,b) => SEV_ORDER.indexOf(b.max_severity_7d) - SEV_ORDER.indexOf(a.max_severity_7d));
   }, [riverForecast]);
 
@@ -415,7 +427,9 @@ function ForecastSidebar({
                 riverAlerts.map((pt, i) => (
                   <div key={i} className="px-3 py-2 border-b border-border/10 last:border-0">
                     <div className="flex items-center gap-1.5">
-                      <Waves className="h-3 w-3 shrink-0" style={{ color: SEV_COLOR[pt.max_severity_7d] }} />
+                      {pt.is_upstream
+                        ? <span className="text-xs shrink-0">⛰️</span>
+                        : <Waves className="h-3 w-3 shrink-0" style={{ color: SEV_COLOR[pt.max_severity_7d] }} />}
                       <span className="text-[11px] font-semibold flex-1 truncate">{pt.river}</span>
                       <span className="text-[10px] font-bold" style={{ color: SEV_COLOR[pt.max_severity_7d] }}>
                         {SEV_LABEL[pt.max_severity_7d]}
@@ -426,6 +440,11 @@ function ForecastSidebar({
                       <span>·</span>
                       <span className="font-mono">{pt.current_discharge.toLocaleString()} m³/s</span>
                     </div>
+                    {pt.is_upstream && (
+                      <div className="text-[9px] text-purple-400 mt-0.5">
+                        ⛰️ upstream watch{pt.lead_distance_km ? ` · ~${pt.lead_distance_km}km to the plains` : ""}
+                      </div>
+                    )}
                     {/* Mini discharge bar */}
                     <div className="mt-1.5 flex gap-0.5">
                       {pt.days.map((d, j) => (
@@ -586,8 +605,12 @@ function RiverLegend({ show }: { show: boolean }) {
           <span className="text-[9px] text-muted-foreground">{l}</span>
         </div>
       ))}
+      <div className="flex items-center gap-1.5 mb-0.5 mt-1 pt-1 border-t border-border/20">
+        <div className="w-3.5 h-3.5 rounded-full border-2 border-purple-400" style={{ borderStyle: "dashed" }} />
+        <span className="text-[9px] text-muted-foreground">⛰️ Upstream watch (Nepal/Sikkim headwaters)</span>
+      </div>
       <p className="text-[8px] text-muted-foreground mt-1 leading-tight">
-        Line = river course, colored by nearest gauge (≤80km). Dashed circle = ~35km watch radius around a danger/extreme gauge — not a modeled flood extent.
+        Line = river course, colored by nearest gauge (≤80km). Dashed circle = ~35km watch radius around a danger/extreme gauge — not a modeled flood extent. Purple-ringed markers sit in the headwaters (Nepal/Sikkim), upstream of the India border — an early signal, not current conditions in India.
       </p>
       <p className="text-[8px] text-muted-foreground mt-1">GloFAS · 7-day max</p>
     </div>

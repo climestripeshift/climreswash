@@ -161,7 +161,38 @@ RIVER_POINTS = [
     (34.08, 77.58, "Indus",       "Leh"),
     (33.72, 74.87, "Jhelum",      "Baramulla"),
     (33.50, 75.20, "Jhelum",      "Anantnag"),
+
+    # ── TEESTA ───────────────────────────────────────────────────────────────
+    # Not previously monitored at all. Directly relevant after the Oct 2023
+    # South Lhonak GLOF (Sikkim) destroyed the Teesta III dam at Chungthang and
+    # caused catastrophic downstream flooding -- the same class of disaster as
+    # a Himalayan flash flood, just in Sikkim rather than Nepal.
+    (26.80, 88.83, "Teesta",      "Jalpaiguri"),
 ]
+
+# ── Upstream headwater watch points (Nepal / Sikkim Himalaya) ───────────────
+# Every point above sits in India, at or downstream of where these rivers
+# cross the border -- so by the time a gauge here reads DANGER, the water is
+# already arriving. Kosi is called "Bihar's sorrow" specifically because a
+# surge in the Nepal hills reaches the Bihar plains in hours; nothing in this
+# pipeline saw that coming before today. These four points sit in the actual
+# headwaters (verified live against the GloFAS/Open-Meteo flood API before
+# adding -- real elevation, real discharge, not guessed coordinates) so a rise
+# here is an early warning for the paired plains point in UPSTREAM_PAIRS below,
+# not current ground truth for Bihar/UP/WB itself.
+UPSTREAM_POINTS = [
+    (27.35, 87.15, "Kosi",    "Nepal Hills"),    # Sapt Koshi above the Barahkshetra gorge
+    (27.68, 84.20, "Gandak",  "Nepal Hills"),    # Narayani at Devghat/Tribeni
+    (28.62, 81.22, "Ghaghra", "Nepal Hills"),    # Karnali at Chisapani (becomes the Ghaghra in India)
+    (27.60, 88.65, "Teesta",  "Sikkim Hills"),   # near Chungthang -- site of the Oct 2023 South Lhonak GLOF
+]
+
+# Nearest downstream plains gauge for each headwater point, by river name --
+# used only to compute a straight-line "how far to the plains" distance shown
+# on the map. Not a hydraulic travel-time model.
+UPSTREAM_DOWNSTREAM_PAIR = {
+    "Kosi": "Supaul", "Gandak": "Kushinagar", "Ghaghra": "Bahraich", "Teesta": "Jalpaiguri",
+}
 
 # ── Fetch GloFAS data ────────────────────────────────────────────────────────
 
@@ -180,21 +211,41 @@ def fetch_point(lat, lon):
 
 def classify(discharge, p25, p75):
     if discharge is None or p75 is None: return "unknown"
-    spread = max((p75 - (p25 or 0)), 1)
+    # Floor scales WITH the river's own magnitude (25% of p75), not just a flat
+    # 1 m3/s -- a trivial few-m3/s stream can swing 2-3x on pure model noise and
+    # trip "extreme" under a flat floor even though nothing resembling a flood
+    # is happening. A big river needs a proportionally big excess to alarm;
+    # a tiny one now needs a proportionally bigger (relative) excess too.
+    spread = max((p75 - (p25 or 0)), p75 * 0.25, 2.0)
     if discharge > p75 + spread * 2:   return "extreme"
     if discharge > p75 + spread * 1:   return "danger"
     if discharge > p75:                 return "warning"
     if discharge > (p25 or 0):         return "elevated"
     return "normal"
 
+
+def haversine_km(lat1, lon1, lat2, lon2):
+    from math import radians, sin, cos, asin, sqrt
+    R = 6371
+    dlat, dlon = radians(lat2 - lat1), radians(lon2 - lon1)
+    a = sin(dlat/2)**2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon/2)**2
+    return R * 2 * asin(sqrt(a))
+
 # ── Main ────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    print(f"Fetching {len(RIVER_POINTS)} river points…")
+    downstream_coord = {}  # river -> (lat, lon) of its UPSTREAM_DOWNSTREAM_PAIR plains point
+    for lat, lon, river, district in RIVER_POINTS:
+        target = UPSTREAM_DOWNSTREAM_PAIR.get(river)
+        if target and district == target:
+            downstream_coord[river] = (lat, lon)
+
+    all_points = [(*pt, False) for pt in RIVER_POINTS] + [(*pt, True) for pt in UPSTREAM_POINTS]
+    print(f"Fetching {len(all_points)} river points ({len(UPSTREAM_POINTS)} upstream headwater watch)…")
     results = []
     errors  = 0
 
-    for i, (lat, lon, river, district) in enumerate(RIVER_POINTS):
+    for i, (lat, lon, river, district, is_upstream) in enumerate(all_points):
         data = fetch_point(lat, lon)
         if "error" in data:
             print(f"  [{i+1}] ERROR {river}/{district}: {data['error']}")
@@ -231,17 +282,22 @@ if __name__ == "__main__":
 
         if not days_out: continue
 
-        results.append({
+        point_out = {
             "lat": lat, "lon": lon,
             "river": river, "location": district,
             "current_discharge": days_out[today_idx]["discharge"] if len(days_out) > today_idx else days_out[0]["discharge"],
             "current_severity": days_out[today_idx]["severity"] if len(days_out) > today_idx else days_out[0]["severity"],
             "max_severity_7d": max_severity,
             "days": days_out,
-        })
+            "is_upstream": is_upstream,
+        }
+        if is_upstream and river in downstream_coord:
+            dlat, dlon = downstream_coord[river]
+            point_out["lead_distance_km"] = round(haversine_km(lat, lon, dlat, dlon))
+        results.append(point_out)
 
         if (i+1) % 20 == 0:
-            print(f"  {i+1}/{len(RIVER_POINTS)} done…")
+            print(f"  {i+1}/{len(all_points)} done…")
         time.sleep(0.12)
 
     sev_counts = defaultdict(int)
