@@ -1903,8 +1903,9 @@ function HexMap({
     <MapContainer center={[22.5, 80]} zoom={5} style={{ height: "100%", width: "100%" }}
       scrollWheelZoom maxBounds={[[6,68],[37,98]]} minZoom={4} maxZoom={10} ref={mapRef}>
       <SetupCanvas />
-      <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-        attribution='&copy; <a href="https://www.openstreetmap.org/">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>' />
+      <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}"
+        attribution='&copy; <a href="https://www.esri.com/">Esri</a>, HERE, Garmin, FAO, NOAA, USGS, &copy; OpenStreetMap contributors' />
+      <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}" />
       <GeoJSON ref={geoJsonRef} key={`${selectedState}-${selectedDistrict}-${crossFilters.length}-${crossFilters.map(f=>f.key+f.op+f.value).join(',')}-${hasFutureData}`}
         data={filtered} style={styleFeature} onEachFeature={onEachFeature} />
       <BoundaryLayers showDistricts={showDistricts} showStates={showStates} onBoundaryClick={onBoundaryClick} />

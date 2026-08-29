@@ -463,8 +463,9 @@ function RajasthanHexMap({ hexes, hexByH3Id, ratings, infraUnit, oldDistrictStat
   return (
     <MapContainer center={[26.5, 73.8]} zoom={7} style={{ height: "100%", width: "100%" }} scrollWheelZoom ref={mapRef}>
       <SetupCanvas />
-      <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-        attribution='&copy; <a href="https://www.openstreetmap.org/">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>' />
+      <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}"
+        attribution='&copy; <a href="https://www.esri.com/">Esri</a>, HERE, Garmin, FAO, NOAA, USGS, &copy; OpenStreetMap contributors' />
+      <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}" />
       {viewMode === "hex" && <GeoJSON key={`${mode}-${layer.key}-${infraUnit}-${starFilter}-${mapLevelFilter}`} data={geoData as any} style={styleFeature} onEachFeature={onEachFeature} />}
       {viewMode === "district" && districtGeo && (
         <>
