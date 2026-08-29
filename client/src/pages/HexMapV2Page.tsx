@@ -623,6 +623,11 @@ function FilterSidebar({
   showRivers, onShowRiversChange,
   showSchools, onShowSchoolsChange,
   heatViewMode, onHeatViewModeChange,
+  nfhs6Loading, nfhs6NDistricts,
+  nfhs6Indicator, onNfhs6IndicatorChange,
+  nfhs6Field, onNfhs6FieldChange,
+  nfhs6Search, onNfhs6SearchChange,
+  nfhs6FilteredIndicators, nfhs6TotalIndicators,
 }: {
   collapsed: boolean; onToggle: () => void;
   attr: string; onAttrChange: (k: string) => void;
@@ -636,6 +641,11 @@ function FilterSidebar({
   showRivers: boolean; onShowRiversChange: (v: boolean) => void;
   showSchools: boolean; onShowSchoolsChange: (v: boolean) => void;
   heatViewMode: "annual" | "peak"; onHeatViewModeChange: (m: "annual" | "peak") => void;
+  nfhs6Loading: boolean; nfhs6NDistricts: number;
+  nfhs6Indicator: number; onNfhs6IndicatorChange: (n: number) => void;
+  nfhs6Field: "delta" | "nfhs6" | "nfhs5"; onNfhs6FieldChange: (f: "delta" | "nfhs6" | "nfhs5") => void;
+  nfhs6Search: string; onNfhs6SearchChange: (s: string) => void;
+  nfhs6FilteredIndicators: { num: number; label: string }[]; nfhs6TotalIndicators: number;
 }) {
   const [openCats, setOpenCats] = useState<Record<string, boolean>>({ overview: true });
 
@@ -717,44 +727,60 @@ function FilterSidebar({
       </div>
       {showSchools && selectedState !== "All India" && <SchoolsCoverageNote state={selectedState} />}
 
-      {/* Category sections */}
-      <div className="flex-1 overflow-y-auto">
-        {CATEGORIES.map((cat) => {
-          const catAttrs = ATTRIBUTES.filter((a) => a.category === cat.id);
-          const isOpen = openCats[cat.id] ?? false;
-          return (
-            <div key={cat.id} className="border-b border-border/20">
-              <button
-                onClick={() => toggleCat(cat.id)}
-                className="w-full px-3 py-2 flex items-center gap-2 text-left hover:bg-muted/30 transition-colors"
-              >
-                {isOpen ? <ChevronDown className="h-3 w-3 text-muted-foreground" /> : <ChevronRight className="h-3 w-3 text-muted-foreground" />}
-                <span className="text-xs">{cat.icon}</span>
-                <span className="text-[11px] font-semibold flex-1">{cat.label}</span>
-                <span className="text-[9px] text-muted-foreground">{catAttrs.length}</span>
+      {/* NFHS-6 indicator picker -- the Phase 2 grid's primary layer control.
+          The hazard-layer picker lives on /grid; this replaces it here rather
+          than duplicating it, per request. */}
+      <div className="flex-1 overflow-y-auto flex flex-col">
+        <div className="px-3 py-2 border-b border-border/20">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-xs">🏥</span>
+            <span className="text-[11px] font-semibold flex-1">NFHS-6 Indicator</span>
+            {nfhs6Loading
+              ? <span className="text-[9px] text-muted-foreground">loading…</span>
+              : <span className="text-[9px] text-muted-foreground">{nfhs6NDistricts} districts</span>}
+          </div>
+          <div className="grid grid-cols-3 gap-1 mb-2">
+            {([["delta", "Change"], ["nfhs6", "2023-24"], ["nfhs5", "2019-21"]] as const).map(([k, l]) => (
+              <button key={k} onClick={() => onNfhs6FieldChange(k)}
+                className={`px-1.5 py-1 rounded text-[10px] font-semibold transition-colors ${
+                  nfhs6Field === k ? "bg-rose-600 text-white" : "bg-muted/60 text-muted-foreground hover:bg-muted"
+                }`}>
+                {l}
               </button>
-              {isOpen && (
-                <div className="px-2 pb-2">
-                  {catAttrs.map((a) => (
-                    <button
-                      key={a.key}
-                      onClick={() => onAttrChange(a.key)}
-                      className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] flex items-center gap-2 transition-colors mb-0.5 ${
-                        attr === a.key
-                          ? "bg-emerald-600/15 text-emerald-400 font-semibold"
-                          : "text-muted-foreground hover:bg-muted/30 hover:text-foreground"
-                      }`}
-                    >
-                      <span className="text-xs w-4 text-center">{a.icon}</span>
-                      <span className="flex-1">{a.label}</span>
-                      {attr === a.key && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })}
+            ))}
+          </div>
+          <input
+            type="text" value={nfhs6Search} onChange={(e) => onNfhs6SearchChange(e.target.value)}
+            placeholder={`Search ${nfhs6TotalIndicators || 93} indicators…`}
+            className="w-full rounded-md border border-border/50 bg-muted/40 px-2 py-1 text-[11px] outline-none text-foreground placeholder:text-muted-foreground"
+          />
+        </div>
+        <div className="flex-1 overflow-y-auto px-2 py-1.5">
+          {nfhs6FilteredIndicators.length === 0 ? (
+            <div className="text-[10px] text-muted-foreground text-center py-4">No indicators match "{nfhs6Search}"</div>
+          ) : (
+            nfhs6FilteredIndicators.map((ind) => (
+              <button
+                key={ind.num}
+                onClick={() => onNfhs6IndicatorChange(ind.num)}
+                className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] flex items-start gap-2 transition-colors mb-0.5 ${
+                  nfhs6Indicator === ind.num
+                    ? "bg-rose-600/15 text-rose-400 font-semibold"
+                    : "text-muted-foreground hover:bg-muted/30 hover:text-foreground"
+                }`}
+              >
+                <span className="flex-1 leading-tight">{ind.label}</span>
+                {nfhs6Indicator === ind.num && <span className="w-1.5 h-1.5 rounded-full bg-rose-500 mt-1 shrink-0" />}
+              </button>
+            ))
+          )}
+        </div>
+        <p className="px-3 py-1.5 text-[9px] text-muted-foreground border-t border-border/20 leading-tight">
+          {nfhs6Field === "delta"
+            ? "Green = improved, red = worsened, NFHS-5 (2019-21) → NFHS-6 (2023-24)."
+            : "Darker blue = higher value. Direction (good/bad) isn't assumed for a raw level — switch to Change to see improved vs. worsened."}
+          {" "}Sanitation, cooking fuel, handwashing and anaemia aren't published in NFHS-6.
+        </p>
       </div>
 
       {/* Cross-filter section */}
@@ -1416,7 +1442,27 @@ const LAYER_DIRECTION: Record<string, "good" | "bad"> = {
   hist_temp_trend: "bad", hist_rainfall_cv: "bad",
 };
 
-function Legend({ attr, timelapseYear }: { attr: string; timelapseYear?: number | null }) {
+function Legend({ attr, timelapseYear, nfhs6Label, nfhs6Field }: { attr: string; timelapseYear?: number | null; nfhs6Label?: string; nfhs6Field?: "delta" | "nfhs6" | "nfhs5" }) {
+  if (attr === "nfhs6") {
+    const isDelta = nfhs6Field === "delta";
+    return (
+      <div className="bg-background/90 backdrop-blur border border-border/40 rounded-lg p-2.5 shadow-lg w-52">
+        <p className="text-[10px] font-semibold mb-1.5 leading-tight">🏥 {nfhs6Label}</p>
+        {isDelta ? (
+          <>
+            <div className="h-2.5 w-full rounded-sm mb-1" style={{ background: "linear-gradient(to right, #ef4444, #fee2e2, #d1fae5, #10b981)" }} />
+            <div className="flex justify-between text-[9px] text-muted-foreground"><span>Worsened</span><span>Improved</span></div>
+          </>
+        ) : (
+          <>
+            <div className="h-2.5 w-full rounded-sm mb-1" style={{ background: "linear-gradient(to right, #dbeafe, #1e40af)" }} />
+            <div className="flex justify-between text-[9px] text-muted-foreground"><span>Low</span><span>High</span></div>
+          </>
+        )}
+        <p className="text-[9px] text-muted-foreground italic mt-1">Gray = district not matched. {nfhs6Field === "nfhs6" ? "2023-24 level" : nfhs6Field === "nfhs5" ? "2019-21 level" : "Change, NFHS-5→6"}.</p>
+      </div>
+    );
+  }
   const meta = ATTRIBUTES.find((a) => a.key === attr) ?? LEGEND_OVERRIDES[attr];
   if (!meta) return null;
 
@@ -1908,7 +1954,7 @@ function SchoolsCoverageNote({ state }: { state: string }) {
 function HexMap({
   geoData, attr, selectedState, selectedDistrict, crossFilters, mapRef, onHexClick,
   showDistricts, showStates, showRivers, showSchools, onBoundaryClick, hasFutureData,
-  timelapseYear, timelapseData,
+  timelapseYear, timelapseData, nfhs6ColorFn, nfhs6Label,
 }: {
   geoData: any; attr: string; selectedState: string; selectedDistrict: string;
   crossFilters: CrossFilter[];
@@ -1919,6 +1965,8 @@ function HexMap({
   hasFutureData: boolean;
   timelapseYear: number | null;
   timelapseData: { years: number[]; rainfall: Record<string, number[]>; temp: Record<string, number[]> } | undefined;
+  nfhs6ColorFn: (props: any) => string;
+  nfhs6Label: string;
 }) {
   const geoJsonRef = useRef<LeafletGeoJSONLayer | null>(null);
 
@@ -1939,21 +1987,27 @@ function HexMap({
   }, [geoData, selectedState, selectedDistrict, crossFilters]);
 
   const styleFeature = useCallback((feature: any) => ({
-    fillColor: timelapseYear != null
+    fillColor: attr === "nfhs6"
+      ? nfhs6ColorFn(feature.properties)
+      : timelapseYear != null
       ? timelapseHexColor(feature.properties.h3_id, attr, timelapseYear, timelapseData)
       : hexColor(feature.properties, attr),
     fillOpacity: 0.75, color: "#64748b", weight: 0.3, renderer: canvasRenderer,
-  }), [attr, timelapseYear, timelapseData]);
+  }), [attr, timelapseYear, timelapseData, nfhs6ColorFn]);
 
   useEffect(() => { geoJsonRef.current?.setStyle(styleFeature); }, [styleFeature]);
 
   const onEachFeature = useCallback((feature: any, layer: any) => {
     const p = feature.properties;
-    const val = attr === "land_use" ? p.land_use : p[attr];
     const district = p.district_name ? `${p.district_name}, ` : "";
-    layer.bindTooltip(`<b>${district}${p.state}</b><br/>${val}`, { sticky: true });
+    if (attr === "nfhs6") {
+      layer.bindTooltip(`<b>${district}${p.state}</b><br/>${nfhs6Label}<br/><i>click for full trend</i>`, { sticky: true });
+    } else {
+      const val = attr === "land_use" ? p.land_use : p[attr];
+      layer.bindTooltip(`<b>${district}${p.state}</b><br/>${val}`, { sticky: true });
+    }
     layer.on("click", () => onHexClick(p));
-  }, [attr, onHexClick]);
+  }, [attr, onHexClick, nfhs6Label]);
 
   if (!filtered) return null;
 
@@ -1982,7 +2036,7 @@ export default function HexMapV2Page() {
   const initialDistrict = urlParams.get("district") || "All";
   const presentMode = urlParams.get("present") === "1";
 
-  const [attr, setAttr]                       = useState("hex_risk");
+  const [attr, setAttr]                       = useState("nfhs6");
   const [heatViewMode, setHeatViewMode]       = useState<"annual" | "peak">("annual");
   const effectiveAttr = attr === "heat_risk" && heatViewMode === "peak" ? "heat_peak_score" : attr;
 
@@ -2003,19 +2057,96 @@ export default function HexMapV2Page() {
   });
 
   // NFHS-5 -> NFHS-6 district trends + correlations vs this platform's terrain/
-  // hazard factors (scripts/compute_nfhs6_district_trends.py). Same query key as
-  // HexInfoPanel's per-district lookup -- react-query shares the cache, so
-  // opening this panel and clicking a hex both reuse one fetch.
+  // hazard factors (scripts/compute_nfhs6_district_trends.py). This is the Phase
+  // 2 grid's primary sidebar now (the hazard-layer picker lives on /grid --
+  // replaced here per request, not duplicated). Same query key as HexInfoPanel's
+  // per-district lookup -- react-query shares the cache across both.
   const [corrPanelOpen, setCorrPanelOpen] = useState(false);
-  const nfhs6CorrQ = useQuery<{
-    meta: { n_districts: number; n_matched: number };
+  const [nfhs6Indicator, setNfhs6Indicator] = useState(68); // "Children under 5 who are stunted"
+  const [nfhs6Field, setNfhs6Field] = useState<"delta" | "nfhs6" | "nfhs5">("delta");
+  const [nfhs6Search, setNfhs6Search] = useState("");
+
+  type Nfhs6Indicator = { label: string; nfhs6: number; nfhs5: number; delta: number; improved: boolean; small_sample: boolean };
+  type Nfhs6District = { state: string; district: string; matched_factors: boolean;
+    factors: Record<string, number> | null; indicators: Record<string, Nfhs6Indicator> };
+  const nfhs6Q = useQuery<{
+    meta: { n_districts: number; n_matched: number; n_indicators: number };
+    districts: Nfhs6District[];
     correlations: Array<{ indicator: string; field: string; factor: string; r: number; n: number }>;
   }>({
     queryKey: ["nfhs6-district-trends"],
     queryFn: () => fetch("/data/nfhs6_district_trends.json").then((r) => r.json()),
     staleTime: Infinity,
-    enabled: corrPanelOpen,
   });
+
+  const nfhs6Norm = (s: string) => (s || "").toLowerCase().replace(/&/g, "and").replace(/[-_]/g, " ").trim();
+
+  // district "state|district" (normalized) -> that district's full record
+  const nfhs6DistrictMap = useMemo(() => {
+    const m = new Map<string, Nfhs6District>();
+    for (const d of nfhs6Q.data?.districts ?? []) m.set(`${nfhs6Norm(d.state)}|${nfhs6Norm(d.district)}`, d);
+    return m;
+  }, [nfhs6Q.data]);
+
+  // Every indicator this dataset has, {num, label} -- consistent numbering across
+  // all 697 districts (verified: same 93 indicators, same order, everywhere), so
+  // any one district's indicator set is the full picker list.
+  // Union across ALL districts, not just one -- a single district's indicator set
+  // is incomplete (compute_nfhs6_district_trends.py drops an indicator per-district
+  // when either NFHS-6 or NFHS-5 came back null/suppressed for that specific
+  // district, so a small/suppressed district like South Andaman has only ~32 of
+  // the 93, while most districts have the full set).
+  const nfhs6IndicatorList = useMemo(() => {
+    const byNum = new Map<number, string>();
+    for (const d of nfhs6Q.data?.districts ?? []) {
+      for (const [num, ind] of Object.entries(d.indicators)) {
+        if (!byNum.has(Number(num))) byNum.set(Number(num), ind.label.replace(/\s*\(%\)\s*$/, ""));
+      }
+    }
+    return [...byNum.entries()].map(([num, label]) => ({ num, label })).sort((a, b) => a.num - b.num);
+  }, [nfhs6Q.data]);
+
+  const nfhs6FilteredIndicators = useMemo(() => {
+    if (!nfhs6Search.trim()) return nfhs6IndicatorList;
+    const q = nfhs6Search.toLowerCase();
+    return nfhs6IndicatorList.filter((i) => i.label.toLowerCase().includes(q));
+  }, [nfhs6IndicatorList, nfhs6Search]);
+
+  // p5-p95 domain for the selected indicator+field, across matched non-suppressed
+  // districts -- used to scale color intensity.
+  const nfhs6Domain = useMemo(() => {
+    const vals: number[] = [];
+    for (const d of nfhs6Q.data?.districts ?? []) {
+      const ind = d.indicators[String(nfhs6Indicator)];
+      if (ind && !ind.small_sample) vals.push(ind[nfhs6Field]);
+    }
+    if (!vals.length) return { lo: 0, hi: 1 };
+    vals.sort((a, b) => a - b);
+    const lo = vals[Math.floor(vals.length * 0.05)];
+    const hi = vals[Math.ceil(vals.length * 0.95) - 1] || vals[vals.length - 1];
+    return { lo, hi: hi === lo ? lo + 1 : hi };
+  }, [nfhs6Q.data, nfhs6Indicator, nfhs6Field]);
+
+  const nfhs6SelectedLabel = nfhs6IndicatorList.find((i) => i.num === nfhs6Indicator)?.label ?? "";
+
+  // Green = improved (delta) or the "good" end of the range (level); red = the
+  // opposite. For delta this uses the server-computed `improved` flag (direction-
+  // aware per indicator -- "higher is better" for some, "lower is better" for
+  // most), not a raw sign check.
+  const nfhs6ColorFn = useCallback((props: any) => {
+    const rec = nfhs6DistrictMap.get(`${nfhs6Norm(props.state)}|${nfhs6Norm(props.district_name)}`);
+    const ind = rec?.indicators[String(nfhs6Indicator)];
+    if (!ind || ind.small_sample) return "#e2e8f0";
+    const { lo, hi } = nfhs6Domain;
+    if (nfhs6Field === "delta") {
+      const mag = Math.min(1, Math.abs(ind.delta) / Math.max(Math.abs(lo), Math.abs(hi), 0.01));
+      return ind.improved ? lerp3([16, 185, 129], [220, 252, 231], 1 - mag) : lerp3([239, 68, 68], [254, 226, 226], 1 - mag);
+    }
+    const t = Math.max(0, Math.min(1, (ind[nfhs6Field] - lo) / (hi - lo)));
+    // direction unknown for a raw level without the indicator's own higher/lower-is-better
+    // hint, so use a neutral sequential ramp (light -> dark blue) rather than guessing red/green.
+    return lerp3([219, 234, 254], [30, 64, 175], t);
+  }, [nfhs6DistrictMap, nfhs6Indicator, nfhs6Field, nfhs6Domain]);
 
   useEffect(() => {
     if (!timelapsePlaying) return;
@@ -2267,6 +2398,11 @@ export default function HexMapV2Page() {
         showRivers={showRivers} onShowRiversChange={setShowRivers}
         showSchools={showSchools} onShowSchoolsChange={setShowSchools}
         heatViewMode={heatViewMode} onHeatViewModeChange={setHeatViewMode}
+        nfhs6Loading={nfhs6Q.isLoading} nfhs6NDistricts={nfhs6Q.data?.meta.n_districts ?? 0}
+        nfhs6Indicator={nfhs6Indicator} onNfhs6IndicatorChange={setNfhs6Indicator}
+        nfhs6Field={nfhs6Field} onNfhs6FieldChange={setNfhs6Field}
+        nfhs6Search={nfhs6Search} onNfhs6SearchChange={setNfhs6Search}
+        nfhs6FilteredIndicators={nfhs6FilteredIndicators} nfhs6TotalIndicators={nfhs6IndicatorList.length}
         matchCount={(() => {
           if (!crossFilters.length || !features.length) return features.length;
           return features.filter((f: any) => crossFilters.every((cf) => {
@@ -2310,7 +2446,8 @@ export default function HexMapV2Page() {
                 mapRef={mapRef} onHexClick={(p) => { setClickedHex(p); setClickedBoundary(null); }}
                 showDistricts={showDistricts} showStates={showStates} showRivers={showRivers} showSchools={showSchools}
                 onBoundaryClick={handleBoundaryClick} hasFutureData={!!futureQ.data}
-                timelapseYear={timelapseActive ? timelapseYear : null} timelapseData={timelapseQ.data} />
+                timelapseYear={timelapseActive ? timelapseYear : null} timelapseData={timelapseQ.data}
+                nfhs6ColorFn={nfhs6ColorFn} nfhs6Label={nfhs6SelectedLabel} />
               {futureQ.isFetching && (
                 <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-[900] flex items-center gap-2 bg-background/90 border border-border rounded-full px-4 py-1.5 text-xs text-muted-foreground shadow-lg">
                   <Loader2 className="h-3 w-3 animate-spin" /> Loading future projections…
@@ -2414,7 +2551,7 @@ export default function HexMapV2Page() {
           {/* Legend */}
           {features.length > 0 && (
             <div className="absolute bottom-8 left-3 z-[800]">
-              <Legend attr={effectiveAttr} timelapseYear={timelapseActive ? timelapseYear : null} />
+              <Legend attr={effectiveAttr} timelapseYear={timelapseActive ? timelapseYear : null} nfhs6Label={nfhs6SelectedLabel} nfhs6Field={nfhs6Field} />
             </div>
           )}
 
@@ -2423,17 +2560,17 @@ export default function HexMapV2Page() {
             {corrPanelOpen && (
               <div className="bg-background/95 backdrop-blur border border-border/40 rounded-lg p-3 shadow-lg w-80 max-h-96 overflow-y-auto text-[10px]">
                 <p className="font-semibold mb-1.5 flex items-center gap-1">🏥 NFHS-5→6 vs. terrain/hazard</p>
-                {nfhs6CorrQ.isLoading ? (
+                {nfhs6Q.isLoading ? (
                   <p className="text-muted-foreground">Loading {`>`}600 district compendiums…</p>
-                ) : nfhs6CorrQ.isError || !nfhs6CorrQ.data ? (
+                ) : nfhs6Q.isError || !nfhs6Q.data ? (
                   <p className="text-red-400">Failed to load</p>
                 ) : (
                   <>
                     <p className="text-muted-foreground mb-2">
-                      {nfhs6CorrQ.data.meta.n_matched} of {nfhs6CorrQ.data.meta.n_districts} districts matched to this platform's terrain/hazard hex data. Pearson r across all matched, non-suppressed districts; only |r|≥0.25 at n≥50 shown.
+                      {nfhs6Q.data.meta.n_matched} of {nfhs6Q.data.meta.n_districts} districts matched to this platform's terrain/hazard hex data. Pearson r across all matched, non-suppressed districts; only |r|≥0.25 at n≥50 shown.
                     </p>
                     <div className="space-y-1.5">
-                      {nfhs6CorrQ.data.correlations.slice(0, 20).map((c, i) => (
+                      {nfhs6Q.data.correlations.slice(0, 20).map((c, i) => (
                         <div key={i} className="border-t border-border/20 pt-1.5 first:border-0 first:pt-0">
                           <div className="flex justify-between gap-2">
                             <span className="text-muted-foreground leading-tight">{c.indicator.replace(/\s*\(%\)\s*$/, "")} <span className="italic">({c.field === "delta" ? "Δ5→6" : "NFHS-6 level"})</span></span>
