@@ -171,12 +171,79 @@ def main():
             **{f: round(a[f] / pop, 3) for f in FACTORS},
         }
 
+    # ── Fallback: census-boundary spatial join for districts the platform's own
+    # district_name field doesn't carry at all (Chennai, Kolkata, Daman, Mahe,
+    # Mumbai, most of NCT Delhi -- confirmed absent from district_factors above,
+    # not a naming mismatch: verified by listing each state's actual district
+    # set, see chat). data/india_districts_census.geojson (Census 2011, 641 real
+    # district polygons) has real geometry for every one of these. This computes
+    # a SEPARATE aggregate purely for the correlation matching below -- it does
+    # NOT touch india_hex_props.json's own district_name, which every other page
+    # on this platform depends on. Genuinely post-2011 districts (Charkhi Dadri,
+    # Tenkasi, Hanumakonda, Shahdara) still won't be here; correct, they didn't
+    # exist as separate polygons in 2011.
+    census_district_factors = {}
+    census_path = ROOT / "data/india_districts_census.geojson"
+    if census_path.exists():
+        import geopandas as gpd
+        import h3
+
+        print("Computing census-boundary fallback aggregates...")
+        census_gdf = gpd.read_file(str(census_path))
+        if census_gdf.crs is None:
+            census_gdf = census_gdf.set_crs("EPSG:4326")
+
+        # Hex POLYGONS + "intersects", not centroid + "within": these fallback
+        # districts (Chennai, Kolkata, Mumbai, Daman, Mahe, Delhi's inner
+        # districts) are all small/dense enough that ZERO hex centroids land
+        # inside them (verified -- a first attempt using centroids matched 0 of
+        # these 5 despite the polygons genuinely existing in the census file).
+        # A ~252km2 hex routinely covers a whole small urban district plus its
+        # surroundings, so this necessarily blends in some neighboring area --
+        # an approximation, same spirit as any coarse-grid estimate for a
+        # sub-grid-cell area, and it's the ONLY way a hex grid this coarse can
+        # say anything at all about a small compact district. A hex touching
+        # multiple districts contributes to each -- deliberate, not a bug.
+        hex_rows = []
+        for h in hexes:
+            if not h.get("h3_id"):
+                continue
+            boundary = h3.cell_to_boundary(h["h3_id"])
+            hex_rows.append({"h3_id": h["h3_id"], "boundary": boundary, **{f: h.get(f) for f in FACTORS}, "population": h.get("population")})
+        from shapely.geometry import Polygon
+        hex_gdf = gpd.GeoDataFrame(hex_rows, geometry=[Polygon([(lon, lat) for lat, lon in r["boundary"]]) for r in hex_rows], crs="EPSG:4326")
+        joined = gpd.sjoin(hex_gdf, census_gdf[["Dist_name", "ST_NM", "geometry"]], how="inner", predicate="intersects")
+
+        cacc = defaultdict(lambda: {"pop": 0.0, **{f: 0.0 for f in FACTORS}})
+        for _, row in joined.iterrows():
+            d, s = row.get("Dist_name"), row.get("ST_NM")
+            if not d or not s or (isinstance(d, float) and math.isnan(d)):
+                continue
+            pop = max(row.get("population") or 0, 1)
+            a = cacc[(s, d)]
+            a["pop"] += pop
+            for f in FACTORS:
+                v = row.get(f)
+                if v is not None and not (isinstance(v, float) and math.isnan(v)):
+                    a[f] += v * pop
+        for (s, d), a in cacc.items():
+            pop = a["pop"]
+            census_district_factors[(norm(s), norm(d))] = {
+                "state": s, "district": d, "population": round(pop),
+                **{f: round(a[f] / pop, 3) for f in FACTORS},
+            }
+        print(f"  {len(census_district_factors)} census districts aggregated from {len(hex_rows)} hexes")
+
     # ── Match NFHS-6 (state, district) -> hex-grid (state, district) ────────
     hex_by_state = defaultdict(list)
     for (sn, dn), rec in district_factors.items():
         hex_by_state[sn].append((dn, rec["district"]))
 
     def match_district(nfhs_state: str, nfhs_district: str):
+        """Returns (factors_dict, source) or (None, None). source is 'hex_grid'
+        (this platform's own district_name -- what every other page uses) or
+        'census_2011' (the supplementary boundary fallback, only for districts
+        district_name doesn't carry at all)."""
         alias = DISTRICT_ALIASES.get((nfhs_state, nfhs_district))
         target_district = alias or nfhs_district
         cand_states = NFHS_TO_HEX_STATES_NORM.get(norm(nfhs_state), [nfhs_state])
@@ -184,7 +251,7 @@ def main():
             sn = norm(cand_state)
             key = (sn, norm(target_district))
             if key in district_factors:
-                return key
+                return district_factors[key], "hex_grid"
         # fuzzy fallback within each candidate state
         for cand_state in cand_states:
             sn = norm(cand_state)
@@ -194,8 +261,16 @@ def main():
             names = [c[0] for c in candidates]
             best = difflib.get_close_matches(norm(target_district), names, n=1, cutoff=0.72)
             if best:
-                return (sn, best[0])
-        return None
+                return district_factors[(sn, best[0])], "hex_grid"
+        # census-2011 boundary fallback -- exact name match only (these are all
+        # well-known, unambiguous names -- Chennai, Kolkata, Mumbai, Daman, Mahe,
+        # NCT Delhi's sub-districts -- fuzzy matching isn't needed and would risk
+        # a wrong match for common short names)
+        for cand_state in cand_states:
+            key = (norm(cand_state), norm(target_district))
+            if key in census_district_factors:
+                return census_district_factors[key], "census_2011"
+        return None, None
 
     # ── Build per-district indicator trend rows ──────────────────────────────
     by_district = defaultdict(list)
@@ -203,12 +278,14 @@ def main():
         by_district[(r["state"], r["district"])].append(r)
 
     unmatched = []
+    census_matched = []
     districts_out = []
     for (state, district), rows in by_district.items():
-        mkey = match_district(state, district)
-        factors = district_factors.get(mkey) if mkey else None
+        factors, source = match_district(state, district)
         if not factors:
             unmatched.append((state, district))
+        elif source == "census_2011":
+            census_matched.append((state, district))
         indicators = {}
         for r in rows:
             if r["nfhs6"] is None or r["nfhs5"] is None:
@@ -223,6 +300,7 @@ def main():
         districts_out.append({
             "state": state, "district": district,
             "matched_factors": factors is not None,
+            "factor_source": source,
             "factors": factors,
             "indicators": indicators,
         })
@@ -230,7 +308,11 @@ def main():
 
     print(f"Districts: {len(districts_out)}  matched to hex factors: "
           f"{sum(1 for d in districts_out if d['matched_factors'])}  "
-          f"unmatched: {len(unmatched)}")
+          f"({len(census_matched)} via census-2011 fallback)  unmatched: {len(unmatched)}")
+    if census_matched:
+        print("  Matched via census-2011 fallback (not in this platform's own district_name):")
+        for s, d in sorted(census_matched):
+            print(f"    {s} / {d}")
     if unmatched:
         print("  Unmatched (state, district):")
         for s, d in sorted(unmatched):
@@ -298,6 +380,7 @@ def main():
             "note": nfhs["note"],
             "n_districts": len(districts_out),
             "n_matched": sum(1 for d in districts_out if d["matched_factors"]),
+            "n_matched_census_fallback": len(census_matched),
             "n_indicators": len(indicator_labels),
             "factors": FACTORS,
         },
