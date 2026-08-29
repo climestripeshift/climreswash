@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { MapContainer, TileLayer, GeoJSON, CircleMarker, Tooltip, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, GeoJSON, CircleMarker, Circle, Tooltip, useMap } from "react-leaflet";
 import type { Map as LeafletMap, GeoJSON as LeafletGeoJSONLayer } from "leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -151,6 +151,111 @@ function RiverLayer({ points, showRivers }: { points: RiverPoint[]; showRivers: 
           </CircleMarker>
         );
       })}
+    </>
+  );
+}
+
+// ── River line overlay — real river geometry, colored by nearest gauge ────────
+// The 150 GloFAS sample points are discrete readings on the channel, not the
+// channel itself. This draws the actual river course (OSM linework, already
+// used on /grid as india_rivers.geojson) and colors each stretch by whichever
+// forecast gauge is nearest to it, so "where along the river" has an answer
+// beyond isolated dots. A stretch farther than RIVER_MATCH_KM from any gauge
+// has no reading and stays neutral — we don't extrapolate severity onto rivers
+// we aren't monitoring.
+
+const RIVER_MATCH_KM = 80;
+
+function approxKm(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const dLat = (lat1 - lat2) * 111.32;
+  const dLon = (lon1 - lon2) * 111.32 * Math.cos((((lat1 + lat2) / 2) * Math.PI) / 180);
+  return Math.sqrt(dLat * dLat + dLon * dLon);
+}
+
+function sampleCoords(coords: [number, number][], n = 6): [number, number][] {
+  if (coords.length <= n) return coords;
+  const out: [number, number][] = [];
+  for (let i = 0; i < n; i++) out.push(coords[Math.round((i * (coords.length - 1)) / (n - 1))]);
+  return out;
+}
+
+function nearestGauge(coords: [number, number][], points: RiverPoint[]): { pt: RiverPoint; distKm: number } | null {
+  let best: { pt: RiverPoint; distKm: number } | null = null;
+  for (const [lng, lat] of sampleCoords(coords)) {
+    for (const pt of points) {
+      const d = approxKm(lat, lng, pt.lat, pt.lon);
+      if (!best || d < best.distKm) best = { pt, distKm: d };
+    }
+  }
+  return best && best.distKm <= RIVER_MATCH_KM ? best : null;
+}
+
+function RiverLineOverlay({ show, points }: { show: boolean; points: RiverPoint[] | undefined }) {
+  const riversQ = useQuery<any>({
+    queryKey: ["india-rivers-lines"],
+    queryFn: () => fetch("/data/india_rivers.geojson").then((r) => r.json()),
+    staleTime: Infinity,
+    enabled: show,
+  });
+
+  const riverStyle = useCallback((feature: any) => {
+    const coords = feature.geometry.coordinates as [number, number][];
+    const match = points && points.length ? nearestGauge(coords, points) : null;
+    if (match) {
+      const sev = match.pt.max_severity_7d;
+      return {
+        color: SEV_COLOR[sev] || "#3b82f6",
+        weight: sev === "extreme" ? 3.5 : sev === "danger" ? 3 : sev === "warning" ? 2.2 : 1.6,
+        opacity: 0.85,
+      };
+    }
+    return { color: "#3b82f6", weight: 1, opacity: 0.3 };
+  }, [points]);
+
+  const onEachRiver = useCallback((feature: any, layer: any) => {
+    const name = feature.properties?.name || "River";
+    const coords = feature.geometry.coordinates as [number, number][];
+    const match = points && points.length ? nearestGauge(coords, points) : null;
+    const label = match
+      ? `${name} — nearest gauge (${Math.round(match.distKm)}km): ${SEV_LABEL[match.pt.max_severity_7d]}`
+      : `${name} — no nearby gauge`;
+    layer.bindTooltip(label, { sticky: true, className: "text-[10px]" });
+  }, [points]);
+
+  if (!show || !riversQ.data) return null;
+  return <GeoJSON key="river-lines" data={riversQ.data} style={riverStyle} onEachFeature={onEachRiver} />;
+}
+
+// ── Flood watch zones — approximate radius around danger/extreme gauges ───────
+// NOT a modeled flood extent (that needs a DEM-based inundation model we don't
+// run). This is a plain proximity buffer around the gauges currently reading
+// danger/extreme, labeled as such, so "roughly which stretch to watch" has a
+// visual answer without overclaiming precision we don't have.
+
+function FloodWatchZones({ show, points }: { show: boolean; points: RiverPoint[] | undefined }) {
+  if (!show || !points) return null;
+  const watch = points.filter((p) => p.max_severity_7d === "danger" || p.max_severity_7d === "extreme");
+  return (
+    <>
+      {watch.map((pt, i) => (
+        <Circle
+          key={`watch-${i}`}
+          center={[pt.lat, pt.lon]}
+          radius={35000}
+          pathOptions={{
+            color: SEV_COLOR[pt.max_severity_7d], weight: 1.5, dashArray: "6 5",
+            fillColor: SEV_COLOR[pt.max_severity_7d], fillOpacity: 0.08,
+          }}
+        >
+          <Tooltip sticky>
+            <div className="text-xs">
+              <div className="font-bold">{pt.river} @ {pt.location}</div>
+              <div style={{ color: SEV_COLOR[pt.max_severity_7d] }} className="font-bold">{SEV_LABEL[pt.max_severity_7d]}</div>
+              <div className="text-gray-400 mt-0.5 text-[10px]">Approximate 35km watch radius around this gauge — not a modeled flood extent</div>
+            </div>
+          </Tooltip>
+        </Circle>
+      ))}
     </>
   );
 }
@@ -452,6 +557,8 @@ function ForecastMap({
         attribution='&copy; Esri, HERE, Garmin, FAO, NOAA, USGS, &copy; OpenStreetMap contributors' />
       <GeoJSON ref={geoJsonRef} key={`${selectedState}-${hazardFilter}-${minRisk}-${selectedDay}`}
         data={filtered} style={styleFeature} onEachFeature={onEachFeature} />
+      <RiverLineOverlay show={showRivers} points={riverForecast?.points} />
+      <FloodWatchZones show={showRivers} points={riverForecast?.points} />
       {riverForecast && (
         <RiverLayer points={riverForecast.points} showRivers={showRivers} />
       )}
@@ -472,6 +579,9 @@ function RiverLegend({ show }: { show: boolean }) {
           <span className="text-[9px] text-muted-foreground">{l}</span>
         </div>
       ))}
+      <p className="text-[8px] text-muted-foreground mt-1 leading-tight">
+        Line = river course, colored by nearest gauge (≤80km). Dashed circle = ~35km watch radius around a danger/extreme gauge — not a modeled flood extent.
+      </p>
       <p className="text-[8px] text-muted-foreground mt-1">GloFAS · 7-day max</p>
     </div>
   );
