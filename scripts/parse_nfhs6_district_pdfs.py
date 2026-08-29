@@ -14,17 +14,28 @@ elsewhere in the platform; this parser does not fabricate NFHS-6 values for them
 
 Requires poppler's pdftotext (installed via `brew install poppler` for this run).
 
-Output: data/nfhs6_district_all_indicators.json
-  { "generated": ..., "source": ..., "rows": [
-      {"state": "Rajasthan", "district": "Ajmer", "indicator": "...", "unit": "%",
-       "nfhs6": 8.9, "nfhs6_small_sample": false,
-       "nfhs5": 7.3, "nfhs5_small_sample": false}, ... ],
-    "state_rows": [ ...same shape, district=null, the state-level table on the
-      same PDFs, ~93 indicators -- richer than nfhs6_state_key_indicators.json's
-      hand-picked 7 ... ] }
+Output (both a machine-friendly JSON and a plain CSV per level -- the CSV is
+the one to open directly in Excel/Sheets; the JSON is what
+compute_nfhs6_district_trends.py and the Phase 2 grid actually read):
+  data/nfhs6_district_all_indicators.json / .csv
+      one row per (state, district, indicator): NFHS-6 + NFHS-5 side by side,
+      exactly as printed in each district's 3-page "Key Indicators" fact sheet
+      -- 697 districts x ~93 indicators.
+  data/nfhs6_state_all_indicators.csv (bundled inside the same JSON's
+      "state_rows") -- the full ~101-indicator state-level table on the same
+      PDFs, richer than nfhs6_state_key_indicators.json's hand-picked 7.
+
+These compendiums are NOT the same as the state-only fact sheets already hand-
+extracted into data/nfhs6_state_key_indicators.json (7 indicators). They contain
+~90+ indicators per district, NFHS-6 vs NFHS-5, but still do NOT publish
+sanitation, cooking fuel, handwashing, or anaemia (confirmed absent from every
+sampled district table) -- NFHS-6 fact sheets structurally omit these across the
+board, state and district alike. Any indicator involving those stays NFHS-5-only
+elsewhere in the platform; this parser does not fabricate NFHS-6 values for them.
 
 Run: python scripts/parse_nfhs6_district_pdfs.py
 """
+import csv
 import json
 import re
 import subprocess
@@ -33,6 +44,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 PDF_DIR = Path("/Users/adityajain/UNICEF RAJASTHAN/climreswash/nhfs 6")
 OUT = ROOT / "data/nfhs6_district_all_indicators.json"
+OUT_DISTRICT_CSV = ROOT / "data/nfhs6_district_all_indicators.csv"
+OUT_STATE_CSV = ROOT / "data/nfhs6_state_all_indicators.csv"
 
 DISTRICT_HEADER = re.compile(r"^\s*(.+?),\s*(.+?)\s*-\s*Key Indicators\s*$")
 STATE_HEADER = re.compile(r"^\s*(.+?)\s*-\s*Key Indicators\s*$")
@@ -203,6 +216,33 @@ def main():
     with open(OUT, "w") as f:
         json.dump(out, f, separators=(",", ":"))
     print(f"\nSaved {OUT} ({OUT.stat().st_size / 1024 / 1024:.1f}MB)")
+
+    write_csv(OUT_DISTRICT_CSV, district_rows, ["State", "District"])
+    print(f"Saved {OUT_DISTRICT_CSV} ({OUT_DISTRICT_CSV.stat().st_size / 1024 / 1024:.1f}MB) -- open directly in Excel/Sheets")
+    write_csv(OUT_STATE_CSV, state_rows, ["State"])
+    print(f"Saved {OUT_STATE_CSV} ({OUT_STATE_CSV.stat().st_size / 1024:.0f}KB)")
+
+
+def write_csv(path: Path, rows: list, id_cols: list[str]):
+    """id_cols is ["State", "District"] for district rows, ["State"] for state rows
+    (district is always None there, so no District column)."""
+    id_keys = [c.lower() for c in id_cols]
+    with open(path, "w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(id_cols + ["Indicator No.", "Indicator", "Unit",
+                               "NFHS 6", "NFHS 6 Small Sample", "NFHS 5", "NFHS 5 Small Sample", "Delta (6-5)"])
+        for r in rows:
+            delta = round(r["nfhs6"] - r["nfhs5"], 2) if r["nfhs6"] is not None and r["nfhs5"] is not None else ""
+            w.writerow(
+                [r[k] for k in id_keys] + [
+                    r["num"], r["indicator"], r["unit"] or "",
+                    r["nfhs6"] if r["nfhs6"] is not None else "",
+                    "Y" if r["nfhs6_small_sample"] else "",
+                    r["nfhs5"] if r["nfhs5"] is not None else "",
+                    "Y" if r["nfhs5_small_sample"] else "",
+                    delta,
+                ]
+            )
 
 
 if __name__ == "__main__":
