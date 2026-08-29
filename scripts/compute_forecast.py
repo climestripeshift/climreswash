@@ -24,13 +24,41 @@ from risk.formulas import (
     wet_bulb_score,
 )
 
-ROOT      = Path(__file__).resolve().parent.parent
-HEX_FILE  = ROOT / "client/public/data/india_hex_grid.geojson"
-OUT_FILE  = ROOT / "client/public/data/forecast_risk.json"
+ROOT       = Path(__file__).resolve().parent.parent
+HEX_FILE   = ROOT / "client/public/data/india_hex_grid.geojson"
+HEX_PROPS_FILE = ROOT / "client/public/data/india_hex_props.json"
+RIVER_FILE = ROOT / "client/public/data/river_forecast.json"
+OUT_FILE   = ROOT / "client/public/data/forecast_risk.json"
 API_URL   = "https://api.open-meteo.com/v1/forecast"
 BATCH     = 20   # smaller batches to avoid 429 rate limits
 SAMPLE_N  = 25   # fewer samples (500 pts) — weather doesn't vary in 25km
 ALERT_THRESHOLD = 1.0
+
+# ── Fluvial flood fusion ──────────────────────────────────────────────────────
+# Pluvial flood (above) only sees the rain falling ON this hex today. A river
+# can flood a hex under clear skies from rain that fell days ago, hundreds of
+# km upstream -- that's what the GloFAS river-discharge forecast (river_forecast.json,
+# fetch_river_forecast.py) measures, and until now the two never talked to each
+# other: "River Discharge: EXTREME" on the map had zero effect on the hex's own
+# flood score. This adds a bonus, scaled by how close the hex actually is to a
+# river (dist_to_river_km, real measured distance, not the local land-use estimate
+# below) and by how far the nearest MONITORED gauge is (a gauge's reading is only
+# treated as representative of the river within RIVER_GAUGE_MATCH_KM of it --
+# beyond that we don't have a reading and add nothing, rather than guess).
+RIVER_GAUGE_MATCH_KM = 120
+RIVER_SEVERITY_BONUS = {
+    "extreme": 4.0, "danger": 3.0, "warning": 1.8, "elevated": 0.8,
+    "normal": 0.0, "unknown": 0.0,
+}
+
+
+def fluvial_flood_bonus(dist_to_river_km: float, gauge_dist_km: float, severity: str) -> float:
+    base = RIVER_SEVERITY_BONUS.get(severity, 0.0)
+    if base <= 0 or gauge_dist_km > RIVER_GAUGE_MATCH_KM:
+        return 0.0
+    river_proximity = math.exp(-dist_to_river_km / 5)          # ~1.0 at 0km, ~0.14 at 10km
+    gauge_confidence = max(0.0, 1 - gauge_dist_km / RIVER_GAUGE_MATCH_KM)  # linear falloff
+    return base * river_proximity * gauge_confidence
 
 LAND_USE_PARAMS = {
     "tree":     {"tree_pct": 75, "built_pct": 2,  "sand_pct": 20},
@@ -87,6 +115,44 @@ def main():
         lon = sum(c[0] for c in coords) / len(coords)
         lat = sum(c[1] for c in coords) / len(coords)
         centroids.append((lat, lon))
+
+    # ── River fusion: real dist-to-river per hex + nearest live gauge ─────────
+    dist_to_river: dict[str, float] = {}
+    if HEX_PROPS_FILE.exists():
+        with open(HEX_PROPS_FILE) as f:
+            for p in json.load(f):
+                d = p.get("dist_to_river_km")
+                if d is not None:
+                    dist_to_river[p["h3_id"]] = float(d)
+        print(f"  dist_to_river_km loaded for {len(dist_to_river)} hexes")
+
+    river_points: list[dict] = []
+    if RIVER_FILE.exists():
+        with open(RIVER_FILE) as f:
+            river_data = json.load(f)
+        for pt in river_data.get("points", []):
+            river_points.append({
+                "lat": pt["lat"], "lon": pt["lon"],
+                "river": pt["river"], "location": pt["location"],
+                "sev_by_date": {d["date"]: d["severity"] for d in pt["days"]},
+            })
+        print(f"  river_forecast.json loaded: {len(river_points)} gauges (generated {river_data.get('generated', '?')})")
+    else:
+        print("  ⚠️  river_forecast.json not found — flood score will be pluvial-only this run")
+
+    # For each hex, find nearest gauge once (severity varies by day, distance doesn't)
+    hex_river_match: list[tuple[int, float] | None] = [None] * total  # (river_points idx, dist_km)
+    if river_points:
+        for i, (lat, lon) in enumerate(centroids):
+            best_idx, best_dist = -1, 1e9
+            for ri, rp in enumerate(river_points):
+                d = haversine_km(lat, lon, rp["lat"], rp["lon"])
+                if d < best_dist:
+                    best_dist, best_idx = d, ri
+            if best_dist <= RIVER_GAUGE_MATCH_KM:
+                hex_river_match[i] = (best_idx, best_dist)
+        matched = sum(1 for m in hex_river_match if m)
+        print(f"  {matched}/{total} hexes within {RIVER_GAUGE_MATCH_KM}km of a monitored gauge")
 
     # Sample weather points (every Nth hex)
     sample_indices = list(range(0, total, SAMPLE_N))
@@ -174,6 +240,7 @@ def main():
     hex_risks: dict[str, list[float]] = {}
     hex_dominant: dict[str, list[str]] = {}
     alerts: list[dict] = []
+    fluvial_hex_days = 0  # (hex, day) pairs where river discharge added to the flood score
 
     for i, feat in enumerate(features):
         p = feat["properties"]
@@ -201,6 +268,9 @@ def main():
         wx_idx = hex_weather_idx[i]
         wx_days = weather.get(wx_idx, [])
 
+        dtr = dist_to_river.get(h3_id)
+        rmatch = hex_river_match[i]  # (river_points idx, dist_km) or None
+
         day_risks = []
         day_dominant = []
 
@@ -214,9 +284,17 @@ def main():
             else:
                 rain, temp, rh, wind = 0, 35, 50, 5
 
-            # ── Flood (from forecasted rainfall) ──
+            # ── Flood (pluvial from forecasted rainfall) + fluvial (river discharge) ──
             flood_haz = pluvial_flood_score(rain, sand_pct, built_pct, slope)
-            flood_r = compute_risk(flood_haz, exposure_10, fs, ac)
+            river_bonus, river_sev, river_pt = 0.0, None, None
+            if rmatch and dtr is not None and d < len(dates):
+                rp = river_points[rmatch[0]]
+                river_sev = rp["sev_by_date"].get(dates[d])
+                if river_sev:
+                    river_bonus = fluvial_flood_bonus(dtr, rmatch[1], river_sev)
+                    if river_bonus > 0:
+                        river_pt = rp
+            flood_r = compute_risk(flood_haz, exposure_10, fs, ac, cascade_amplifiers=river_bonus)
 
             # ── Heat (from forecasted temperature) ──
             threshold = 30.0 if elev > 800 else (37.0 if elev < 30 else 40.0)
@@ -264,6 +342,8 @@ def main():
 
             day_risks.append(round(max_r, 2))
             day_dominant.append(dominant)
+            if river_bonus > 0:
+                fluvial_hex_days += 1
 
             # Generate alert if above threshold
             if max_r >= ALERT_THRESHOLD and d <= 2:
@@ -273,6 +353,9 @@ def main():
                     detail["temp_c"] = round(temp, 1)
                 if dominant == "wetbulb": detail["rh_pct"] = round(rh)
                 if wind > 20: detail["wind_kmh"] = round(wind, 1)
+                if dominant == "flood" and river_pt:
+                    detail["river"] = river_pt["river"]
+                    detail["river_severity"] = river_sev
                 alerts.append({
                     "h3_id": h3_id,
                     "district": p.get("district_name", "Unknown"),
@@ -311,6 +394,7 @@ def main():
     import os
     size_kb = os.path.getsize(OUT_FILE) // 1024
     print(f"Done. {size_kb} KB, {len(dates)} days, {len(final_alerts)} alerts")
+    print(f"Fluvial fusion: {fluvial_hex_days} hex-days had a river-discharge bonus added to their flood score")
 
     # Print top 10 alerts
     if final_alerts:

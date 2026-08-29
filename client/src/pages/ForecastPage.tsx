@@ -28,6 +28,7 @@ interface Alert {
   h3_id: string; district: string; state: string; hazard: string;
   risk: number; day: number; date: string;
   rain_mm?: number; temp_c?: number; rh_pct?: number; wind_kmh?: number;
+  river?: string; river_severity?: string;
 }
 
 interface RiverDay {
@@ -477,6 +478,12 @@ function ForecastSidebar({
                     {a.rh_pct ? ` · ${a.rh_pct}%RH` : ""}
                     {" · "}{a.date}
                   </div>
+                  {a.river && (
+                    <div className="mt-1 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-semibold"
+                      style={{ backgroundColor: `${SEV_COLOR[a.river_severity || "warning"]}22`, color: SEV_COLOR[a.river_severity || "warning"] }}>
+                      <Waves className="h-2.5 w-2.5" /> {a.river} river {SEV_LABEL[a.river_severity || "warning"]} nearby
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
