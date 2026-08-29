@@ -36,6 +36,10 @@ NFHS_FILE = ROOT / "data/nfhs6_district_all_indicators.json"
 HEX_FILE = ROOT / "client/public/data/india_hex_props.json"
 OUT = ROOT / "client/public/data/nfhs6_district_trends.json"
 
+
+def norm(s: str) -> str:
+    return (s or "").lower().replace("&", "and").replace("-", " ").replace("_", " ").strip()
+
 # ── Indicators with an unambiguous "higher is better" direction; everything
 # else not listed defaults to "lower is better" (true for the large majority --
 # stunting, wasting, diarrhoea, mortality-adjacent, blood pressure, etc.).
@@ -70,25 +74,49 @@ DISTRICT_ALIASES = {
     ("Karnataka", "Tumakuru"): "Tumkur",
     ("Karnataka", "Chikkamagaluru"): "Chikmagalur",
     ("Karnataka", "Bagalkote"): "Bagalkot",
+    ("Karnataka", "Vijayapura"): "Bijapur",              # renamed from Bijapur, 2014
     ("Gujarat", "Ahmedabad"): "Ahmadabad",
+    ("Gujarat", "Botad"): "Batod",                        # spelling variant in hex source
+    ("Gujarat", "Dahod"): "Dohad",                        # spelling variant in hex source
     ("Haryana", "Gurugram"): "Gurgaon",
     ("Haryana", "Nuh"): "Mewat",
-    ("Andhra Pradesh", "Y.S.R."): "YSR Kadapa",
+    ("Andhra Pradesh", "Y.S.R."): "Kadapa(YSR)",
     ("Assam", "Marigaon"): "Morigaon",
     ("Assam", "Karbi Anglong"): "Karbi Anglong",
     ("Bihar", "Purbi Champaran"): "East Champaran",
     ("Jharkhand", "Purbi Singhbum"): "Purbi Singhbhum",
+    ("Chhattisgarh", "Dantewada"): "Dakshin Bastar Dantewada",
+    ("Madhya Pradesh", "Agar Malwa"): "Agar",             # pre-expansion short name
+    ("Maharashtra", "Beed"): "Bid",
+    ("Odisha", "Sonepur"): "Subarnapur",                  # renamed 2011
+    ("Punjab", "Sri Muktsar Sahib"): "Muktsar",           # honorific added later
+    ("Tamil Nadu", "Tuticorin"): "Thoothukkudi",
+    ("Telangana", "Bhadradri Kothagudem"): "Bhadradri",
+    ("Telangana", "Kumuram Bheem Asifabad"): "Komaram Bheem",
+    ("Telangana", "Medchal Malkajgiri"): "Medchal",
+    ("Uttar Pradesh", "Amroha"): "Jyotiba Phule Nagar",   # renamed back from J.P. Nagar, 2012
+    ("Uttar Pradesh", "Ayodhya"): "Faizabad",             # renamed 2018
+    ("Uttar Pradesh", "Hathras"): "Mahamaya Nagar",       # renamed back, 2012
+    ("Uttar Pradesh", "Kasganj"): "Kanshiram Nagar",      # renamed back, 2014
+    ("Uttar Pradesh", "Prayagraj"): "Allahabad",          # renamed 2018
+    ("West Bengal", "Hooghly"): "Hugli",
+    ("Andaman & Nicobar Islands", "Nicobar"): "Nicobars",
 }
 
-HEX_TO_NFHS_STATE = {
-    "Andaman & Nicobar Island": "Andaman & Nicobar Islands",
-    "Dadra & Nagar Haveli": "Dadra & Nagar Haveli and Daman & Diu",
-    "Daman & Diu": "Dadra & Nagar Haveli and Daman & Diu",
+# NFHS state name -> every hex-grid state name that could hold its districts.
+# Usually 1:1 by spelling/pluralization only, but the 2020 DNH+Daman&Diu UT
+# merger means one NFHS state now spans what the (older) hex boundaries still
+# carry as two separate states -- search both.
+NFHS_TO_HEX_STATES = {
+    "Andaman & Nicobar Islands": ["Andaman & Nicobar Island"],
+    "Dadra & Nagar Haveli and Daman & Diu": ["Dadra & Nagar Haveli", "Daman & Diu"],
 }
-
-
-def norm(s: str) -> str:
-    return (s or "").lower().replace("&", "and").replace("-", " ").replace("_", " ").strip()
+# The source PDF text extraction renders some state names inconsistently across
+# pages (e.g. "Andaman & Nicobar Islands" on some, "Andaman and Nicobar Islands"
+# on others -- an "&"-vs-"and" glyph/ligature quirk in the PDF itself, not a
+# parsing bug) -- so this lookup normalizes both sides rather than requiring an
+# exact string match.
+NFHS_TO_HEX_STATES_NORM = {norm(k): v for k, v in NFHS_TO_HEX_STATES.items()}
 
 
 def higher_is_better(label: str) -> bool:
@@ -151,22 +179,22 @@ def main():
     def match_district(nfhs_state: str, nfhs_district: str):
         alias = DISTRICT_ALIASES.get((nfhs_state, nfhs_district))
         target_district = alias or nfhs_district
-        target_state = HEX_TO_NFHS_STATE.get(nfhs_state, nfhs_state)
-        # try the aliased/raw name reversed against hex naming too
-        for cand_state in {target_state, nfhs_state}:
+        cand_states = NFHS_TO_HEX_STATES_NORM.get(norm(nfhs_state), [nfhs_state])
+        for cand_state in cand_states:
             sn = norm(cand_state)
             key = (sn, norm(target_district))
             if key in district_factors:
                 return key
-        # fuzzy fallback within the same state
-        sn = norm(target_state)
-        candidates = hex_by_state.get(sn, [])
-        if not candidates:
-            return None
-        names = [c[0] for c in candidates]
-        best = difflib.get_close_matches(norm(target_district), names, n=1, cutoff=0.72)
-        if best:
-            return (sn, best[0])
+        # fuzzy fallback within each candidate state
+        for cand_state in cand_states:
+            sn = norm(cand_state)
+            candidates = hex_by_state.get(sn, [])
+            if not candidates:
+                continue
+            names = [c[0] for c in candidates]
+            best = difflib.get_close_matches(norm(target_district), names, n=1, cutoff=0.72)
+            if best:
+                return (sn, best[0])
         return None
 
     # ── Build per-district indicator trend rows ──────────────────────────────

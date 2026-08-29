@@ -1113,7 +1113,7 @@ function HexInfoPanel({ props, ranking, confidence, villages, villagesLoading, o
                 const rec = nfhs6Q.data.districts.find(
                   (d) => norm(d.district) === norm(props.district_name) && norm(d.state) === norm(props.state)
                 );
-                if (!rec) return <div className="mt-1 text-[10px] text-muted-foreground italic">No NFHS-6 district compendium matched for {props.district_name} — likely a newer/renamed district (e.g. post-2016 Telangana splits, UP's Prayagraj/Ayodhya renames) not yet in this platform's district boundaries.</div>;
+                if (!rec) return <div className="mt-1 text-[10px] text-muted-foreground italic">No NFHS-6 district compendium matched for {props.district_name} — likely a district this platform's boundaries don't carry separately (e.g. Chennai, Kolkata, Mumbai City, most of NCT Delhi's districts) or a newer split (Telangana's Hanumakonda/Mulugu, Haryana's Charkhi Dadri, Tamil Nadu's Tenkasi).</div>;
                 const rows = Object.values(rec.indicators).filter((i) => !i.small_sample);
                 const topMovers = [...rows].sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta)).slice(0, 15);
                 const improvedCount = rows.filter((i) => i.improved).length;
