@@ -12,6 +12,7 @@ import AdminLogin from "@/pages/AdminLogin";
 import TechnologyPage from "@/pages/TechnologyPage";
 import LiveDataPage from "@/pages/LiveDataPage";
 import HexMapPage from "@/pages/HexMapPage";
+import HexMapV2Page from "@/pages/HexMapV2Page";
 import ForecastPage from "@/pages/ForecastPage";
 import ReportPage from "@/pages/ReportPage";
 import StateSummaryPage from "@/pages/StateSummaryPage";
@@ -36,6 +37,7 @@ function Router() {
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/live-data" component={LiveDataPage} />
       <Route path="/grid" component={HexMapPage} />
+      <Route path="/grid-v2" component={HexMapV2Page} />
       <Route path="/forecast" component={ForecastPage} />
       <Route path="/report/:district" component={ReportPage} />
       <Route path="/states" component={StateSummaryPage} />

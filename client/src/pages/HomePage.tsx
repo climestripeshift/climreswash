@@ -162,6 +162,11 @@ export default function HomePage() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-48">
                   <DropdownMenuItem asChild>
+                    <Link href="/grid-v2" className="flex items-center gap-2 cursor-pointer">
+                      <Grid3X3 className="w-3.5 h-3.5 text-teal-500" /> Hex Grid v2
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <Link href="/states" className="cursor-pointer">States</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
