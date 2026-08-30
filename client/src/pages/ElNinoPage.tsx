@@ -42,6 +42,16 @@ interface ElNinoData {
   state_summaries: StateSummary[];
 }
 
+interface EnsoStatus {
+  source: string;
+  latest_oni: { season: string; year: number; oni: number } | null;
+  latest_classification: string | null;
+  recent_seasons: { season: string; year: number; oni: number }[];
+  alert_status: string | null;
+  synopsis: string | null;
+  next_update: string | null;
+}
+
 // ── Helpers ────────────────────────────────────────────────────────────────
 
 const LEVEL_STYLE: Record<string, string> = {
@@ -81,12 +91,18 @@ export default function ElNinoPage() {
     queryFn: () => fetch("/data/elnino.json").then(r => r.json()),
     staleTime: Infinity,
   });
+  const { data: enso } = useQuery<EnsoStatus>({
+    queryKey: ["enso-status"],
+    queryFn: () => fetch("/data/enso_status.json").then(r => r.json()),
+    staleTime: 60 * 60 * 1000,
+  });
 
-  const [tab, setTab]               = useState<"districts"|"states"|"cascade">("districts");
+  const [tab, setTab]               = useState<"districts"|"states"|"cascade"|"safeguard">("safeguard");
   const [search, setSearch]         = useState("");
   const [levelFilter, setLevelFilter] = useState("all");
   const [sortKey, setSortKey]       = useState<SortKey>("score");
   const [sortDir, setSortDir]       = useState<"desc"|"asc">("desc");
+  const [safeguardSearch, setSafeguardSearch] = useState("");
 
   // Hooks before early return
   const filtered = useMemo(() => {
@@ -102,6 +118,26 @@ export default function ElNinoPage() {
       return sortDir === "desc" ? (bv as number) - (av as number) : (av as number) - (bv as number);
     });
   }, [data?.districts, levelFilter, search, sortKey, sortDir]);
+
+  // Safeguard tab's district lookup -- top text match, plus a priority action
+  // derived from whichever of this district's own risk factors is worst
+  // (not a generic checklist -- a low-sanitation district and a high-heat
+  // district need different first moves).
+  const safeguardMatch = useMemo(() => {
+    if (!safeguardSearch.trim() || !data?.districts.length) return null;
+    const q = safeguardSearch.toLowerCase();
+    const exact = data.districts.find(d => d.district.toLowerCase() === q);
+    const partial = data.districts.find(d => d.district.toLowerCase().includes(q) || d.state.toLowerCase().includes(q));
+    const d = exact ?? partial;
+    if (!d) return null;
+    const drivers = [
+      { key: "sanitation", value: 100 - d.sanitation, label: "Sanitation gap", action: "Toilets are the first thing to fail when water runs short — plan now: minimal-water/dry options (ash, sand, twin-pit), not a return to open defecation." },
+      { key: "wasting", value: d.wasting_pct, label: "Child wasting baseline", action: "Already-high wasting means little buffer left — get children screened at the Anganwadi now, before the lean season, not after." },
+      { key: "heat", value: d.heat, label: "Heat risk", action: "Pre-monsoon heat will spike 1.5–2.5°C above normal here — plan now to avoid outdoor work/travel 12–4pm and know the heat stroke warning signs." },
+      { key: "drought", value: d.drought, label: "Drought risk", action: "This district is structurally monsoon-dependent — store water now, before scarcity, and identify a backup source before taps run low." },
+    ].sort((a, b) => b.value - a.value);
+    return { district: d, topDriver: drivers[0] };
+  }, [safeguardSearch, data?.districts]);
 
   if (isLoading || !data) {
     return (
@@ -139,6 +175,7 @@ export default function ElNinoPage() {
   }));
 
   const TABS = [
+    { id:"safeguard", label:"Safeguard Yourself", icon:"🛡️" },
     { id:"districts", label:"Critical Districts", icon:"🗺️" },
     { id:"states",    label:"State Exposure",     icon:"📊" },
     { id:"cascade",   label:"WASH Cascade",       icon:"⛓️" },
@@ -181,6 +218,54 @@ export default function ElNinoPage() {
       </header>
 
       <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
+
+        {/* ── Live NOAA status (real, current -- not the hypothetical below) ── */}
+        {enso?.latest_oni && (
+          <div className="rounded-xl border-2 border-red-500/40 bg-red-500/5 p-4 space-y-3">
+            <div className="flex items-start justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-lg">🔴</span>
+                <span className="text-sm font-bold text-red-400">
+                  {enso.alert_status ?? "ENSO Status"}
+                </span>
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-red-500/15 text-red-400 border border-red-500/30 font-semibold">
+                  ONI {enso.latest_oni.oni > 0 ? "+" : ""}{enso.latest_oni.oni.toFixed(2)} · {enso.latest_classification}
+                </span>
+                <span className="text-[10px] text-muted-foreground">
+                  {enso.latest_oni.season} {enso.latest_oni.year}
+                </span>
+              </div>
+              <span className="text-[10px] text-muted-foreground shrink-0">
+                NOAA CPC · next update {enso.next_update ?? "TBD"}
+              </span>
+            </div>
+            {enso.synopsis && (
+              <p className="text-xs font-medium leading-relaxed">{enso.synopsis}</p>
+            )}
+            {enso.recent_seasons && enso.recent_seasons.length > 1 && (
+              <div className="flex items-end gap-1 h-10 pt-1">
+                {enso.recent_seasons.map((s, i) => {
+                  const h = Math.min(100, Math.abs(s.oni) / 2 * 100);
+                  return (
+                    <div key={i} className="flex-1 flex flex-col items-center gap-0.5" title={`${s.season} ${s.year}: ${s.oni > 0 ? "+" : ""}${s.oni.toFixed(2)}`}>
+                      <div className="w-full flex items-end h-7">
+                        <div
+                          className={`w-full rounded-sm ${s.oni >= 0.5 ? "bg-red-400" : s.oni <= -0.5 ? "bg-blue-400" : "bg-muted-foreground/30"}`}
+                          style={{ height: `${Math.max(8, h)}%` }}
+                        />
+                      </div>
+                      <span className="text-[8px] text-muted-foreground">{s.season}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            <p className="text-[9px] text-muted-foreground italic">
+              Source: NOAA Climate Prediction Center — Oceanic Niño Index (Niño-3.4 SST anomaly, 3-month running mean) + ENSO Diagnostic Discussion.
+              Everything below this — district scores, cascade timeline — is a structural vulnerability assessment; this banner is the only live signal on whether an event is actually occurring.
+            </p>
+          </div>
+        )}
 
         {/* ── What is El Niño (always shown) ──────────────────────────── */}
         <div className="rounded-xl border border-orange-500/20 bg-orange-500/5 p-4 space-y-2">
@@ -256,6 +341,123 @@ export default function ElNinoPage() {
             </div>
           ))}
         </div>
+
+        {/* ── TAB: Safeguard Yourself (household/community level) ────────── */}
+        {tab === "safeguard" && (
+          <section className="space-y-5">
+            {/* District lookup */}
+            <div className="rounded-xl border border-border bg-card p-4">
+              <h3 className="text-sm font-bold mb-1">Find your district</h3>
+              <p className="text-xs text-muted-foreground mb-3">
+                Type your district or state to see its risk level and the single biggest thing to act on first.
+              </p>
+              <div className="relative">
+                <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                <input type="text" placeholder="e.g. Latur, Jaisalmer, Marathwada…"
+                  value={safeguardSearch} onChange={e => setSafeguardSearch(e.target.value)}
+                  className="w-full pl-7 pr-3 py-2 text-sm rounded-md border border-border bg-muted/40 text-foreground outline-none placeholder:text-muted-foreground/60" />
+              </div>
+              {safeguardSearch.trim() && (
+                safeguardMatch ? (
+                  <div className={`mt-3 rounded-lg border p-3 ${LEVEL_STYLE[safeguardMatch.district.level]}`}>
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div>
+                        <span className="font-bold text-sm">{safeguardMatch.district.district}</span>
+                        <span className="text-xs text-muted-foreground ml-2">{safeguardMatch.district.state}</span>
+                      </div>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold uppercase ${LEVEL_STYLE[safeguardMatch.district.level]}`}>
+                        {safeguardMatch.district.level} risk
+                      </span>
+                    </div>
+                    <div className="mt-2 flex items-start gap-2 text-xs">
+                      <span className="text-lg shrink-0">⚠️</span>
+                      <div>
+                        <div className="font-semibold">Priority: {safeguardMatch.topDriver.label}</div>
+                        <p className="text-muted-foreground mt-0.5">{safeguardMatch.topDriver.action}</p>
+                      </div>
+                    </div>
+                    <div className="mt-2 flex gap-2">
+                      <Link href={`/wash-assess?district=${encodeURIComponent(safeguardMatch.district.district)}`}
+                        className="text-[11px] px-2 py-1 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-medium">
+                        WASH Assess this district →
+                      </Link>
+                      <Link href={`/report/${encodeURIComponent(safeguardMatch.district.district)}`}
+                        className="text-[11px] px-2 py-1 rounded bg-blue-500/15 text-blue-400 border border-blue-500/30 font-medium">
+                        Full district report →
+                      </Link>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="mt-3 text-xs text-muted-foreground italic">No match — try a shorter name or the state.</p>
+                )
+              )}
+            </div>
+
+            {/* Household/community checklist */}
+            <div className="rounded-xl border border-border bg-card p-4">
+              <h3 className="text-sm font-bold mb-3">What to do now — household &amp; community level</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {[
+                  { icon: "💧", title: "Water", color: "border-blue-500/20 bg-blue-500/5", items: [
+                    "Store water now, before scarcity — clean, covered containers, replaced every few days.",
+                    "Know a backup source (a second bore well, tanker contact, community source) before your main one runs low.",
+                    "Purify stored/uncertain water: boil for 1 minute, or chlorinate, before drinking.",
+                    "If you can, set up rainwater harvesting before the monsoon — every extra day of storage matters when the monsoon is weak.",
+                  ]},
+                  { icon: "🚻", title: "Sanitation & Hygiene", color: "border-emerald-500/20 bg-emerald-500/5", items: [
+                    "Keep using your toilet even as water gets scarce — pit toilets work with ash/sand instead of water flushing.",
+                    "Don't let water scarcity push the household back to open defecation — it's the single biggest driver of the diarrhoea spike that follows.",
+                    "Handwashing with minimal water still works — a tippy-tap (a hanging container with a small hole) uses a fraction of what a tap does.",
+                    "If your community toilet block has no water, report it — a non-functional toilet is worse than none, since people assume it's usable.",
+                  ]},
+                  { icon: "🧒", title: "Child Health & Nutrition", color: "border-orange-500/20 bg-orange-500/5", items: [
+                    "Get children weighed at the Anganwadi now, before the lean season — early wasting is treatable, late wasting is a hospital case.",
+                    "Keep ORS packets at home; know the recipe (6 tsp sugar + ½ tsp salt in 1L clean water) if you run out.",
+                    "Don't delay care-seeking for diarrhoea or fever — dehydration in a small child can turn serious within a day.",
+                    "Continue breastfeeding through the drought period — it's the most water-secure food a baby can get.",
+                  ]},
+                  { icon: "🌡️", title: "Heat Safety", color: "border-red-500/20 bg-red-500/5", items: [
+                    "Avoid outdoor work or travel between 12–4pm during the pre-monsoon heat spike (Apr–Jun).",
+                    "Watch for heat stroke signs: confusion, hot dry skin, no sweating, high body temperature — it's a medical emergency, cool the person immediately and get help.",
+                    "Elderly, infants, and outdoor workers (farmers, construction, vendors) are highest-risk — check on them specifically.",
+                    "Light, loose, light-colored clothing and staying hydrated matter more than usual once heat and water scarcity overlap.",
+                  ]},
+                ].map(c => (
+                  <div key={c.title} className={`rounded-lg border p-3 ${c.color}`}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-lg">{c.icon}</span>
+                      <span className="font-semibold text-sm">{c.title}</span>
+                    </div>
+                    <ul className="space-y-1.5 text-xs text-muted-foreground">
+                      {c.items.map((it, i) => (
+                        <li key={i} className="flex items-start gap-1.5">
+                          <span className="mt-0.5 shrink-0 text-foreground/40">•</span><span>{it}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Where to get help */}
+            <div className="rounded-xl border border-border bg-card p-4">
+              <h3 className="text-sm font-bold mb-2">Where to get help</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                {[
+                  { icon: "👩‍⚕️", title: "ASHA worker", body: "Your village's first point of contact for health, nutrition screening, and referrals — don't wait for a crisis to reach out." },
+                  { icon: "🏥", title: "Anganwadi Centre / PHC", body: "Growth monitoring for children under 5, ORS/zinc supplies, and the nearest escalation point for anything beyond first aid." },
+                  { icon: "🚰", title: "JJM helpline", body: "For piped water supply failures — report a dry tap early so repair/tanker support can be scheduled before it becomes a village-wide shortage." },
+                ].map(h => (
+                  <div key={h.title} className="rounded-lg border border-border bg-muted/20 p-3">
+                    <div className="flex items-center gap-2 mb-1"><span className="text-base">{h.icon}</span><span className="font-semibold">{h.title}</span></div>
+                    <p className="text-muted-foreground">{h.body}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* ── TAB: Critical Districts ──────────────────────────────────── */}
         {tab === "districts" && (
