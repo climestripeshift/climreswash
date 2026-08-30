@@ -1001,18 +1001,24 @@ const RISK_LABEL: Record<string, string> = {
   flashflood_risk: "Flash Flood", sealevel_risk: "Sea Level", fire_risk: "Fire",
 };
 
-function HexInfoPanel({ props, ranking, confidence, villages, villagesLoading, onClose }: {
+function HexInfoPanel({ props, ranking, confidence, villages, villagesLoading, onClose,
+  mapNfhs6Indicator, mapNfhs6Field, mapNfhs6Area, mapNfhs6Label,
+}: {
   props: any;
   ranking: any | null;
   confidence: { p5: number; p95: number; mean: number; sd: number } | null;
   villages: VillageHexEntry | null;
   villagesLoading: boolean;
   onClose: () => void;
+  mapNfhs6Indicator: number;
+  mapNfhs6Field: "delta" | "nfhs6" | "nfhs5";
+  mapNfhs6Area: "total" | "urban" | "rural";
+  mapNfhs6Label: string;
 }) {
   const [tab, setTab] = useState<"data" | "actions">("data");
   const [villagesExpanded, setVillagesExpanded] = useState(false);
   const [historyExpanded, setHistoryExpanded] = useState(false);
-  const [nfhs6Expanded, setNfhs6Expanded] = useState(false);
+  const [nfhs6Expanded, setNfhs6Expanded] = useState(true); // open by default -- this is grid-v2's whole point
   const nfhs6Q = useQuery<{
     meta: { n_districts: number; n_matched: number; source: string; note: string };
     districts: Array<{ state: string; district: string; matched_factors: boolean;
@@ -1156,8 +1162,46 @@ function HexInfoPanel({ props, ranking, confidence, villages, villagesLoading, o
                 const rows = Object.entries(rec.indicators).filter(([, i]) => !i.small_sample);
                 const topMovers = [...rows].sort((a, b) => Math.abs(b[1].delta) - Math.abs(a[1].delta)).slice(0, 15);
                 const improvedCount = rows.filter(([, i]) => i.improved).length;
+
+                // What's actually colored on the map right now, for THIS hex --
+                // resolved the same way HexMapV2Page's own nfhs6ColorFn does, so
+                // this box always matches what you're looking at. Total reads the
+                // district's own value; Urban/Rural reads the STATE's (that's the
+                // real resolution NFHS publishes it at -- not this component
+                // guessing, the source doesn't have it finer than that).
+                const mapInd = rec.indicators[String(mapNfhs6Indicator)];
+                const mapStateInd = stateRec?.indicators[String(mapNfhs6Indicator)];
+                let mapCallout: { grain: string; text: string; improved: boolean | null } | null = null;
+                if (mapNfhs6Area === "total" && mapInd && !mapInd.small_sample) {
+                  const val = mapNfhs6Field === "delta" ? `${mapInd.nfhs5}→${mapInd.nfhs6} (${mapInd.delta > 0 ? "+" : ""}${mapInd.delta})` : `${mapInd[mapNfhs6Field]}`;
+                  mapCallout = { grain: `${props.district_name} (district)`, text: val, improved: mapNfhs6Field === "delta" ? mapInd.improved : null };
+                } else if (mapNfhs6Area !== "total" && mapStateInd) {
+                  const v6 = mapNfhs6Area === "urban" ? mapStateInd.nfhs6_urban : mapStateInd.nfhs6_rural;
+                  const v5 = mapNfhs6Area === "urban" ? mapStateInd.nfhs5_urban : mapStateInd.nfhs5_rural;
+                  if (v6 != null) {
+                    const higherIsBetter = mapStateInd.improved === (mapStateInd.delta > 0);
+                    const areaDelta = v5 != null ? Math.round((v6 - v5) * 100) / 100 : null;
+                    const val = mapNfhs6Field === "delta"
+                      ? (v5 != null ? `${v5}→${v6} (${(areaDelta as number) > 0 ? "+" : ""}${areaDelta})` : `${v6} (no 2019-21 value to compare)`)
+                      : mapNfhs6Field === "nfhs6" ? `${v6}` : (v5 != null ? `${v5}` : "not available");
+                    const improved = mapNfhs6Field === "delta" && areaDelta != null ? (higherIsBetter ? areaDelta > 0 : areaDelta < 0) : null;
+                    mapCallout = { grain: `${props.state} (state, ${mapNfhs6Area})`, text: val, improved };
+                  }
+                }
                 return (
                   <div className="mt-1 space-y-1 pl-1 border-l border-border/30 text-[10px]">
+                    {mapCallout && (
+                      <div className="rounded-md bg-indigo-500/10 border border-indigo-500/20 px-2 py-1.5 mb-1">
+                        <div className="text-indigo-400 font-semibold leading-tight">📍 Currently on map: {mapNfhs6Label.replace(/\s*\(%\)\s*$/, "")}</div>
+                        <div className="flex justify-between mt-0.5">
+                          <span className="text-muted-foreground">{mapCallout.grain}</span>
+                          <span className={`font-medium ${mapCallout.improved === true ? "text-emerald-400" : mapCallout.improved === false ? "text-red-400" : ""}`}>{mapCallout.text}</span>
+                        </div>
+                      </div>
+                    )}
+                    {mapNfhs6Area !== "total" && !mapCallout && (
+                      <p className="text-amber-500 italic">No {mapNfhs6Area} value available for {props.state} on this indicator.</p>
+                    )}
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Indicators improved / worsened</span>
                       <span className="font-medium"><span className="text-emerald-400">{improvedCount}</span> / <span className="text-red-400">{rows.length - improvedCount}</span> of {rows.length}</span>
@@ -2591,7 +2635,8 @@ export default function HexMapV2Page() {
             <div className="absolute top-3 right-3 z-[800]">
               <HexInfoPanel props={clickedHex} ranking={rankByDistrict[clickedHex.district_name] ?? null} confidence={confidenceQ.data?.[clickedHex.h3_id] ?? null}
                 villages={hexVillagesQ.data?.[clickedHex.h3_id] ?? null} villagesLoading={hexVillagesQ.isLoading}
-                onClose={() => setClickedHex(null)} />
+                onClose={() => setClickedHex(null)}
+                mapNfhs6Indicator={nfhs6Indicator} mapNfhs6Field={nfhs6Field} mapNfhs6Area={nfhs6Area} mapNfhs6Label={nfhs6SelectedLabel} />
             </div>
           )}
 
