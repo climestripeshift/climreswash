@@ -189,6 +189,20 @@ const RURAL_URBAN_LABELS: Record<string, string> = {
   urban: "Urban (village data can't see)", negligible: "Negligible population",
 };
 
+// For the NFHS-6 "Mixed" area mode: which of the state's two published values
+// (Urban/Rural) a given hex should be colored with, based on the hex's OWN
+// real classification (hex_rural_urban.json, WorldPop + Survey of India
+// villages) -- not a guess, and not a district-level survey estimate. Urban
+// and Composite hexes (population NFHS's own "urban" sampling frame would
+// catch) both read the state's Urban value; Rural hexes read Rural.
+// Negligible (near-zero population) and unclassified hexes have nothing
+// defensible to show, so they're left ungreyed by returning null.
+function nfhs6EffectiveArea(cls: string | undefined | null): "urban" | "rural" | null {
+  if (cls === "urban" || cls === "composite") return "urban";
+  if (cls === "rural") return "rural";
+  return null;
+}
+
 // Fixed absolute domains — green always means safe, red always means danger
 const FIXED_DOMAIN: Record<string, [number, number]> = {
   hex_risk: [0, 10], population: [0, 5000000], cascade_count: [0, 4], data_confidence: [0, 1],
@@ -645,7 +659,7 @@ function FilterSidebar({
   nfhs6Loading: boolean; nfhs6NDistricts: number;
   nfhs6Indicator: number; onNfhs6IndicatorChange: (n: number) => void;
   nfhs6Field: "delta" | "nfhs6" | "nfhs5"; onNfhs6FieldChange: (f: "delta" | "nfhs6" | "nfhs5") => void;
-  nfhs6Area: "total" | "urban" | "rural"; onNfhs6AreaChange: (a: "total" | "urban" | "rural") => void;
+  nfhs6Area: "total" | "urban" | "rural" | "mixed"; onNfhs6AreaChange: (a: "total" | "urban" | "rural" | "mixed") => void;
   nfhs6Search: string; onNfhs6SearchChange: (s: string) => void;
   nfhs6FilteredIndicators: { num: number; label: string }[]; nfhs6TotalIndicators: number;
   nfhs6PopStats: { improvedPop: number; worsenedPop: number; total: number; improvedPct: number; worsenedPct: number } | null;
@@ -742,10 +756,10 @@ function FilterSidebar({
               ? <span className="text-[9px] text-muted-foreground">loading…</span>
               : <span className="text-[9px] text-muted-foreground">{nfhs6NDistricts} districts</span>}
           </div>
-          <div className="grid grid-cols-3 gap-1 mb-1.5">
-            {([["total", "Total"], ["urban", "Urban"], ["rural", "Rural"]] as const).map(([k, l]) => (
+          <div className="grid grid-cols-4 gap-1 mb-1.5">
+            {([["total", "Total"], ["urban", "Urban"], ["rural", "Rural"], ["mixed", "Mixed"]] as const).map(([k, l]) => (
               <button key={k} onClick={() => onNfhs6AreaChange(k)}
-                className={`px-1.5 py-1 rounded text-[10px] font-semibold transition-colors ${
+                className={`px-1 py-1 rounded text-[10px] font-semibold transition-colors ${
                   nfhs6Area === k ? "bg-indigo-600 text-white" : "bg-muted/60 text-muted-foreground hover:bg-muted"
                 }`}>
                 {l}
@@ -762,9 +776,14 @@ function FilterSidebar({
               </button>
             ))}
           </div>
-          {nfhs6Area !== "total" && (
+          {(nfhs6Area === "urban" || nfhs6Area === "rural") && (
             <p className="text-[9px] text-amber-500 mb-2 leading-tight">
               ⚠ {nfhs6Area === "urban" ? "Urban" : "Rural"} is state-level only (NFHS doesn't split rural/urban by district) — every district in a state shows the same color.
+            </p>
+          )}
+          {nfhs6Area === "mixed" && (
+            <p className="text-[9px] text-indigo-400 mb-2 leading-tight">
+              ℹ Each hex shows its state's Urban or Rural NFHS value, picked by that hex's own real population mix (Survey of India villages) — genuine hex-level texture, state-level number. Grey hexes have too little counted population to classify.
             </p>
           )}
           {nfhs6PopStats && (
@@ -1012,7 +1031,7 @@ function HexInfoPanel({ props, ranking, confidence, villages, villagesLoading, o
   onClose: () => void;
   mapNfhs6Indicator: number;
   mapNfhs6Field: "delta" | "nfhs6" | "nfhs5";
-  mapNfhs6Area: "total" | "urban" | "rural";
+  mapNfhs6Area: "total" | "urban" | "rural" | "mixed";
   mapNfhs6Label: string;
 }) {
   const [tab, setTab] = useState<"data" | "actions">("data");
@@ -1171,13 +1190,17 @@ function HexInfoPanel({ props, ranking, confidence, villages, villagesLoading, o
                 // guessing, the source doesn't have it finer than that).
                 const mapInd = rec.indicators[String(mapNfhs6Indicator)];
                 const mapStateInd = stateRec?.indicators[String(mapNfhs6Indicator)];
+                // For Mixed, THIS hex's own rural_urban_class decides whether the
+                // state's Urban or Rural value applies here -- same rule the map's
+                // nfhs6ColorFn uses, so the callout matches the hex's actual color.
+                const mapEffectiveArea = mapNfhs6Area === "mixed" ? nfhs6EffectiveArea(props.rural_urban_class) : (mapNfhs6Area !== "total" ? mapNfhs6Area : null);
                 let mapCallout: { grain: string; text: string; improved: boolean | null } | null = null;
                 if (mapNfhs6Area === "total" && mapInd && !mapInd.small_sample) {
                   const val = mapNfhs6Field === "delta" ? `${mapInd.nfhs5}→${mapInd.nfhs6} (${mapInd.delta > 0 ? "+" : ""}${mapInd.delta})` : `${mapInd[mapNfhs6Field]}`;
                   mapCallout = { grain: `${props.district_name} (district)`, text: val, improved: mapNfhs6Field === "delta" ? mapInd.improved : null };
-                } else if (mapNfhs6Area !== "total" && mapStateInd) {
-                  const v6 = mapNfhs6Area === "urban" ? mapStateInd.nfhs6_urban : mapStateInd.nfhs6_rural;
-                  const v5 = mapNfhs6Area === "urban" ? mapStateInd.nfhs5_urban : mapStateInd.nfhs5_rural;
+                } else if (mapEffectiveArea && mapStateInd) {
+                  const v6 = mapEffectiveArea === "urban" ? mapStateInd.nfhs6_urban : mapStateInd.nfhs6_rural;
+                  const v5 = mapEffectiveArea === "urban" ? mapStateInd.nfhs5_urban : mapStateInd.nfhs5_rural;
                   if (v6 != null) {
                     const higherIsBetter = mapStateInd.improved === (mapStateInd.delta > 0);
                     const areaDelta = v5 != null ? Math.round((v6 - v5) * 100) / 100 : null;
@@ -1185,7 +1208,10 @@ function HexInfoPanel({ props, ranking, confidence, villages, villagesLoading, o
                       ? (v5 != null ? `${v5}→${v6} (${(areaDelta as number) > 0 ? "+" : ""}${areaDelta})` : `${v6} (no 2019-21 value to compare)`)
                       : mapNfhs6Field === "nfhs6" ? `${v6}` : (v5 != null ? `${v5}` : "not available");
                     const improved = mapNfhs6Field === "delta" && areaDelta != null ? (higherIsBetter ? areaDelta > 0 : areaDelta < 0) : null;
-                    mapCallout = { grain: `${props.state} (state, ${mapNfhs6Area})`, text: val, improved };
+                    const grain = mapNfhs6Area === "mixed"
+                      ? `${props.state} (state ${mapEffectiveArea} value — this hex is ${RURAL_URBAN_LABELS[props.rural_urban_class]?.split(" (")[0] ?? mapEffectiveArea})`
+                      : `${props.state} (state, ${mapNfhs6Area})`;
+                    mapCallout = { grain, text: val, improved };
                   }
                 }
                 return (
@@ -1200,7 +1226,11 @@ function HexInfoPanel({ props, ranking, confidence, villages, villagesLoading, o
                       </div>
                     )}
                     {mapNfhs6Area !== "total" && !mapCallout && (
-                      <p className="text-amber-500 italic">No {mapNfhs6Area} value available for {props.state} on this indicator.</p>
+                      <p className="text-amber-500 italic">
+                        {mapNfhs6Area === "mixed" && !mapEffectiveArea
+                          ? "This hex has too little counted population to classify as urban or rural, so Mixed leaves it uncolored."
+                          : `No ${mapNfhs6Area === "mixed" ? mapEffectiveArea : mapNfhs6Area} value available for ${props.state} on this indicator.`}
+                      </p>
                     )}
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Indicators improved / worsened</span>
@@ -1540,11 +1570,14 @@ const LAYER_DIRECTION: Record<string, "good" | "bad"> = {
   hist_temp_trend: "bad", hist_rainfall_cv: "bad",
 };
 
-function Legend({ attr, timelapseYear, nfhs6Label, nfhs6Field, nfhs6Area }: { attr: string; timelapseYear?: number | null; nfhs6Label?: string; nfhs6Field?: "delta" | "nfhs6" | "nfhs5"; nfhs6Area?: "total" | "urban" | "rural" }) {
+function Legend({ attr, timelapseYear, nfhs6Label, nfhs6Field, nfhs6Area }: { attr: string; timelapseYear?: number | null; nfhs6Label?: string; nfhs6Field?: "delta" | "nfhs6" | "nfhs5"; nfhs6Area?: "total" | "urban" | "rural" | "mixed" }) {
   if (attr === "nfhs6") {
     const isDelta = nfhs6Field === "delta";
-    const areaLabel = nfhs6Area === "urban" ? "Urban" : nfhs6Area === "rural" ? "Rural" : "Total";
-    const grain = nfhs6Area === "total" ? "district" : "state";
+    const areaLabel = nfhs6Area === "urban" ? "Urban" : nfhs6Area === "rural" ? "Rural" : nfhs6Area === "mixed" ? "Mixed" : "Total";
+    const grain = nfhs6Area === "total" ? "district" : nfhs6Area === "mixed" ? "hex" : "state";
+    const grainNote = nfhs6Area === "mixed"
+      ? "Gray = hex too sparse to classify urban/rural. Colored per-hex: state's Urban or Rural value, picked by that hex's own population mix."
+      : `Gray = ${grain} not matched. ${nfhs6Field === "nfhs6" ? "2023-24 level" : nfhs6Field === "nfhs5" ? "2019-21 level" : "Change, NFHS-5→6"} — colored by ${grain}.`;
     return (
       <div className="bg-background/90 backdrop-blur border border-border/40 rounded-lg p-2.5 shadow-lg w-52">
         <p className="text-[10px] font-semibold mb-1.5 leading-tight">🏥 {nfhs6Label} <span className="text-indigo-400">({areaLabel})</span></p>
@@ -1559,7 +1592,7 @@ function Legend({ attr, timelapseYear, nfhs6Label, nfhs6Field, nfhs6Area }: { at
             <div className="flex justify-between text-[9px] text-muted-foreground"><span>Low</span><span>High</span></div>
           </>
         )}
-        <p className="text-[9px] text-muted-foreground italic mt-1">Gray = {grain} not matched. {nfhs6Field === "nfhs6" ? "2023-24 level" : nfhs6Field === "nfhs5" ? "2019-21 level" : "Change, NFHS-5→6"} — colored by {grain}.</p>
+        <p className="text-[9px] text-muted-foreground italic mt-1">{grainNote}</p>
       </div>
     );
   }
@@ -2168,8 +2201,14 @@ export default function HexMapV2Page() {
   // STATE-level (35 states) -- NFHS doesn't produce a rural/urban split at
   // district granularity at all, so this necessarily colors whole states flat,
   // not the district-by-district pattern Total shows. Not a bug -- it's the real
-  // resolution the source data has for this split.
-  const [nfhs6Area, setNfhs6Area] = useState<"total" | "urban" | "rural">("total");
+  // resolution the source data has for this split. "mixed" blends both real
+  // sources at their true resolutions instead of picking one: each hex keeps
+  // the state's Urban or Rural NFHS value, but WHICH one is picked per-hex
+  // from that hex's own real rural_urban_class (WorldPop + Survey of India
+  // villages, hex_rural_urban.json) -- so a single state can show genuine
+  // hex-level texture (its cities reading Urban, its countryside Rural) even
+  // though the underlying survey value itself is still state-level.
+  const [nfhs6Area, setNfhs6Area] = useState<"total" | "urban" | "rural" | "mixed">("total");
   const [nfhs6Search, setNfhs6Search] = useState("");
 
   type Nfhs6Indicator = { label: string; nfhs6: number; nfhs5: number; delta: number; improved: boolean; small_sample: boolean };
@@ -2247,29 +2286,47 @@ export default function HexMapV2Page() {
   // Resolves the current indicator+field+area to a plain {nfhs6,nfhs5,delta,improved}
   // for either a district record (area=total) or a state record (area=urban/rural).
   // Single source of truth for domain/color/pop-stats so the three can't drift.
+  // "mixed" isn't resolvable from a record alone -- it needs the clicked/colored
+  // hex's own rural_urban_class to pick urban vs rural, so those callers bypass
+  // this and call getAreaValue directly with the per-hex area.
   const resolveNfhs6 = useCallback((rec: Nfhs6District | Nfhs6StateRec | undefined) => {
     const ind = rec?.indicators[String(nfhs6Indicator)];
     if (!ind || ind.small_sample) return null;
     if (nfhs6Area === "total") return ind;
+    if (nfhs6Area === "mixed") return null;
     return getAreaValue(ind, nfhs6Area);
   }, [nfhs6Indicator, nfhs6Area, getAreaValue]);
 
   // p5-p95 domain for the selected indicator+field+area, across matched non-
   // suppressed records (697 districts for Total, 35 states for Urban/Rural) --
-  // used to scale color intensity.
+  // used to scale color intensity. For "mixed" the domain has to span BOTH the
+  // urban and rural values every state could show (since which one appears
+  // depends on the hex, not the state), so it pools both per state rather than
+  // picking one.
   const nfhs6Domain = useMemo(() => {
     const vals: number[] = [];
-    const records = nfhs6Area === "total" ? (nfhs6Q.data?.districts ?? []) : (nfhs6Q.data?.states ?? []);
-    for (const d of records) {
-      const v = resolveNfhs6(d as any);
-      if (v && v[nfhs6Field] != null) vals.push(v[nfhs6Field] as number);
+    if (nfhs6Area === "mixed") {
+      for (const s of nfhs6Q.data?.states ?? []) {
+        const ind = s.indicators[String(nfhs6Indicator)];
+        if (!ind || ind.small_sample) continue;
+        for (const a of ["urban", "rural"] as const) {
+          const v = getAreaValue(ind, a);
+          if (v && v[nfhs6Field] != null) vals.push(v[nfhs6Field] as number);
+        }
+      }
+    } else {
+      const records = nfhs6Area === "total" ? (nfhs6Q.data?.districts ?? []) : (nfhs6Q.data?.states ?? []);
+      for (const d of records) {
+        const v = resolveNfhs6(d as any);
+        if (v && v[nfhs6Field] != null) vals.push(v[nfhs6Field] as number);
+      }
     }
     if (!vals.length) return { lo: 0, hi: 1 };
     vals.sort((a, b) => a - b);
     const lo = vals[Math.floor(vals.length * 0.05)];
     const hi = vals[Math.ceil(vals.length * 0.95) - 1] || vals[vals.length - 1];
     return { lo, hi: hi === lo ? lo + 1 : hi };
-  }, [nfhs6Q.data, nfhs6Area, nfhs6Field, resolveNfhs6]);
+  }, [nfhs6Q.data, nfhs6Area, nfhs6Field, resolveNfhs6, getAreaValue, nfhs6Indicator]);
 
   const nfhs6SelectedLabel = nfhs6IndicatorList.find((i) => i.num === nfhs6Indicator)?.label ?? "";
 
@@ -2302,12 +2359,23 @@ export default function HexMapV2Page() {
   // aware per indicator -- "higher is better" for some, "lower is better" for
   // most), not a raw sign check. Total colors by district; Urban/Rural colors by
   // the hex's STATE instead (every hex in a state gets the same color), since
-  // that split doesn't exist at district resolution.
+  // that split doesn't exist at district resolution. Mixed also colors by state
+  // value, but picks urban vs rural PER HEX from that hex's own real
+  // rural_urban_class -- genuine hex-level texture inside a single state.
   const nfhs6ColorFn = useCallback((props: any) => {
-    const rec = nfhs6Area === "total"
-      ? nfhs6DistrictMap.get(`${nfhs6Norm(props.state)}|${nfhs6Norm(props.district_name)}`)
-      : nfhs6StateMap.get(nfhs6Norm(props.state));
-    const v = resolveNfhs6(rec);
+    let v: { nfhs6: number | null; nfhs5: number | null; delta: number | null; improved: boolean | null } | Nfhs6Indicator | null;
+    if (nfhs6Area === "mixed") {
+      const area = nfhs6EffectiveArea(props.rural_urban_class);
+      if (!area) return "#e2e8f0";
+      const stateRec = nfhs6StateMap.get(nfhs6Norm(props.state));
+      const ind = stateRec?.indicators[String(nfhs6Indicator)];
+      v = ind && !ind.small_sample ? getAreaValue(ind, area) : null;
+    } else {
+      const rec = nfhs6Area === "total"
+        ? nfhs6DistrictMap.get(`${nfhs6Norm(props.state)}|${nfhs6Norm(props.district_name)}`)
+        : nfhs6StateMap.get(nfhs6Norm(props.state));
+      v = resolveNfhs6(rec);
+    }
     if (!v || v[nfhs6Field] == null) return "#e2e8f0";
     const { lo, hi } = nfhs6Domain;
     if (nfhs6Field === "delta") {
@@ -2318,7 +2386,7 @@ export default function HexMapV2Page() {
     // direction unknown for a raw level without the indicator's own higher/lower-is-better
     // hint, so use a neutral sequential ramp (light -> dark blue) rather than guessing red/green.
     return lerp3([219, 234, 254], [30, 64, 175], t);
-  }, [nfhs6DistrictMap, nfhs6StateMap, nfhs6Area, nfhs6Field, nfhs6Domain, resolveNfhs6]);
+  }, [nfhs6DistrictMap, nfhs6StateMap, nfhs6Area, nfhs6Field, nfhs6Domain, resolveNfhs6, nfhs6Indicator, getAreaValue]);
 
   useEffect(() => {
     if (!timelapsePlaying) return;
