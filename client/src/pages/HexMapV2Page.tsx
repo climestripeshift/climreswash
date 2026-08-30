@@ -1001,6 +1001,9 @@ function HexInfoPanel({ props, ranking, confidence, villages, villagesLoading, o
     districts: Array<{ state: string; district: string; matched_factors: boolean;
       factors: Record<string, number> | null;
       indicators: Record<string, { label: string; nfhs6: number; nfhs5: number; delta: number; improved: boolean; small_sample: boolean }> }>;
+    states: Array<{ state: string;
+      indicators: Record<string, { label: string; nfhs6: number; nfhs5: number; delta: number; improved: boolean; small_sample: boolean;
+        nfhs6_urban: number | null; nfhs6_rural: number | null }> }>;
     correlations: Array<{ indicator: string; field: string; factor: string; r: number; n: number }>;
   }>({
     queryKey: ["nfhs6-district-trends"],
@@ -1131,9 +1134,10 @@ function HexInfoPanel({ props, ranking, confidence, villages, villagesLoading, o
                   (d) => norm(d.district) === norm(props.district_name) && norm(d.state) === norm(props.state)
                 );
                 if (!rec) return <div className="mt-1 text-[10px] text-muted-foreground italic">No NFHS-6 district compendium matched for {props.district_name} — likely a genuinely new district with no predecessor (Telangana's Hanumakonda/Mulugu, Haryana's Charkhi Dadri, Tamil Nadu's Tenkasi, Delhi's Shahdara) or Mumbai/Mahe, which this platform's boundaries can't currently place correctly.</div>;
-                const rows = Object.values(rec.indicators).filter((i) => !i.small_sample);
-                const topMovers = [...rows].sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta)).slice(0, 15);
-                const improvedCount = rows.filter((i) => i.improved).length;
+                const stateRec = nfhs6Q.data.states.find((s) => norm(s.state) === norm(props.state));
+                const rows = Object.entries(rec.indicators).filter(([, i]) => !i.small_sample);
+                const topMovers = [...rows].sort((a, b) => Math.abs(b[1].delta) - Math.abs(a[1].delta)).slice(0, 15);
+                const improvedCount = rows.filter(([, i]) => i.improved).length;
                 return (
                   <div className="mt-1 space-y-1 pl-1 border-l border-border/30 text-[10px]">
                     <div className="flex justify-between">
@@ -1143,16 +1147,26 @@ function HexInfoPanel({ props, ranking, confidence, villages, villagesLoading, o
                     {!rec.matched_factors && (
                       <p className="text-amber-500 italic">Terrain/hazard correlation unavailable — district name didn't match this platform's hex boundaries.</p>
                     )}
-                    <p className="text-muted-foreground italic pt-0.5">Top 15 movers, NFHS-5 (2019-21) → NFHS-6 (2023-24):</p>
+                    <p className="text-muted-foreground italic pt-0.5">Top 15 movers, NFHS-5 (2019-21) → NFHS-6 (2023-24) — district is Total only (NFHS-6 doesn't estimate rural/urban at district level); {props.state}'s statewide 2023-24 Urban/Rural split shown where available:</p>
                     <div className="max-h-64 overflow-y-auto space-y-1 pr-1">
-                      {topMovers.map((ind, i) => (
-                        <div key={i} className="flex justify-between gap-2">
-                          <span className="text-muted-foreground leading-tight">{ind.label.replace(/\s*\(%\)\s*$/, "")}</span>
-                          <span className={`font-medium shrink-0 ${ind.improved ? "text-emerald-400" : "text-red-400"}`}>
-                            {ind.nfhs5}→{ind.nfhs6} ({ind.delta > 0 ? "+" : ""}{ind.delta})
-                          </span>
-                        </div>
-                      ))}
+                      {topMovers.map(([num, ind], i) => {
+                        const st = stateRec?.indicators[num];
+                        return (
+                          <div key={i} className="pb-0.5">
+                            <div className="flex justify-between gap-2">
+                              <span className="text-muted-foreground leading-tight">{ind.label.replace(/\s*\(%\)\s*$/, "")}</span>
+                              <span className={`font-medium shrink-0 ${ind.improved ? "text-emerald-400" : "text-red-400"}`}>
+                                {ind.nfhs5}→{ind.nfhs6} ({ind.delta > 0 ? "+" : ""}{ind.delta})
+                              </span>
+                            </div>
+                            {st && (st.nfhs6_urban != null || st.nfhs6_rural != null) && (
+                              <div className="text-[9px] text-muted-foreground/70 text-right">
+                                state 2023-24 — urban {st.nfhs6_urban ?? "—"} · rural {st.nfhs6_rural ?? "—"}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                     <p className="text-[9px] text-muted-foreground italic pt-0.5">
                       NFHS-6 (2023-24) vs NFHS-5 (2019-21) State/District Fact Sheet Compendiums, IIPS/MoHFW. Sanitation, cooking fuel, handwashing and anaemia aren't published in NFHS-6 — not shown here, not a gap in this parse.

@@ -318,6 +318,34 @@ def main():
         for s, d in sorted(unmatched):
             print(f"    {s} / {d}")
 
+    # ── State-level rows, WITH the urban/rural split district tables don't have.
+    # NFHS-6 doesn't produce district-level rural/urban estimates at all (stated
+    # in the compendiums' own methodology note) -- this is the only granularity
+    # finer than "Total" this dataset actually offers, and until now the parser
+    # extracted it and then discarded it. NFHS-5's own urban/rural split isn't on
+    # this table (only its Total, for the trend comparison), so nfhs5_urban/rural
+    # stay unavailable -- a source limitation, not something this script can add.
+    by_state = defaultdict(list)
+    for r in nfhs["state_rows"]:
+        by_state[r["state"]].append(r)
+    states_out = []
+    for state, rows in by_state.items():
+        indicators = {}
+        for r in rows:
+            if r["nfhs6"] is None or r["nfhs5"] is None:
+                continue
+            delta = round(r["nfhs6"] - r["nfhs5"], 2)
+            hib = higher_is_better(r["indicator"])
+            indicators[r["num"]] = {
+                "label": r["indicator"], "nfhs6": r["nfhs6"], "nfhs5": r["nfhs5"],
+                "delta": delta, "improved": (delta > 0) if hib else (delta < 0),
+                "small_sample": r["nfhs6_small_sample"] or r["nfhs5_small_sample"],
+                "nfhs6_urban": r.get("nfhs6_urban"), "nfhs6_rural": r.get("nfhs6_rural"),
+            }
+        states_out.append({"state": state, "indicators": indicators})
+    states_out.sort(key=lambda r: r["state"])
+    print(f"States: {len(states_out)} (with NFHS-6 urban/rural split, 2023-24 only)")
+
     # ── Correlation matrix: every indicator's delta & nfhs6-level vs every
     # factor, computed across all matched, non-small-sample districts. Only
     # pairs with n>=50 and |r|>=0.25 are kept -- with ~600 districts of power
@@ -385,6 +413,7 @@ def main():
             "factors": FACTORS,
         },
         "districts": districts_out,
+        "states": states_out,
         "correlations": top_correlations,
         "top_improvers": top_improvers,
         "top_regressors": top_regressors,

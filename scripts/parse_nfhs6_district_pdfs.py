@@ -97,10 +97,19 @@ def flush(buf_num: int | None, buf_lines: list[str], state: str | None, district
     m = try_resolve(buf_lines, is_state=district is None)
     if not m:
         return  # header-only / continuation without a resolvable value pair -- skip
-    if len(m.groups()) == 5:
-        label, _urban, _rural, tok6, tok5 = m.group(1).strip(), m.group(2), m.group(3), m.group(4), m.group(5)
+    is_state_row = len(m.groups()) == 5
+    if is_state_row:
+        # State pages carry Urban/Rural for the CURRENT round only (2023-24) --
+        # the source table doesn't print NFHS-5's own urban/rural split, only
+        # its Total (for the trend comparison). District pages never have this
+        # split at all -- NFHS-6's own documentation states district-level
+        # rural/urban estimates aren't produced, not a parsing gap.
+        label, urban_tok, rural_tok, tok6, tok5 = m.group(1).strip(), m.group(2), m.group(3), m.group(4), m.group(5)
+        urban_v, urban_small = parse_value(urban_tok)
+        rural_v, rural_small = parse_value(rural_tok)
     else:
         label, tok6, tok5 = m.group(1).strip(), m.group(2), m.group(3)
+        urban_v = rural_v = urban_small = rural_small = None
     v6, small6 = parse_value(tok6)
     v5, small5 = parse_value(tok5)
     unit_m = UNIT_RE.search(label)
@@ -111,6 +120,11 @@ def flush(buf_num: int | None, buf_lines: list[str], state: str | None, district
         "nfhs6": v6, "nfhs6_small_sample": small6,
         "nfhs5": v5, "nfhs5_small_sample": small5,
     }
+    if is_state_row:
+        row["nfhs6_urban"] = urban_v
+        row["nfhs6_urban_small_sample"] = urban_small
+        row["nfhs6_rural"] = rural_v
+        row["nfhs6_rural_small_sample"] = rural_small
     (district_rows if district else state_rows).append(row)
 
 
@@ -219,25 +233,34 @@ def main():
 
     write_csv(OUT_DISTRICT_CSV, district_rows, ["State", "District"])
     print(f"Saved {OUT_DISTRICT_CSV} ({OUT_DISTRICT_CSV.stat().st_size / 1024 / 1024:.1f}MB) -- open directly in Excel/Sheets")
-    write_csv(OUT_STATE_CSV, state_rows, ["State"])
+    write_csv(OUT_STATE_CSV, state_rows, ["State"], with_urban_rural=True)
     print(f"Saved {OUT_STATE_CSV} ({OUT_STATE_CSV.stat().st_size / 1024:.0f}KB)")
 
 
-def write_csv(path: Path, rows: list, id_cols: list[str]):
+def write_csv(path: Path, rows: list, id_cols: list[str], with_urban_rural: bool = False):
     """id_cols is ["State", "District"] for district rows, ["State"] for state rows
-    (district is always None there, so no District column)."""
+    (district is always None there, so no District column). with_urban_rural adds
+    the NFHS-6 Urban/Rural columns -- state rows only; district tables don't carry
+    this split at all (NFHS-6's own documentation: not produced at district level)."""
     id_keys = [c.lower() for c in id_cols]
+    extra_cols = ["NFHS 6 Urban", "NFHS 6 Rural"] if with_urban_rural else []
     with open(path, "w", newline="") as f:
         w = csv.writer(f)
         w.writerow(id_cols + ["Indicator No.", "Indicator", "Unit",
-                               "NFHS 6", "NFHS 6 Small Sample", "NFHS 5", "NFHS 5 Small Sample", "Delta (6-5)"])
+                               "NFHS 6", "NFHS 6 Small Sample"] + extra_cols +
+                    ["NFHS 5", "NFHS 5 Small Sample", "Delta (6-5)"])
         for r in rows:
             delta = round(r["nfhs6"] - r["nfhs5"], 2) if r["nfhs6"] is not None and r["nfhs5"] is not None else ""
+            extra_vals = [
+                r.get("nfhs6_urban") if r.get("nfhs6_urban") is not None else "",
+                r.get("nfhs6_rural") if r.get("nfhs6_rural") is not None else "",
+            ] if with_urban_rural else []
             w.writerow(
                 [r[k] for k in id_keys] + [
                     r["num"], r["indicator"], r["unit"] or "",
                     r["nfhs6"] if r["nfhs6"] is not None else "",
                     "Y" if r["nfhs6_small_sample"] else "",
+                ] + extra_vals + [
                     r["nfhs5"] if r["nfhs5"] is not None else "",
                     "Y" if r["nfhs5_small_sample"] else "",
                     delta,
