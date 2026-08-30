@@ -1003,7 +1003,8 @@ function HexInfoPanel({ props, ranking, confidence, villages, villagesLoading, o
       indicators: Record<string, { label: string; nfhs6: number; nfhs5: number; delta: number; improved: boolean; small_sample: boolean }> }>;
     states: Array<{ state: string;
       indicators: Record<string, { label: string; nfhs6: number; nfhs5: number; delta: number; improved: boolean; small_sample: boolean;
-        nfhs6_urban: number | null; nfhs6_rural: number | null }> }>;
+        nfhs6_urban: number | null; nfhs6_rural: number | null;
+        nfhs5_urban: number | null; nfhs5_rural: number | null }> }>;
     correlations: Array<{ indicator: string; field: string; factor: string; r: number; n: number }>;
   }>({
     queryKey: ["nfhs6-district-trends"],
@@ -1147,7 +1148,7 @@ function HexInfoPanel({ props, ranking, confidence, villages, villagesLoading, o
                     {!rec.matched_factors && (
                       <p className="text-amber-500 italic">Terrain/hazard correlation unavailable — district name didn't match this platform's hex boundaries.</p>
                     )}
-                    <p className="text-muted-foreground italic pt-0.5">Top 15 movers, NFHS-5 (2019-21) → NFHS-6 (2023-24) — district is Total only (NFHS-6 doesn't estimate rural/urban at district level); {props.state}'s statewide 2023-24 Urban/Rural split shown where available:</p>
+                    <p className="text-muted-foreground italic pt-0.5">Top 15 movers, NFHS-5 (2019-21) → NFHS-6 (2023-24) — district is Total only (NFHS-6 doesn't estimate rural/urban at district level); {props.state}'s statewide Urban/Rural split shown where available:</p>
                     <div className="max-h-64 overflow-y-auto space-y-1 pr-1">
                       {topMovers.map(([num, ind], i) => {
                         const st = stateRec?.indicators[num];
@@ -1161,7 +1162,12 @@ function HexInfoPanel({ props, ranking, confidence, villages, villagesLoading, o
                             </div>
                             {st && (st.nfhs6_urban != null || st.nfhs6_rural != null) && (
                               <div className="text-[9px] text-muted-foreground/70 text-right">
-                                state 2023-24 — urban {st.nfhs6_urban ?? "—"} · rural {st.nfhs6_rural ?? "—"}
+                                2023-24 — urban {st.nfhs6_urban ?? "—"} · rural {st.nfhs6_rural ?? "—"}
+                              </div>
+                            )}
+                            {st && (st.nfhs5_urban != null || st.nfhs5_rural != null) && (
+                              <div className="text-[9px] text-muted-foreground/70 text-right">
+                                2019-21 — urban {st.nfhs5_urban ?? "—"} · rural {st.nfhs5_rural ?? "—"}
                               </div>
                             )}
                           </div>
@@ -1169,7 +1175,7 @@ function HexInfoPanel({ props, ranking, confidence, villages, villagesLoading, o
                       })}
                     </div>
                     <p className="text-[9px] text-muted-foreground italic pt-0.5">
-                      NFHS-6 (2023-24) vs NFHS-5 (2019-21) State/District Fact Sheet Compendiums, IIPS/MoHFW. Sanitation, cooking fuel, handwashing and anaemia aren't published in NFHS-6 — not shown here, not a gap in this parse.
+                      NFHS-6 (2023-24) vs NFHS-5 (2019-21) State/District Fact Sheet Compendiums, IIPS/MoHFW. NFHS-5 urban/rural via pratapvardhan/NFHS-5 (CC-BY 4.0), itself sourced from the official NFHS-5 state fact sheets. Sanitation, cooking fuel, handwashing and anaemia aren't published in NFHS-6 — not shown here, not a gap in this parse.
                     </p>
                   </div>
                 );

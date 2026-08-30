@@ -25,9 +25,11 @@ set; the platform's existing wash_sanitation_pct etc. (NFHS-5) stay as-is.
 
 Run: python scripts/compute_nfhs6_district_trends.py
 """
+import csv
 import difflib
 import json
 import math
+import re
 from collections import defaultdict
 from pathlib import Path
 
@@ -321,14 +323,52 @@ def main():
     # ── State-level rows, WITH the urban/rural split district tables don't have.
     # NFHS-6 doesn't produce district-level rural/urban estimates at all (stated
     # in the compendiums' own methodology note) -- this is the only granularity
-    # finer than "Total" this dataset actually offers, and until now the parser
-    # extracted it and then discarded it. NFHS-5's own urban/rural split isn't on
-    # this table (only its Total, for the trend comparison), so nfhs5_urban/rural
-    # stay unavailable -- a source limitation, not something this script can add.
+    # finer than "Total" this dataset actually offers. The NFHS-6 compendium's own
+    # state table gives NFHS-6's urban/rural (current round) but only NFHS-5's
+    # Total (for the trend comparison) -- NFHS-5's OWN urban/rural split isn't on
+    # that table at all. Filled in from a second, independent source instead:
+    # data/raw/nfhs5/nfhs5_states_urban_rural.csv (pratapvardhan/NFHS-5 on GitHub,
+    # CC-BY 4.0, itself parsed from the official NFHS-5 state fact sheets at
+    # rchiips.org) -- joined by normalized indicator text since the two sources
+    # use different indicator numbering/order. Exact match first, then substring
+    # containment (my own state-row labels can be truncated mid-sentence by a
+    # page-wrap quirk in the source PDF's 4-column state layout -- see
+    # parse_nfhs6_district_pdfs.py -- so a truncated label vs. the fuller NFHS-5
+    # wording needs substring, not just exact-normalized, matching).
+    def norm_ind(s: str) -> str:
+        s = re.sub(r"\d+", "", s.lower())
+        return re.sub(r"\s+", " ", re.sub(r"[^a-z ]", " ", s)).strip()
+
+    nfhs5_ur_path = ROOT / "data/raw/nfhs5/nfhs5_states_urban_rural.csv"
+    nfhs5_ur_by_state = defaultdict(dict)  # state -> {norm_label: (urban, rural)}
+    if nfhs5_ur_path.exists():
+        with open(nfhs5_ur_path, newline="") as f:
+            for row in csv.DictReader(f):
+                try:
+                    u, r5 = float(row["nfhs5_urban"]), float(row["nfhs5_rural"])
+                except (ValueError, KeyError):
+                    continue
+                nfhs5_ur_by_state[row["state"]][norm_ind(row["indicator"])] = (u, r5)
+        print(f"NFHS-5 urban/rural source loaded: {len(nfhs5_ur_by_state)} states")
+
+    def find_nfhs5_ur(state: str, label: str):
+        pool = nfhs5_ur_by_state.get(state)
+        if not pool:
+            return None, None
+        target = norm_ind(label)
+        if target in pool:
+            return pool[target]
+        if len(target) > 15:
+            for k, v in pool.items():
+                if target in k or k in target:
+                    return v
+        return None, None
+
     by_state = defaultdict(list)
     for r in nfhs["state_rows"]:
         by_state[r["state"]].append(r)
     states_out = []
+    n_nfhs5_ur_matched = 0
     for state, rows in by_state.items():
         indicators = {}
         for r in rows:
@@ -336,15 +376,20 @@ def main():
                 continue
             delta = round(r["nfhs6"] - r["nfhs5"], 2)
             hib = higher_is_better(r["indicator"])
+            nfhs5_urban, nfhs5_rural = find_nfhs5_ur(state, r["indicator"])
+            if nfhs5_urban is not None:
+                n_nfhs5_ur_matched += 1
             indicators[r["num"]] = {
                 "label": r["indicator"], "nfhs6": r["nfhs6"], "nfhs5": r["nfhs5"],
                 "delta": delta, "improved": (delta > 0) if hib else (delta < 0),
                 "small_sample": r["nfhs6_small_sample"] or r["nfhs5_small_sample"],
                 "nfhs6_urban": r.get("nfhs6_urban"), "nfhs6_rural": r.get("nfhs6_rural"),
+                "nfhs5_urban": nfhs5_urban, "nfhs5_rural": nfhs5_rural,
             }
         states_out.append({"state": state, "indicators": indicators})
     states_out.sort(key=lambda r: r["state"])
-    print(f"States: {len(states_out)} (with NFHS-6 urban/rural split, 2023-24 only)")
+    print(f"States: {len(states_out)}  urban/rural: NFHS-6 always present, "
+          f"NFHS-5 matched for {n_nfhs5_ur_matched} state-indicator pairs")
 
     # ── Correlation matrix: every indicator's delta & nfhs6-level vs every
     # factor, computed across all matched, non-small-sample districts. Only
