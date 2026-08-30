@@ -627,7 +627,7 @@ function FilterSidebar({
   nfhs6Indicator, onNfhs6IndicatorChange,
   nfhs6Field, onNfhs6FieldChange,
   nfhs6Search, onNfhs6SearchChange,
-  nfhs6FilteredIndicators, nfhs6TotalIndicators,
+  nfhs6FilteredIndicators, nfhs6TotalIndicators, nfhs6PopStats,
 }: {
   collapsed: boolean; onToggle: () => void;
   attr: string; onAttrChange: (k: string) => void;
@@ -646,6 +646,7 @@ function FilterSidebar({
   nfhs6Field: "delta" | "nfhs6" | "nfhs5"; onNfhs6FieldChange: (f: "delta" | "nfhs6" | "nfhs5") => void;
   nfhs6Search: string; onNfhs6SearchChange: (s: string) => void;
   nfhs6FilteredIndicators: { num: number; label: string }[]; nfhs6TotalIndicators: number;
+  nfhs6PopStats: { improvedPop: number; worsenedPop: number; total: number; improvedPct: number; worsenedPct: number } | null;
 }) {
   const [openCats, setOpenCats] = useState<Record<string, boolean>>({ overview: true });
 
@@ -749,6 +750,22 @@ function FilterSidebar({
               </button>
             ))}
           </div>
+          {nfhs6PopStats && (
+            <div className="mb-2 rounded-md bg-muted/40 px-2 py-1.5">
+              <div className="flex justify-between text-[9px] text-muted-foreground mb-1">
+                <span>{(nfhs6PopStats.total / 1e6).toFixed(0)}M people, matched districts</span>
+                <span>by population</span>
+              </div>
+              <div className="h-2 w-full rounded-sm overflow-hidden flex">
+                <div className="h-full bg-emerald-500" style={{ width: `${nfhs6PopStats.improvedPct}%` }} title={`${nfhs6PopStats.improvedPct}% improved`} />
+                <div className="h-full bg-red-500" style={{ width: `${nfhs6PopStats.worsenedPct}%` }} title={`${nfhs6PopStats.worsenedPct}% worsened`} />
+              </div>
+              <div className="flex justify-between text-[9px] mt-1">
+                <span className="text-emerald-400 font-semibold">{nfhs6PopStats.improvedPct}% improved ({(nfhs6PopStats.improvedPop / 1e6).toFixed(0)}M)</span>
+                <span className="text-red-400 font-semibold">{nfhs6PopStats.worsenedPct}% worsened ({(nfhs6PopStats.worsenedPop / 1e6).toFixed(0)}M)</span>
+              </div>
+            </div>
+          )}
           <input
             type="text" value={nfhs6Search} onChange={(e) => onNfhs6SearchChange(e.target.value)}
             placeholder={`Search ${nfhs6TotalIndicators || 93} indicators…`}
@@ -2129,6 +2146,28 @@ export default function HexMapV2Page() {
 
   const nfhs6SelectedLabel = nfhs6IndicatorList.find((i) => i.num === nfhs6Indicator)?.label ?? "";
 
+  // Population-weighted improved/worsened: the sidebar's district COUNT
+  // ("46/85 districts improved") treats a 50,000-person district the same as a
+  // 20-million-person one. This answers "how many actual people" instead --
+  // sum district population by improved/worsened, not district count.
+  const nfhs6PopStats = useMemo(() => {
+    if (nfhs6Field !== "delta") return null;
+    let improvedPop = 0, worsenedPop = 0;
+    for (const d of nfhs6Q.data?.districts ?? []) {
+      const ind = d.indicators[String(nfhs6Indicator)];
+      const pop = d.factors?.population;
+      if (!ind || ind.small_sample || !pop) continue;
+      if (ind.improved) improvedPop += pop; else worsenedPop += pop;
+    }
+    const total = improvedPop + worsenedPop;
+    if (!total) return null;
+    return {
+      improvedPop, worsenedPop, total,
+      improvedPct: Math.round((improvedPop / total) * 100),
+      worsenedPct: Math.round((worsenedPop / total) * 100),
+    };
+  }, [nfhs6Q.data, nfhs6Indicator, nfhs6Field]);
+
   // Green = improved (delta) or the "good" end of the range (level); red = the
   // opposite. For delta this uses the server-computed `improved` flag (direction-
   // aware per indicator -- "higher is better" for some, "lower is better" for
@@ -2403,6 +2442,7 @@ export default function HexMapV2Page() {
         nfhs6Field={nfhs6Field} onNfhs6FieldChange={setNfhs6Field}
         nfhs6Search={nfhs6Search} onNfhs6SearchChange={setNfhs6Search}
         nfhs6FilteredIndicators={nfhs6FilteredIndicators} nfhs6TotalIndicators={nfhs6IndicatorList.length}
+        nfhs6PopStats={nfhs6PopStats}
         matchCount={(() => {
           if (!crossFilters.length || !features.length) return features.length;
           return features.filter((f: any) => crossFilters.every((cf) => {
