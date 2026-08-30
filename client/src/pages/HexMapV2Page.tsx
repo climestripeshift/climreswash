@@ -626,6 +626,7 @@ function FilterSidebar({
   nfhs6Loading, nfhs6NDistricts,
   nfhs6Indicator, onNfhs6IndicatorChange,
   nfhs6Field, onNfhs6FieldChange,
+  nfhs6Area, onNfhs6AreaChange,
   nfhs6Search, onNfhs6SearchChange,
   nfhs6FilteredIndicators, nfhs6TotalIndicators, nfhs6PopStats,
 }: {
@@ -644,6 +645,7 @@ function FilterSidebar({
   nfhs6Loading: boolean; nfhs6NDistricts: number;
   nfhs6Indicator: number; onNfhs6IndicatorChange: (n: number) => void;
   nfhs6Field: "delta" | "nfhs6" | "nfhs5"; onNfhs6FieldChange: (f: "delta" | "nfhs6" | "nfhs5") => void;
+  nfhs6Area: "total" | "urban" | "rural"; onNfhs6AreaChange: (a: "total" | "urban" | "rural") => void;
   nfhs6Search: string; onNfhs6SearchChange: (s: string) => void;
   nfhs6FilteredIndicators: { num: number; label: string }[]; nfhs6TotalIndicators: number;
   nfhs6PopStats: { improvedPop: number; worsenedPop: number; total: number; improvedPct: number; worsenedPct: number } | null;
@@ -740,7 +742,17 @@ function FilterSidebar({
               ? <span className="text-[9px] text-muted-foreground">loading…</span>
               : <span className="text-[9px] text-muted-foreground">{nfhs6NDistricts} districts</span>}
           </div>
-          <div className="grid grid-cols-3 gap-1 mb-2">
+          <div className="grid grid-cols-3 gap-1 mb-1.5">
+            {([["total", "Total"], ["urban", "Urban"], ["rural", "Rural"]] as const).map(([k, l]) => (
+              <button key={k} onClick={() => onNfhs6AreaChange(k)}
+                className={`px-1.5 py-1 rounded text-[10px] font-semibold transition-colors ${
+                  nfhs6Area === k ? "bg-indigo-600 text-white" : "bg-muted/60 text-muted-foreground hover:bg-muted"
+                }`}>
+                {l}
+              </button>
+            ))}
+          </div>
+          <div className="grid grid-cols-3 gap-1 mb-1">
             {([["delta", "Change"], ["nfhs6", "2023-24"], ["nfhs5", "2019-21"]] as const).map(([k, l]) => (
               <button key={k} onClick={() => onNfhs6FieldChange(k)}
                 className={`px-1.5 py-1 rounded text-[10px] font-semibold transition-colors ${
@@ -750,6 +762,11 @@ function FilterSidebar({
               </button>
             ))}
           </div>
+          {nfhs6Area !== "total" && (
+            <p className="text-[9px] text-amber-500 mb-2 leading-tight">
+              ⚠ {nfhs6Area === "urban" ? "Urban" : "Rural"} is state-level only (NFHS doesn't split rural/urban by district) — every district in a state shows the same color.
+            </p>
+          )}
           {nfhs6PopStats && (
             <div className="mb-2 rounded-md bg-muted/40 px-2 py-1.5">
               <div className="flex justify-between text-[9px] text-muted-foreground mb-1">
@@ -1479,12 +1496,14 @@ const LAYER_DIRECTION: Record<string, "good" | "bad"> = {
   hist_temp_trend: "bad", hist_rainfall_cv: "bad",
 };
 
-function Legend({ attr, timelapseYear, nfhs6Label, nfhs6Field }: { attr: string; timelapseYear?: number | null; nfhs6Label?: string; nfhs6Field?: "delta" | "nfhs6" | "nfhs5" }) {
+function Legend({ attr, timelapseYear, nfhs6Label, nfhs6Field, nfhs6Area }: { attr: string; timelapseYear?: number | null; nfhs6Label?: string; nfhs6Field?: "delta" | "nfhs6" | "nfhs5"; nfhs6Area?: "total" | "urban" | "rural" }) {
   if (attr === "nfhs6") {
     const isDelta = nfhs6Field === "delta";
+    const areaLabel = nfhs6Area === "urban" ? "Urban" : nfhs6Area === "rural" ? "Rural" : "Total";
+    const grain = nfhs6Area === "total" ? "district" : "state";
     return (
       <div className="bg-background/90 backdrop-blur border border-border/40 rounded-lg p-2.5 shadow-lg w-52">
-        <p className="text-[10px] font-semibold mb-1.5 leading-tight">🏥 {nfhs6Label}</p>
+        <p className="text-[10px] font-semibold mb-1.5 leading-tight">🏥 {nfhs6Label} <span className="text-indigo-400">({areaLabel})</span></p>
         {isDelta ? (
           <>
             <div className="h-2.5 w-full rounded-sm mb-1" style={{ background: "linear-gradient(to right, #ef4444, #fee2e2, #d1fae5, #10b981)" }} />
@@ -1496,7 +1515,7 @@ function Legend({ attr, timelapseYear, nfhs6Label, nfhs6Field }: { attr: string;
             <div className="flex justify-between text-[9px] text-muted-foreground"><span>Low</span><span>High</span></div>
           </>
         )}
-        <p className="text-[9px] text-muted-foreground italic mt-1">Gray = district not matched. {nfhs6Field === "nfhs6" ? "2023-24 level" : nfhs6Field === "nfhs5" ? "2019-21 level" : "Change, NFHS-5→6"}.</p>
+        <p className="text-[9px] text-muted-foreground italic mt-1">Gray = {grain} not matched. {nfhs6Field === "nfhs6" ? "2023-24 level" : nfhs6Field === "nfhs5" ? "2019-21 level" : "Change, NFHS-5→6"} — colored by {grain}.</p>
       </div>
     );
   }
@@ -2101,14 +2120,23 @@ export default function HexMapV2Page() {
   const [corrPanelOpen, setCorrPanelOpen] = useState(false);
   const [nfhs6Indicator, setNfhs6Indicator] = useState(68); // "Children under 5 who are stunted"
   const [nfhs6Field, setNfhs6Field] = useState<"delta" | "nfhs6" | "nfhs5">("delta");
+  // "total" = district-level (697 districts, the normal view). "urban"/"rural" =
+  // STATE-level (35 states) -- NFHS doesn't produce a rural/urban split at
+  // district granularity at all, so this necessarily colors whole states flat,
+  // not the district-by-district pattern Total shows. Not a bug -- it's the real
+  // resolution the source data has for this split.
+  const [nfhs6Area, setNfhs6Area] = useState<"total" | "urban" | "rural">("total");
   const [nfhs6Search, setNfhs6Search] = useState("");
 
   type Nfhs6Indicator = { label: string; nfhs6: number; nfhs5: number; delta: number; improved: boolean; small_sample: boolean };
   type Nfhs6District = { state: string; district: string; matched_factors: boolean;
     factors: Record<string, number> | null; indicators: Record<string, Nfhs6Indicator> };
+  type Nfhs6StateInd = Nfhs6Indicator & { nfhs6_urban: number | null; nfhs6_rural: number | null; nfhs5_urban: number | null; nfhs5_rural: number | null };
+  type Nfhs6StateRec = { state: string; indicators: Record<string, Nfhs6StateInd> };
   const nfhs6Q = useQuery<{
     meta: { n_districts: number; n_matched: number; n_indicators: number };
     districts: Nfhs6District[];
+    states: Nfhs6StateRec[];
     correlations: Array<{ indicator: string; field: string; factor: string; r: number; n: number }>;
   }>({
     queryKey: ["nfhs6-district-trends"],
@@ -2124,6 +2152,29 @@ export default function HexMapV2Page() {
     for (const d of nfhs6Q.data?.districts ?? []) m.set(`${nfhs6Norm(d.state)}|${nfhs6Norm(d.district)}`, d);
     return m;
   }, [nfhs6Q.data]);
+
+  // normalized state name -> that state's full record (for the Urban/Rural views)
+  const nfhs6StateMap = useMemo(() => {
+    const m = new Map<string, Nfhs6StateRec>();
+    for (const s of nfhs6Q.data?.states ?? []) m.set(nfhs6Norm(s.state), s);
+    return m;
+  }, [nfhs6Q.data]);
+
+  // For area=urban/rural: {nfhs6, nfhs5, delta, improved} derived from the state
+  // record's urban/rural fields -- "improved" direction reuses the SAME higher-
+  // is-better classification already computed server-side for Total (recovered
+  // from the relationship between its own delta sign and improved flag), applied
+  // to the urban/rural-specific delta instead of guessing a fresh direction.
+  const getAreaValue = useCallback((ind: Nfhs6StateInd | Nfhs6Indicator, area: "urban" | "rural") => {
+    const st = ind as Nfhs6StateInd;
+    const v6 = area === "urban" ? st.nfhs6_urban : st.nfhs6_rural;
+    const v5 = area === "urban" ? st.nfhs5_urban : st.nfhs5_rural;
+    if (v6 == null) return null;
+    const higherIsBetter = ind.improved === (ind.delta > 0);
+    const delta = v5 != null ? Math.round((v6 - v5) * 100) / 100 : null;
+    const improved = delta != null ? (higherIsBetter ? delta > 0 : delta < 0) : null;
+    return { nfhs6: v6, nfhs5: v5, delta, improved };
+  }, []);
 
   // Every indicator this dataset has, {num, label} -- consistent numbering across
   // all 697 districts (verified: same 93 indicators, same order, everywhere), so
@@ -2149,29 +2200,43 @@ export default function HexMapV2Page() {
     return nfhs6IndicatorList.filter((i) => i.label.toLowerCase().includes(q));
   }, [nfhs6IndicatorList, nfhs6Search]);
 
-  // p5-p95 domain for the selected indicator+field, across matched non-suppressed
-  // districts -- used to scale color intensity.
+  // Resolves the current indicator+field+area to a plain {nfhs6,nfhs5,delta,improved}
+  // for either a district record (area=total) or a state record (area=urban/rural).
+  // Single source of truth for domain/color/pop-stats so the three can't drift.
+  const resolveNfhs6 = useCallback((rec: Nfhs6District | Nfhs6StateRec | undefined) => {
+    const ind = rec?.indicators[String(nfhs6Indicator)];
+    if (!ind || ind.small_sample) return null;
+    if (nfhs6Area === "total") return ind;
+    return getAreaValue(ind, nfhs6Area);
+  }, [nfhs6Indicator, nfhs6Area, getAreaValue]);
+
+  // p5-p95 domain for the selected indicator+field+area, across matched non-
+  // suppressed records (697 districts for Total, 35 states for Urban/Rural) --
+  // used to scale color intensity.
   const nfhs6Domain = useMemo(() => {
     const vals: number[] = [];
-    for (const d of nfhs6Q.data?.districts ?? []) {
-      const ind = d.indicators[String(nfhs6Indicator)];
-      if (ind && !ind.small_sample) vals.push(ind[nfhs6Field]);
+    const records = nfhs6Area === "total" ? (nfhs6Q.data?.districts ?? []) : (nfhs6Q.data?.states ?? []);
+    for (const d of records) {
+      const v = resolveNfhs6(d as any);
+      if (v && v[nfhs6Field] != null) vals.push(v[nfhs6Field] as number);
     }
     if (!vals.length) return { lo: 0, hi: 1 };
     vals.sort((a, b) => a - b);
     const lo = vals[Math.floor(vals.length * 0.05)];
     const hi = vals[Math.ceil(vals.length * 0.95) - 1] || vals[vals.length - 1];
     return { lo, hi: hi === lo ? lo + 1 : hi };
-  }, [nfhs6Q.data, nfhs6Indicator, nfhs6Field]);
+  }, [nfhs6Q.data, nfhs6Area, nfhs6Field, resolveNfhs6]);
 
   const nfhs6SelectedLabel = nfhs6IndicatorList.find((i) => i.num === nfhs6Indicator)?.label ?? "";
 
-  // Population-weighted improved/worsened: the sidebar's district COUNT
-  // ("46/85 districts improved") treats a 50,000-person district the same as a
-  // 20-million-person one. This answers "how many actual people" instead --
-  // sum district population by improved/worsened, not district count.
+  // Population-weighted improved/worsened -- Total only: it needs district
+  // population (which this platform has); Urban/Rural would need each state's
+  // urban/rural population split specifically, which isn't in this dataset, so
+  // rather than approximate with total state population (overstating either
+  // side depending on how urbanized the state is) this stays Total-only and
+  // says so in the UI.
   const nfhs6PopStats = useMemo(() => {
-    if (nfhs6Field !== "delta") return null;
+    if (nfhs6Field !== "delta" || nfhs6Area !== "total") return null;
     let improvedPop = 0, worsenedPop = 0;
     for (const d of nfhs6Q.data?.districts ?? []) {
       const ind = d.indicators[String(nfhs6Indicator)];
@@ -2186,26 +2251,30 @@ export default function HexMapV2Page() {
       improvedPct: Math.round((improvedPop / total) * 100),
       worsenedPct: Math.round((worsenedPop / total) * 100),
     };
-  }, [nfhs6Q.data, nfhs6Indicator, nfhs6Field]);
+  }, [nfhs6Q.data, nfhs6Indicator, nfhs6Field, nfhs6Area]);
 
   // Green = improved (delta) or the "good" end of the range (level); red = the
   // opposite. For delta this uses the server-computed `improved` flag (direction-
   // aware per indicator -- "higher is better" for some, "lower is better" for
-  // most), not a raw sign check.
+  // most), not a raw sign check. Total colors by district; Urban/Rural colors by
+  // the hex's STATE instead (every hex in a state gets the same color), since
+  // that split doesn't exist at district resolution.
   const nfhs6ColorFn = useCallback((props: any) => {
-    const rec = nfhs6DistrictMap.get(`${nfhs6Norm(props.state)}|${nfhs6Norm(props.district_name)}`);
-    const ind = rec?.indicators[String(nfhs6Indicator)];
-    if (!ind || ind.small_sample) return "#e2e8f0";
+    const rec = nfhs6Area === "total"
+      ? nfhs6DistrictMap.get(`${nfhs6Norm(props.state)}|${nfhs6Norm(props.district_name)}`)
+      : nfhs6StateMap.get(nfhs6Norm(props.state));
+    const v = resolveNfhs6(rec);
+    if (!v || v[nfhs6Field] == null) return "#e2e8f0";
     const { lo, hi } = nfhs6Domain;
     if (nfhs6Field === "delta") {
-      const mag = Math.min(1, Math.abs(ind.delta) / Math.max(Math.abs(lo), Math.abs(hi), 0.01));
-      return ind.improved ? lerp3([16, 185, 129], [220, 252, 231], 1 - mag) : lerp3([239, 68, 68], [254, 226, 226], 1 - mag);
+      const mag = Math.min(1, Math.abs(v.delta as number) / Math.max(Math.abs(lo), Math.abs(hi), 0.01));
+      return v.improved ? lerp3([16, 185, 129], [220, 252, 231], 1 - mag) : lerp3([239, 68, 68], [254, 226, 226], 1 - mag);
     }
-    const t = Math.max(0, Math.min(1, (ind[nfhs6Field] - lo) / (hi - lo)));
+    const t = Math.max(0, Math.min(1, ((v[nfhs6Field] as number) - lo) / (hi - lo)));
     // direction unknown for a raw level without the indicator's own higher/lower-is-better
     // hint, so use a neutral sequential ramp (light -> dark blue) rather than guessing red/green.
     return lerp3([219, 234, 254], [30, 64, 175], t);
-  }, [nfhs6DistrictMap, nfhs6Indicator, nfhs6Field, nfhs6Domain]);
+  }, [nfhs6DistrictMap, nfhs6StateMap, nfhs6Area, nfhs6Field, nfhs6Domain, resolveNfhs6]);
 
   useEffect(() => {
     if (!timelapsePlaying) return;
@@ -2460,6 +2529,7 @@ export default function HexMapV2Page() {
         nfhs6Loading={nfhs6Q.isLoading} nfhs6NDistricts={nfhs6Q.data?.meta.n_districts ?? 0}
         nfhs6Indicator={nfhs6Indicator} onNfhs6IndicatorChange={setNfhs6Indicator}
         nfhs6Field={nfhs6Field} onNfhs6FieldChange={setNfhs6Field}
+        nfhs6Area={nfhs6Area} onNfhs6AreaChange={setNfhs6Area}
         nfhs6Search={nfhs6Search} onNfhs6SearchChange={setNfhs6Search}
         nfhs6FilteredIndicators={nfhs6FilteredIndicators} nfhs6TotalIndicators={nfhs6IndicatorList.length}
         nfhs6PopStats={nfhs6PopStats}
@@ -2611,7 +2681,7 @@ export default function HexMapV2Page() {
           {/* Legend */}
           {features.length > 0 && (
             <div className="absolute bottom-8 left-3 z-[800]">
-              <Legend attr={effectiveAttr} timelapseYear={timelapseActive ? timelapseYear : null} nfhs6Label={nfhs6SelectedLabel} nfhs6Field={nfhs6Field} />
+              <Legend attr={effectiveAttr} timelapseYear={timelapseActive ? timelapseYear : null} nfhs6Label={nfhs6SelectedLabel} nfhs6Field={nfhs6Field} nfhs6Area={nfhs6Area} />
             </div>
           )}
 
