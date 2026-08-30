@@ -61,12 +61,22 @@ HIGHER_IS_BETTER_HINTS = [
     "iodized salt",
 ]
 
+# Cardinal-direction words -- see the fuzzy-match guard in match_district()
+# below: raw string similarity treats "North East" and "North West" as nearly
+# identical, so any fuzzy candidate whose direction word(s) don't match the
+# target's gets rejected rather than silently accepted.
+DIRECTION_WORDS = {"north", "south", "east", "west", "central"}
+
 # ── Known official district renamings / NFHS-vs-hex-grid spelling variants that
 # a plain normalized-string match won't catch. (state, nfhs_name) -> hex_name.
 # Built from the actual unmatched set after the first pass (see chat) -- not
 # guessed blind; each is a documented rename or a confirmed spelling variant.
 DISTRICT_ALIASES = {
-    ("Karnataka", "Bengaluru Urban"): "Bangalore Urban",
+    # NOT "Bangalore Urban" -- that string doesn't exist in the hex source
+    # (which only has plain "Bangalore" + "Bangalore Rural"), so this was
+    # silently falling through to fuzzy and landing on "Bangalore Rural"
+    # (0.867 -- Urban's data was overwriting Rural's on the map).
+    ("Karnataka", "Bengaluru Urban"): "Bangalore",
     ("Karnataka", "Bengaluru Rural"): "Bangalore Rural",
     ("Karnataka", "Belagavi"): "Belgaum",
     ("Karnataka", "Ballari"): "Bellary",
@@ -85,23 +95,52 @@ DISTRICT_ALIASES = {
     ("Andhra Pradesh", "Y.S.R."): "Kadapa(YSR)",
     ("Assam", "Marigaon"): "Morigaon",
     ("Assam", "Karbi Anglong"): "Karbi Anglong",
-    ("Bihar", "Purbi Champaran"): "East Champaran",
+    ("Assam", "West Karbi Anglong"): "Karbi Anglong West",
+    # was "East Champaran" -- that string doesn't actually exist in this
+    # platform's district_name field, so this alias was silently falling
+    # through to the FUZZY path anyway (matching "Purba Champaran" at only
+    # 0.759 -- below the 0.85 floor below); pointing it at the real spelling
+    # directly makes it an exact match again regardless of fuzzy cutoff.
+    ("Bihar", "Purbi Champaran"): "Purba Champaran",
     ("Jharkhand", "Purbi Singhbum"): "Purbi Singhbhum",
     ("Chhattisgarh", "Dantewada"): "Dakshin Bastar Dantewada",
+    ("Chhattisgarh", "Korea"): "Koriya",                  # spelling variant in hex source -- NOT "Korba" (a different, adjacent district the old 0.72 fuzzy cutoff was wrongly matching this to)
     ("Madhya Pradesh", "Agar Malwa"): "Agar",             # pre-expansion short name
     ("Maharashtra", "Beed"): "Bid",
+    ("Maharashtra", "Raigad"): "Raigarh",                 # spelling variant in hex source
     ("Odisha", "Sonepur"): "Subarnapur",                  # renamed 2011
+    ("Odisha", "Boudh"): "Baudh",                         # spelling variant in hex source
+    ("Odisha", "Deogarh"): "Debagarh",                    # spelling variant in hex source
     ("Punjab", "Sri Muktsar Sahib"): "Muktsar",           # honorific added later
+    ("Puducherry", "Pondicherry"): "Puducherry",          # old name, still what hex source uses
+    ("Rajasthan", "Dholpur"): "Dhaulpur",                 # spelling variant in hex source
     ("Tamil Nadu", "Tuticorin"): "Thoothukkudi",
     ("Telangana", "Bhadradri Kothagudem"): "Bhadradri",
+    ("Telangana", "Jogulamba Gadwal"): "Jogulamba",       # hex source uses the shortened name
     ("Telangana", "Kumuram Bheem Asifabad"): "Komaram Bheem",
     ("Telangana", "Medchal Malkajgiri"): "Medchal",
+    # NOT "Warangal (U)" (Urban) -- the old 0.72 fuzzy cutoff was wrongly
+    # matching "Rural" to "Urban" here since they're both close in edit
+    # distance to "Warangal"; the hex source's actual Rural district is
+    # spelled with the same "(R)" convention as its Urban counterpart.
+    ("Telangana", "Warangal Rural"): "Warangal (R)",
+    ("Tripura", "Sepahijala"): "Sipahijula",              # spelling variant in hex source
     ("Uttar Pradesh", "Amroha"): "Jyotiba Phule Nagar",   # renamed back from J.P. Nagar, 2012
     ("Uttar Pradesh", "Ayodhya"): "Faizabad",             # renamed 2018
+    ("Uttar Pradesh", "Bhadohi"): "Sant Ravidas Nagar (Bhadohi)",
     ("Uttar Pradesh", "Hathras"): "Mahamaya Nagar",       # renamed back, 2012
     ("Uttar Pradesh", "Kasganj"): "Kanshiram Nagar",      # renamed back, 2014
     ("Uttar Pradesh", "Prayagraj"): "Allahabad",          # renamed 2018
+    # Uttarakhand's hex source retains the old undivided name for what's now
+    # NFHS-6's "Pauri Garhwal" -- NOT "Tehri Garhwal" (a different district;
+    # the old 0.72 fuzzy cutoff was wrongly matching these two together).
+    ("Uttarakhand", "Pauri Garhwal"): "Garhwal",
+    ("Jammu and Kashmir", "Poonch"): "Punch",             # spelling variant in hex source
+    ("Jammu and Kashmir", "Shopian"): "Shupiyan",         # spelling variant in hex source
+    ("Jammu and Kashmir", "Budgam"): "Badgam",            # spelling variant in hex source
     ("West Bengal", "Hooghly"): "Hugli",
+    ("West Bengal", "Howrah"): "Haora",
+    ("West Bengal", "Cooch Behar"): "Koch Bihar",
     ("Andaman & Nicobar Islands", "Nicobar"): "Nicobars",
 }
 
@@ -261,9 +300,32 @@ def main():
             if not candidates:
                 continue
             names = [c[0] for c in candidates]
-            best = difflib.get_close_matches(norm(target_district), names, n=1, cutoff=0.72)
-            if best:
-                return district_factors[(sn, best[0])], "hex_grid"
+            # cutoff=0.85, not the original 0.72: auditing every match the old
+            # cutoff accepted (see chat) found it was accepting genuinely WRONG
+            # cross-district matches near the low end -- "Korea"->"Korba" (0.80,
+            # two different real Chhattisgarh districts), "Purba Bardhaman"->
+            # "Paschim Barddhaman" (0.727, opposite ends of a since-split
+            # district), "Bhadohi"->"Hardoi" (0.769), "Pauri Garhwal"->"Tehri
+            # Garhwal" (0.769), "Warangal Rural"->"Warangal (U)" (0.769, Rural
+            # silently landing on Urban's data). Every LEGITIMATE match below
+            # 0.85 got promoted to an explicit DISTRICT_ALIASES entry above
+            # instead, so raising this floor only removes the false positives,
+            # not real coverage -- the two ambiguous 1-hex-district-into-2-real-
+            # districts splits (undivided "Karbi Anglong"/"Barddhaman" in the hex
+            # source vs. NFHS-6's separately-reported East/West and Purba/Paschim)
+            # are deliberately left unmatched rather than guessed at either half.
+            # Directional-token guard: even at 0.85+, raw string similarity can't
+            # tell "North East" from "North West" apart (they differ by one
+            # 4-letter word out of a short string) -- caught NCT of Delhi's
+            # "North East"->"North West" and "South East"->"South West" both
+            # matching at 0.900, silently pointing opposite-compass districts at
+            # each other's data. Ask for a few candidates and skip any whose
+            # cardinal-direction words don't exactly match the target's.
+            for best in difflib.get_close_matches(norm(target_district), names, n=3, cutoff=0.85):
+                target_dirs = set(norm(target_district).split()) & DIRECTION_WORDS
+                cand_dirs = set(best.split()) & DIRECTION_WORDS
+                if target_dirs == cand_dirs:
+                    return district_factors[(sn, best)], "hex_grid"
         # census-2011 boundary fallback -- exact name match only (these are all
         # well-known, unambiguous names -- Chennai, Kolkata, Mumbai, Daman, Mahe,
         # NCT Delhi's sub-districts -- fuzzy matching isn't needed and would risk
@@ -275,9 +337,18 @@ def main():
         return None, None
 
     # ── Build per-district indicator trend rows ──────────────────────────────
+    # Group by NORMALIZED state, not the raw string: the same "&"-vs-"and" PDF
+    # text-extraction quirk noted above (NFHS_TO_HEX_STATES_NORM) also hits
+    # district_rows directly for Andaman & Nicobar -- without this, "South
+    # Andaman" under "Andaman & Nicobar Islands" and under "Andaman and
+    # Nicobar Islands" were two separate by_district groups, producing a
+    # literal duplicate "South Andaman" entry in districts_out.
     by_district = defaultdict(list)
+    state_canon: dict[str, str] = {}
     for r in nfhs["district_rows"]:
-        by_district[(r["state"], r["district"])].append(r)
+        sn = norm(r["state"])
+        canon_state = state_canon.setdefault(sn, r["state"])
+        by_district[(canon_state, r["district"])].append(r)
 
     unmatched = []
     census_matched = []
@@ -299,8 +370,29 @@ def main():
                 "delta": delta, "improved": (delta > 0) if hib else (delta < 0),
                 "small_sample": r["nfhs6_small_sample"] or r["nfhs5_small_sample"],
             }
+        # Use the hex grid's OWN spelling for "district" whenever we matched one --
+        # not the NFHS PDF's spelling. The frontend joins districts_out to a hex's
+        # props.district_name by exact normalized string (HexMapV2Page.tsx's
+        # nfhs6DistrictMap / HexInfoPanel), so any district where the two sources
+        # disagree (old Census-2011-era names like "Belgaum"/"Bijapur"/"Gulbarga"/
+        # "Mysore"/"Tumkur"/"Bellary"/"Shimoga" vs. NFHS-6's renamed "Belagavi"/
+        # "Vijayapura"/"Kalaburagi"/"Mysuru"/"Tumakuru"/"Ballari"/"Shivamogga", or
+        # simple transliteration drift like "Ahmadnagar" vs "Ahmednagar") was
+        # matching for factors/correlation (matched_factors=True) but PERMANENTLY
+        # failing the frontend's map-color join -- 131 districts, ~2,349 hexes,
+        # grey on every indicator regardless of which one is selected. factors
+        # (when present) always carries the hex grid's exact district_name
+        # (built from h.get("district_name") above), so reusing it here makes the
+        # two joins use the same string. Census-2011-fallback matches keep the
+        # census name (Chennai, Kolkata, ...) -- those hexes genuinely have no
+        # district_name at all, so no district-name string would let them join;
+        # matched_factors still correctly flags them for the correlation matrix.
+        # Unmatched districts keep the raw NFHS spelling, purely so the "why
+        # didn't this match" printout below is legible.
+        canonical_district = factors["district"] if factors else district
         districts_out.append({
-            "state": state, "district": district,
+            "state": state, "district": canonical_district,
+            "nfhs_district": district,
             "matched_factors": factors is not None,
             "factor_source": source,
             "factors": factors,
