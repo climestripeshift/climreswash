@@ -19,6 +19,7 @@ ROOT         = Path(__file__).resolve().parent.parent
 HEX_FILE     = ROOT / "client/public/data/india_hex_grid.geojson"
 DISTRICTS    = ROOT / "client/public/data/india.json"
 SOIL_SAND    = ROOT / "client/public/data/hex_soil_sand.json"
+HEX_PROPS    = ROOT / "client/public/data/india_hex_props.json"
 
 
 def main():
@@ -99,11 +100,77 @@ def main():
               f"(run scripts/fetch_soilgrids_sand.py first for real data)")
         hexes["real_sand_pct"] = None
 
+    # 3c. Load real per-hex slope + distance-to-water (compute_slope_water.py --
+    # WIRING FIX, see chat: that script only ever wrote india_hex_props.json,
+    # while this script reads hexes exclusively from india_hex_grid.geojson, so
+    # its real slope_deg/dist_water_m never reached compute_hex_risk() -- every
+    # hex nationwide was silently using the coarse elevation-bucket estimate
+    # (capped at 25 deg) regardless of whether compute_slope_water.py had been
+    # run. Merged here the same way real_sand_pct is above: by h3_id, from
+    # india_hex_props.json (the one file that script writes to), not by
+    # re-deriving it from the geojson.
+    print("Loading real slope + distance-to-water (compute_slope_water.py)...")
+    if HEX_PROPS.exists():
+        props_raw = json.loads(HEX_PROPS.read_text())
+        slope_map = {p["h3_id"]: p.get("slope_deg") for p in props_raw if p.get("slope_deg") is not None}
+        distw_map = {p["h3_id"]: p.get("dist_water_m") for p in props_raw if p.get("dist_water_m") is not None}
+        hexes["slope_deg"] = hexes["h3_id"].map(slope_map)
+        hexes["dist_water_m"] = hexes["h3_id"].map(distw_map)
+        n_real_slope = hexes["slope_deg"].notna().sum()
+        print(f"  {n_real_slope}/{len(hexes)} hexes have real slope/dist-water data "
+              f"({100*n_real_slope/len(hexes):.1f}%) -- rest fall back to the elevation-bucket estimate")
+    else:
+        print(f"  {HEX_PROPS.name} not found -- all hexes fall back to the elevation-bucket estimate "
+              f"(run scripts/compute_slope_water.py first for real data)")
+        hexes["slope_deg"] = None
+        hexes["dist_water_m"] = None
+
     # 4. Estimate distance to coast (rough: hexes near sea level + near edges)
     print("Estimating coastal proximity...")
     centroids = hexes.geometry.centroid
     hex_lats = [c.y for c in centroids]
     hex_lons = [c.x for c in centroids]
+
+    # 4b. SCOPED REVERT for dist_water_m near the coast (see chat). Root cause:
+    # the hex grid (build_hex_grid.py) is generated only within India's LAND
+    # district-polygon union -- no hex was ever created over open ocean, so
+    # "nearest water hex" can never find the sea, only inland lakes/rivers/
+    # reservoirs. Confirmed systemic on 6 real coastal cities (Chennai, Vizag,
+    # Mumbai, Kochi, Puri, Paradip): all showed dist_water_m of 18-54km against
+    # a true ocean distance of 0-3km.
+    #
+    # NOT a blanket revert: checked genuinely inland hexes first (Bhopal,
+    # Indore, Nagpur, Gwalior, Bikaner, Amravati, Sagar) -- the OLD heuristic
+    # (a flat elevation-bucket guess, capped at 5000m everywhere, everywhere)
+    # differs from the real value by 10-100x there too, but the REAL value is
+    # the credible one (Bikaner/Thar desert: old=3.2km flat guess, new=340km,
+    # and 340km is right -- it's a real desert). Blanket-reverting would have
+    # thrown away a genuine improvement for arid/interior India to fix a
+    # coastal-only problem.
+    #
+    # Scope: only override dist_water_m where estimate_coast_dist() recognizes
+    # the hex as being inside a coastal geographic zone at all (it returns the
+    # literal sentinel 1e6 for "no coastal formula applies," so this is a
+    # clean binary gate, not a fuzzy threshold). Known limitation carried over
+    # from that function: its low-elevation override can false-positive on the
+    # genuinely-inland-but-flat Gangetic plain -- an acceptable failure mode
+    # here specifically, since it only means those hexes ALSO get the old
+    # (already-mediocre-everywhere) heuristic rather than the real-but-untested
+    # inland value, not a new error.
+    print("Reverting dist_water_m to the old heuristic for coastal-zone hexes only...")
+    from risk.hex_risk import estimate_coast_dist, estimate_dist_water
+    n_reverted = 0
+    dist_water_col = hexes["dist_water_m"].tolist()
+    for i, row in enumerate(hexes.itertuples()):
+        elev = float(getattr(row, "elevation_mean", 200) or 200)
+        cd = estimate_coast_dist(hex_lats[i], hex_lons[i], elev)
+        if cd < 1e6:
+            lu = str(getattr(row, "land_use", "crop") or "crop")
+            dist_water_col[i] = estimate_dist_water(lu, elev)
+            n_reverted += 1
+    hexes["dist_water_m"] = dist_water_col
+    print(f"  {n_reverted}/{len(hexes)} hexes reverted to the old dist_water_m heuristic "
+          f"(coastal zone) -- slope_deg and inland dist_water_m are unaffected")
 
     # 4. Compute per-hex risk: ALL 10 hazard types
     print("Computing per-hex risk scores (10 hazard channels)...")

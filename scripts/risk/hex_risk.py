@@ -224,13 +224,66 @@ def compute_hex_risk(row, lat: float, lon: float, wash_by_state: dict, state_ac:
     cyc_r = compute_risk(cyc_haz, exposure_10, fs, ac * AC_EFFECTIVENESS["cyclone"])
 
     # ── 4. Drought ──
+    # BUG FIX (severity/probability audit, see chat): severity used to be
+    # max(ndvi_based, drought_days-derived) and THEN drought_days was reused
+    # again as occurrence in _occ_and_chronic() below -- the same frequency
+    # signal counted twice, multiplicatively, in what's supposed to be two
+    # independent terms (severity given occurrence, and probability of
+    # occurrence). Severity now comes from the NDVI proxy alone; occurrence
+    # carries the frequency signal, once.
+    #
+    # KNOWN, DELIBERATE REGRESSION this reintroduces -- read before shipping:
+    # the drought_days-derived floor this removes was added in e1a8bb3 ("Fix
+    # drought risk underestimation in irrigated arid zones") specifically
+    # because the NDVI proxy alone was badly wrong for irrigated cropland in
+    # the Thar belt and Marathwada -- green center-pivot fields read as
+    # "not drought" by NDVI despite chronic underlying aridity. That commit's
+    # own before/after numbers (avg district drought_risk): Barmer 1.73 →
+    # 9.86, Jodhpur 0.78 → 8.74, Nagaur 0.37 → 6.88, Jaisalmer 4.75 → 8.70,
+    # Latur 0.00 → 2.37. Removing the floor moves those numbers back toward
+    # the LOW (pre-fix, documented-wrong) end -- see the verification numbers
+    # below for exactly how far. This wasn't in your list of 5 bugs, so I
+    # implemented the fix exactly as specified rather than silently keep the
+    # floor under a different mechanism -- but you should decide this one
+    # with the real numbers in hand, not by trusting doc-comment prose (mine
+    # or the original commit's).
+    # BUG FIX: spi_proxy compares each hex's ABSOLUTE current-season NDVI to
+    # one flat national threshold (0.4) -- not a departure from that hex's
+    # own normal. Real SPI is a standardized anomaly (z-score against a
+    # location's own long-run distribution); this proxy has no "own normal"
+    # to compare against, so naturally low-NDVI land cover (Thar barren/
+    # scrub, Deccan dry grassland) reads as chronic severe drought from its
+    # baseline alone, every year, anomaly or not -- not fixable by
+    # reweighting or re-centering without inventing numbers this platform
+    # doesn't have. NO PER-HEX NDVI BASELINE EXISTS to compute a real z-score
+    # from: fetch_ndvi.py pulls a single Aug-Sep 2023 MODIS composite per
+    # hex, not a multi-year time series, so there's no real per-hex mean/std
+    # to standardize against. Faking one (e.g. assuming a distribution) would
+    # produce a more confident-LOOKING number that's no more accurate than
+    # this one, so I have not done that.
+    #
+    # What would actually fix this: either (a) a multi-year, season-matched
+    # per-hex NDVI time series (e.g. re-run fetch_ndvi.py's MODIS query
+    # across the same Aug-Sep window for ~5-10 years, then store per-hex
+    # mean+std) to compute a genuine z-score, or (b) bypass vegetation
+    # entirely and compute real SPI from gridded rainfall (IMD 0.25° gridded
+    # daily rainfall, or CHIRPS) -- which is what SPI is actually defined on,
+    # and has no land-cover confound at all. (b) is the more standard fix if
+    # you want to source it before the demo; (a) is closer to what's already
+    # wired up (same MODIS endpoint, just called repeatedly).
+    #
+    # Interim mitigation only (not a real fix, see above): cap how much
+    # confidence this proxy alone can claim -- 7.0 rather than the full 0-10
+    # scale, since a top-of-scale "catastrophic" reading shouldn't be
+    # assertable from land-cover baseline alone with no real anomaly signal
+    # behind it. This is a blunt cap, not a correction -- it does not
+    # specifically discount naturally-arid land types differently from
+    # anything else; it just stops the least-trustworthy signal here from
+    # claiming the most extreme scores.
     spi_proxy = (ndvi - 0.4) * 3
     if sand_pct > 50:
         spi_proxy -= 0.5
-    drought_sev_ndvi = drought_score(spi_proxy)
-    drought_freq_val = min(1.0, max(0.0, drought_days / 365.0)) if drought_days > 0 else 0.0
-    drought_sev_freq = min(10.0, drought_freq_val * 15.0)
-    drought_sev = max(drought_sev_ndvi, drought_sev_freq)
+    drought_sev = min(7.0, drought_score(spi_proxy))
     drought_occ, drought_cf, drought_haz = _occ_and_chronic("drought", drought_days, drought_sev)
     drought_sens_base = 0.5 + 0.3 * (1 - ndvi) + 0.2 * (sand_pct / 100)
     drought_sens = min(1.0, drought_sens_base * (1 + GW_WEIGHT * gw_stress))

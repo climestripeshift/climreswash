@@ -140,8 +140,17 @@ def cyclone_score(
     rain_band_sc = pluvial_flood_score(rainfall_24h_mm, sand_pct, built_pct, slope_deg) * rain_band_factor
 
     # Coastal surge
+    # BUG FIX: 0.013 produced 22-29m surge at a routine severe-cyclone wind
+    # speed (150 km/h) -- 2-3x the worst real-world reference (Bhola 1970,
+    # ~10m, the deadliest storm surge on record; Amphan 2020 near the
+    # Sundarbans at comparable wind speed, ~4-5m observed). Recalibrated so
+    # 150 km/h at bay_factor=1.3 lands at ~5m (Amphan-comparable), reserving
+    # a higher ceiling (~14m at bay_factor=1.3) for a hypothetical 250 km/h
+    # storm -- above every recorded Bay of Bengal cyclone, appropriately,
+    # since 250 km/h sustained wind is itself far beyond anything observed
+    # there.
     wind_ms = wind_max_kmh / 3.6
-    surge_height = 0.013 * wind_ms ** 2 * bay_factor
+    surge_height = 0.0022 * wind_ms ** 2 * bay_factor
     proximity = math.exp(-dist_coast_m / 10000)
     elev_protection = max(0.0, 1 - elev_m / max(surge_height, 0.01))
     coastal_sc = min(10.0, surge_height * 2 * proximity * elev_protection)
@@ -172,13 +181,25 @@ def flood_sensitivity(
     built_pct: float,
     dist_water_m: float,
 ) -> float:
-    """§7 — Flood terrain sensitivity. Output 0–1."""
-    return (
-        0.3 * (1 - slope_deg / 30)
+    """§7 — Flood terrain sensitivity. Output 0–1.
+
+    BUG FIX: the slope term used to go negative for slope_deg > 30 (Western
+    Ghats escarpments, Uttarakhand hill hexes routinely exceed 30 degrees
+    from H3-neighbor elevation differences) -- a negative term inside a sum
+    that's supposed to land in [0,1] silently UNDERSTATED flood sensitivity
+    in the steepest terrain, the opposite of physically realistic (steep
+    slopes shed water fast but concentrate it violently downslope -- flash
+    flood territory, not flood-proof territory). Clamped the slope term at
+    its own floor of 0, and the full return value to [0,1] per this
+    function's documented range, so a stacked/rounding edge case elsewhere
+    can't push it out of bounds either."""
+    val = (
+        0.3 * max(0.0, 1 - slope_deg / 30)
         + 0.3 * (1 - sand_pct / 100)
         + 0.2 * (built_pct / 100)
         + 0.2 * math.exp(-dist_water_m / 2000)
     )
+    return max(0.0, min(1.0, val))
 
 
 # ── 9. Heat sensitivity ──────────────────────────────────────────────────────
@@ -227,10 +248,13 @@ def compute_risk(
     cascade_amplifiers: float = 0.0,
 ) -> float:
     """§9–10 — Risk with hazard-intensity AC dampening.
-    At extreme hazard (H≥10), AC effectiveness drops to 33% — catastrophic
-    events overwhelm even good infrastructure. At low hazard (H≤5), AC
-    applies fully. This prevents well-served areas from scoring near-zero
-    during genuine disasters (Mumbai 2005, Kerala 2018)."""
+    At extreme hazard (H≥9.6), AC effectiveness floors at 20% (max(0.2, ...) --
+    DOCSTRING FIX, see chat: this used to say 33%, which the code has never
+    actually done) -- catastrophic events overwhelm even good infrastructure,
+    but some residual adaptive benefit is retained even at extreme hazard
+    rather than going to zero. At low hazard (H≤5), AC applies fully. This
+    prevents well-served areas from scoring near-zero during genuine
+    disasters (Mumbai 2005, Kerala 2018)."""
     ac_dampening = max(0.2, 1 - hazard_score / 12)
     effective_ac = ac * ac_dampening
     risk = (hazard_score * exposure * sensitivity) * (1 - effective_ac) / 10
