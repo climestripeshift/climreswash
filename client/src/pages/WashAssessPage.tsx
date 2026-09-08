@@ -9,6 +9,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SHOW_FUTURE_2050 } from "@/lib/featureFlags";
 import {
   ArrowLeft, Search, Droplets, Trash2, Wind, Thermometer,
   AlertTriangle, CheckCircle, Edit3, Save, X, Info,
@@ -992,8 +993,19 @@ export default function WashAssessPage() {
             </div>
           )}
 
-          {/* 2050 Climate Outlook */}
-          {gap && (
+          {/* 2050 Climate Outlook -- gated behind SHOW_FUTURE_2050 (see chat, Item 1
+              audit): this panel was rendering real future_risk_ssp*_2050 numbers
+              from gap_rankings.json with zero gating, unlike ActionPlanPage's
+              already-correct implementation. Same pattern as GapAnalysisPage's
+              banner: a short notice in place of the panel when the flag is off,
+              not a silent gap in the layout. */}
+          {!SHOW_FUTURE_2050 && gap && (
+            <div className="mb-4 bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-[11px] text-amber-600 dark:text-amber-400">
+              <span className="font-semibold">2050 climate outlook: preliminary, not for planning use.</span> The
+              future-projection pipeline is under revision. Present-day risk data above is validated.
+            </div>
+          )}
+          {SHOW_FUTURE_2050 && gap && (
             <div className="mb-4 bg-card border border-border rounded-xl p-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">

@@ -6,6 +6,7 @@ import {
   Search, ExternalLink, ChevronDown, ChevronUp, ChevronsUpDown,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { SHOW_FUTURE_2050 } from "@/lib/featureFlags";
 import {
   ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, BarChart, Bar, Legend, Cell,
@@ -931,42 +932,58 @@ export default function InsightsPage() {
               ))}
             </div>
 
-            <div className="rounded-xl border border-border bg-card p-4">
-              <h3 className="text-sm font-semibold mb-1">Heat & Wet-Bulb Days — National Average</h3>
-              <p className="text-xs text-muted-foreground mb-4">
-                Wet-bulb days hit <strong className="text-foreground">{future_national.wet_bulb_days.ssp585_2050} d/yr</strong> nationally under SSP5-8.5 by 2050.
-                Flood-disruption days: <strong className="text-foreground">{future_national.flood_days.ssp585_2050} d/yr</strong>. Severe-heat days: <strong className="text-foreground">{future_national.severe_heat.ssp585_2050} d/yr</strong>.
-              </p>
-              <div className="h-60">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={futureBarData} margin={{top:4,right:16,bottom:4,left:0}}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.08} />
-                    <XAxis dataKey="scenario" tick={{fontSize:11,fill:"currentColor",opacity:0.7}} />
-                    <YAxis tick={{fontSize:10,fill:"currentColor",opacity:0.5}} unit=" d" />
-                    <Tooltip formatter={(v:number,name:string) => [`${(v as number).toFixed(1)} d/yr`, name]}
-                      contentStyle={{background:"var(--background)",border:"1px solid var(--border)",borderRadius:"8px",fontSize:"12px"}} />
-                    <Legend wrapperStyle={{fontSize:"12px"}} />
-                    <Bar dataKey="heat" name="Heat Days" fill="#f87171" radius={[3,3,0,0]} />
-                    <Bar dataKey="wetbulb" name="Wet-Bulb Days" fill="#fb923c" radius={[3,3,0,0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+            {/* Chart + stat tiles gated behind SHOW_FUTURE_2050 (see chat, Item 1
+                audit): both read future_national from insights.json with zero
+                gating previously. The two SSP-scenario explainer cards above are
+                general/static text, not future_national-driven, so they stay
+                visible either way. */}
+            {!SHOW_FUTURE_2050 && (
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-[11px] text-amber-600 dark:text-amber-400">
+                <span className="font-semibold">2050 projections: preliminary, not for planning use.</span> The
+                future-projection pipeline is under revision. Present-day national hazard data is validated and
+                shown throughout the other tabs.
               </div>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {[
-                { label:"Flood days 2050", val:`${future_national.flood_days.ssp585_2050} d/yr`, sub:"SSP5-8.5 national avg", color:"text-blue-400 border-blue-500/20 bg-blue-500/5" },
-                { label:"Severe heat 2050", val:`${future_national.severe_heat.ssp585_2050} d/yr`, sub:"SSP5-8.5 national avg", color:"text-red-400 border-red-500/20 bg-red-500/5" },
-                { label:"SSP2 wet-bulb 2050", val:`${future_national.wet_bulb_days.ssp245_2050} d/yr`, sub:"lower-bound scenario", color:"text-yellow-500 border-yellow-500/20 bg-yellow-500/5" },
-                { label:"SSP2 flood 2050", val:`${future_national.flood_days.ssp245_2050 ?? "—"} d/yr`, sub:"SSP2-4.5 2050", color:"text-teal-400 border-teal-500/20 bg-teal-500/5" },
-              ].map(s => (
-                <div key={s.label} className={`rounded-lg border p-3 text-center ${s.color}`}>
-                  <div className="text-xl font-bold">{s.val}</div>
-                  <div className="text-xs font-medium mt-0.5">{s.label}</div>
-                  <div className="text-[10px] text-muted-foreground mt-0.5">{s.sub}</div>
+            )}
+            {SHOW_FUTURE_2050 && (
+              <>
+                <div className="rounded-xl border border-border bg-card p-4">
+                  <h3 className="text-sm font-semibold mb-1">Heat & Wet-Bulb Days — National Average</h3>
+                  <p className="text-xs text-muted-foreground mb-4">
+                    Wet-bulb days hit <strong className="text-foreground">{future_national.wet_bulb_days.ssp585_2050} d/yr</strong> nationally under SSP5-8.5 by 2050.
+                    Flood-disruption days: <strong className="text-foreground">{future_national.flood_days.ssp585_2050} d/yr</strong>. Severe-heat days: <strong className="text-foreground">{future_national.severe_heat.ssp585_2050} d/yr</strong>.
+                  </p>
+                  <div className="h-60">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={futureBarData} margin={{top:4,right:16,bottom:4,left:0}}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.08} />
+                        <XAxis dataKey="scenario" tick={{fontSize:11,fill:"currentColor",opacity:0.7}} />
+                        <YAxis tick={{fontSize:10,fill:"currentColor",opacity:0.5}} unit=" d" />
+                        <Tooltip formatter={(v:number,name:string) => [`${(v as number).toFixed(1)} d/yr`, name]}
+                          contentStyle={{background:"var(--background)",border:"1px solid var(--border)",borderRadius:"8px",fontSize:"12px"}} />
+                        <Legend wrapperStyle={{fontSize:"12px"}} />
+                        <Bar dataKey="heat" name="Heat Days" fill="#f87171" radius={[3,3,0,0]} />
+                        <Bar dataKey="wetbulb" name="Wet-Bulb Days" fill="#fb923c" radius={[3,3,0,0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
-              ))}
-            </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {[
+                    { label:"Flood days 2050", val:`${future_national.flood_days.ssp585_2050} d/yr`, sub:"SSP5-8.5 national avg", color:"text-blue-400 border-blue-500/20 bg-blue-500/5" },
+                    { label:"Severe heat 2050", val:`${future_national.severe_heat.ssp585_2050} d/yr`, sub:"SSP5-8.5 national avg", color:"text-red-400 border-red-500/20 bg-red-500/5" },
+                    { label:"SSP2 wet-bulb 2050", val:`${future_national.wet_bulb_days.ssp245_2050} d/yr`, sub:"lower-bound scenario", color:"text-yellow-500 border-yellow-500/20 bg-yellow-500/5" },
+                    { label:"SSP2 flood 2050", val:`${future_national.flood_days.ssp245_2050 ?? "—"} d/yr`, sub:"SSP2-4.5 2050", color:"text-teal-400 border-teal-500/20 bg-teal-500/5" },
+                  ].map(s => (
+                    <div key={s.label} className={`rounded-lg border p-3 text-center ${s.color}`}>
+                      <div className="text-xl font-bold">{s.val}</div>
+                      <div className="text-xs font-medium mt-0.5">{s.label}</div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5">{s.sub}</div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
 
             <div className="rounded-xl border border-border bg-card p-4">
               <h3 className="text-sm font-semibold mb-1">States: Wet-Bulb Days by 2050 (SSP5-8.5)</h3>

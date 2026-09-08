@@ -11,12 +11,51 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from risk.formulas import adaptive_capacity
+from compute_nfhs6_district_trends import DISTRICT_ALIASES
 
 ROOT      = Path(__file__).resolve().parent.parent
 NFHS_CSV  = ROOT / "data/nfhs5_district_wash.csv"
 HEX_PROPS = ROOT / "client/public/data/india_hex_props.json"
 HEX_GEO   = ROOT / "client/public/data/india_hex_grid.geojson"
 MPI_FILE  = ROOT / "scripts/nfhs5_poverty_mpi.json"
+
+# FIX B (see chat, null-AC audit): this script had its own, separate, cruder
+# district-name matching (plain normalize + a 5-char prefix heuristic) --
+# DISTRICT_ALIASES (compute_nfhs6_district_trends.py) already solved this
+# exact problem for the NFHS-6 pipeline, but was never ported here, so this
+# script kept failing on the same spelling drift a second time (Ahmedabad/
+# Ahmadabad, Y.S.R./Kadapa(YSR), Prayagraj/Allahabad, etc.) -- these are
+# real district-name mismatches, not missing survey data; NFHS-5 has these
+# districts, this script just couldn't find them.
+#
+# Direction note: DISTRICT_ALIASES maps (state, official/NFHS-6 spelling) ->
+# hex-grid spelling. This script needs the reverse -- given the hex's own
+# district_name, find the official spelling to try against the NFHS-5 CSV.
+# The "official" spelling on the NFHS-6 side and the NFHS-5 CSV's own
+# spelling agree for every alias checked here (both are current-day
+# government district names; only this platform's own hex source lags
+# behind), so reusing the same table in reverse is safe, not a guess.
+HEX_TO_OFFICIAL_NAME = {
+    (state, hex_name): official_name
+    for (state, official_name), hex_name in DISTRICT_ALIASES.items()
+}
+
+# Supplementary aliases DISTRICT_ALIASES doesn't have, because NFHS-6's own
+# matching never needed them explicitly -- fuzzy matching there (cutoff 0.85)
+# already covers "Ahmadnagar"/"Ahmednagar" (ratio 0.900) and "Leh(Ladakh)"/
+# "Leh (Ladakh)" (ratio 0.857) without an alias. This script has no fuzzy
+# matching at all, so these need to be explicit here. Confirmed against the
+# real NFHS-5 CSV (data/nfhs5_district_wash.csv): all 7 spellings below exist
+# there exactly.
+SUPPLEMENTARY_ALIASES = {
+    ("Maharashtra", "Ahmadnagar"): "Ahmednagar",
+    ("Ladakh", "Leh(Ladakh)"): "Leh (Ladakh)",
+    ("Uttarakhand", "Hardwar"): "Haridwar",
+    ("West Bengal", "Darjiling"): "Darjeeling",
+    ("Tripura", "Unokoti"): "Unakoti",
+    ("Uttar Pradesh", "Samli"): "Shamli",
+    ("Telangana", "Hydrabad"): "Hyderabad",
+}
 
 
 def normalize(name: str) -> str:
@@ -61,9 +100,18 @@ def main():
         if not district or district == "Unknown":
             continue
 
-        # Try exact, then normalized, then prefix match
+        # Try exact/normalized, then known alias, then prefix match
         norm = normalize(district)
         row = nfhs_by_name.get(norm)
+
+        if not row:
+            # FIX B: known spelling alias (ported from DISTRICT_ALIASES +
+            # SUPPLEMENTARY_ALIASES above) -- tried before the prefix
+            # heuristic since it's a specific, verified correction rather
+            # than a guess.
+            official = HEX_TO_OFFICIAL_NAME.get((state, district)) or SUPPLEMENTARY_ALIASES.get((state, district))
+            if official:
+                row = nfhs_by_name.get(normalize(official))
 
         if not row:
             # Try prefix match (e.g. "Agar" → "Agar Malwa")

@@ -45,6 +45,7 @@ export default function MethodologyPage() {
             {["Framework","Hazards","Exposure","Sensitivity","Adaptive Capacity","Burden Metric","Future Projections","Validation","Data Sources","Limitations"].map((s, i) => (
               <li key={s}><a href={`#s${i+1}`} className="hover:text-foreground">{i+1}. {s}</a></li>
             ))}
+            <li><a href="#s8b" className="hover:text-foreground">8b. Validation &amp; Corrections</a></li>
           </ol>
         </nav>
 
@@ -93,12 +94,12 @@ export default function MethodologyPage() {
 
         <S id="s4" title="4. Sensitivity">
           <P>Terrain-based: slope (real, from H3 neighbour elevation differences), soil type (from land use proxy), built-up percentage, distance to water (haversine to nearest ESA "water" hex). Different sensitivity functions for flood vs heat.</P>
-          <Formula>Flood sensitivity = 0.3×(1−slope/30) + 0.3×(1−sand/100) + 0.2×(built/100) + 0.2×exp(−dist_water/2000)</Formula>
+          <Formula>Flood sensitivity = max(0, 0.3×(1−slope/30)) + 0.3×(1−sand/100) + 0.2×(built/100) + 0.2×exp(−dist_water/2000), clamped to [0,1]</Formula>
           <P>Drought sensitivity amplified by groundwater stress (WRIS Nov 2022 data, 496 districts): districts with depleted aquifers are up to 50% more drought-sensitive.</P>
         </S>
 
         <S id="s5" title="5. Adaptive Capacity">
-          <P>NFHS-5 district-level (707 districts, 2019-21) weighted composite:</P>
+          <P>NFHS-5 district-level (680 of 713 districts matched, 2019-21) weighted composite. The remaining 33 districts (post-2011 splits, unsurveyed union territories) fall back to a real state-level average rather than zero adaptive capacity.</P>
           <Formula>AC = 0.25×toilet + 0.20×water + 0.15×health + 0.10×electricity + 0.15×(1−poverty) + 0.15×literacy</Formula>
           <P>Groundwater penalty reduces AC by up to 20% in depleted-aquifer districts.</P>
           <P><strong>Hazard-specific AC effectiveness:</strong> Infrastructure genuinely mitigates some hazards but not others. Flood AC effectiveness = 1.0 (good sanitation/drainage helps). Heat = 0.4 (toilets don't cool a city). Air pollution = 0.2 (infrastructure barely reduces PM2.5). This prevents high-capacity cities like Delhi from being artificially scored as "safe" for heat/pollution.</P>
@@ -125,17 +126,22 @@ export default function MethodologyPage() {
               <thead><tr className="border-b text-muted-foreground text-left"><th className="py-1 pr-2">Predicted</th><th className="py-1 pr-2">vs Observed</th><th className="py-1 pr-2">r</th><th className="py-1">Direction</th></tr></thead>
               <tbody>
                 {[
-                  ["Flood risk","Diarrhoea prevalence","−0.06","Investigating"],
-                  ["Drought risk","Child stunting","+0.05","✅ Correct"],
-                  ["Heat risk","Anaemia","+0.08","✅ Correct"],
-                  ["Overall risk","Vaccination","−0.13","✅ Correct (negative)"],
+                  ["Flood risk","Diarrhoea prevalence","+0.02","✅ Correct (weak)"],
+                  ["Drought risk","Child stunting","+0.04","✅ Correct (weak)"],
+                  ["Heat risk","Anaemia","+0.41","✅ Correct (strongest signal)"],
+                  ["Overall risk","Vaccination","−0.15","✅ Correct (negative)"],
                 ].map(([p,o,r,d]) => (
                   <tr key={p} className="border-b border-border/20"><td className="py-1 pr-2">{p}</td><td className="py-1 pr-2">{o}</td><td className="py-1 pr-2 font-mono">{r}</td><td className="py-1">{d}</td></tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <P>Correlations are weak (0.05–0.13) — <strong>expected and honest</strong>. Health outcomes are driven primarily by WASH infrastructure quality (income, governance), not climate frequency alone. This is precisely why ClimResWASH exists: climate risk ALONE doesn't predict health outcomes, but climate × WASH interaction does. The model correctly predicts WHERE climate events happen; WASH data predicts WHERE coping is weak.</P>
+          <P>Correlations range from weak (flood, drought) to moderate (heat: r=0.41) — <strong>expected and honest</strong>. Health outcomes are driven primarily by WASH infrastructure quality (income, governance), not climate frequency alone. This is precisely why ClimResWASH exists: climate risk ALONE doesn't predict health outcomes, but climate × WASH interaction does. The model correctly predicts WHERE climate events happen; WASH data predicts WHERE coping is weak.</P>
+        </S>
+
+        <S id="s8b" title="8b. Validation & Corrections">
+          <P>A September 2026 audit of the hazard-probability × severity calculation found and fixed six issues in <code>formulas.py</code>/<code>hex_risk.py</code>: a drought double-counting bug, an unclamped severity cap on the NDVI-based drought proxy, a flood-sensitivity formula that went negative on steep terrain, a cyclone storm-surge coefficient producing 2–3× real-world surge heights, an incorrect AC-floor docstring (20%, not 33%), and a water-proximity signal for heat/wet-bulb that missed real rivers. Two data-wiring gaps were also found and fixed: real slope/distance-to-water computations existed but never reached the district join, and no hex grid existed over open ocean, so coastal distance-to-water silently fell back to inland lakes. Separately, ~831 hexes had <code>adaptive_capacity: null</code> from unmatched NFHS-5 district names (spelling variants, post-2011 district splits) — these now fall back to the real state-level average rather than being silently treated as zero capacity.</P>
+          <P>All fixes were verified against a national re-run: 12,508 of 12,705 hexes had at least one risk field change, with every non-risk field byte-identical to the pre-fix baseline. Re-running validation (above) against the corrected data confirms the model held — direction correct on all matched pairs, and the heat↔anaemia correlation (the strongest in the model) improved slightly, from r=0.41 to r=0.43.</P>
         </S>
 
         <S id="s9" title="9. Data Sources">
@@ -176,7 +182,8 @@ export default function MethodologyPage() {
             <li><strong>Point estimates, not distributions:</strong> Risk scores are single values, not probability distributions. Value-at-Risk (VaR) approach is a future extension.</li>
             <li><strong>Correlation ≠ causation:</strong> Validation correlations show geographic pattern agreement, not causal pathways.</li>
             <li><strong>30-year climate record:</strong> Limits estimation of very rare events (return periods beyond 50 years).</li>
-            <li><strong>Air pollution is mock:</strong> PM2.5 values use geographic patterns until real WashU/ACAG satellite rasters are ingested.</li>
+            <li><strong>Drought severity proxy:</strong> Derived from a single-season 2023 NDVI composite compared to one flat national threshold, not a per-hex multi-year baseline — real anomaly-based SPI is a planned upgrade.</li>
+            <li><strong>Slope resolution:</strong> Computed from H3-neighbour elevation differences (~15km regional relief), not local terrain — meaningfully orders steep vs flat regions but under-resolves fine-grained slope within a hex.</li>
           </ul>
           <P><em>Stating limitations builds trust. This model is a decision-support tool — it complements, not replaces, ground-level assessment.</em></P>
         </S>

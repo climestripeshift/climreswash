@@ -72,23 +72,29 @@ export default function GapAnalysisPage() {
           <span className="text-sm font-semibold">Gap Analysis — Bridge the Gap</span>
           <div className="h-3 w-px bg-border/50" />
 
-          {/* Scenario selector */}
-          <div className="flex items-center gap-1">
-            {[["ssp245", "SSP2-4.5"], ["ssp585", "SSP5-8.5"]].map(([k, l]) => (
-              <button key={k} onClick={() => setScenario(k)}
-                className={`px-2 py-1 rounded text-[10px] font-semibold ${scenario === k ? "bg-red-600 text-white" : "bg-muted/60 text-muted-foreground"}`}>
-                {l}
-              </button>
-            ))}
-          </div>
-          <div className="flex items-center gap-1">
-            {["2030", "2050"].map((h) => (
-              <button key={h} onClick={() => setHorizon(h)}
-                className={`px-2 py-1 rounded text-[10px] font-semibold ${horizon === h ? "bg-red-600 text-white" : "bg-muted/60 text-muted-foreground"}`}>
-                {h}
-              </button>
-            ))}
-          </div>
+          {/* Scenario/horizon selectors -- gated, see chat Item 1 audit: these
+              drove the table below regardless of the banner's own warning.
+              No point offering scenario/horizon controls for data that isn't shown. */}
+          {SHOW_FUTURE_2050 && (
+            <>
+              <div className="flex items-center gap-1">
+                {[["ssp245", "SSP2-4.5"], ["ssp585", "SSP5-8.5"]].map(([k, l]) => (
+                  <button key={k} onClick={() => setScenario(k)}
+                    className={`px-2 py-1 rounded text-[10px] font-semibold ${scenario === k ? "bg-red-600 text-white" : "bg-muted/60 text-muted-foreground"}`}>
+                    {l}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-1">
+                {["2030", "2050"].map((h) => (
+                  <button key={h} onClick={() => setHorizon(h)}
+                    className={`px-2 py-1 rounded text-[10px] font-semibold ${horizon === h ? "bg-red-600 text-white" : "bg-muted/60 text-muted-foreground"}`}>
+                    {h}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
 
           <div className="flex-1" />
           <Link href="/grid" className="text-[11px] text-emerald-400 hover:text-emerald-300 font-semibold">← Hex Grid</Link>
@@ -96,8 +102,16 @@ export default function GapAnalysisPage() {
         </div>
       </header>
 
-      {/* Headlines */}
-      {headlines && (
+      {/* Headlines + table -- gated behind SHOW_FUTURE_2050 (see chat, Item 1
+          audit): the banner above already said "not for planning use," but this
+          whole section rendered the real future_risk/capacity_gap/people_at_risk_2050
+          data underneath it regardless -- the page was contradicting its own
+          banner. There's no meaningful "present-only" version of a page whose
+          entire purpose is present-vs-future gap comparison, so when the flag
+          is off this replaces the section with a single explanatory state
+          rather than a partially-present-data table that would misrepresent
+          what a capacity "gap" even means without the future side. */}
+      {SHOW_FUTURE_2050 && headlines && (
         <div className="px-4 py-3 border-b border-border/30 flex items-center gap-6 bg-red-500/5">
           <div className="text-center">
             <div className="text-2xl font-black text-red-400">{headlines.critical}</div>
@@ -118,63 +132,74 @@ export default function GapAnalysisPage() {
         </div>
       )}
 
-      {/* Table */}
-      <div className="flex-1 overflow-auto">
-        <table className="w-full text-[11px]">
-          <thead className="sticky top-0 bg-background border-b border-border/40 text-muted-foreground">
-            <tr>
-              <th className="w-8 px-2 py-2 text-center">#</th>
-              <th className="px-2 py-2 text-left w-40">District</th>
-              <th className="px-2 py-2 text-left w-32">State</th>
-              <th className="px-2 py-2 text-center w-14">Now</th>
-              <th className="px-2 py-2 text-center w-4">→</th>
-              <th className="px-2 py-2 text-center w-14">{horizon}</th>
-              <th className="px-2 py-2 text-center w-14">Gap</th>
-              <th className="px-2 py-2 text-center w-12">AC</th>
-              <th className="px-2 py-2 text-center w-16">Tier</th>
-              <th className="px-2 py-2 text-center w-16">Hazard</th>
-              <th className="px-2 py-2 text-right w-20">People 2050</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sorted.map((r, i) => {
-              const tier = TIER_COLORS[r.priority_tier] || TIER_COLORS.low;
-              const futRisk = (r as any)[futureKey] ?? r.future_risk_ssp585_2050;
-              const esc = futRisk - r.present_risk;
-              return (
-                <tr key={r.district + r.state} className="border-b border-border/20 hover:bg-muted/20 cursor-pointer"
-                  onClick={() => setExpanded(expanded === i ? null : i)}>
-                  <td className="px-2 py-2 text-center text-muted-foreground">{r.rank}</td>
-                  <td className="px-2 py-2 font-semibold">{r.district}</td>
-                  <td className="px-2 py-2 text-muted-foreground">{r.state}</td>
-                  <td className="px-2 py-2 text-center font-mono">{r.present_risk.toFixed(1)}</td>
-                  <td className="px-2 py-2 text-center">{esc > 0.3 ? "↗️" : esc < -0.3 ? "↘️" : "→"}</td>
-                  <td className="px-2 py-2 text-center font-mono font-bold" style={{ color: futRisk >= 5 ? "#ef4444" : futRisk >= 3 ? "#f59e0b" : "#22c55e" }}>
-                    {futRisk.toFixed(1)}
-                  </td>
-                  <td className="px-2 py-2 text-center font-mono font-bold text-red-400">{r.capacity_gap.toFixed(1)}</td>
-                  <td className="px-2 py-2 text-center font-mono">{r.present_ac.toFixed(2)}</td>
-                  <td className="px-2 py-2 text-center">
-                    <Badge variant="outline" className={`text-[8px] h-4 ${tier.text} ${tier.border} ${tier.bg}`}>
-                      {r.priority_tier}
-                    </Badge>
-                  </td>
-                  <td className="px-2 py-2 text-center capitalize text-[10px]">{r.present_dominant_hazard}</td>
-                  <td className="px-2 py-2 text-right font-mono">{fmt(r.people_at_risk_2050)}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-
-        {!showAll && data.length > 30 && (
-          <div className="text-center py-3">
-            <button onClick={() => setShowAll(true)} className="text-xs text-muted-foreground hover:text-foreground">
-              Show all {data.length} districts
-            </button>
+      {!SHOW_FUTURE_2050 && (
+        <div className="flex-1 flex items-center justify-center px-4">
+          <div className="max-w-md text-center text-sm text-muted-foreground">
+            <AlertTriangle className="h-6 w-6 text-amber-400 mx-auto mb-3" />
+            <p className="font-semibold text-foreground mb-1">Gap analysis unavailable</p>
+            <p>This view compares present-day risk against 2050 climate projections, which are currently under revision (CMIP6 pipeline recalibration in progress). District-level present-day risk is available on the <Link href="/grid-v2" className="underline">Hex Grid</Link>.</p>
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {SHOW_FUTURE_2050 && (
+        <div className="flex-1 overflow-auto">
+          <table className="w-full text-[11px]">
+            <thead className="sticky top-0 bg-background border-b border-border/40 text-muted-foreground">
+              <tr>
+                <th className="w-8 px-2 py-2 text-center">#</th>
+                <th className="px-2 py-2 text-left w-40">District</th>
+                <th className="px-2 py-2 text-left w-32">State</th>
+                <th className="px-2 py-2 text-center w-14">Now</th>
+                <th className="px-2 py-2 text-center w-4">→</th>
+                <th className="px-2 py-2 text-center w-14">{horizon}</th>
+                <th className="px-2 py-2 text-center w-14">Gap</th>
+                <th className="px-2 py-2 text-center w-12">AC</th>
+                <th className="px-2 py-2 text-center w-16">Tier</th>
+                <th className="px-2 py-2 text-center w-16">Hazard</th>
+                <th className="px-2 py-2 text-right w-20">People 2050</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sorted.map((r, i) => {
+                const tier = TIER_COLORS[r.priority_tier] || TIER_COLORS.low;
+                const futRisk = (r as any)[futureKey] ?? r.future_risk_ssp585_2050;
+                const esc = futRisk - r.present_risk;
+                return (
+                  <tr key={r.district + r.state} className="border-b border-border/20 hover:bg-muted/20 cursor-pointer"
+                    onClick={() => setExpanded(expanded === i ? null : i)}>
+                    <td className="px-2 py-2 text-center text-muted-foreground">{r.rank}</td>
+                    <td className="px-2 py-2 font-semibold">{r.district}</td>
+                    <td className="px-2 py-2 text-muted-foreground">{r.state}</td>
+                    <td className="px-2 py-2 text-center font-mono">{r.present_risk.toFixed(1)}</td>
+                    <td className="px-2 py-2 text-center">{esc > 0.3 ? "↗️" : esc < -0.3 ? "↘️" : "→"}</td>
+                    <td className="px-2 py-2 text-center font-mono font-bold" style={{ color: futRisk >= 5 ? "#ef4444" : futRisk >= 3 ? "#f59e0b" : "#22c55e" }}>
+                      {futRisk.toFixed(1)}
+                    </td>
+                    <td className="px-2 py-2 text-center font-mono font-bold text-red-400">{r.capacity_gap.toFixed(1)}</td>
+                    <td className="px-2 py-2 text-center font-mono">{r.present_ac.toFixed(2)}</td>
+                    <td className="px-2 py-2 text-center">
+                      <Badge variant="outline" className={`text-[8px] h-4 ${tier.text} ${tier.border} ${tier.bg}`}>
+                        {r.priority_tier}
+                      </Badge>
+                    </td>
+                    <td className="px-2 py-2 text-center capitalize text-[10px]">{r.present_dominant_hazard}</td>
+                    <td className="px-2 py-2 text-right font-mono">{fmt(r.people_at_risk_2050)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+
+          {!showAll && data.length > 30 && (
+            <div className="text-center py-3">
+              <button onClick={() => setShowAll(true)} className="text-xs text-muted-foreground hover:text-foreground">
+                Show all {data.length} districts
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -181,14 +181,57 @@ def compute_hex_risk(row, lat: float, lon: float, wash_by_state: dict, state_ac:
     dist_w    = float(row.get("dist_water_m", 0) or 0) or estimate_dist_water(lu, elev)
     dist_coast = estimate_coast_dist(lat, lon, elev)
 
+    # BUG 6 (see chat): heat_sensitivity()/heatwave_score() used dist_w above, which
+    # only finds a hex's nearest "water"-tagged NEIGHBOR HEX -- misses real rivers/
+    # streams too narrow for a 15km-spaced hex centroid to land on. Confirmed on 6
+    # major rivers (Ganga/Varanasi, Godavari/Nashik, Krishna/Vijayawada, Yamuna/Delhi,
+    # Narmada/Jabalpur, Brahmaputra/Guwahati): dist_w read 17-61km when the true
+    # distance is under 10km. dist_to_river_km (real OSM river-line geometry,
+    # fetch_river_distance.py, 100% hex coverage) is the real signal -- wired in HERE
+    # ONLY, for heat_sensitivity/heatwave_score. NOT flood_sensitivity (fs, below,
+    # keeps dist_w unchanged -- explicit instruction) and not landslide/flashflood
+    # sensitivity (out of this fix's scope, still use dist_w).
+    #
+    # FIX (see chat): the min()-with-a-fallback safety net below used to be gated to
+    # coastal hexes only (dist_coast < 1e6), on the reasoning that dist_to_river_km
+    # can be unreliable near the coast when no river is nearby (Kachchh/Rann-of-Kutch:
+    # 45-60km real river distance despite sitting on the coast). But dist_to_river_km
+    # ONLY sees rivers (OSM river-line geometry) -- it has the exact same blind spot
+    # inland for any hex correctly near a LAKE, RESERVOIR, or WETLAND instead (which
+    # dist_w, from the real land_use=="water" hex tagging, DOES catch correctly).
+    # Confirmed: a Kachchh hex with land_use=="water" itself (dist_w=0, i.e. sitting
+    # AT the water) was reading dist_to_river_km=48.5km once the coastal gate excluded
+    # it from the safety net -- same mechanism, just inland. "Prefer whichever real
+    # signal shows closer water" has no reason to be geography-limited, so the gate is
+    # gone -- unconditional now, every hex takes the closer of the two. This is still
+    # NOT a fix for the separate open-ocean dist_w gap for hexes with no real water
+    # feature (river OR lake) nearby at all -- still needs real coastline data.
+    dist_river_km = row.get("dist_to_river_km")
+    dist_river_km = float(dist_river_km) if dist_river_km is not None else 999.0
+    dist_w_heat = min(dist_river_km * 1000, dist_w)
+
     fs = flood_sensitivity(slope, sand_pct, built_pct, dist_w)
-    hs = heat_sensitivity(tree_pct, built_pct, dist_w)
+    hs = heat_sensitivity(tree_pct, built_pct, dist_w_heat)
 
     pop = int(row.get("population", 10000) or 10000)
     exposure_10 = exposure_score(max(1, pop), 9, 8, 25)
     state_name = str(row.get("state", "") or "")
-    ac_base = float(row.get("adaptive_capacity", 0) or 0)
-    if ac_base < 0.05:
+    # FIX A (see chat, null-AC audit): a JSON null becomes float('nan') once this
+    # reaches a pandas/geopandas DataFrame (adaptive_capacity is a float64 column).
+    # `nan or 0` evaluates to nan (nan is truthy), so the old
+    # `float(row.get(...) or 0)` line never actually produced 0 for a missing
+    # value -- it produced nan, and `nan < 0.05` is always False, so the
+    # state-level fallback below silently never fired for any null-AC hex
+    # (831 of them). They fell through to `max(0.1, nan * ...)` = 0.1, the
+    # platform's absolute floor, regardless of their real district. Checking
+    # for missing/NaN explicitly, before the threshold comparison, fixes this
+    # without changing anything for a hex that has a real (even genuinely low)
+    # AC value -- those still go through ac_base normally and only hit the
+    # fallback via the existing <0.05 threshold, unchanged.
+    ac_raw = row.get("adaptive_capacity", 0)
+    ac_missing = ac_raw is None or (isinstance(ac_raw, float) and math.isnan(ac_raw))
+    ac_base = 0.0 if ac_missing else float(ac_raw)
+    if ac_missing or ac_base < 0.05:
         ac_base = state_ac.get(state_name, 0.7)
     gw_stress = float(row.get("gw_stress_score", GW_DEFAULT) or GW_DEFAULT)
     ac = max(0.1, ac_base * (1 - AC_GW_PENALTY * gw_stress))
@@ -206,7 +249,7 @@ def compute_hex_risk(row, lat: float, lon: float, wash_by_state: dict, state_ac:
 
     # ── 2. Heatwave ──
     threshold = 30.0 if elev > 800 else (37.0 if dist_coast < 50000 else 40.0)
-    heat_sev = heatwave_score(44, threshold, 3, built_pct, tree_pct, dist_w)
+    heat_sev = heatwave_score(44, threshold, 3, built_pct, tree_pct, dist_w_heat)
     heat_occ, heat_cf, heat_haz = _occ_and_chronic("heat", heat_days, heat_sev)
     heat_r = compute_risk(heat_haz, exposure_10, hs, ac * AC_EFFECTIVENESS["heat"])
 

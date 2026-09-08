@@ -109,21 +109,34 @@ def main():
     # run. Merged here the same way real_sand_pct is above: by h3_id, from
     # india_hex_props.json (the one file that script writes to), not by
     # re-deriving it from the geojson.
-    print("Loading real slope + distance-to-water (compute_slope_water.py)...")
+    # Also loads dist_to_river_km here -- SAME wiring gap, found while verifying Bug 6
+    # (see chat): fetch_river_distance.py only ever wrote india_hex_props.json too, and
+    # was never merged in here either, so Bug 6's real river-distance signal was
+    # silently falling back to a 999km sentinel for every hex nationwide -- the actual
+    # national run never had real river data despite sample verification (which
+    # manually injected the field) passing clean.
+    print("Loading real slope + distance-to-water (compute_slope_water.py) + "
+          "distance-to-river (fetch_river_distance.py)...")
     if HEX_PROPS.exists():
         props_raw = json.loads(HEX_PROPS.read_text())
         slope_map = {p["h3_id"]: p.get("slope_deg") for p in props_raw if p.get("slope_deg") is not None}
         distw_map = {p["h3_id"]: p.get("dist_water_m") for p in props_raw if p.get("dist_water_m") is not None}
+        distriver_map = {p["h3_id"]: p.get("dist_to_river_km") for p in props_raw if p.get("dist_to_river_km") is not None}
         hexes["slope_deg"] = hexes["h3_id"].map(slope_map)
         hexes["dist_water_m"] = hexes["h3_id"].map(distw_map)
+        hexes["dist_to_river_km"] = hexes["h3_id"].map(distriver_map)
         n_real_slope = hexes["slope_deg"].notna().sum()
+        n_real_river = hexes["dist_to_river_km"].notna().sum()
         print(f"  {n_real_slope}/{len(hexes)} hexes have real slope/dist-water data "
               f"({100*n_real_slope/len(hexes):.1f}%) -- rest fall back to the elevation-bucket estimate")
+        print(f"  {n_real_river}/{len(hexes)} hexes have real dist_to_river_km "
+              f"({100*n_real_river/len(hexes):.1f}%) -- rest fall back to the dist_water_m-only comparison")
     else:
         print(f"  {HEX_PROPS.name} not found -- all hexes fall back to the elevation-bucket estimate "
               f"(run scripts/compute_slope_water.py first for real data)")
         hexes["slope_deg"] = None
         hexes["dist_water_m"] = None
+        hexes["dist_to_river_km"] = None
 
     # 4. Estimate distance to coast (rough: hexes near sea level + near edges)
     print("Estimating coastal proximity...")
