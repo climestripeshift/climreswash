@@ -10,6 +10,23 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import express from "express";
+import { fileURLToPath } from "url";
+
+// Portable module-dir resolution (see chat, production crash-loop fix):
+// import.meta.dirname requires native ESM (Node 20.11+) -- fine under `tsx`
+// in dev, but esbuild's CJS production bundle (dist/index.cjs) leaves
+// import.meta as an EMPTY OBJECT (esbuild's own documented behavior for CJS
+// output -- confirmed directly in the built bundle), so both .dirname AND
+// .url are undefined there, crashing path.resolve() at module load (before
+// any request, hence the immediate healthcheck failures / crash loop).
+// `typeof __dirname` is safe on an undeclared identifier (no ReferenceError)
+// -- CJS (the esbuild bundle) always provides a real __dirname, so this uses
+// that directly there and only falls back to the import.meta.url-derived
+// path in genuine ESM (tsx dev), where import.meta.url is real.
+declare const __dirname: string | undefined;
+const moduleDir = typeof __dirname !== "undefined"
+  ? __dirname
+  : path.dirname(fileURLToPath(import.meta.url));
 
 // Technology technical-drawing uploads. Stored outside client/public and dist -- those
 // are Vite-build artifacts (client/public gets bundled at build time, dist is a
@@ -17,7 +34,7 @@ import express from "express";
 // build effectively vanishes on the next deploy. This directory is served directly by
 // Express (see the /uploads static route below), independent of the build pipeline, so
 // uploads persist across rebuilds/redeploys.
-const UPLOADS_DIR = path.resolve(import.meta.dirname, "..", "uploads", "technology");
+const UPLOADS_DIR = path.resolve(moduleDir, "..", "uploads", "technology");
 fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 
 const diagramUpload = multer({
@@ -47,7 +64,7 @@ export async function registerRoutes(
   // Serve admin-uploaded technology drawings. Registered here (before the dev-mode
   // Vite middleware / prod serveStatic catch-all get attached in server/index.ts) so
   // it takes priority over both.
-  app.use("/uploads", express.static(path.resolve(import.meta.dirname, "..", "uploads")));
+  app.use("/uploads", express.static(path.resolve(moduleDir, "..", "uploads")));
 
   // Country Routes (aggregate level)
   app.get("/api/countries", async (_req, res) => {
