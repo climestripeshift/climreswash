@@ -1,0 +1,39 @@
+{
+  "_comment": "Shared fixtures for the golden parity test between scripts/risk/formulas.py and client/src/lib/simulatorFormulas.ts. See tests/test_golden_hex_risk_parity.py for how these are used.",
+
+  "tier1_vectors": {
+    "_comment": "Hex-independent numeric test vectors for the pure formula functions -- both engines MUST agree on these to floating-point precision (same math, same inputs, no legitimate reason to diverge). This is the real regression gate: run before any change to formulas.py or simulatorFormulas.ts.",
+    "pluvial_flood_score": [
+      [0, 25, 10, 3], [7.5, 50, 20, 5], [30, 20, 70, 0.5], [30, 80, 5, 0.5],
+      [64.5, 30, 40, 2], [124.5, 10, 60, 8], [300, 10, 90, 1], [50, 0, 100, 35]
+    ],
+    "heatwave_score": [
+      [44, 40, 3, 30, 15, 2000], [35, 40, 0, 10, 50, 500], [42, 37, 5, 70, 5, 10000],
+      [50, 30, 10, 90, 0, 50000], [38, 40, 1, 20, 80, 100]
+    ],
+    "drought_score": [-3, -2, -1, -0.5, 0, 1, 3],
+    "wet_bulb_score": [[38, 70], [30, 50], [40, 90], [25, 30], [20, 20]],
+    "exposure_score": [
+      [0, 9, 8, 25], [5000, 9, 8, 25], [50000, 9, 8, 25],
+      [500000, 20, 15, 35], [5000000, 5, 5, 20]
+    ],
+    "flood_sensitivity": [
+      [3, 25, 10, 5000], [35, 25, 10, 5000], [50, 10, 90, 100], [0, 80, 5, 50000]
+    ],
+    "_flood_sensitivity_note": "slope=35 and slope=50 rows are the Bug-3 clamp case (slope>30, must NOT go negative) -- this is exactly the pattern that silently drifted between formulas.py and simulatorFormulas.ts earlier this session before both were fixed.",
+    "heat_sensitivity": [
+      [10, 70, 500], [80, 5, 50000], [0, 100, 0]
+    ],
+    "compute_risk": [
+      [5, 7, 0.5, 0.6], [10, 10, 1, 0.9], [0, 5, 0.5, 0.5], [12, 8, 0.8, 1.0]
+    ],
+    "_compute_risk_note": "hazard=10 and hazard=12 rows exercise the AC-dampening floor (max(0.2, 1-H/12)) -- Bug 5's docstring-vs-code mismatch was here."
+  },
+
+  "tier2_scenario": {
+    "_comment": "Shared 'severe day' weather, applied identically to every hex on both sides for the Tier-2 hex-level comparison. rainfall=50mm and tmax=44C/hot_days=3 match hex_risk.py's own hardcoded reference values for pluvial_flood_score/heatwave_score (see hex_risk.py compute_hex_risk, the flood_sev and heat_sev lines) -- chosen so the comparison isolates real-input resolution (slope/water-distance/sand%/exposure/AC), not different weather assumptions. rh_pct is NOT fixed here -- it's computed per-hex in the Python harness from hex_risk.py's own rh_proxy formula and written into hexes_with_scenario.json so both sides use the identical value.",
+    "rainfall_mm": 50,
+    "tmax_c": 44,
+    "hot_days": 3
+  }
+}

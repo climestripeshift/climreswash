@@ -160,9 +160,15 @@ def _occ_and_chronic(hz_name: str, days: float, severity: float):
     return occurrence, chronic_factor, hazard * chronic_factor
 
 
-def compute_hex_risk(row, lat: float, lon: float, wash_by_state: dict, state_ac: dict) -> dict:
-    """Compute all RISK_COLS fields for one hex. Returns {col: value} plus
-    an internal '_cascade_rule_ids' list for caller-side stats tracking."""
+def resolve_static_hex_inputs(row, lat: float, lon: float, wash_by_state: dict, state_ac: dict) -> dict:
+    """Terrain/land-use/exposure/adaptive-capacity inputs shared by every hazard
+    channel in compute_hex_risk() -- none of this depends on weather. Split out
+    so compute_forecast.py's live 7-day weather-driven scoring can call this
+    exact resolution instead of maintaining its own (drifting) local copies of
+    slope/water-distance/sand%/exposure/AC estimation -- see chat, compute_forecast.py
+    unification. Pure extraction: verified byte-identical compute_hex_risk() output
+    before/after this split.
+    """
     elev = float(row.get("elevation_mean", 200) or 200)
     lu   = str(row.get("land_use", "crop") or "crop")
     ndvi = float(row.get("ndvi_mean", 0.3) or 0.3)
@@ -235,6 +241,27 @@ def compute_hex_risk(row, lat: float, lon: float, wash_by_state: dict, state_ac:
         ac_base = state_ac.get(state_name, 0.7)
     gw_stress = float(row.get("gw_stress_score", GW_DEFAULT) or GW_DEFAULT)
     ac = max(0.1, ac_base * (1 - AC_GW_PENALTY * gw_stress))
+
+    return {
+        "elev": elev, "lu": lu, "ndvi": ndvi,
+        "tree_pct": tree_pct, "built_pct": built_pct, "sand_pct": sand_pct,
+        "slope": slope, "dist_w": dist_w, "dist_w_heat": dist_w_heat,
+        "dist_coast": dist_coast, "exposure_10": exposure_10,
+        "state_name": state_name, "ac": ac, "gw_stress": gw_stress,
+        "fs": fs, "hs": hs,
+    }
+
+
+def compute_hex_risk(row, lat: float, lon: float, wash_by_state: dict, state_ac: dict) -> dict:
+    """Compute all RISK_COLS fields for one hex. Returns {col: value} plus
+    an internal '_cascade_rule_ids' list for caller-side stats tracking."""
+    inp = resolve_static_hex_inputs(row, lat, lon, wash_by_state, state_ac)
+    elev, lu, ndvi = inp["elev"], inp["lu"], inp["ndvi"]
+    tree_pct, built_pct, sand_pct = inp["tree_pct"], inp["built_pct"], inp["sand_pct"]
+    slope, dist_w, dist_w_heat = inp["slope"], inp["dist_w"], inp["dist_w_heat"]
+    dist_coast = inp["dist_coast"]
+    exposure_10, state_name, ac, gw_stress = inp["exposure_10"], inp["state_name"], inp["ac"], inp["gw_stress"]
+    fs, hs = inp["fs"], inp["hs"]
 
     flood_days   = float(row.get("flood_days_per_year", 0) or 0)
     heat_days    = float(row.get("heat_days_per_year", 0) or 0)

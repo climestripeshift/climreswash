@@ -4,7 +4,7 @@
  */
 
 // Land-use params from compute_future_days.py (same defaults used there)
-const LAND_USE_PARAMS: Record<string, { tree_pct: number; built_pct: number; sand_pct: number }> = {
+export const LAND_USE_PARAMS: Record<string, { tree_pct: number; built_pct: number; sand_pct: number }> = {
   tree:     { tree_pct: 75, built_pct: 2,  sand_pct: 20 },
   shrub:    { tree_pct: 30, built_pct: 3,  sand_pct: 35 },
   grass:    { tree_pct: 10, built_pct: 5,  sand_pct: 30 },
@@ -18,9 +18,14 @@ const LAND_USE_PARAMS: Record<string, { tree_pct: number; built_pct: number; san
 };
 const DEFAULT_LU = LAND_USE_PARAMS.crop;
 
-// Defaults for missing hex_props fields (slope_deg, dist_water_m not stored)
-const DEFAULT_SLOPE = 3.0;    // degrees (India mixed-terrain national avg; 1.0 hits drainage floor)
-const DEFAULT_DIST_WATER = 5000; // metres
+// Defaults for missing hex_props fields. NOTE (see chat, Part 2 golden test):
+// slope_deg/dist_water_m/real_sand_pct ARE now stored per-hex (100% coverage
+// since this session's terrain wiring fixes) but reScoreHex() below still
+// never reads them off HexProp -- this comment is stale and the gap is real,
+// not fixed here (Part 2 is test-infrastructure only). The golden test
+// surfaces exactly where this causes reScoreHex to diverge from hex_risk.py.
+export const DEFAULT_SLOPE = 3.0;    // degrees (India mixed-terrain national avg; 1.0 hits drainage floor)
+export const DEFAULT_DIST_WATER = 5000; // metres
 
 // ── 1. Pluvial flood score (§1 — IMD lookup table) ──────────────────────────
 
@@ -28,7 +33,7 @@ const RAIN_TABLE: [number, number][] = [
   [0.0, 0.0], [7.5, 2.0], [35.5, 4.0], [64.5, 6.0], [124.5, 8.0], [244.4, 10.0],
 ];
 
-function rainBase(mm: number): number {
+export function rainBase(mm: number): number {
   if (mm <= 0) return 0;
   if (mm >= RAIN_TABLE[RAIN_TABLE.length - 1][0]) return RAIN_TABLE[RAIN_TABLE.length - 1][1];
   for (let i = 0; i < RAIN_TABLE.length - 1; i++) {
@@ -42,7 +47,7 @@ function rainBase(mm: number): number {
   return 0;
 }
 
-function pluvialFloodScore(mm: number, sand: number, built: number, slope: number): number {
+export function pluvialFloodScore(mm: number, sand: number, built: number, slope: number): number {
   const base = rainBase(mm);
   const infiltration = (sand / 100) * (1 - built / 100);
   const drainage = Math.max(0.3, slope / 5);
@@ -52,7 +57,7 @@ function pluvialFloodScore(mm: number, sand: number, built: number, slope: numbe
 
 // ── 2. Heatwave score (§2) ───────────────────────────────────────────────────
 
-function heatwaveScore(
+export function heatwaveScore(
   tmax: number, threshold: number, days: number,
   built: number, tree: number, distWater: number,
 ): number {
@@ -67,13 +72,13 @@ function heatwaveScore(
 
 // ── 3. Drought score (§3) ────────────────────────────────────────────────────
 
-function droughtScore(spi: number): number {
+export function droughtScore(spi: number): number {
   return Math.max(0, Math.min(10, -spi * 5));
 }
 
 // ── 4. Wet-bulb score (§4 — Stull 2011 approx) ──────────────────────────────
 
-function wetBulbTemp(t: number, rh: number): number {
+export function wetBulbTemp(t: number, rh: number): number {
   return (
     t * Math.atan(0.151977 * Math.sqrt(rh + 8.313659))
     + Math.atan(t + rh)
@@ -83,13 +88,13 @@ function wetBulbTemp(t: number, rh: number): number {
   );
 }
 
-function wetBulbScore(t: number, rh: number): number {
+export function wetBulbScore(t: number, rh: number): number {
   return Math.max(0, Math.min(10, (wetBulbTemp(t, rh) - 28) * 10 / 7));
 }
 
 // ── 5. Exposure score (§6) ───────────────────────────────────────────────────
 
-function exposureScore(pop: number, ch5pct: number, el60pct: number, w1549pct: number): number {
+export function exposureScore(pop: number, ch5pct: number, el60pct: number, w1549pct: number): number {
   if (pop <= 0) return 0;
   const vulnFrac = ch5pct + el60pct + w1549pct * 0.3;
   return Math.min(10, Math.log10(pop) * 2 * (1 + vulnFrac / 100));
@@ -97,7 +102,7 @@ function exposureScore(pop: number, ch5pct: number, el60pct: number, w1549pct: n
 
 // ── 6. Sensitivity functions (§7) ────────────────────────────────────────────
 
-function floodSensitivity(slope: number, sand: number, built: number, distWater: number): number {
+export function floodSensitivity(slope: number, sand: number, built: number, distWater: number): number {
   // BUG FIX (same as formulas.py Bug 3, see chat): slope term used to go
   // negative for slope > 30 -- dormant here too (DEFAULT_SLOPE=3.0 always,
   // never reaches 30), but fixing the formula itself while in this file.
@@ -110,7 +115,7 @@ function floodSensitivity(slope: number, sand: number, built: number, distWater:
   return Math.max(0, Math.min(1, val));
 }
 
-function heatSensitivity(tree: number, built: number, distWater: number): number {
+export function heatSensitivity(tree: number, built: number, distWater: number): number {
   return (
     0.4 * (built / 100)
     + 0.3 * (1 - tree / 100)
@@ -120,7 +125,7 @@ function heatSensitivity(tree: number, built: number, distWater: number): number
 
 // ── 7. Master risk equation (§9–10) ──────────────────────────────────────────
 
-function computeRisk(hazard: number, exposure: number, sensitivity: number, ac: number): number {
+export function computeRisk(hazard: number, exposure: number, sensitivity: number, ac: number): number {
   const acDampening = Math.max(0.2, 1 - hazard / 12);
   const effectiveAc = ac * acDampening;
   const risk = (hazard * exposure * sensitivity) * (1 - effectiveAc) / 10;
@@ -158,23 +163,22 @@ export interface HexProp {
   hex_risk: number;
 }
 
+export interface HexScoreBreakdown {
+  exposure: number; ac: number; treePct: number; sandPct: number; builtPct: number;
+  floodSens: number; heatSens: number; droughtSens: number;
+  floodHazard: number; heatHazard: number; wbHazard: number; droughtHazard: number;
+  floodRisk: number; heatRisk: number; wbRisk: number; droughtRisk: number;
+  passThrough: number; combined: number;
+}
+
 /**
- * Re-score a hex under a user-specified climate scenario.
- * Uses present-day formulas with land-use proxies for missing terrain fields.
- * Hazards NOT controlled by sliders (cyclone, landslide, coldwave) pass through unchanged.
- *
- * `stateAc` is required, not optional (see chat, null-AC audit): 280 hexes have
- * adaptive_capacity === null (districts genuinely absent from NFHS-5). Before
- * this fix, `const ac = hex.adaptive_capacity` read null straight through, and
- * `null * number` evaluates to 0 in JS -- every null-AC hex got treated as
- * having ZERO adaptive capacity, worse than even the pre-fix Python bug's 0.1
- * floor. Confirmed: 28 of the El Nino preset's 32 "flipped to HIGH RISK"
- * districts had 100% null-AC hexes -- an AC artifact, not a drought signal.
- * stateAc comes from client/public/data/state_ac.json, generated by directly
- * calling the same build_wash_state_context() hex_risk.py itself uses --
- * same numbers, not a re-derived approximation.
+ * Per-channel breakdown behind reScoreHex() -- split out (see chat, Part 2
+ * golden test) so a test harness can inspect flood/heat/wetbulb/drought
+ * hazard, sensitivity, exposure, and AC individually against hex_risk.py's
+ * equivalents, instead of only the single blended max() reScoreHex returns.
+ * Pure extraction: reScoreHex()'s return value is unchanged (verified).
  */
-export function reScoreHex(hex: HexProp, inputs: SimInputs, stateAc: Record<string, number>): number {
+export function scoreHexBreakdown(hex: HexProp, inputs: SimInputs, stateAc: Record<string, number>): HexScoreBreakdown {
   const pop = hex.population || 1;
   const lu = LAND_USE_PARAMS[hex.land_use] ?? DEFAULT_LU;
 
@@ -187,7 +191,10 @@ export function reScoreHex(hex: HexProp, inputs: SimInputs, stateAc: Record<stri
   const w1549pct = (hex.pop_women_15_49      / pop) * 100;
   const exp = exposureScore(pop, ch5pct, el60pct, w1549pct);
 
-  // Sensitivity (terrain defaults for missing fields)
+  // Sensitivity (terrain defaults for missing fields -- see chat, DEFAULT_SLOPE/
+  // DEFAULT_DIST_WATER comment above: real slope_deg/dist_water_m exist per-hex
+  // now but are not read here; this is a known, unfixed gap the golden test
+  // surfaces, not something patched in Part 2's scope).
   const floodSens = floodSensitivity(DEFAULT_SLOPE, lu.sand_pct, lu.built_pct, DEFAULT_DIST_WATER);
   const heatSens  = heatSensitivity(treePct, lu.built_pct, DEFAULT_DIST_WATER);
 
@@ -213,12 +220,14 @@ export function reScoreHex(hex: HexProp, inputs: SimInputs, stateAc: Record<stri
   const rainNormal = 5 + hex.ndvi_mean * 50;
   const spiFromRain = Math.max(-3, Math.min(3, (inputs.rainfall_mm / rainNormal - 1) / 0.4));
   const droughtSens = Math.min(1.0, 0.5 + 0.3 * (1 - hex.ndvi_mean) + 0.2 * (lu.sand_pct / 100));
+  const droughtHazard = spiFromRain < 0 ? droughtScore(spiFromRain) : 0;
   const droughtRisk = spiFromRain < 0
-    ? computeRisk(droughtScore(spiFromRain), exp, droughtSens, ac)
+    ? computeRisk(droughtHazard, exp, droughtSens, ac)
     : 0;
 
   // Wet-bulb (uses tmax_c and rh_pct)
-  const wbRisk = computeRisk(wetBulbScore(inputs.tmax_c, inputs.rh_pct), exp, heatSens, ac);
+  const wbHazard = wetBulbScore(inputs.tmax_c, inputs.rh_pct);
+  const wbRisk = computeRisk(wbHazard, exp, heatSens, ac);
 
   // Pass-through: hazards not controlled by sliders
   const passThrough = Math.max(
@@ -229,5 +238,33 @@ export function reScoreHex(hex: HexProp, inputs: SimInputs, stateAc: Record<stri
 
   // Water risk: dominant of flood (high rain) vs drought (low rain) — U-shaped curve
   const waterRisk = Math.max(floodRisk, droughtRisk);
-  return Math.min(10, Math.max(waterRisk, heatRisk, wbRisk, passThrough));
+  const combined = Math.min(10, Math.max(waterRisk, heatRisk, wbRisk, passThrough));
+
+  return {
+    exposure: exp, ac, treePct, sandPct: lu.sand_pct, builtPct: lu.built_pct,
+    floodSens, heatSens, droughtSens,
+    floodHazard, heatHazard, wbHazard, droughtHazard,
+    floodRisk, heatRisk, wbRisk, droughtRisk,
+    passThrough, combined,
+  };
+}
+
+/**
+ * Re-score a hex under a user-specified climate scenario.
+ * Uses present-day formulas with land-use proxies for missing terrain fields.
+ * Hazards NOT controlled by sliders (cyclone, landslide, coldwave) pass through unchanged.
+ *
+ * `stateAc` is required, not optional (see chat, null-AC audit): 280 hexes have
+ * adaptive_capacity === null (districts genuinely absent from NFHS-5). Before
+ * this fix, `const ac = hex.adaptive_capacity` read null straight through, and
+ * `null * number` evaluates to 0 in JS -- every null-AC hex got treated as
+ * having ZERO adaptive capacity, worse than even the pre-fix Python bug's 0.1
+ * floor. Confirmed: 28 of the El Nino preset's 32 "flipped to HIGH RISK"
+ * districts had 100% null-AC hexes -- an AC artifact, not a drought signal.
+ * stateAc comes from client/public/data/state_ac.json, generated by directly
+ * calling the same build_wash_state_context() hex_risk.py itself uses --
+ * same numbers, not a re-derived approximation.
+ */
+export function reScoreHex(hex: HexProp, inputs: SimInputs, stateAc: Record<string, number>): number {
+  return scoreHexBreakdown(hex, inputs, stateAc).combined;
 }

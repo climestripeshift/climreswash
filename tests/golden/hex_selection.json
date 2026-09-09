@@ -1,0 +1,152 @@
+[
+  {
+    "category": "coastal",
+    "district": "Chengalputtu",
+    "state": "Tamil Nadu",
+    "h3_id": "85618c77fffffff"
+  },
+  {
+    "category": "coastal",
+    "district": "Visakhapatnam",
+    "state": "Andhra Pradesh",
+    "h3_id": "853c9317fffffff"
+  },
+  {
+    "category": "coastal",
+    "district": "Mumbai Suburban",
+    "state": "Maharashtra",
+    "h3_id": "85608b57fffffff"
+  },
+  {
+    "category": "coastal",
+    "district": "Ernakulam",
+    "state": "Kerala",
+    "h3_id": "856004dbfffffff"
+  },
+  {
+    "category": "coastal",
+    "district": "Puri",
+    "state": "Odisha",
+    "h3_id": "853c9da7fffffff"
+  },
+  {
+    "category": "inland_riverine",
+    "district": "Varanasi",
+    "state": "Uttar Pradesh",
+    "h3_id": "853c1657fffffff"
+  },
+  {
+    "category": "inland_riverine",
+    "district": "Nashik",
+    "state": "Maharashtra",
+    "h3_id": "85609953fffffff"
+  },
+  {
+    "category": "inland_riverine",
+    "district": "Krishna",
+    "state": "Andhra Pradesh",
+    "h3_id": "85619bcbfffffff"
+  },
+  {
+    "category": "inland_riverine",
+    "district": "Jabalpur",
+    "state": "Madhya Pradesh",
+    "h3_id": "853d9b83fffffff"
+  },
+  {
+    "category": "inland_riverine",
+    "district": "Kamrup Metropolitan",
+    "state": "Assam",
+    "h3_id": "853ce10bfffffff"
+  },
+  {
+    "category": "high_altitude",
+    "district": "Leh(Ladakh)",
+    "state": "Ladakh",
+    "h3_id": "853d31b3fffffff"
+  },
+  {
+    "category": "high_altitude",
+    "district": "Shimla",
+    "state": "Himachal Pradesh",
+    "h3_id": "853d10a3fffffff"
+  },
+  {
+    "category": "high_altitude",
+    "district": "East District",
+    "state": "Sikkim",
+    "h3_id": "853c0a53fffffff"
+  },
+  {
+    "category": "high_altitude",
+    "district": "Kargil",
+    "state": "Ladakh",
+    "h3_id": "853d3193fffffff"
+  },
+  {
+    "category": "high_altitude",
+    "district": "Chamba",
+    "state": "Himachal Pradesh",
+    "h3_id": "853d338bfffffff"
+  },
+  {
+    "category": "arid",
+    "district": "Jaisalmer",
+    "state": "Rajasthan",
+    "h3_id": "85425167fffffff"
+  },
+  {
+    "category": "arid",
+    "district": "Bikaner",
+    "state": "Rajasthan",
+    "h3_id": "85425d43fffffff"
+  },
+  {
+    "category": "arid",
+    "district": "Barmer",
+    "state": "Rajasthan",
+    "h3_id": "8542e98ffffffff"
+  },
+  {
+    "category": "arid",
+    "district": "Jodhpur",
+    "state": "Rajasthan",
+    "h3_id": "853db4c7fffffff"
+  },
+  {
+    "category": "arid",
+    "district": "Kachchh",
+    "state": "Gujarat",
+    "h3_id": "8542e31bfffffff"
+  },
+  {
+    "category": "ne_hills",
+    "district": "Kohima",
+    "state": "Nagaland",
+    "h3_id": "853ce873fffffff"
+  },
+  {
+    "category": "ne_hills",
+    "district": "East Khasi Hills",
+    "state": "Meghalaya",
+    "h3_id": "853ce317fffffff"
+  },
+  {
+    "category": "ne_hills",
+    "district": "Aizawl",
+    "state": "Mizoram",
+    "h3_id": "853cc1dbfffffff"
+  },
+  {
+    "category": "ne_hills",
+    "district": "Papum Pare",
+    "state": "Arunachal Pradesh",
+    "h3_id": "853c537bfffffff"
+  },
+  {
+    "category": "ne_hills",
+    "district": "Imphal West",
+    "state": "Manipur",
+    "h3_id": "853cea03fffffff"
+  }
+]
