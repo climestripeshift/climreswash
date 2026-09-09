@@ -113,19 +113,59 @@ def estimate_coast_dist(lat: float, lon: float, elev: float) -> float:
 
 def build_wash_state_context(states: list[str], wash_raw: dict, mpi_raw: dict) -> tuple[dict, dict]:
     """Reconstruct wash_by_state + state_ac from the same static NFHS-5 sources
-    join_hex_districts.py uses — needs only the set of hex states, not geometry."""
+    join_hex_districts.py uses — needs only the set of hex states, not geometry.
+
+    FIX (see chat, state-aliasing audit): nfhs5_wash.json contains real,
+    genuinely distinct data for post-bifurcation states as ".."-prefixed rows
+    (e.g. "..Uttarakhand", toilet_pct=92.5) ALONGSIDE a combined/historical
+    row for the pre-split survey unit (e.g. "Uttar Pradesh, inc Uttarakhand",
+    toilet_pct=76.3, a UP+Uttarakhand blend) -- confirmed these are real,
+    separately-surveyed NFHS-5 numbers, not duplicates or a parsing artifact.
+    The old single-pass substring match iterated wash_raw in file order and
+    `break`ed on the FIRST hit, which was always the combined row (it appears
+    before its own ".."-prefixed children) for any state whose name is a
+    substring of the combined row's name -- silently misrouting Uttarakhand,
+    Uttar Pradesh, Chhattisgarh, Madhya Pradesh, Jharkhand, Bihar, Telangana,
+    Andhra Pradesh, and Ladakh away from their own dedicated data. Worse,
+    since Python dict values are references, TWO states matching the SAME
+    combined row (e.g. both "Uttarakhand" and "Uttar Pradesh" hit "Uttar
+    Pradesh, inc Uttarakhand") ended up with wash_by_state entries pointing
+    at the literal same dict object, so `vals["poverty_pct"] = ...` for
+    whichever state was processed second silently overwrote the first's.
+    Fixed with two passes: (1) exact match against the dedicated row first
+    (state's own name, ".."-prefix stripped) -- always preferred when it
+    exists; (2) substring/combined-row match only as a fallback for states
+    with no dedicated row (e.g. the multi-UT combined entries, unaffected by
+    this bug). Also copies the matched dict instead of mutating wash_raw's
+    own value in place, so no two states can ever alias the same object
+    again even in an unanticipated future case.
+    Verified against all 35 real hex states: only the above 9 states' match
+    target changes; every other state matches identically to before.
+    """
     wash_by_state: dict[str, dict] = {}
     for hex_state in states:
         if not hex_state or hex_state == "Unknown":
             continue
         hs_lower = hex_state.lower().replace("&", "and")
+
+        matched = None
         for dhs_name, vals in wash_raw.items():
             ds_lower = dhs_name.lower().replace("&", "and").replace("..", "")
-            if hs_lower == ds_lower or hs_lower in ds_lower or ds_lower in hs_lower:
-                vals["poverty_pct"] = mpi_raw.get(hex_state, 20.0)
-                wash_by_state[hex_state] = vals
+            if hs_lower == ds_lower:
+                matched = vals
                 break
-        if hex_state not in wash_by_state:
+        if matched is None:
+            for dhs_name, vals in wash_raw.items():
+                ds_lower = dhs_name.lower().replace("&", "and").replace("..", "")
+                if hs_lower in ds_lower or ds_lower in hs_lower:
+                    matched = vals
+                    break
+
+        if matched is not None:
+            vals = dict(matched)  # copy -- never mutate/alias wash_raw's own dict
+            vals["poverty_pct"] = mpi_raw.get(hex_state, 20.0)
+            wash_by_state[hex_state] = vals
+        else:
             wash_by_state[hex_state] = {
                 "toilet_pct": 70, "piped_water_pct": 85, "health_access_pct": 80,
                 "electricity_pct": 90, "female_literacy_pct": 70,
