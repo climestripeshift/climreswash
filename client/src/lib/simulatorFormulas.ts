@@ -18,14 +18,41 @@ export const LAND_USE_PARAMS: Record<string, { tree_pct: number; built_pct: numb
 };
 const DEFAULT_LU = LAND_USE_PARAMS.crop;
 
-// Defaults for missing hex_props fields. NOTE (see chat, Part 2 golden test):
-// slope_deg/dist_water_m/real_sand_pct ARE now stored per-hex (100% coverage
-// since this session's terrain wiring fixes) but reScoreHex() below still
-// never reads them off HexProp -- this comment is stale and the gap is real,
-// not fixed here (Part 2 is test-infrastructure only). The golden test
-// surfaces exactly where this causes reScoreHex to diverge from hex_risk.py.
+// Fallbacks used ONLY when a hex has no real slope_deg/dist_water_m at all
+// (should be rare -- 100% coverage in india_hex_props.json today) -- see
+// estimateSlope()/estimateDistWater() below, which are the actual per-hex
+// fallback hex_risk.py uses (elevation-bucket estimates), ported here for
+// parity (see chat, golden-test Fix 2). DEFAULT_SLOPE/DEFAULT_DIST_WATER are
+// now a last-resort only (missing elevation_mean too), not the everyday path
+// they used to be.
 export const DEFAULT_SLOPE = 3.0;    // degrees (India mixed-terrain national avg; 1.0 hits drainage floor)
 export const DEFAULT_DIST_WATER = 5000; // metres
+
+// Ported from scripts/risk/hex_risk.py's estimate_slope()/estimate_dist_water()
+// -- the real elevation-bucket fallback hex_risk.py uses when a hex has no
+// slope_deg/dist_water_m measurement, NOT what reScoreHex used to fall back
+// to (a single flat constant regardless of terrain).
+export function estimateSlope(elev: number): number {
+  if (elev > 3000) return 25.0;
+  if (elev > 1500) return 15.0;
+  if (elev > 800) return 8.0;
+  if (elev > 300) return 3.0;
+  if (elev > 100) return 1.0;
+  return 0.5;
+}
+
+export function estimateDistWater(lu: string, elev: number): number {
+  if (lu === "water" || lu === "wetland" || lu === "mangrove") return 100.0;
+  if (elev < 30) return 500.0;
+  if (elev < 100) return 1500.0;
+  if (elev < 300) return 3000.0;
+  return 5000.0;
+}
+
+// Groundwater-stress AC penalty (see chat, golden-test Fix 1) -- same
+// constants as hex_risk.py's AC_GW_PENALTY/GW_DEFAULT.
+export const AC_GW_PENALTY = 0.2;
+export const GW_DEFAULT = 0.1;
 
 // ── 1. Pluvial flood score (§1 — IMD lookup table) ──────────────────────────
 
@@ -161,6 +188,20 @@ export interface HexProp {
   landslide_risk: number;
   coldwave_risk: number;
   hex_risk: number;
+  // Real per-hex terrain/groundwater fields (see chat, golden-test Fix 1/Fix 2)
+  // -- all optional/nullable since india_hex_props.json coverage varies:
+  // elevation_mean/slope_deg/dist_water_m/dist_to_river_km/gw_stress_score are
+  // 100% populated; real_sand_pct is currently 0% populated client-side (a
+  // separate, unfixed sync_hex_risk_to_props.py gap -- present in the geojson
+  // pipeline scripts read but never copied into the props file the client
+  // fetches) so its real-value branch below is presently always the land-use
+  // fallback in production, same as before this fix, until that gap is closed.
+  elevation_mean?: number | null;
+  slope_deg?: number | null;
+  dist_water_m?: number | null;
+  dist_to_river_km?: number | null;
+  real_sand_pct?: number | null;
+  gw_stress_score?: number | null;
 }
 
 export interface HexScoreBreakdown {
@@ -179,7 +220,13 @@ export interface HexScoreBreakdown {
  * Pure extraction: reScoreHex()'s return value is unchanged (verified).
  */
 export function scoreHexBreakdown(hex: HexProp, inputs: SimInputs, stateAc: Record<string, number>): HexScoreBreakdown {
-  const pop = hex.population || 1;
+  // Population fallback (see chat, golden-test Fix 2): hex_risk.py falls back
+  // a missing/zero population to 10000 ("unknown, assume moderate"), not 1 --
+  // `|| 1` here used to silently zero out exposure (log10(1)=0) for every
+  // real, legitimate zero-population hex (glaciers, open water, salt flats --
+  // confirmed on the Kachchh/Kargil hexes the golden test's ts=0 cases came
+  // from). `|| 10000` matches hex_risk.py's actual fallback exactly.
+  const pop = hex.population || 10000;
   const lu = LAND_USE_PARAMS[hex.land_use] ?? DEFAULT_LU;
 
   // tree_pct: blend land-use default with NDVI signal
@@ -191,27 +238,63 @@ export function scoreHexBreakdown(hex: HexProp, inputs: SimInputs, stateAc: Reco
   const w1549pct = (hex.pop_women_15_49      / pop) * 100;
   const exp = exposureScore(pop, ch5pct, el60pct, w1549pct);
 
-  // Sensitivity (terrain defaults for missing fields -- see chat, DEFAULT_SLOPE/
-  // DEFAULT_DIST_WATER comment above: real slope_deg/dist_water_m exist per-hex
-  // now but are not read here; this is a known, unfixed gap the golden test
-  // surfaces, not something patched in Part 2's scope).
-  const floodSens = floodSensitivity(DEFAULT_SLOPE, lu.sand_pct, lu.built_pct, DEFAULT_DIST_WATER);
-  const heatSens  = heatSensitivity(treePct, lu.built_pct, DEFAULT_DIST_WATER);
+  // Real per-hex terrain inputs (see chat, golden-test Fix 2), same
+  // resolution order as hex_risk.py's resolve_static_hex_inputs():
+  // real value if present and nonzero, else the elevation-bucket estimate
+  // (estimateSlope/estimateDistWater above), else the flat national default
+  // only if elevation itself is also missing. real_sand_pct is currently
+  // always absent client-side (see HexProp comment) so sandPct resolves to
+  // the land-use guess in production today, same as before this fix -- the
+  // real-value branch is here and correct, just unreachable until that
+  // separate sync gap is closed.
+  const elev = hex.elevation_mean ?? 200;
+  const slope = (hex.slope_deg || 0) || estimateSlope(elev) || DEFAULT_SLOPE;
+  const distW = (hex.dist_water_m || 0) || estimateDistWater(hex.land_use, elev) || DEFAULT_DIST_WATER;
+  const sandPct = hex.real_sand_pct != null ? hex.real_sand_pct : lu.sand_pct;
+  // Bug-6 river-aware water distance (see chat) -- min of real OSM river
+  // distance and nearest-water-hex distance, used for heat/wet-bulb only
+  // (flood/drought keep distW), same as hex_risk.py.
+  const distRiverKm = hex.dist_to_river_km != null ? hex.dist_to_river_km : 999.0;
+  const distWHeat = Math.min(distRiverKm * 1000, distW);
+
+  const floodSens = floodSensitivity(slope, sandPct, lu.built_pct, distW);
+  const heatSens  = heatSensitivity(treePct, lu.built_pct, distWHeat);
 
   // Null-safe AC (same fallback logic as hex_risk.py Fix A): null/undefined
   // or a genuinely near-zero value falls back to the real state-level
   // average, never to 0.
   const acMissing = hex.adaptive_capacity == null || Number.isNaN(hex.adaptive_capacity);
-  const ac = (acMissing || hex.adaptive_capacity! < 0.05)
+  const acBase = (acMissing || hex.adaptive_capacity! < 0.05)
     ? (stateAc[hex.state] ?? 0.7)
     : hex.adaptive_capacity!;
 
+  // Groundwater-stress AC penalty (see chat, golden-test Fix 1) -- same
+  // formula and same "falsy collapses to default" semantics as hex_risk.py's
+  // `gw_stress = row.get(...) or GW_DEFAULT` (a real gw_stress_score of
+  // exactly 0 also falls back to GW_DEFAULT there, so `||` here matches that
+  // behavior deliberately, not just for missing/undefined).
+  const gwStress = hex.gw_stress_score || GW_DEFAULT;
+  const ac = Math.max(0.1, acBase * (1 - AC_GW_PENALTY * gwStress));
+
   // Flood
-  const floodHazard = pluvialFloodScore(inputs.rainfall_mm, lu.sand_pct, lu.built_pct, DEFAULT_SLOPE);
+  const floodHazard = pluvialFloodScore(inputs.rainfall_mm, sandPct, lu.built_pct, slope);
   const floodRisk   = computeRisk(floodHazard, exp, floodSens, ac);
 
+  // Heat threshold (see chat, golden-test heat-threshold fix): hex_risk.py
+  // uses `30.0 if elev > 800 else (37.0 if dist_coast < 50000 else 40.0)` --
+  // high-altitude regions aren't heat-adapted, so "heatwave" kicks in lower.
+  // Ported the elevation branch (the one explicitly asked for, and the one
+  // that drove every heat-channel Tier-2b mismatch in the golden test --
+  // Leh/Shimla/Kargil/Sikkim/NE hills, all elev>800). NOT ported: the
+  // dist_coast<50000 -> 37 middle tier -- that needs a hex's lat/lon, which
+  // isn't in HexProp or india_hex_props.json today (frontend reconstructs
+  // hex geometry from h3_id via h3-js rather than storing coordinates), and
+  // none of the current test hexes' mismatches are driven by that branch.
+  // Flagging as a known, deliberate simplification, not a silent omission.
+  const heatThreshold = elev > 800 ? 30.0 : 40.0;
+
   // Heat
-  const heatHazard = heatwaveScore(inputs.tmax_c, 40, inputs.hot_days, lu.built_pct, treePct, DEFAULT_DIST_WATER);
+  const heatHazard = heatwaveScore(inputs.tmax_c, heatThreshold, inputs.hot_days, lu.built_pct, treePct, distWHeat);
   const heatRisk   = computeRisk(heatHazard, exp, heatSens, ac);
 
   // Drought — per-hex deficit → SPI, then terrain-adaptive sensitivity
@@ -219,7 +302,7 @@ export function scoreHexBreakdown(hex: HexProp, inputs: SimInputs, stateAc: Reco
   // surplus in wet ones. Drought only fires on actual deficit (negative SPI).
   const rainNormal = 5 + hex.ndvi_mean * 50;
   const spiFromRain = Math.max(-3, Math.min(3, (inputs.rainfall_mm / rainNormal - 1) / 0.4));
-  const droughtSens = Math.min(1.0, 0.5 + 0.3 * (1 - hex.ndvi_mean) + 0.2 * (lu.sand_pct / 100));
+  const droughtSens = Math.min(1.0, 0.5 + 0.3 * (1 - hex.ndvi_mean) + 0.2 * (sandPct / 100));
   const droughtHazard = spiFromRain < 0 ? droughtScore(spiFromRain) : 0;
   const droughtRisk = spiFromRain < 0
     ? computeRisk(droughtHazard, exp, droughtSens, ac)

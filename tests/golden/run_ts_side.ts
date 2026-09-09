@@ -44,6 +44,12 @@ function toHexProp(props: any): HexProp {
     drought_risk: props.drought_risk ?? 0, wetbulb_risk: props.wetbulb_risk ?? 0,
     cyclone_risk: props.cyclone_risk ?? 0, landslide_risk: props.landslide_risk ?? 0,
     coldwave_risk: props.coldwave_risk ?? 0, hex_risk: props.hex_risk ?? 0,
+    elevation_mean: props.elevation_mean ?? null,
+    slope_deg: props.slope_deg ?? null,
+    dist_water_m: props.dist_water_m ?? null,
+    dist_to_river_km: props.dist_to_river_km ?? null,
+    real_sand_pct: props.real_sand_pct ?? null,
+    gw_stress_score: props.gw_stress_score ?? null,
   };
 }
 
