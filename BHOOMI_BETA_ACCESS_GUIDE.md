@@ -47,6 +47,16 @@ Backend: `BETA_AUTH_MODE=code`, `BETA_INGRESS_MODE=proxy`, matching `BETA_ORIGIN
 
 The published runtime must retain Node/tsx and Python 3 with `deploy/beta/requirements-postgres.txt` installed. `.replit` already declares Node 20 and Python 3.11; those modules alone do not establish published dependency availability. Private children never inherit the public `DATABASE_URL` or `SESSION_SECRET`. Keep `BETA_CLOUD_APPROVED=0` until separate data/model/budget approval: only login/admin/history gateway starts, without Core, relay, weights or a Runpod key. Child crashes stop the private group, retry three times, then leave beta unavailable while the public server continues. Core warmup denies chat before quota/spend admission. Core/relay/gateway bind only loopback. Do not change public `DATABASE_URL`, build/start commands or scaling settings.
 
+## Model upstream, spending evidence and secrets (12 October 2026 update)
+
+See `BHOOMI_BETA_INTEGRATION_STATUS.md` for the Pod-versus-Serverless comparison and defects fixed. Operator-facing changes:
+
+- **Two upstream kinds.** `RELAY_UPSTREAM` is either `https://api.runpod.ai/v2/<endpoint>/openai/v1` (Serverless; credential `RUNPOD_API_KEY`, held by the relay only) or `https://<pod>-8000.proxy.runpod.net/v1` (Pod; credential `RELAY_UPSTREAM_KEY`, the in-Pod gate's edge key, never the Runpod account key). A Pod must run `deploy/beta/gpu-compatibility/start-pod-proxy.sh`, not the bare vLLM port: vLLM's `--api-key` leaves `/invocations` unauthenticated.
+- **Identity is verified, not asserted.** The relay refuses any chat response whose `model` is not the pinned LoRA name and any `/v1/models` answer where the pinned LoRA's `parent` is not `RELAY_BASE_MODEL`. A refusal persists a pause (`relay_paused`). The gateway then admits no chat and reserves nothing, and the admin page shows paused. Only the explicit admin resume (`/bhoomiai/admin` pause control off, or the CLI) clears both stops, after review.
+- **Billing evidence is produced automatically** by `deploy/beta/billing_monitor.py` (started with the relay): provider read-only billing + endpoint/Pod state every `MONITOR_INTERVAL_S`. If a provider read fails the file goes stale and dispatch stops within 300 s. Give it a **restricted/read-only** `RUNPOD_MONITOR_API_KEY`. Auto-pay cannot be read from the API: check the console, then set `MONITOR_AUTOPAY_DISABLED=1` (recorded as an operator attestation).
+- **Replit secrets are environment variables.** Put the approval manifest in `BETA_APPROVAL_JSON`; the supervisor writes it mode 0600 under `BETA_RUN_DIR` (default `$TMPDIR/bhoomi-beta-run`) and points the gateway and relay at it. Core's cache must stay inside Core's data root (default `research/bhoomi_ai_core_v0/data/beta-cache`); a `/tmp` path makes Core refuse to start.
+- **Least privilege.** Core and the gateway receive no Runpod credential; the relay receives only its upstream credential; the monitor only the monitor key.
+
 ## Migrations and backup
 
 Do not run public `db:push` to create beta tables. Once the isolated target is explicitly approved, use its secret environment:

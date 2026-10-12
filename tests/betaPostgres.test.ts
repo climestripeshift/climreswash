@@ -264,3 +264,26 @@ test('PostgreSQL + private codes + Replit proxy: isolated storage, real transact
   });
  } finally {for(const s of servers){s.closeAllConnections();await new Promise<void>(r=>s.close(()=>r()));}await store.close();}
 });
+
+test('relay pause is honoured at admission and cleared only by operator resume',async()=>{
+ if(!database) throw new Error('Run python3 tests/runBetaPostgresTests.py; disposable PostgreSQL is required');
+ const db=new PgDatabase(database),store=new PostgresBetaStore(db,'local-test-hmac-key-'.repeat(3));
+ try {
+  const limits={...DEFAULT_LIMITS,perMinute:100,perHour:100,perDay:100,globalPerDay:100,globalConcurrent:2,perUserConcurrent:2,reservationSeconds:10};
+  const limiter=new PostgresLimiter(limits,store);
+  await store.invite('pause@example.org','user','operator');
+  const user=store.hash('pause@example.org');
+  await store.setSetting('paused','false');await store.setSetting('relay_paused','false');
+  assert.equal(await limiter.isKilled(),false);
+  await (await limiter.acquire(user)).release(1);
+  await store.setSetting('relay_paused','true');                       // what the relay writes after an identity mismatch
+  assert.equal(await limiter.isKilled(),true);
+  const before=(await store.dayTotals(new Date().toISOString().slice(0,10))).requests;
+  await assert.rejects(limiter.acquire(user),/limit/);
+  assert.equal((await store.dayTotals(new Date().toISOString().slice(0,10))).requests,before,'a paused request reserves nothing');
+  await limiter.setKilled(true);assert.equal(await limiter.isKilled(),true);
+  await limiter.setKilled(false);                                      // explicit operator resume clears both stops
+  assert.equal(await store.setting('relay_paused','x'),'false');assert.equal(await limiter.isKilled(),false);
+  await (await limiter.acquire(user)).release(1);
+ } finally {await store.close();}
+});

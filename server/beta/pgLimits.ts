@@ -4,8 +4,16 @@ import type { PostgresBetaStore } from "./pgStore";
 
 export class PostgresLimiter {
   constructor(public cfg: LimitConfig, private store: PostgresBetaStore, private now = Date.now) {}
-  isKilled() { return this.store.setting("paused", "false").then(v => v === "true"); }
-  setKilled(on: boolean) { return this.store.setSetting("paused", String(on)); }
+  // The relay persists its own stop (`relay_paused`) after an identity mismatch or provider failure; the gateway honours it at
+  // admission so no quota or GPU seconds are reserved for requests that cannot be served. Operator resume clears both.
+  async isKilled() {
+    const [paused, relay] = await Promise.all([this.store.setting("paused", "false"), this.store.setting("relay_paused", "false")]);
+    return paused === "true" || relay === "true";
+  }
+  async setKilled(on: boolean) {
+    await this.store.setSetting("paused", String(on));
+    if (!on) await this.store.setSetting("relay_paused", "false");
+  }
   async snapshot(user: string, dailyQuota = this.cfg.perDay) {
     const day = utcDay(this.now()), u = await this.store.userDay(user, day);
     return { day, used_today: u.requests, daily_limit: dailyQuota, remaining_today: Math.max(0, dailyQuota - u.requests),

@@ -1,15 +1,22 @@
 #!/usr/bin/env python3
-"""Loopback relay between the Bhoomi AI Core and a Runpod Serverless (worker-vllm) OpenAI-compatible endpoint.
+"""Loopback relay between the Bhoomi AI Core and a Runpod-hosted vLLM (OpenAI-compatible) endpoint.
 
 Why it exists: the Core's experimental backend only talks to a loopback model server (a deliberate gate that stays unchanged).
-This relay *is* that loopback server; it is the single place that holds the Runpod API key and the only code that may reach the
-network, and it can reach exactly one pinned URL.
+This relay *is* that loopback server; it is the single place that holds the upstream credential and the only code that may reach
+the network, and it can reach exactly one pinned URL. Two upstream kinds are supported:
+
+  serverless  https://api.runpod.ai/v2/<endpoint-id>/openai/v1      credential: RUNPOD_API_KEY (scale-to-zero worker-vllm)
+  pod         https://<pod-id>-<port>.proxy.runpod.net/v1           credential: RELAY_UPSTREAM_KEY (vLLM --api-key; the Runpod
+                                                                    account key is never sent to a Pod)
 
 What it enforces (all configurable only through the environment, never by a request):
-  * upstream must be https://api.runpod.ai/v2/<endpoint-id>/openai/v1 (pinned; no redirects followed)
+  * upstream must match one of the two pinned URL shapes above (no redirects followed)
   * only POST /v1/chat/completions and GET /v1/models are forwarded; every other path is 404
   * the model name is overwritten with the pinned name; stream is forced off; max_tokens is clamped
   * request body size cap, per-request timeout, a concurrency cap, and a daily request cap that is independent of the gateway
+  * identity: every chat response must name the pinned model; /v1/models must list the pinned LoRA whose `parent` is the pinned
+    base model. Any mismatch fails closed and pauses dispatch persistently (operator must review). The verified /v1/models
+    answer is cached (RELAY_IDENTITY_TTL_S) so the Core's per-turn lookup never reaches, wakes or bills the GPU endpoint.
 Standard library only. Start:  RUNPOD_API_KEY=... RELAY_UPSTREAM=https://api.runpod.ai/v2/<id>/openai/v1 RELAY_MODEL=<name> python3 runpod_relay.py
 """
 from __future__ import annotations
@@ -30,26 +37,52 @@ import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
 
-UPSTREAM_RE = re.compile(r"^https://api\.runpod\.ai/v2/[A-Za-z0-9]{6,40}/openai/v1$")
+SERVERLESS_RE = re.compile(r"^https://api\.runpod\.ai/v2/[A-Za-z0-9]{6,40}/openai/v1$")
+POD_RE = re.compile(r"^https://[a-z0-9]{8,24}-[0-9]{2,5}\.proxy\.runpod\.net/v1$")
+UPSTREAM_RE = SERVERLESS_RE          # historical name, kept for importers
 MAX_BODY = 256 * 1024
+DEFAULT_BASE_MODEL = "Qwen/Qwen3-4B-Instruct-2507"
+
+
+def classify_upstream(url: str) -> str | None:
+    """'serverless' | 'pod' | None. Shared with billing_monitor so both always agree on what the upstream is."""
+    if SERVERLESS_RE.match(url):
+        return "serverless"
+    if POD_RE.match(url):
+        return "pod"
+    return None
 
 
 class Config:
     def __init__(self, env=None, allow_test_upstream: bool = False):
         e = os.environ if env is None else env
         self.upstream = (e.get("RELAY_UPSTREAM") or "").rstrip("/")
-        ok = bool(UPSTREAM_RE.match(self.upstream))
-        if allow_test_upstream:      # tests only: a plain-http loopback fake
+        self.kind = classify_upstream(self.upstream)
+        if allow_test_upstream and self.kind is None:      # tests only: a plain-http loopback fake
             u = urlparse(self.upstream)
-            ok = ok or (u.scheme == "http" and u.hostname in ("127.0.0.1", "localhost"))
-        if not ok:
-            raise SystemExit("RELAY_UPSTREAM must be https://api.runpod.ai/v2/<endpoint-id>/openai/v1")
-        self.key = e.get("RUNPOD_API_KEY") or ""
-        if not self.key and not allow_test_upstream:
-            raise SystemExit("RUNPOD_API_KEY is required")
+            if u.scheme == "http" and u.hostname in ("127.0.0.1", "localhost"):
+                self.kind = "test"
+        if self.kind is None:
+            raise SystemExit("RELAY_UPSTREAM must be https://api.runpod.ai/v2/<endpoint-id>/openai/v1 "
+                             "or https://<pod-id>-<port>.proxy.runpod.net/v1")
+        if self.kind == "pod":
+            # A Pod authenticates with the vLLM --api-key. The Runpod account key must never be sent to it.
+            self.key = e.get("RELAY_UPSTREAM_KEY") or ""
+            if len(self.key) < 32 or self.key == e.get("RUNPOD_API_KEY"):
+                raise SystemExit("RELAY_UPSTREAM_KEY (32+ chars, distinct from the Runpod account key) is required for a Pod upstream")
+        elif self.kind == "test":
+            self.key = e.get("RELAY_UPSTREAM_KEY") or e.get("RUNPOD_API_KEY") or ""
+        else:
+            self.key = e.get("RUNPOD_API_KEY") or ""
+            if not self.key:
+                raise SystemExit("RUNPOD_API_KEY is required")
         self.model = e.get("RELAY_MODEL") or ""
         if not self.model:
             raise SystemExit("RELAY_MODEL (the pinned served model / LoRA name) is required")
+        self.base_model = e.get("RELAY_BASE_MODEL") or DEFAULT_BASE_MODEL
+        self.identity_ttl_s = float(e.get("RELAY_IDENTITY_TTL_S", "300"))
+        # llama.cpp style local fakes expose no `parent`; a real vLLM LoRA always does. Only tests may relax this.
+        self.require_parent = not (allow_test_upstream and e.get("RELAY_REQUIRE_PARENT") == "0")
         self.max_tokens = int(e.get("RELAY_MAX_TOKENS", "600"))
         self.timeout_s = float(e.get("RELAY_TIMEOUT_S", "180"))
         self.concurrency = int(e.get("RELAY_CONCURRENCY", "2"))
@@ -83,6 +116,8 @@ class Relay:
         self.sem = threading.BoundedSemaphore(cfg.concurrency)
         self.lock = threading.Lock()
         self.day, self.count = self._today(), 0
+        self._identity: tuple[float, bytes] | None = None      # (verified_at, sanitized /v1/models body)
+        self._identity_failed = False                           # in-memory stop in addition to the persistent pause
         self.opener = urllib.request.build_opener(_NoRedirect)
         if not cfg.test_only and cfg.database_url:
             with self._pg() as db:
@@ -172,7 +207,53 @@ class Relay:
             self.count += 1
             return True
 
+    # ---- identity ---------------------------------------------------------------------------------------------------
+    def _fail_identity(self) -> tuple[int, bytes]:
+        """The endpoint served something other than the pinned model: stop all further dispatch until an operator reviews."""
+        self._identity, self._identity_failed = None, True
+        try:
+            self.pause()
+        except Exception:  # noqa: BLE001 - never mask the identity failure
+            pass
+        return 502, b'{"error":"model identity check failed"}'
+
+    def _verified_models(self, raw: bytes) -> bytes | None:
+        """Sanitised /v1/models body iff the pinned LoRA is listed with the pinned base as parent; else None."""
+        try:
+            data = json.loads(raw).get("data")
+            mine = next(d for d in data if isinstance(d, dict) and d.get("id") == self.cfg.model)
+        except Exception:  # noqa: BLE001
+            return None
+        if self.cfg.require_parent and mine.get("parent") != self.cfg.base_model:
+            return None
+        entry = {"id": mine["id"], "object": "model"}
+        if mine.get("parent") is not None:
+            entry["parent"] = mine["parent"]
+        return json.dumps({"object": "list", "data": [entry],
+                           "bhoomi_relay": {"verified": True, "upstream_kind": self.cfg.kind, "base_model": self.cfg.base_model,
+                                            "checked_at": int(self.clock())}}).encode("utf-8")
+
+    def _cached_identity(self) -> bytes | None:
+        hit = self._identity
+        if hit and 0 <= self.clock() - hit[0] <= self.cfg.identity_ttl_s:
+            return hit[1]
+        return None
+
+    def _verified_chat(self, raw: bytes) -> bool:
+        try:
+            j = json.loads(raw)
+            message = j["choices"][0]["message"]
+        except Exception:  # noqa: BLE001
+            return False
+        return j.get("model") == self.cfg.model and isinstance(message, dict)
+
     def forward(self, method: str, path: str, body: bytes) -> tuple[int, bytes]:
+        if self._identity_failed:
+            return 503, b'{"error":"model identity failed; dispatch stopped pending operator review"}'
+        if (method, path) == ("GET", "/v1/models"):
+            cached = self._cached_identity()
+            if cached is not None:           # verified recently: no upstream call, no reservation, no worker wake-up
+                return 200, cached
         if (method, path) == ("POST", "/v1/chat/completions"):
             try:
                 req = json.loads(body.decode("utf-8"))
@@ -203,7 +284,16 @@ class Relay:
                 "Content-Type": "application/json", "Authorization": f"Bearer {self.cfg.key}"})
             try:
                 with self.opener.open(r, timeout=self.cfg.timeout_s) as resp:  # noqa: S310 - url pinned by Config
-                    return resp.status, resp.read(4 * 1024 * 1024)
+                    status, raw = resp.status, resp.read(4 * 1024 * 1024)
+                if status == 200 and method == "GET":
+                    verified = self._verified_models(raw)
+                    if verified is None:
+                        return self._fail_identity()
+                    self._identity = (self.clock(), verified)
+                    return 200, verified
+                if status == 200 and not self._verified_chat(raw):
+                    return self._fail_identity()
+                return status, raw
             except urllib.error.HTTPError as e:
                 if e.code >= 500: self.pause()
                 return (e.code if e.code in (400, 401, 404, 429, 500, 503) else 502), b'{"error":"upstream error"}'

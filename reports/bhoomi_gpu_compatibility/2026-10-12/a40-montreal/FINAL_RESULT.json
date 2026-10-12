@@ -1,0 +1,155 @@
+{
+  "verdict": "PASS",
+  "approved_by_user": "explicit approval 2026-10-12 for ONE fresh A40 Pod, CA-MTL-1, <=30 min, <=$5, synthetic data only",
+  "pod": {
+    "id": "zdww5ekt7i887w",
+    "name": "bhoomi-llm-ckpt160-compat-a40-20261012",
+    "gpu": "NVIDIA A40 48GB (sm_86)",
+    "cloud": "SECURE",
+    "data_center": "CA-MTL-1",
+    "host_cuda": "13.2",
+    "driver": "595.91.07",
+    "price_usd_hr": 0.59,
+    "container_disk_gb": 80,
+    "volumes": "none",
+    "exposed_ports": [
+      "22/tcp"
+    ],
+    "final_state": "EXITED (stop response + independent get-pod read)"
+  },
+  "image": "vllm/vllm-openai:v0.30.0@sha256:8a69ffad015f138d7170c4ddc429e230a3bc1c1719f67e14324749df200a4b90",
+  "software": "vllm 0.30.0, torch 2.13.0+cu130",
+  "model": {
+    "base": "Qwen/Qwen3-4B-Instruct-2507",
+    "revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+    "adapter": "checkpoint-160 PEFT LoRA r=16",
+    "adapter_sha256": "462270265fafcdf6fa52d136b556926d357f9aa6710f72a8fbc934f04a3c65ed",
+    "hash_verification": "8/8 files OK on the Pod (explicit sha256sum --strict, plus the wrapper's own fail-closed check before vLLM start)"
+  },
+  "loading": {
+    "engine_ready_seconds_after_gate": 78.1,
+    "weights_download_seconds": 7.2,
+    "model_loading_gib": 7.71,
+    "kv_cache_gib": 29.81,
+    "gpu_mem_used_mib": 38807,
+    "lora_log": "Loaded new LoRA adapter: name 'bhoomi-llm-v1-ckpt160'",
+    "models_endpoint": [
+      "Qwen/Qwen3-4B-Instruct-2507",
+      "bhoomi-llm-v1-ckpt160"
+    ],
+    "lora_parent": "Qwen/Qwen3-4B-Instruct-2507",
+    "dtype": "bfloat16",
+    "enforce_eager": true
+  },
+  "generation": {
+    "ok": true,
+    "seconds": 9.75,
+    "http": 200,
+    "latency_s": 9.75,
+    "text": "A 0-10 hazard screening index for a district is a numerical score that estimates the relative likelihood of a hazard occurring in that area, with 0 indicating no hazard and 10 indicating the highest level of hazard. It does not mean the hazard is certain to happen, nor does it predict the exact timing or severity of an event.",
+    "finish_reason": "stop",
+    "usage": {
+      "prompt_tokens": 34,
+      "total_tokens": 105,
+      "completion_tokens": 71,
+      "prompt_tokens_details": null,
+      "completion_tokens_details": null
+    },
+    "model": "bhoomi-llm-v1-ckpt160"
+  },
+  "native_tool_call": {
+    "ok": true,
+    "seconds": 2.97,
+    "http": 200,
+    "latency_s": 2.96,
+    "tool_name": "district_hazard_profile",
+    "arguments": {
+      "district": "Kota",
+      "state": "Rajasthan"
+    },
+    "n_tool_calls": 1,
+    "content": null,
+    "usage": {
+      "prompt_tokens": 2617,
+      "total_tokens": 2648,
+      "completion_tokens": 31,
+      "prompt_tokens_details": null,
+      "completion_tokens_details": null
+    },
+    "finish_reason": "tool_calls"
+  },
+  "tool_result_followup": {
+    "ok": true,
+    "seconds": 3.66,
+    "http": 200,
+    "latency_s": 3.66,
+    "text": "Kota, Rajasthan: the overall hazard screening index is 2.50 (index, 0-10 scale) [F1]. It is a rule-based screening index for the whole hazard portfolio (0-10 scale), not a probability.",
+    "usage": {
+      "prompt_tokens": 2761,
+      "total_tokens": 2815,
+      "completion_tokens": 54,
+      "prompt_tokens_details": null,
+      "completion_tokens_details": null
+    }
+  },
+  "base_model_ab_informational": {
+    "ok": true,
+    "seconds": 1.4,
+    "informational": true,
+    "http": 200,
+    "latency_s": 1.4,
+    "tool_name": "district_hazard_profile",
+    "arguments": "{\"district\": \"Kota\", \"state\": \"Rajasthan\"}",
+    "content": ""
+  },
+  "auth_and_failure": {
+    "auth": {
+      "ok": true,
+      "seconds": 0.0,
+      "no_bearer_http": 401,
+      "wrong_bearer_http": 401
+    },
+    "loopback": {
+      "ok": true,
+      "seconds": 0.01,
+      "port_8000_listen_addrs_hex": [
+        "0100007F"
+      ]
+    },
+    "failure_handling": {
+      "ok": true,
+      "seconds": 0.02,
+      "malformed_http": 400,
+      "unknown_model_http": 404,
+      "server_still_healthy_http": 200
+    }
+  },
+  "timing": {
+    "t0_epoch": 1791821365.9,
+    "stopped_and_verified_epoch": 1791822139.8,
+    "elapsed_seconds": 774,
+    "limit_seconds": 1800,
+    "timeline_s": {
+      "create": "~100",
+      "image_pull_done_ssh_endpoint": "449",
+      "upload_done": "~600",
+      "engine_ready_plus_all_tests_done": "~720"
+    }
+  },
+  "cost": {
+    "billing_api_records": 0,
+    "billing_note": "Runpod billing posts with up to ~1 h delay; no record yet",
+    "upper_bound_usd": 0.13,
+    "basis": "0.59 $/hr x 774 s from before create, plus ~$0.0024 disk; under the $5 cap and ~$0.30 expectation"
+  },
+  "caveats": [
+    "enforce-eager used (no CUDA graphs/torch.compile): proves loading and correctness, not production throughput",
+    "tool-call test used the real trained tool schemas but a synthetic question and synthetic tool-result fixture; the Core verifier was NOT in the loop",
+    "base model also produced the correct tool call for this simple prompt, so this single prompt does not by itself demonstrate adapter-specific behaviour; adapter identity rests on the vLLM LoRA load log, /v1/models parent link and the hash-verified files",
+    "latencies include first-request Triton LoRA kernel JIT (see vllm.log)",
+    "one A40 host only; RTX 3090 not placeable on CUDA>=13 hosts at test time"
+  ],
+  "production_changes": false,
+  "replit_neon_dns_changes": false,
+  "frozen_benchmarks_touched": false
+}

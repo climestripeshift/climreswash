@@ -95,8 +95,17 @@ class OpenAICompatBackend(LLMBackend):
     def model_info(self) -> dict:
         info = {"backend": self.name, "model": self.model, "base_url": self.base}
         try:
-            data = self._request("/models").get("data", [])
+            body = self._request("/models")
+            data = body.get("data", [])
             info["served_models"] = [d.get("id") for d in data][:10]
+            # What the endpoint itself reports about the model we asked for. A vLLM LoRA lists its base model as `parent`;
+            # the relay additionally marks answers it verified against its pinned identity.
+            mine = next((d for d in data if isinstance(d, dict) and d.get("id") == self.model), None)
+            info["served_parent"] = mine.get("parent") if mine else None
+            relay = body.get("bhoomi_relay")
+            info["relay_identity_verified"] = bool(isinstance(relay, dict) and relay.get("verified") is True and mine is not None)
         except LLMError:
             info["served_models"] = "unreachable"
+            info["served_parent"] = None
+            info["relay_identity_verified"] = False
         return info

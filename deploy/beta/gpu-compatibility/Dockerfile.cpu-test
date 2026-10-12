@@ -1,0 +1,6 @@
+# CPU-only SSH/bootstrap tests. This is not the GPU deployment image.
+FROM ubuntu:24.04
+RUN apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends openssh-server python3 ca-certificates && rm -rf /var/lib/apt/lists/*
+COPY start-private.sh /start-private.sh
+ENTRYPOINT ["/bin/bash", "-c"]
+CMD ["exec /bin/bash /start-private.sh"]

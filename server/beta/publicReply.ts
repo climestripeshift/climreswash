@@ -12,7 +12,7 @@ export function publicReply(raw: any, label: string, unavailable: string[]) {
   return {
     interaction_id: raw.interaction_id, session_id: raw.session_id,
     status: ["verified", "direct", "no_evidence", "model_error", "resource_limit", "tool_failure", "refused", "unsupported", "unverified", "clarification", "fallback", "error"].includes(raw.status) ? raw.status : "unverified",
-    answer: publicText(raw.answer), evidence: publicText(raw.evidence),
+    answer: raw.status === "model_error" ? "The model is temporarily unavailable. Please try again shortly." : publicText(raw.answer), evidence: publicText(raw.evidence),
     notes: Array.isArray(raw.notes) ? raw.notes.slice(0, 20).map(publicText) : [], links: [],
     verification: { passed: raw.verification?.passed === true, violations: raw.verification?.passed === true ? [] : [{ rule: "review_required", detail: "Answer requires independent review." }] },
     // Scientific execution details remain private. Tool APIs are not exposed.

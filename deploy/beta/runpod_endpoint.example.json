@@ -1,24 +1,39 @@
 {
-  "_comment": "Specification for the Runpod Serverless endpoint. NOT created: creating it needs the owner's separate approval. Items marked UNVERIFIED have not been exercised on a real worker.",
+  "_comment": "Specification for the Runpod Serverless endpoint (Option B). NOT created: creating it needs the owner's separate approval. Updated 2026-10-12 after the A40 Pod compatibility PASS. Items under 'unverified' have not been exercised on a real Serverless worker.",
   "name": "bhoomi-beta-v1",
   "worker_image": "runpod/worker-v1-vllm:v2.28.0@sha256:f0cba070a8d324fc664934c31b9e89d7a294f9116b2c81984defc2edcbc7098d",
-  "gpu_pool": [
-    "RTX 4090 24 GB",
-    "RTX A5000 24 GB",
-    "L4 24 GB"
+  "worker_image_with_adapter": "BUILD: deploy/beta/serverless/Dockerfile.worker (FROM the pinned digest above); record the resulting image digest in the approval manifest and worker receipt",
+  "engine_evidence": {
+    "vllm_version": "0.30.0",
+    "vllm_build_commit": "ced6857afa0ea7b2e3f0846a62e1394e90f15607",
+    "cuda_runtime": "13.0.2 (image requires host CUDA >= 13.0)",
+    "note": "This worker image embeds the SAME vLLM build (commit and pipeline) as vllm/vllm-openai:v0.30.0@sha256:8a69ffad..., which loaded the real checkpoint-160 adapter and made native tool calls on an A40 Pod on 2026-10-12. Worker-specific behaviour (launch arguments, LoRA/template wiring, cold start) is still unverified."
+  },
+  "gpu_type_ids": [
+    "NVIDIA A40",
+    "NVIDIA RTX A6000"
   ],
+  "gpu_notes": {
+    "NVIDIA A40": "VERIFIED engine+GPU: GA102 sm_86, 48 GB, CUDA 13.0/13.2 hosts, Secure cloud. Serverless flex price 1.22 USD/h (catalog read 2026-10-12).",
+    "NVIDIA RTX A6000": "Same GA102 chip and 48 GB; not run. Stock was NONE on 2026-10-12.",
+    "excluded": "RTX 3090 (no CUDA >= 13.0 host available; Community only on CUDA 12.4), RTX 4090/A5000/L4 (not run with this stack)."
+  },
+  "min_cuda_version": "13.0",
+  "cloud": "SECURE",
   "scaling": {
     "workers_min": 0,
     "workers_max": 1,
-    "idle_timeout_s": 5,
+    "idle_timeout_s": 60,
     "execution_timeout_s": 150,
-    "queue_delay_scaler_s": 4
+    "queue_delay_scaler_s": 4,
+    "idle_timeout_note": "5 s (earlier draft) makes nearly every question pay a full cold start. Measured Pod cold start (container start to ready, eager mode, weights downloaded) was 78 s; at 1.22 USD/h that is ~0.026 USD per cold start versus ~0.020 USD to keep a worker 60 s."
   },
   "spend_controls": [
-    "prepaid balance only (no auto-recharge)",
-    "workers_max exactly 1 for first test",
-    "billing alert",
-    "gateway GPU-second budget and kill switch"
+    "prepaid balance only (no auto-recharge); the operator attests this to billing_monitor.py (MONITOR_AUTOPAY_DISABLED=1) after checking the console",
+    "workers_max exactly 1; workers_min exactly 0 (billing_monitor.py verifies both every minute and withholds shutdown_verified otherwise)",
+    "relay: approval manifest + <=300 s old provider billing evidence + monthly reservation cap + daily request cap",
+    "gateway: per-user and global GPU-second budgets, persistent kill switch, and the relay's persistent pause on any identity mismatch",
+    "a restricted/read-only API key for billing_monitor.py (RUNPOD_MONITOR_API_KEY), separate from the key the relay uses to call the endpoint"
   ],
   "env": {
     "MODEL_NAME": "Qwen/Qwen3-4B-Instruct-2507",
@@ -26,35 +41,43 @@
     "ENABLE_LORA": "true",
     "MAX_LORAS": "1",
     "MAX_LORA_RANK": "16",
-    "LORA_MODULES": "[{\"name\": \"bhoomi-llm-v1-ckpt160\", \"path\": \"/runpod-volume/bhoomi-ckpt160\", \"base_model_name\": \"Qwen/Qwen3-4B-Instruct-2507\"}]",
+    "LORA_MODULES": "[{\"name\": \"bhoomi-llm-v1-ckpt160\", \"path\": \"/opt/bhoomi/adapter\", \"base_model_name\": \"Qwen/Qwen3-4B-Instruct-2507\"}]",
     "MAX_MODEL_LEN": "6144",
-    "GPU_MEMORY_UTILIZATION": "0.90",
+    "GPU_MEMORY_UTILIZATION": "0.85",
+    "ENFORCE_EAGER": "true",
     "MAX_CONCURRENCY": "2",
     "ENABLE_AUTO_TOOL_CHOICE": "true",
     "TOOL_CALL_PARSER": "hermes",
     "DTYPE": "bfloat16",
     "MAX_NUM_SEQS": "2",
-    "CUSTOM_CHAT_TEMPLATE": "/runpod-volume/bhoomi-ckpt160/chat_template.jinja",
+    "CUSTOM_CHAT_TEMPLATE": "/opt/bhoomi/adapter/chat_template.jinja",
     "TOKENIZER_NAME": "Qwen/Qwen3-4B-Instruct-2507",
     "TOKENIZER_REVISION": "cdbee75f17c01a7cc42f958dc650907174af0554",
     "TRUST_REMOTE_CODE": "false",
-    "VLLM_STARTUP_TIMEOUT": "180"
+    "VLLM_STARTUP_TIMEOUT": "240"
+  },
+  "env_notes": "GPU_MEMORY_UTILIZATION and ENFORCE_EAGER match the configuration that PASSED on the A40 Pod (0.85, eager). A network-volume deployment would use LORA_MODULES path /runpod-volume/bhoomi-ckpt160 and CUSTOM_CHAT_TEMPLATE under the same directory instead.",
+  "adapter_delivery": {
+    "recommended": "bake the 8 hash-verified files into an image layer (deploy/beta/serverless/Dockerfile.worker). The image digest then IS the adapter identity: no network volume, no Hugging Face token, immutable by digest. Needs: a private registry account/credential and the 148 MB adapter uploaded to it.",
+    "alternative": "network volume populated once from a temporary Pod (storage billed monthly; identity needs a post-fill sha256 attestation).",
+    "rejected": "Hugging Face private repo: vLLM resolves LoRA repos without a revision pin, so content identity is weaker."
   },
   "unverified": [
-    "tool-call output of the LoRA model under the vLLM hermes parser matches the llama.cpp local runtime (run the parity probe, plan section 11)",
-    "the adapter's chat template is honoured by the worker (CUSTOM_CHAT_TEMPLATE or an equivalent); the adapter was trained with its own template",
-    "LoRA selected by name through the OpenAI-compatible route",
-    "cold-start time downloading the pinned public base and reading the approved adapter from the private volume"
+    "worker-vllm's launch arguments for LoRA/tool parser/template on this worker (the engine build is verified; the wrapper that launches it is not)",
+    "CUSTOM_CHAT_TEMPLATE: the worker README documents it as a template string; whether a file path is honoured must be shown by the first request",
+    "response `model` and /openai/v1/models `parent` fields on the worker (the relay refuses anything else)",
+    "cold start on Serverless (measured only on a Pod)",
+    "A40 availability: stock was LOW on 2026-10-12; a queued request waits for a worker"
   ],
   "data_policy": "The worker receives only prompts that the Core builds from allowed tool outputs and user questions. It never receives data files, the feedback database or restricted datasets.",
   "candidate_only": true,
   "first_test": {
     "approval_required": true,
-    "wall_clock_limit_seconds": 900,
+    "wall_clock_limit_seconds": 1800,
     "operator_attended": true,
     "model_call_limit": 12,
     "budget_usd": 5,
     "data": "synthetic tool records only",
-    "hf_token": "not supplied; approved adapter on private volume"
+    "hf_token": "not supplied"
   }
 }

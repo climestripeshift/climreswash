@@ -1,0 +1,17 @@
+# Serverless worker with the checkpoint-160 adapter baked in. The resulting IMAGE DIGEST is the adapter's identity.
+# Build context is produced (and hash-verified) by build_worker_context.py; do not hand-assemble it.
+#   python3 deploy/beta/serverless/build_worker_context.py /path/to/empty-context
+#   docker build -f deploy/beta/serverless/Dockerfile.worker -t REGISTRY/bhoomi-worker:ckpt160 /path/to/empty-context
+# Requires ~20 GB free disk locally (the base image is large). Pushing is a separate, approved step.
+FROM runpod/worker-v1-vllm:v2.28.0@sha256:f0cba070a8d324fc664934c31b9e89d7a294f9116b2c81984defc2edcbc7098d
+
+COPY adapter/ /opt/bhoomi/adapter/
+COPY adapter.SHA256SUMS /opt/bhoomi/adapter.SHA256SUMS
+# Fail the BUILD if any file differs from the approved hashes.
+RUN cd /opt/bhoomi/adapter && sha256sum --strict --check /opt/bhoomi/adapter.SHA256SUMS \
+ && chmod -R a-w /opt/bhoomi
+
+LABEL org.opencontainers.image.title="bhoomi-llm-v1-ckpt160-worker" \
+      ai.bhoomi.adapter.sha256="462270265fafcdf6fa52d136b556926d357f9aa6710f72a8fbc934f04a3c65ed" \
+      ai.bhoomi.base.revision="cdbee75f17c01a7cc42f958dc650907174af0554" \
+      ai.bhoomi.status="experimental; deployable=false"
