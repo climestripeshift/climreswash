@@ -3,7 +3,12 @@
 set -euo pipefail
 umask 077
 cd /app
-: "${BETA_CORE_URL:?}" "${RELAY_UPSTREAM:?}" "${RUNPOD_API_KEY:?}" "${BETA_HASH_KEY:?}"
+: "${BETA_HASH_KEY:?}"
+# Login/history/admin can run while inference is disarmed, without Runpod credentials or scientific datasets.
+if [ "${BETA_CLOUD_APPROVED:-0}" != "1" ] && [ "${BETA_START_CORE_OFFLINE:-0}" != "1" ]; then
+  exec node_modules/.bin/tsx server/betaServer.ts
+fi
+: "${BETA_CORE_URL:?}" "${RELAY_UPSTREAM:?}" "${RUNPOD_API_KEY:?}"
 [ "${BHOOMI_DEPLOYMENT_PROFILE:-}" = "cloud_beta" ] || { echo "refusing to start: BHOOMI_DEPLOYMENT_PROFILE must be cloud_beta" >&2; exit 1; }
 python3 deploy/beta/runpod_relay.py & pids=($!)
 IFS=',' read -ra urls <<<"$BETA_CORE_URL"

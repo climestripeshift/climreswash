@@ -1,18 +1,17 @@
-// Standalone entry point for the hosted research beta. NOT part of the production server (server/index.ts is untouched):
-// it imports no production routes, no database, no session store. It serves the static beta client and /api/beta/* only,
-// bound to loopback; the public hostname is published through Cloudflare Tunnel + Access (see deploy/beta/).
-//
-//   BETA_ENV=hosted BETA_AUTH_MODE=cloudflare BETA_ACCESS_TEAM_DOMAIN=<team>.cloudflareaccess.com BETA_ACCESS_AUD=<aud tag> \
-//   BETA_HASH_KEY=<32+ random chars> BETA_DB_PATH=/data/beta.sqlite BETA_CORE_URL=http://127.0.0.1:8765[,http://127.0.0.1:8766,...] \
-//   BETA_PUBLIC_ORIGIN=https://beta.example.org BETA_STATIC_DIR=dist/beta tsx server/betaServer.ts
+// Private beta backend; public Replit build/start commands stay unchanged.
+// Access-code mode requires isolated PostgreSQL and authenticated proxy ingress.
 import express from "express";
 import path from "node:path";
 import fs from "node:fs";
 import { cachedJwks, type JwksFetcher } from "./beta/accessJwt";
 import { createBetaRouter, type BetaConfig } from "./beta/gateway";
 import { DEFAULT_LIMITS, Limiter, type LimitConfig } from "./beta/limits";
-import { BetaStore } from "./beta/store";
+import { PgDatabase } from "./beta/pgDatabase";
+import { PostgresBetaStore } from "./beta/pgStore";
+import { PostgresLimiter } from "./beta/pgLimits";
+import { CodeAuth } from "./beta/codeAuth";
 
+async function main() {
 const env = process.env;
 const num = (k: string, d: number) => {
   const n = env[k] === undefined ? d : Number(env[k]);
@@ -20,11 +19,13 @@ const num = (k: string, d: number) => {
   return n;
 };
 const hosted = true;
-const ingress = env.BETA_INGRESS_MODE ?? "worker";
-if (!["worker", "loopback"].includes(ingress)) throw new Error("Invalid BETA_INGRESS_MODE");
-if (ingress === "worker" && (!env.BETA_ORIGIN_KEY || env.BETA_ORIGIN_KEY.length < 32)) throw new Error("Worker ingress requires BETA_ORIGIN_KEY");
-const authMode = "cloudflare" as const;
-if (env.BETA_AUTH_MODE && env.BETA_AUTH_MODE !== authMode) throw new Error("Only verified Cloudflare authentication is supported");
+const ingress = env.BETA_INGRESS_MODE ?? "proxy";
+if (!["worker", "loopback", "proxy"].includes(ingress)) throw new Error("Invalid BETA_INGRESS_MODE");
+if (ingress !== "loopback" && (!env.BETA_ORIGIN_KEY || env.BETA_ORIGIN_KEY.length < 32)) throw new Error("Worker ingress requires BETA_ORIGIN_KEY");
+const authMode = env.BETA_AUTH_PROVIDER ?? env.BETA_AUTH_MODE ?? "code";
+if (!["cloudflare", "code"].includes(authMode)) throw new Error("Unsupported beta authentication provider");
+if (authMode === "code" && (ingress !== "proxy" || !env.BETA_DATABASE_URL)) throw new Error("Access-code login requires proxy ingress and isolated PostgreSQL configuration");
+
 if (!env.BETA_PUBLIC_ORIGIN || new URL(env.BETA_PUBLIC_ORIGIN).origin !== env.BETA_PUBLIC_ORIGIN || !env.BETA_PUBLIC_ORIGIN.startsWith("https://")) throw new Error("BETA_PUBLIC_ORIGIN must be an HTTPS origin");
 const limits: LimitConfig = {
   ...DEFAULT_LIMITS,
@@ -47,7 +48,19 @@ if (authMode === "cloudflare") {
     return (await r.json()) as { keys: never[] };
   });
 }
-const store = new BetaStore(env.BETA_DB_PATH ?? "beta.sqlite", env.BETA_HASH_KEY ?? "");
+let store;
+if (env.BETA_DATABASE_URL) {
+  const db = new PgDatabase(env.BETA_DATABASE_URL);
+  await db.assertReady();
+  store = new PostgresBetaStore(db, env.BETA_HASH_KEY ?? "");
+} else {
+  // Legacy/local fixture only: access-code deployment does not import Node 24 SQLite.
+  const { BetaStore } = await import("./beta/store");
+  store = new BetaStore(env.BETA_DB_PATH ?? "beta.sqlite", env.BETA_HASH_KEY ?? "");
+}
+const codeAuth = authMode === "code" ? new CodeAuth(store as PostgresBetaStore, env.BETA_PUBLIC_ORIGIN,
+  num("BETA_SESSION_SECONDS", 28800)) : undefined;
+const limiter = store instanceof PostgresBetaStore ? new PostgresLimiter(limits, store) : new Limiter(limits, store);
 // Bootstrap and user changes use the audited CLI; startup never restores revoked administrators.
 const approvalPath = env.BETA_APPROVAL_MANIFEST;
 const approval = approvalPath && fs.existsSync(approvalPath) ? JSON.parse(fs.readFileSync(approvalPath, "utf8")) : null;
@@ -56,7 +69,7 @@ const inferenceReady = env.BETA_CLOUD_APPROVED === "1" && approval?.approved ===
   && approval?.model?.registry_id && approval?.model?.base_revision && /^[0-9a-f]{64}$/.test(approval?.model?.adapter_sha256 ?? "")
   && /^[0-9a-f]{64}$/.test(approval?.data_bundle_sha256 ?? "") && approval?.approved_by && approval?.privacy_contact && approval?.processing_regions?.length && approval?.processors?.length && approval?.attributions?.length;
 const config: BetaConfig = {
-  hosted, authMode, inferenceReady: !!inferenceReady, expectedModel: approval?.model, originKey: env.BETA_ORIGIN_KEY, access: team && aud ? { teamDomain: team, aud, clockSkewSec: 0 } : undefined, getJwks,
+  hosted, authMode: authMode as "cloudflare" | "code", codeAuth, inferenceReady: !!inferenceReady, expectedModel: approval?.model, originKey: env.BETA_ORIGIN_KEY, access: team && aud ? { teamDomain: team, aud, clockSkewSec: 0 } : undefined, getJwks,
   privacy: approval ? { contact: approval.privacy_contact ?? "", processors: approval.processors ?? [], regions: approval.processing_regions ?? [], attributions: approval.attributions ?? [] } : undefined,
   coreUrls: (env.BETA_CORE_URL ?? "http://127.0.0.1:8765").split(",").map(u => u.trim()).filter(Boolean), publicOrigin: env.BETA_PUBLIC_ORIGIN, limits,
   model: { label: env.BETA_MODEL_LABEL ?? "Bhoomi-LLM v1 checkpoint-160 (experimental research beta)", experimental: true,
@@ -74,9 +87,14 @@ app.use((_req, res, next) => {
 });
 app.use("/api", (_req, res, next) => { res.set("Cache-Control", "no-store"); next(); });
 app.use(express.json({ limit: "16kb" }));
-app.use(createBetaRouter({ store, limiter: new Limiter(limits, store), config }));
+app.use(createBetaRouter({ store, limiter, config }));
 app.use((_req, res) => { res.status(404).json({ message: "Not found." }); });
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => { res.status(err.type === "entity.too.large" ? 413 : err instanceof SyntaxError ? 400 : 500).json({ message: "Service error." }); });
 
 const port = num("BETA_PORT", 5100);
-app.listen(port, "127.0.0.1", () => console.log(`[beta] gateway on 127.0.0.1:${port} (${hosted ? "hosted" : "local"}, auth=${authMode})`));
+const listenHost = env.BETA_LISTEN_HOST ?? "127.0.0.1";
+if (!["127.0.0.1", "0.0.0.0"].includes(listenHost) || (listenHost === "0.0.0.0" && (!env.BETA_ORIGIN_KEY || env.BETA_ORIGIN_KEY.length < 32))) throw new Error("Unsafe gateway listener");
+app.listen(port, listenHost, () => console.log(`[beta] gateway on 127.0.0.1:${port} (${hosted ? "hosted" : "local"}, auth=${authMode})`));
+
+}
+main().catch(() => { console.error("[beta] Startup failed; check private configuration and migration status."); process.exit(1); });

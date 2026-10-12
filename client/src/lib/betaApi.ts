@@ -1,5 +1,4 @@
-// Client for the hosted research-beta gateway (/bhoomiai/api/*). Authentication is handled by Cloudflare Access in front of the
-// site; this client never sees credentials. Fetch is injectable for tests.
+// Same-origin private beta API. Access codes are submitted only by the login form; sessions use HTTP-only cookies.
 import type { BhoomiReply } from "./bhoomiAi";
 
 export interface BetaMe {
@@ -25,6 +24,7 @@ async function call<T>(path: string, init: RequestInit | undefined, f: Fetch): P
 const post = (body: unknown): RequestInit => ({ method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 
 export const getMe = (f: Fetch = fetch) => call<BetaMe>("/bhoomiai/api/me", undefined, f);
+export const loginBeta = (email: string, access_code: string, f: Fetch = fetch) => call<{ ok: true }>("/bhoomiai/api/auth/login", post({ email, access_code }), f);
 export const acceptConsent = (version: string, training: boolean, f: Fetch = fetch) =>
   call<{ ok: true }>("/bhoomiai/api/consent", post({ version, research: true, training }), f);
 export const askBeta = (message: string, sessionId: string | undefined, f: Fetch = fetch) =>

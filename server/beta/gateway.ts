@@ -9,11 +9,16 @@ import { CONSENT_VERSION, FEEDBACK_CATEGORIES, REVIEW_STATUSES, type ReviewStatu
 import { shapeChatResponse, loopbackUpstream } from "../bhoomiAi";
 import { AccessError, verifyAccessJwt, type AccessConfig, type JwksFetcher } from "./accessJwt";
 import { LimitError, Limiter, withTimeout, type LimitConfig } from "./limits";
-import { BetaStore, type Role, type UserRow } from "./store";
+import type { Role, UserRow } from "./store";
+import type { BetaPersistence } from "./persistence";
+import type { PostgresLimiter } from "./pgLimits";
+import type { CodeAuth } from "./codeAuth";
+import { asyncRouter } from "./asyncRouter";
 
 export interface BetaConfig {
   hosted: boolean;                       // true on the internet-facing host: dev authentication is impossible
-  authMode: "cloudflare";
+  authMode: "cloudflare" | "code";
+  codeAuth?: CodeAuth;
   inferenceReady?: boolean;
   originKey?: string;
   privacy?: { contact: string; processors: string[]; regions: string[]; attributions: string[] };
@@ -27,7 +32,7 @@ export interface BetaConfig {
   limits: LimitConfig;
   model: { label: string; experimental: boolean; baseModel: string; note: string };
 }
-export interface BetaDeps { store: BetaStore; limiter: Limiter; config: BetaConfig; fetchImpl?: typeof fetch; now?: () => number }
+export interface BetaDeps { store: BetaPersistence; limiter: Limiter | PostgresLimiter; config: BetaConfig; fetchImpl?: typeof fetch; now?: () => number }
 
 declare module "express-serve-static-core" {
   interface Request { beta?: { email: string; userHash: string; user: UserRow; tokenHash: string; tokenExpiry: number; issuedAt: number } }
@@ -81,13 +86,14 @@ const csvCell = (v: unknown) => {
 
 export function createBetaRouter(deps: BetaDeps): express.Router {
   const { store, limiter, config } = deps;
+  if (config.authMode === "code" && (!config.originKey || config.originKey.length < 32)) throw new Error("Code login requires authenticated proxy ingress");
   const doFetch = deps.fetchImpl ?? fetch;
   const now = deps.now ?? Date.now;
   const cores = (config.coreUrls ?? [config.coreUrl ?? "http://127.0.0.1:8765"]).map(u => loopbackUpstream(u)).filter((u): u is URL => !!u);
   const inflight = cores.map(() => 0);
   const sessionOwner = new Map<string, string>();
   const sessionCore = new Map<string, number>();   // Core sessions live in one worker's memory: a session sticks to its worker
-  const r = express.Router();
+  const r = asyncRouter();
   const generic = (res: Response, code: number, message: string, extra: object = {}) => res.status(code).json({ message, ...extra });
 
   // ---- public: liveness only (no versions, no model info, no internals) ------------------------------------------
@@ -100,13 +106,18 @@ export function createBetaRouter(deps: BetaDeps): express.Router {
         const actual = Buffer.from(req.header("x-bhoomi-origin-key") ?? ""), expected = Buffer.from(config.originKey);
         if (actual.length !== expected.length || !timingSafeEqual(actual, expected)) return generic(res, 403, "Forbidden.");
       }
-      if (config.authMode !== "cloudflare" || !config.access || !config.getJwks) return generic(res, 503, "Verified sign-in is unavailable.");
+      if (config.authMode === "code") {
+        if (!config.codeAuth) return generic(res, 503, "Private sign-in is unavailable.");
+        req.beta = await config.codeAuth.authenticate(req);
+        return next();
+      }
+      if (config.authMode !== "cloudflare" || !config.access || !config.getJwks) return generic(res, 503, "Private sign-in is unavailable.");
       const cookie = req.header("cookie")?.split(";").map(s => s.trim()).find(s => s.startsWith("CF_Authorization="))?.slice("CF_Authorization=".length);
       const token = req.header("cf-access-jwt-assertion") ?? cookie;
       const id = await verifyAccessJwt(token, config.access, config.getJwks, Math.floor(now() / 1000));
-      const email = id.email, user = store.getUser(email);
+      const email = id.email, user = (await store.getUser(email));
       const tokenHash = createHash("sha256").update(token!).digest("hex");
-      if (store.tokenRevoked(tokenHash)) return generic(res, 401, "Sign-in required.");
+      if ((await store.tokenRevoked(tokenHash))) return generic(res, 401, "Sign-in required.");
       if (!user || user.status === "suspended" || (user.expires_at !== null && user.expires_at <= now()) || id.iat * 1000 <= user.revoked_before)
         return generic(res, 403, "This beta is invitation-only.");
       req.beta = { email, userHash: store.hash(email), user, tokenHash, tokenExpiry: id.exp * 1000, issuedAt: id.iat * 1000 };
@@ -129,36 +140,46 @@ export function createBetaRouter(deps: BetaDeps): express.Router {
     if (!(u.consent_research && u.consent_version === CONSENT_VERSION)) return generic(res, 428, "Please review and accept the research-beta terms first.", { code: "consent_required", consent_version: CONSENT_VERSION });
     next();
   };
-  r.use("/bhoomiai/api", (_req, res, next) => { res.set({ "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" }); next(); });
+  r.use("/bhoomiai/api", async (_req, res, next) => { res.set({ "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" }); next(); });
+  // Login also requires authenticated ingress. Never expose a standalone origin login endpoint.
+  r.use("/bhoomiai/api", (req, res, next) => {
+    if (config.originKey) {
+      const a = Buffer.from(req.header("x-bhoomi-origin-key") ?? ""), b = Buffer.from(config.originKey);
+      if (a.length !== b.length || !timingSafeEqual(a, b)) return generic(res, 403, "Forbidden.");
+    }
+    next();
+  });
+  if (config.authMode === "code" && config.codeAuth) config.codeAuth.register(r);
   r.use("/bhoomiai/api", authenticate);
   r.use("/bhoomiai/api", sameOrigin);
   const writes = new Map<string, number[]>();
-  r.use("/bhoomiai/api", (req, res, next) => {
+  r.use("/bhoomiai/api", async (req, res, next) => {
     if (req.method === "GET") return next();
     const key = req.beta!.userHash, recent = (writes.get(key) ?? []).filter(t => now() - t < 60_000);
     if (recent.length >= 30) return generic(res, 429, "Please slow down.");
     recent.push(now()); writes.set(key, recent); next();
   });
-  r.get("/bhoomiai/api/health", (_req, res) => res.json({ ok: true }));
-  r.get("/bhoomiai/api/history", requireConsent, (req, res) => res.json({ items: store.history(req.beta!.userHash) }));
-  r.post("/bhoomiai/api/logout", (req, res) => {
-    store.revokeToken(req.beta!.tokenHash, req.beta!.tokenExpiry);
+  r.get("/bhoomiai/api/health", async (_req, res) => res.json({ ok: true }));
+  r.get("/bhoomiai/api/history", requireConsent, async (req, res) => res.json({ items: (await store.history(req.beta!.userHash)) }));
+  r.post("/bhoomiai/api/logout", async (req, res) => {
+    if (config.authMode === "code" && config.codeAuth) return config.codeAuth.logout(req, res);
+    (await store.revokeToken(req.beta!.tokenHash, req.beta!.tokenExpiry));
     res.json({ ok: true, redirect: "/cdn-cgi/access/logout" });
   });
 
   // ---- me / consent ------------------------------------------------------------------------------------------
-  r.get("/bhoomiai/api/me", (req, res) => {
+  r.get("/bhoomiai/api/me", async (req, res) => {
     const u = req.beta!.user;
     res.json({
       role: u.role, consent: { required_version: CONSENT_VERSION, accepted_version: u.consent_version, research: u.consent_research, training: u.consent_training },
-      quota: limiter.snapshot(req.beta!.userHash, u.daily_quota ?? config.limits.perDay), model: config.model, feedback_categories: FEEDBACK_CATEGORIES, privacy: config.privacy,
+      quota: (await limiter.snapshot(req.beta!.userHash, u.daily_quota ?? config.limits.perDay)), model: config.model, feedback_categories: FEEDBACK_CATEGORIES, privacy: config.privacy,
     });
   });
-  r.post("/bhoomiai/api/consent", (req, res) => {
+  r.post("/bhoomiai/api/consent", async (req, res) => {
     const b = (req.body ?? {}) as Record<string, unknown>;
     if (b.version !== CONSENT_VERSION || b.research !== true || (b.training !== true && b.training !== false) || Object.keys(b).length !== 3)
       return generic(res, 400, "Invalid consent submission.");
-    store.recordConsent(req.beta!.email, CONSENT_VERSION, true, b.training === true);
+    (await store.recordConsent(req.beta!.email, CONSENT_VERSION, true, b.training === true));
     res.json({ ok: true });
   });
 
@@ -173,14 +194,16 @@ export function createBetaRouter(deps: BetaDeps): express.Router {
     const idx = p.sessionId && sessionCore.has(p.sessionId) ? sessionCore.get(p.sessionId)! : inflight.indexOf(Math.min(...inflight));
     const core = cores[idx];
     if (inflight[idx]) { res.set("Retry-After", "10"); return generic(res, 429, "This conversation is busy; try again shortly."); }
+    // Reserve the local Core worker before PostgreSQL I/O yields to another request.
+    inflight[idx]++;
     let slot;
-    try { slot = limiter.acquire(user, req.beta!.user.daily_quota ?? config.limits.perDay); }
+    try { slot = (await limiter.acquire(user, req.beta!.user.daily_quota ?? config.limits.perDay)); }
     catch (e) {
+      inflight[idx]--;
       if (e instanceof LimitError) return res.status(e.code === "kill_switch" || e.code === "gpu_budget" ? 503 : 429).set("Retry-After", String(e.retryAfterSec)).json({ message: e.message, code: e.code, retry_after_s: e.retryAfterSec });
       return generic(res, 500, "Service error.");
     }
     const t0 = now();
-    inflight[idx]++;
     try {
       const out = await withTimeout(config.limits.requestTimeoutMs, async signal => {
         const rr = await doFetch(new URL("/api/chat", core).toString(), {
@@ -190,14 +213,14 @@ export function createBetaRouter(deps: BetaDeps): express.Router {
         return { status: rr.status, body: (await rr.json().catch(() => ({}))) as any };
       });
       if (out.status !== 200) {
-        if (out.status !== 429) limiter.killed = true;
+        if (out.status !== 429) await limiter.setKilled(true);
         return generic(res, out.status === 429 ? 429 : 502, out.status === 429 ? "The model is busy; try again shortly." : "The assistant could not answer this request.");
       }
       const identity = config.expectedModel;
       if (!INTERACTION.test(out.body.interaction_id ?? "") || !SESSION.test(out.body.session_id ?? "")) throw new Error("invalid Core identifiers");
       if (identity && (out.body.model?.experimental !== true || out.body.model?.deployable !== false || Object.entries(identity).some(([k, v]) => out.body.model?.[k] !== v))) throw new Error("model identity mismatch");
-      const current = store.getUser(req.beta!.email);
-      if (!current || current.status === "suspended" || current.revoked_before >= req.beta!.issuedAt || (current.expires_at !== null && current.expires_at <= now()) || store.tokenRevoked(req.beta!.tokenHash)) return generic(res, 403, "Access revoked.");
+      const current = (await store.getUser(req.beta!.email));
+      if (!current || current.status === "suspended" || current.revoked_before >= req.beta!.issuedAt || (current.expires_at !== null && current.expires_at <= now()) || (await store.tokenRevoked(req.beta!.tokenHash))) return generic(res, 403, "Access revoked.");
       const shaped: any = shapeChatResponse(out.body);
       if (typeof shaped.session_id === "string") {
         if (sessionOwner.size > 5000) { sessionOwner.clear(); sessionCore.clear(); }
@@ -208,26 +231,26 @@ export function createBetaRouter(deps: BetaDeps): express.Router {
         .filter((c: any) => c.status && c.status !== "ok" && c.status !== "stale" && c.status !== "control")
         .map((c: any) => `${c.name}: ${String(c.status).replace(/_/g, " ")}`));
       const reply = publicReply(shaped, config.model.label, unavailable);
-      store.logInteraction({ id: String(shaped.interaction_id), userHash: user, question: p.message, answer: reply.answer, status: String(shaped.status),
+      (await store.logInteraction({ id: String(shaped.interaction_id), userHash: user, question: p.message, answer: reply.answer, status: String(shaped.status),
         verified: shaped.verification?.passed === true, verification: out.body.verification, toolCalls: out.body.provenance ?? out.body.tool_trace, model: out.body.model,
-        latencyS: Number(shaped.latency_s ?? 0), unavailable, sessionId: String(shaped.session_id ?? "") });
+        latencyS: Number(shaped.latency_s ?? 0), unavailable, sessionId: String(shaped.session_id ?? "") }));
       res.json(reply);
     } catch (e) {
-      limiter.killed = true; // uncertain upstream work or identity: stop all further dispatch until operator review
+      await limiter.setKilled(true); // uncertain upstream work or identity: stop all further dispatch until operator review
       if ((e as Error).name === "AbortError") return generic(res, 504, "The assistant took too long; please try again.");
       return generic(res, 503, "The assistant is temporarily unavailable.");
     } finally {
       inflight[idx]--;
-      slot.release((now() - t0) / 1000);
+      (await slot.release((now() - t0) / 1000));
     }
   });
 
   // ---- feedback ----------------------------------------------------------------------------------------------
-  r.post("/bhoomiai/api/feedback", requireConsent, (req, res) => {
+  r.post("/bhoomiai/api/feedback", requireConsent, async (req, res) => {
     const p = parseBetaFeedback(req.body);
     if (!p.ok) return generic(res, 400, p.error);
     try {
-      const id = store.addFeedback({ interactionId: p.v.interactionId, userHash: req.beta!.userHash, rating: p.v.rating, categories: p.v.categories, comment: p.v.comment, correction: p.v.correction });
+      const id = (await store.addFeedback({ interactionId: p.v.interactionId, userHash: req.beta!.userHash, rating: p.v.rating, categories: p.v.categories, comment: p.v.comment, correction: p.v.correction }));
       res.json({ ok: true, feedback_id: id, note: "Thank you. Feedback is reviewed by the research team and is not used to train models without review and your separate consent." });
     } catch (e) {
       generic(res, 400, "Feedback could not be recorded.");
@@ -241,19 +264,19 @@ export function createBetaRouter(deps: BetaDeps): express.Router {
     verified: q.verified === "true" ? true : q.verified === "false" ? false : undefined,
     from: q.from ? Number(q.from) : undefined, to: q.to ? Number(q.to) : undefined, limit: q.limit ? Number(q.limit) : undefined, offset: q.offset ? Number(q.offset) : undefined,
   });
-  r.use("/bhoomiai/api/admin", (req, res, next) => {
+  r.use("/bhoomiai/api/admin", async (req, res, next) => {
     for (const k of ["from", "to", "limit", "offset"]) if (req.query[k] !== undefined && (!Number.isSafeInteger(Number(req.query[k])) || Number(req.query[k]) < 0)) return generic(res, 400, "Invalid filter.");
     next();
   });
-  r.get("/bhoomiai/api/admin/feedback", requireAdmin, (req, res) => res.json({ items: store.listFeedback(filters(req.query)), review_statuses: REVIEW_STATUSES }));
-  r.post("/bhoomiai/api/admin/feedback/:id/review", requireAdmin, (req, res) => {
+  r.get("/bhoomiai/api/admin/feedback", requireAdmin, async (req, res) => res.json({ items: (await store.listFeedback(filters(req.query))), review_statuses: REVIEW_STATUSES }));
+  r.post("/bhoomiai/api/admin/feedback/:id/review", requireAdmin, async (req, res) => {
     const b = (req.body ?? {}) as Record<string, unknown>;
-    try { store.review(Number(req.params.id), String(b.review_status) as ReviewStatus, req.beta!.email, typeof b.notes === "string" ? b.notes : ""); res.json({ ok: true }); }
+    try { (await store.review(Number(req.params.id), String(b.review_status) as ReviewStatus, req.beta!.email, typeof b.notes === "string" ? b.notes : "")); res.json({ ok: true }); }
     catch { generic(res, 400, "Review could not be saved."); }
   });
-  r.get("/bhoomiai/api/admin/export", requireAdmin, (req, res) => {
-    const rows = store.exportRows(filters(req.query));
-    store.audit(req.beta!.userHash, "export", String(rows.length));
+  r.get("/bhoomiai/api/admin/export", requireAdmin, async (req, res) => {
+    const rows = (await store.exportRows(filters(req.query)));
+    (await store.audit(req.beta!.userHash, "export", String(rows.length)));
     if (req.query.format === "csv") {
       const cols = ["feedback_id", "interaction_id", "user_hash", "ts", "rating", "categories", "comment", "suggested_correction", "review_status", "question",
         "answer", "answer_status", "verified", "verification", "model", "tool_calls", "consent_at_interaction", "unavailable_data", "consent_training", "training_review_candidate", "training_use_authorized"];
@@ -264,37 +287,37 @@ export function createBetaRouter(deps: BetaDeps): express.Router {
         .send(rows.map(x => JSON.stringify(x)).join("\n"));
     }
   });
-  r.get("/bhoomiai/api/admin/users", requireAdmin, (_req, res) => res.json({ users: store.listUsers() }));
-  r.post("/bhoomiai/api/admin/invite", requireAdmin, (req, res) => {
+  r.get("/bhoomiai/api/admin/users", requireAdmin, async (_req, res) => res.json({ users: (await store.listUsers()) }));
+  r.post("/bhoomiai/api/admin/invite", requireAdmin, async (req, res) => {
     const b = (req.body ?? {}) as Record<string, unknown>;
     try {
-      store.invite(String(b.email ?? ""), b.role === "admin" ? ("admin" as Role) : "user", req.beta!.email);
-      res.json({ ok: true, reminder: "Verified email sign-in is required. Update the exact-email Access policy if configured; send the invitation separately." });
+      (await store.invite(String(b.email ?? ""), b.role === "admin" ? ("admin" as Role) : "user", req.beta!.email));
+      res.json({ ok: true, reminder: "For access-code login, run the operator CLI to issue a private code and share it separately. Email alone cannot sign in." });
     } catch { generic(res, 400, "Invitation could not be created."); }
   });
-  r.post("/bhoomiai/api/admin/suspend", requireAdmin, (req, res) => {
+  r.post("/bhoomiai/api/admin/suspend", requireAdmin, async (req, res) => {
     const b = (req.body ?? {}) as Record<string, unknown>;
-    try { store.manageUser(String(b.email ?? ""), { status: b.suspended === false ? "active" : "suspended" }, req.beta!.email); res.json({ ok: true }); }
+    try { (await store.manageUser(String(b.email ?? ""), { status: b.suspended === false ? "active" : "suspended" }, req.beta!.email)); res.json({ ok: true }); }
     catch { generic(res, 400, "Access change could not be saved."); }
   });
-  r.post("/bhoomiai/api/admin/user", requireAdmin, (req, res) => {
+  r.post("/bhoomiai/api/admin/user", requireAdmin, async (req, res) => {
     const b = (req.body ?? {}) as Record<string, unknown>;
     if (Object.keys(b).some(k => !["email", "role", "quota", "expires_at"].includes(k))) return generic(res, 400, "Invalid change.");
     try {
-      store.manageUser(String(b.email ?? ""), { ...(b.role !== undefined ? { role: b.role as Role } : {}), ...(b.quota !== undefined ? { quota: b.quota as number } : {}), ...(b.expires_at !== undefined ? { expiresAt: b.expires_at as number } : {}) }, req.beta!.email);
+      (await store.manageUser(String(b.email ?? ""), { ...(b.role !== undefined ? { role: b.role as Role } : {}), ...(b.quota !== undefined ? { quota: b.quota as number } : {}), ...(b.expires_at !== undefined ? { expiresAt: b.expires_at as number } : {}) }, req.beta!.email));
       res.json({ ok: true });
     } catch { generic(res, 400, "Access change could not be saved."); }
   });
-  r.get("/bhoomiai/api/admin/usage", requireAdmin, (_req, res) => res.json({ days: store.usageSummary(30), limits: config.limits, killed: limiter.killed }));
-  r.post("/bhoomiai/api/admin/kill", requireAdmin, (req, res) => {
+  r.get("/bhoomiai/api/admin/usage", requireAdmin, async (_req, res) => res.json({ days: (await store.usageSummary(30)), limits: config.limits, killed: (await limiter.isKilled()) }));
+  r.post("/bhoomiai/api/admin/kill", requireAdmin, async (req, res) => {
     if (typeof req.body?.on !== "boolean") return generic(res, 400, "Invalid pause setting.");
-    limiter.killed = req.body.on;
-    store.audit(req.beta!.userHash, "kill_switch", String(limiter.killed));
-    res.json({ ok: true, killed: limiter.killed });
+    await limiter.setKilled(req.body.on);
+    (await store.audit(req.beta!.userHash, "kill_switch", String((await limiter.isKilled()))));
+    res.json({ ok: true, killed: (await limiter.isKilled()) });
   });
 
   // anything else under /bhoomiai/api is a 404 with no detail
-  r.use("/bhoomiai/api", (_req, res) => generic(res, 404, "Not found."));
+  r.use("/bhoomiai/api", async (_req, res) => generic(res, 404, "Not found."));
   return r;
 }
 

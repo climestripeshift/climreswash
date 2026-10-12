@@ -1,3 +1,4 @@
+import { BetaLogin } from "@/components/BetaLogin";
 import { useCallback, useEffect, useState } from "react";
 import { Download, Loader2, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -38,7 +39,7 @@ export default function BhoomiBetaAdminPage() {
   useEffect(() => { if (allowed) load(); }, [allowed, load]);
 
   if (allowed === undefined) return <div className="p-6 text-sm"><Loader2 className="inline h-4 w-4 animate-spin mr-1" />Loading…</div>;
-  if (!allowed) return <div className="p-6 text-sm" role="alert"><ShieldAlert className="inline h-4 w-4 mr-1" />Administrator access required.</div>;
+  if (!allowed) return <div className="p-6 text-sm"><p><ShieldAlert className="inline h-4 w-4 mr-1" />Administrator access required.</p><BetaLogin onDone={() => { getMe().then(m => setAllowed(m.role === "admin")).catch(() => setAllowed(false)); }} /></div>;
 
   const act = async (fn: () => Promise<unknown>, ok: string) => {
     try { await fn(); setMsg(ok); await load(); } catch (e) { setMsg(e instanceof BetaError ? e.message : "Failed."); }

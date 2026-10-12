@@ -14,7 +14,7 @@ with tempfile.TemporaryDirectory(prefix="bhoomi-container-") as tmp:
     context = Path(tmp)
     for rel in ["research/bhoomi_ai_core_v0/src", "research/bhoomi_ai_core_v0/config", "research/bhoomi_ai_core_v0/schemas",
                 "server/beta", "server/betaServer.ts", "server/bhoomiAi.ts", "shared/betaFeedback.ts", "scripts/beta-admin.ts",
-                "deploy/beta/Dockerfile", "deploy/beta/entrypoint.sh", "deploy/beta/runpod_relay.py"]:
+                "deploy/beta/requirements-postgres.txt", "deploy/beta/Dockerfile", "deploy/beta/entrypoint.sh", "deploy/beta/runpod_relay.py"]:
         src, dst = repo / rel, context / rel
         dst.parent.mkdir(parents=True, exist_ok=True)
         if src.is_dir(): shutil.copytree(src, dst, ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.sqlite"))
@@ -32,7 +32,7 @@ with tempfile.TemporaryDirectory(prefix="bhoomi-container-") as tmp:
     values = {
         "NODE_ENV": "production", "BETA_AUTH_MODE": "cloudflare", "BETA_INGRESS_MODE": "loopback", "BETA_PUBLIC_ORIGIN": "https://climreswash.in",
         "BETA_ACCESS_TEAM_DOMAIN": "test.cloudflareaccess.com", "BETA_ACCESS_AUD": "test-aud", "BETA_HASH_KEY": secrets.token_hex(32),
-        "BETA_DB_PATH": "/data/beta.sqlite", "BETA_CORE_URL": "http://127.0.0.1:8765,http://127.0.0.1:8766", "BETA_CLOUD_APPROVED": "0",
+        "BETA_DB_PATH": "/data/beta.sqlite", "BETA_CORE_URL": "http://127.0.0.1:8765,http://127.0.0.1:8766", "BETA_CLOUD_APPROVED": "0", "BETA_START_CORE_OFFLINE": "1",
         "BHOOMI_DEPLOYMENT_PROFILE": "cloud_beta", "BHOOMI_LLM_BACKEND": "openai_compat", "BHOOMI_LLM_EXPERIMENTAL": "1",
         "BHOOMI_LLM_MODEL_ID": "adapter-B-full2ep-experimental-machine-verified", "BHOOMI_LLM_REGISTRY": "/app/registry/models.json",
         "BHOOMI_LLM_MODEL": "bhoomi-llm-v1-ckpt160", "BHOOMI_LLM_BASE_URL": "http://127.0.0.1:8081/v1",

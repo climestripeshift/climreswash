@@ -1,3 +1,4 @@
+import { BetaLogin } from "@/components/BetaLogin";
 import { useEffect, useRef, useState } from "react";
 import { AlertTriangle, FlaskConical, Loader2, Send, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -99,7 +100,7 @@ export default function BhoomiBetaPage() {
 
   const refresh = () => getMe().then(setMe).catch((e: BetaError) => {
     setMe(null);
-    setBlocked(e.status === 401 ? "Please sign in with the e-mail address that received your invitation." : "This beta is invitation-only. If you were invited, contact the research team.");
+    setBlocked(e.status === 401 ? "Sign in with your invited email and private access code." : "This beta is invitation-only. If you were invited, contact the research team.");
   });
   useEffect(() => { refresh(); }, []);
   useEffect(() => { end.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs, busy]);
@@ -123,7 +124,7 @@ export default function BhoomiBetaPage() {
   }
 
   if (me === undefined) return <div className="p-6 text-sm"><Loader2 className="inline h-4 w-4 animate-spin mr-1" />Loading…</div>;
-  if (me === null) return <div className="p-6 max-w-xl mx-auto text-sm" role="alert">{blocked} <a className="underline" href="/bhoomiai">Sign in</a> · <a className="underline" href="/">ClimResWASH home</a></div>;
+  if (me === null) return <div className="p-6 max-w-xl mx-auto text-sm"><p>{blocked}</p><BetaLogin onDone={refresh} /><a className="underline block mt-4" href="/">ClimResWASH home</a></div>;
   const consented = me.consent.accepted_version === me.consent.required_version && me.consent.research;
 
   return (

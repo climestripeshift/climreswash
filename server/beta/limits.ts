@@ -60,6 +60,8 @@ export class Limiter {
   set killed(on: boolean) { this.paused = on; this.usage.setSetting?.("paused", String(on)); }
 
   constructor(public cfg: LimitConfig, private usage: UsageStore, private now: () => number = Date.now) {}
+  isKilled() { return this.killed; }
+  setKilled(on: boolean) { this.killed = on; }
 
   private recent(user: string, windowMs: number): number[] {
     const t = this.now();

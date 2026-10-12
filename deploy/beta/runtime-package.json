@@ -4,6 +4,7 @@
   "type": "module",
   "dependencies": {
     "express": "4.22.3",
-    "tsx": "4.20.5"
+    "tsx": "4.20.5",
+    "pg": "8.23.1"
   }
 }

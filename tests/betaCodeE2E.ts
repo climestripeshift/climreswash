@@ -1,0 +1,57 @@
+// Real browser + HTTPS + PostgreSQL + real access-code hashes. Only inference is a test fixture.
+import assert from 'node:assert/strict';
+import express from 'express';
+import http from 'node:http';
+import https from 'node:https';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import os from 'node:os';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+import { randomBytes } from 'node:crypto';
+import { PgDatabase } from '../server/beta/pgDatabase';
+import { PostgresBetaStore } from '../server/beta/pgStore';
+import { PostgresLimiter } from '../server/beta/pgLimits';
+import { CodeAuth } from '../server/beta/codeAuth';
+import { generateAccessCode, hashAccessCode } from '../server/beta/accessCodes';
+import { createBetaRouter, type BetaConfig } from '../server/beta/gateway';
+import { DEFAULT_LIMITS } from '../server/beta/limits';
+import { registerBetaProxy } from '../server/betaProxy';
+
+const url=process.env.BETA_TEST_DATABASE_URL, module=process.env.PLAYWRIGHT_MODULE;
+if(!url || !module || new URL(url).hostname!=='127.0.0.1' || new URL(url).pathname!=='/bhoomi_beta_test')throw new Error('Disposable local DB and local Playwright required');
+const db=new PgDatabase(url),store=new PostgresBetaStore(db,'browser-local-hmac-key-'.repeat(3));
+const temp=await fs.mkdtemp(path.join(os.tmpdir(),'bhoomi-browser-tls-'));
+let browser:any;const servers:(http.Server|https.Server)[]=[];
+try {
+ await promisify(execFile)('openssl',['req','-x509','-newkey','rsa:2048','-nodes','-keyout',path.join(temp,'key.pem'),'-out',path.join(temp,'cert.pem'),'-days','1','-subj','/CN=localhost']);
+ const site=express();const server=https.createServer({key:await fs.readFile(path.join(temp,'key.pem')),cert:await fs.readFile(path.join(temp,'cert.pem'))},site);servers.push(server);
+ await new Promise<void>(r=>server.listen(0,'127.0.0.1',r));const web=`https://localhost:${(server.address() as any).port}`;
+ const code=generateAccessCode();await store.invite('browser@example.org','user','local-test');await store.setAccessCodeHash('browser@example.org',await hashAccessCode(code),'local-test');
+ const config:BetaConfig={hosted:true,authMode:'code',originKey:'browser-local-origin-key-'.repeat(3),publicOrigin:web,codeAuth:new CodeAuth(store,web),inferenceReady:true,coreUrl:'http://127.0.0.1:8765',limits:{...DEFAULT_LIMITS,perMinute:100,globalPerDay:200,reservationSeconds:10},model:{label:'Bhoomi-LLM v1 checkpoint-160',experimental:true,baseModel:'Qwen3-4B-Instruct-2507',note:'Experimental'}};
+ const gw=express();gw.use(express.json());gw.use(createBetaRouter({store,config,limiter:new PostgresLimiter(config.limits,store),fetchImpl:(async()=>Response.json({interaction_id:randomBytes(16).toString('hex'),session_id:randomBytes(12).toString('hex'),status:'verified',answer:'Kota, Rajasthan: screening index 2.50 [F1].',verification:{passed:true},model:{experimental:true,deployable:false,label:config.model.label},tool_trace:[],latency_s:.1})) as typeof fetch}));
+ const origin=http.createServer(gw);servers.push(origin);await new Promise<void>(r=>origin.listen(0,'127.0.0.1',r));const base=`http://127.0.0.1:${(origin.address() as any).port}`;
+ registerBetaProxy(site,'https://gateway.example.test',(async(u,init)=>fetch(base+new URL(String(u)).pathname+new URL(String(u)).search,{...init,redirect:'manual'})) as typeof fetch,{originKey:config.originKey,publicOrigin:web});
+ const build=path.resolve(process.env.BETA_BUILD_DIR??'dist/public');
+ site.use('/api',(_q,r)=>r.json([])); // public API fixtures only; beta API is handled before this
+ site.use(express.static(build));site.get('*',(_q,r)=>r.sendFile(path.join(build,'index.html')));
+ const {chromium}=await import(module);browser=await chromium.launch({channel:'chrome',headless:true});
+ const context=await browser.newContext({ignoreHTTPSErrors:true});
+ await context.route('**/*',(route:any)=>['localhost','127.0.0.1'].includes(new URL(route.request().url()).hostname)?route.continue():route.abort());
+ const page=await context.newPage();assert.equal((await page.goto(web+'/'))!.status(),200);
+ assert.equal(await page.locator('a[href="/bhoomiai"],a[href="/bhoomiai/admin"]').count(),0);
+ await page.goto(web+'/grid-v2');await page.locator('.leaflet-container').first().waitFor({timeout:30000});
+ assert.equal(await page.getByText('Page Not Found',{exact:false}).count(),0);
+ await page.goto(web+'/bhoomiai');await page.getByLabel('Invited email').fill('browser@example.org');await page.getByLabel('Access code').fill('wrong');await page.getByRole('button',{name:'Sign in',exact:true}).click();await page.getByRole('alert').waitFor();
+ await page.getByLabel('Access code').fill(code);await page.getByRole('button',{name:'Sign in',exact:true}).click();await page.getByTestId('consent').waitFor();
+ const cookies=await context.cookies();const session=cookies.find((c:any)=>c.name==='BhoomiSession');assert.ok(session.httpOnly&&session.secure&&session.sameSite==='Lax');
+ await page.getByTestId('consent').locator('input[type="checkbox"]').first().check();assert.equal(await page.getByTestId('consent').locator('input[type="checkbox"]').nth(1).isChecked(),false);
+ await page.getByRole('button',{name:'Accept and continue'}).click();await page.getByLabel('Question',{exact:true}).fill('What is the screening index of Kota?');await page.getByLabel('Question',{exact:true}).press('Enter');await page.getByText('Kota, Rajasthan: screening index 2.50',{exact:false}).first().waitFor();
+ await page.getByRole('button',{name:'Not helpful',exact:true}).click();
+ await page.getByText('Give feedback on this answer',{exact:true}).click();await page.getByLabel('Wrong place (district / state)').check();await page.getByPlaceholder('Suggested correction (optional): the right value, place or wording').fill('Explain the geography clearly');await page.getByRole('button',{name:'Send feedback',exact:true}).click();await page.getByText('Thank you: feedback recorded for review.').waitFor();
+ assert.equal((await context.request.get(web+'/bhoomiai/api/admin/users')).status(),403);
+ await page.getByRole('button',{name:'Sign out',exact:true}).click();await page.getByLabel('Invited email').waitFor();assert.equal((await context.request.get(web+'/bhoomiai/api/history')).status(),401);
+ await page.getByLabel('Invited email').fill('browser@example.org');await page.getByLabel('Access code').fill(code);await page.getByRole('button',{name:'Sign in',exact:true}).click();await page.getByLabel('Question',{exact:true}).waitFor();
+ await store.manageUser('browser@example.org',{status:'suspended'},'local-test');assert.equal((await context.request.get(web+'/bhoomiai/api/me')).status(),401);
+ console.log('PASS: HTTPS browser login, secure cookies, consent, chat, feedback, logout/revocation; public homepage and GIS map mount; no public beta navigation');
+} finally {if(browser)await browser.close();for(const s of servers){s.closeAllConnections();await new Promise<void>(r=>s.close(()=>r()));}await store.close();await fs.rm(temp,{recursive:true});}

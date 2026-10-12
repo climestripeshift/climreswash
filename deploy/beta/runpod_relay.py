@@ -20,13 +20,15 @@ import os
 import re
 import sys
 import sqlite3
+import uuid
+import calendar
 from pathlib import Path
 import threading
 import time
 import urllib.error
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs
 
 UPSTREAM_RE = re.compile(r"^https://api\.runpod\.ai/v2/[A-Za-z0-9]{6,40}/openai/v1$")
 MAX_BODY = 256 * 1024
@@ -54,6 +56,12 @@ class Config:
         self.daily_cap = int(e.get("RELAY_DAILY_REQUEST_CAP", "400"))
         self.port = int(e.get("RELAY_PORT", "8081"))
         self.test_only = allow_test_upstream
+        self.database_url = e.get("RELAY_DATABASE_URL") or e.get("BETA_DATABASE_URL")
+        if self.database_url:
+            database = urlparse(self.database_url)
+            if database.scheme not in ("postgres", "postgresql") or (database.hostname not in ("127.0.0.1", "localhost", "::1")
+                    and parse_qs(database.query).get("sslmode") != ["verify-full"]):
+                raise SystemExit("Remote relay PostgreSQL requires verified TLS")
         self.budget_db = e.get("RELAY_BUDGET_DB", "/data/relay-budget.sqlite")
         self.approval_file = e.get("RELAY_APPROVAL_FILE", "")
         self.billing_file = e.get("RELAY_BILLING_FILE", "")
@@ -75,7 +83,11 @@ class Relay:
         self.lock = threading.Lock()
         self.day, self.count = self._today(), 0
         self.opener = urllib.request.build_opener(_NoRedirect)
-        if not cfg.test_only:
+        if not cfg.test_only and cfg.database_url:
+            with self._pg() as db:
+                row = db.execute("SELECT version FROM bhoomi_beta.schema_migrations WHERE version=1").fetchone()
+                if not row: raise RuntimeError("Apply beta migrations before relay startup")
+        elif not cfg.test_only:
             Path(cfg.budget_db).parent.mkdir(parents=True, exist_ok=True)
             with closing(sqlite3.connect(cfg.budget_db)) as db, db:
                 db.execute("CREATE TABLE IF NOT EXISTS budget (month TEXT PRIMARY KEY, reserved INTEGER NOT NULL, calls INTEGER NOT NULL)")
@@ -99,6 +111,8 @@ class Relay:
                     or billing.get("shutdown_verified") is not True or billing.get("auto_pay_disabled") is not True
                     or not isinstance(billing.get("spent_micro_usd"), int) or billing["spent_micro_usd"] < 0):
                 return False
+            if self.cfg.database_url:
+                return self._reserve_pg(billing)
             with closing(sqlite3.connect(self.cfg.budget_db)) as db, db:
                 db.execute("BEGIN IMMEDIATE")
                 paused = db.execute("SELECT value FROM control WHERE key='paused'").fetchone()
@@ -116,8 +130,32 @@ class Relay:
         except Exception:
             return False
 
+    def _pg(self):
+        import psycopg
+        return psycopg.connect(self.cfg.database_url, connect_timeout=5,
+                               options="-c search_path=bhoomi_beta,pg_catalog -c statement_timeout=10000 -c lock_timeout=5000")
+
+    def _reserve_pg(self, billing):
+        with self._pg() as db:
+            db.execute("SELECT pg_advisory_xact_lock(726402316)")
+            if db.execute("SELECT 1 FROM settings WHERE key IN ('paused','relay_paused') AND value='true'").fetchone():
+                return False
+            day = self._today()
+            month_start = calendar.timegm(time.strptime(day[:7] + "-01", "%Y-%m-%d")) * 1000
+            day_start = calendar.timegm(time.strptime(day, "%Y-%m-%d")) * 1000
+            reserved, daily = db.execute("SELECT COALESCE(SUM(reservation_micro_usd),0), COUNT(*) FILTER(WHERE ts >= %s) FROM relay_spending WHERE ts >= %s", (day_start,month_start)).fetchone()
+            if daily >= self.cfg.daily_cap or reserved + billing["spent_micro_usd"] + self.cfg.reservation > self.cfg.monthly_cap:
+                return False
+            db.execute("INSERT INTO relay_spending(ts,reservation_micro_usd,request_id) VALUES(%s,%s,%s)",
+                       (self.clock()*1000,self.cfg.reservation,uuid.uuid4().hex))
+            return True
+
     def pause(self):
-        if not self.cfg.test_only:
+        if not self.cfg.test_only and self.cfg.database_url:
+            with self._pg() as db:
+                db.execute("SELECT pg_advisory_xact_lock(726402316)")
+                db.execute("INSERT INTO settings VALUES('relay_paused','true') ON CONFLICT(key) DO UPDATE SET value='true'")
+        elif not self.cfg.test_only:
             with closing(sqlite3.connect(self.cfg.budget_db)) as db, db:
                 db.execute("INSERT INTO control VALUES ('paused','true') ON CONFLICT(key) DO UPDATE SET value='true'")
 
