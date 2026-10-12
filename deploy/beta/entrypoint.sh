@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Starts relay -> Core workers -> gateway in one container. Any process exiting stops the container (restart policy brings it back).
 set -euo pipefail
+umask 077
 cd /app
 : "${BETA_CORE_URL:?}" "${RELAY_UPSTREAM:?}" "${RUNPOD_API_KEY:?}" "${BETA_HASH_KEY:?}"
 [ "${BHOOMI_DEPLOYMENT_PROFILE:-}" = "cloud_beta" ] || { echo "refusing to start: BHOOMI_DEPLOYMENT_PROFILE must be cloud_beta" >&2; exit 1; }

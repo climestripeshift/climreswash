@@ -2274,7 +2274,7 @@ export default function HexMapV2Page() {
         if (!byNum.has(Number(num))) byNum.set(Number(num), ind.label.replace(/\s*\(%\)\s*$/, ""));
       }
     }
-    return [...byNum.entries()].map(([num, label]) => ({ num, label })).sort((a, b) => a.num - b.num);
+    return Array.from(byNum.entries()).map(([num, label]) => ({ num, label })).sort((a, b) => a.num - b.num);
   }, [nfhs6Q.data]);
 
   const nfhs6FilteredIndicators = useMemo(() => {

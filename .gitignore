@@ -25,3 +25,6 @@ deploy/beta/source-clearance.json
 deploy/beta/approval.json
 deploy/beta/billing-attestation.json
 __pycache__/
+
+# Private beta approvals, worker receipts and billing state
+deploy/beta/private-state/

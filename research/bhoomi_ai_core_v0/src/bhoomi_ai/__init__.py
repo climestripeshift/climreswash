@@ -4,4 +4,4 @@ The language model never supplies numbers: every figure comes from validated,
 read-only tools that wrap existing ClimResWASH datasets and research modules.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.3-beta.1"

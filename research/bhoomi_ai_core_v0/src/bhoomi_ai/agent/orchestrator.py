@@ -31,7 +31,7 @@ _HH_INDICATOR = re.compile(r"\b(?:share|percent\w*|proportion|fraction|how\s+man
                            r"|\bhouseholds?\s+(?:have|has|with|having|using|that|who)\b", re.I)
 _HH_LISTING = re.compile(r"\b(?:which|list|name|show|identify|find)\s+(?:the\s+|all\s+)?households?\b", re.I)
 
-SCOPE_NOTE = ("Bhoomi AI Core v0.1 can report screening indices, forecasts, reported flood records, rainfall indicators, "
+SCOPE_NOTE = ("Bhoomi AI Core can report screening indices, forecasts, reported flood records, rainfall indicators, "
               "reanalysis climate summaries and WASH survey values for districts, with their limitations. It does not give "
               "future probabilities or predictions, explain causes, or resolve villages or facilities.")
 

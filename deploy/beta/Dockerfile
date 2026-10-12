@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends python3 tini &&
 WORKDIR /app
 COPY . /app
 # Only what the gateway imports at runtime; versions are copied from the repository package.json by the build step.
-RUN npm install --omit=dev --no-audit --no-fund && useradd -r -u 10001 beta && mkdir -p /data /app/research/bhoomi_ai_core_v0/data && chown -R beta /data /app/research/bhoomi_ai_core_v0/data
+RUN npm ci --omit=dev --no-audit --no-fund && useradd -r -u 10001 beta && mkdir -p /data /app/research/bhoomi_ai_core_v0/data && chown -R beta /data /app/research/bhoomi_ai_core_v0/data
 USER beta
 ENV PYTHONDONTWRITEBYTECODE=1 NODE_ENV=production
 ENTRYPOINT ["/usr/bin/tini", "--", "/app/deploy/beta/entrypoint.sh"]

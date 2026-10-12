@@ -1,0 +1,8 @@
+{
+  "approved": false,
+  "scope": "checkpoint-160-compatibility",
+  "approved_by": "",
+  "expires_at": 0,
+  "budget_usd": 5,
+  "note": "Approval must separately cover endpoint/volume creation, adapter transfer and GPU use. This template authorises nothing."
+}

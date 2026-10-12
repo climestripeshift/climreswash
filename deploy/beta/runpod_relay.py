@@ -15,6 +15,7 @@ Standard library only. Start:  RUNPOD_API_KEY=... RELAY_UPSTREAM=https://api.run
 from __future__ import annotations
 
 import json
+from contextlib import closing
 import os
 import re
 import sys
@@ -76,7 +77,7 @@ class Relay:
         self.opener = urllib.request.build_opener(_NoRedirect)
         if not cfg.test_only:
             Path(cfg.budget_db).parent.mkdir(parents=True, exist_ok=True)
-            with sqlite3.connect(cfg.budget_db) as db:
+            with closing(sqlite3.connect(cfg.budget_db)) as db, db:
                 db.execute("CREATE TABLE IF NOT EXISTS budget (month TEXT PRIMARY KEY, reserved INTEGER NOT NULL, calls INTEGER NOT NULL)")
                 db.execute("CREATE TABLE IF NOT EXISTS daily (day TEXT PRIMARY KEY, calls INTEGER NOT NULL)")
                 db.execute("CREATE TABLE IF NOT EXISTS control (key TEXT PRIMARY KEY, value TEXT)")
@@ -98,7 +99,7 @@ class Relay:
                     or billing.get("shutdown_verified") is not True or billing.get("auto_pay_disabled") is not True
                     or not isinstance(billing.get("spent_micro_usd"), int) or billing["spent_micro_usd"] < 0):
                 return False
-            with sqlite3.connect(self.cfg.budget_db) as db:
+            with closing(sqlite3.connect(self.cfg.budget_db)) as db, db:
                 db.execute("BEGIN IMMEDIATE")
                 paused = db.execute("SELECT value FROM control WHERE key='paused'").fetchone()
                 if paused and paused[0] == "true": return False
@@ -117,7 +118,7 @@ class Relay:
 
     def pause(self):
         if not self.cfg.test_only:
-            with sqlite3.connect(self.cfg.budget_db) as db:
+            with closing(sqlite3.connect(self.cfg.budget_db)) as db, db:
                 db.execute("INSERT INTO control VALUES ('paused','true') ON CONFLICT(key) DO UPDATE SET value='true'")
 
     def _today(self) -> str:

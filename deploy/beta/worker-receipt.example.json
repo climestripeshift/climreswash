@@ -1,0 +1,9 @@
+{
+  "operator_verified": false,
+  "image_digest": "sha256:f0cba070a8d324fc664934c31b9e89d7a294f9116b2c81984defc2edcbc7098d",
+  "vllm_version": "",
+  "base_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+  "adapter_sha256": "462270265fafcdf6fa52d136b556926d357f9aa6710f72a8fbc934f04a3c65ed",
+  "template_sha256": "64f85b198065d0fba2a81f37e10ed68161ce2c19a754c7100e67e0ca2ee9c326",
+  "note": "Record actual running image/version and sha256sum output from worker/approved volume; model names alone do not establish tensor identity."
+}

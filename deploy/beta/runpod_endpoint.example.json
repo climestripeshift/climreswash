@@ -1,7 +1,7 @@
 {
   "_comment": "Specification for the Runpod Serverless endpoint. NOT created: creating it needs the owner's separate approval. Items marked UNVERIFIED have not been exercised on a real worker.",
   "name": "bhoomi-beta-v1",
-  "worker_image": "runpod/worker-v1-vllm:CHANGE_ME_PINNED_TAG",
+  "worker_image": "runpod/worker-v1-vllm:v2.28.0@sha256:f0cba070a8d324fc664934c31b9e89d7a294f9116b2c81984defc2edcbc7098d",
   "gpu_pool": [
     "RTX 4090 24 GB",
     "RTX A5000 24 GB",
@@ -16,7 +16,7 @@
   },
   "spend_controls": [
     "prepaid balance only (no auto-recharge)",
-    "workers_max 1-2",
+    "workers_max exactly 1 for first test",
     "billing alert",
     "gateway GPU-second budget and kill switch"
   ],
@@ -26,21 +26,35 @@
     "ENABLE_LORA": "true",
     "MAX_LORAS": "1",
     "MAX_LORA_RANK": "16",
-    "LORA_MODULES": "[{\"name\":\"bhoomi-llm-v1-ckpt160\",\"path\":\"CHANGE_ME/private-hf-repo-with-adapter\",\"base_model_name\":\"Qwen/Qwen3-4B-Instruct-2507\"}]",
+    "LORA_MODULES": "[{\"name\": \"bhoomi-llm-v1-ckpt160\", \"path\": \"/runpod-volume/bhoomi-ckpt160\", \"base_model_name\": \"Qwen/Qwen3-4B-Instruct-2507\"}]",
     "MAX_MODEL_LEN": "6144",
     "GPU_MEMORY_UTILIZATION": "0.90",
     "MAX_CONCURRENCY": "2",
     "ENABLE_AUTO_TOOL_CHOICE": "true",
     "TOOL_CALL_PARSER": "hermes",
-    "HF_TOKEN": "secret reference, read-only, scoped to the one private adapter repo",
     "DTYPE": "bfloat16",
-    "MAX_NUM_SEQS": "2"
+    "MAX_NUM_SEQS": "2",
+    "CUSTOM_CHAT_TEMPLATE": "/runpod-volume/bhoomi-ckpt160/chat_template.jinja",
+    "TOKENIZER_NAME": "Qwen/Qwen3-4B-Instruct-2507",
+    "TOKENIZER_REVISION": "cdbee75f17c01a7cc42f958dc650907174af0554",
+    "TRUST_REMOTE_CODE": "false",
+    "VLLM_STARTUP_TIMEOUT": "180"
   },
   "unverified": [
     "tool-call output of the LoRA model under the vLLM hermes parser matches the llama.cpp local runtime (run the parity probe, plan section 11)",
     "the adapter's chat template is honoured by the worker (CUSTOM_CHAT_TEMPLATE or an equivalent); the adapter was trained with its own template",
     "LoRA selected by name through the OpenAI-compatible route",
-    "cold-start time from a private HF repo with the base weights not baked into the image"
+    "cold-start time downloading the pinned public base and reading the approved adapter from the private volume"
   ],
-  "data_policy": "The worker receives only prompts that the Core builds from allowed tool outputs and user questions. It never receives data files, the feedback database or restricted datasets."
+  "data_policy": "The worker receives only prompts that the Core builds from allowed tool outputs and user questions. It never receives data files, the feedback database or restricted datasets.",
+  "candidate_only": true,
+  "first_test": {
+    "approval_required": true,
+    "wall_clock_limit_seconds": 900,
+    "operator_attended": true,
+    "model_call_limit": 12,
+    "budget_usd": 5,
+    "data": "synthetic tool records only",
+    "hf_token": "not supplied; approved adapter on private volume"
+  }
 }

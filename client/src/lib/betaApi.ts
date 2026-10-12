@@ -42,7 +42,7 @@ export const adminFeedback = (qs: Record<string, string>, f: Fetch = fetch) =>
   call<{ items: AdminFeedbackItem[]; review_statuses: string[] }>(`/bhoomiai/api/admin/feedback?${new URLSearchParams(qs)}`, undefined, f);
 export const adminReview = (id: number, review_status: string, notes: string, f: Fetch = fetch) =>
   call<{ ok: true }>(`/bhoomiai/api/admin/feedback/${id}/review`, post({ review_status, notes }), f);
-export const adminUsage = (f: Fetch = fetch) => call<{ days: { day: string; users: number; requests: number; gpu_seconds: number }[]; killed: boolean }>("/bhoomiai/api/admin/usage", undefined, f);
+export const adminUsage = (f: Fetch = fetch) => call<{ days: { day: string; users: number; requests: number; gpu_seconds: number }[]; killed: boolean; limits?: { perDay: number } }>("/bhoomiai/api/admin/usage", undefined, f);
 export const adminKill = (on: boolean, f: Fetch = fetch) => call<{ ok: true; killed: boolean }>("/bhoomiai/api/admin/kill", post({ on }), f);
 export const adminInvite = (email: string, role: "user" | "admin", f: Fetch = fetch) => call<{ ok: true; reminder: string }>("/bhoomiai/api/admin/invite", post({ email, role }), f);
 export const adminUsers = (f: Fetch = fetch) => call<{ users: { email: string; role: string; status: string; consent_version: string | null; consent_research: number; consent_training: number; daily_quota: number | null }[] }>("/bhoomiai/api/admin/users", undefined, f);

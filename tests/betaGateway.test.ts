@@ -460,3 +460,32 @@ test('50 invited identities: burst is bounded and histories stay separate', asyn
   }
   g.close();
 });
+
+test('JWKS rotation: an unknown key triggers bounded refresh and expired tokens fail at exact boundary', async () => {
+  let now = 0, fetches = 0;
+  const rotated = { ...jwk, kid: 'rotated' };
+  const get = cachedJwks(async () => ({ keys: ++fetches === 1 ? [jwk] : [jwk, rotated] }), 3600000, 60000, () => now);
+  await verifyAccessJwt(token(), cfg, get);
+  now = 60001;
+  await verifyAccessJwt(token({}, { kid: 'rotated' }), cfg, get);
+  assert.equal(fetches, 2);
+  await assert.rejects(verifyAccessJwt(token({}, { kid: 'missing' }), cfg, get), AccessError);
+  assert.equal(fetches, 2);
+  const t = Math.floor(Date.now() / 1000);
+  await assert.rejects(verifyAccessJwt(token({ exp: t, iat: t - 1 }), { ...cfg, clockSkewSec: 0 }, keys, t), AccessError);
+  await assert.rejects(verifyAccessJwt(token({ iat: t + 1000, exp: t + 500 }), cfg, keys, t), AccessError);
+});
+
+test('Worker backend: even a valid invited identity cannot bypass the origin secret', async () => {
+  const store = mkStore();
+  const config: BetaConfig = { hosted: true, authMode: 'cloudflare', access: cfg, getJwks: keys, originKey: 'secret'.repeat(8),
+    limits: DEFAULT_LIMITS, publicOrigin: 'https://climreswash.in', model: { label: 'beta', baseModel: 'b', note: 'n', experimental: true } };
+  const app = express(); app.use(createBetaRouter({ store, config, limiter: new Limiter(DEFAULT_LIMITS, store) }));
+  const server = http.createServer(app); await new Promise<void>(r => server.listen(0, '127.0.0.1', r));
+  try {
+    const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}/bhoomiai/api/me`;
+    assert.equal((await fetch(url, { headers: { 'Cf-Access-Jwt-Assertion': token() } })).status, 403);
+    assert.equal((await fetch(url, { headers: { 'Cf-Access-Jwt-Assertion': 'forged', 'x-bhoomi-origin-key': config.originKey! } })).status, 401);
+    assert.equal((await fetch(url, { headers: { 'Cf-Access-Jwt-Assertion': token(), 'x-bhoomi-origin-key': config.originKey! } })).status, 200);
+  } finally { server.closeAllConnections(); server.close(); store.close(); }
+});

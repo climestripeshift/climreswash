@@ -55,7 +55,7 @@ export default function BhoomiBetaAdminPage() {
 
       <section className="grid gap-3 sm:grid-cols-3 text-sm">
         <div className="rounded border p-3"><p className="text-xs text-muted-foreground">Latest day{today ? ` (${today.day})` : ""}</p>
-          <p>{today ? `${today.requests} requests · ${today.users} users · ${Math.round(today.gpu_seconds)} GPU-s` : "no usage yet"}</p></div>
+          <p>{today ? `${today.requests} requests · ${today.users} users · ${Math.round(today.gpu_seconds)} reserved / estimated compute-seconds` : "no usage yet"}</p></div>
         <div className="rounded border p-3 flex items-center gap-2"><div className="flex-1"><p className="text-xs text-muted-foreground">Kill switch</p>
           <p>{usage?.killed ? <Badge variant="destructive">Chat disabled</Badge> : <Badge variant="outline">Chat enabled</Badge>}</p></div>
           <Button size="sm" variant={usage?.killed ? "default" : "destructive"} onClick={() => act(() => adminKill(!usage?.killed), usage?.killed ? "Chat re-enabled." : "Chat disabled.")}>
@@ -127,7 +127,7 @@ export default function BhoomiBetaAdminPage() {
           {users.map(u => <li key={u.email} className="border-t py-2 flex gap-2 flex-wrap items-center">
             <span>{u.email} · {u.status} · consent {u.consent_version ?? "pending"}</span>
             <label>Role <select aria-label={`Role for ${u.email}`} value={u.role} onChange={e => act(() => adminUser(u.email, { role: e.target.value }), "Role updated.")} className="border rounded"><option value="user">User</option><option value="admin">Admin</option></select></label>
-            <label>Daily quota <input aria-label={`Quota for ${u.email}`} type="number" min={0} max={120} defaultValue={u.daily_quota ?? 40} key={`${u.email}-${u.daily_quota}`} onBlur={e => { const n = Number(e.target.value); if (n !== (u.daily_quota ?? 40)) act(() => adminUser(u.email, { quota: n }), "Quota updated."); }} className="border rounded w-16" /></label>
+            <label>Daily quota <input aria-label={`Quota for ${u.email}`} type="number" min={0} max={120} defaultValue={u.daily_quota ?? usage?.limits?.perDay ?? 40} key={`${u.email}-${u.daily_quota}`} onBlur={e => { const n = Number(e.target.value); if (n !== (u.daily_quota ?? usage?.limits?.perDay ?? 40)) act(() => adminUser(u.email, { quota: n }), "Quota updated."); }} className="border rounded w-16" /></label>
             <Button size="sm" variant={u.status === "suspended" ? "outline" : "destructive"} onClick={() => act(() => adminSuspend(u.email, u.status !== "suspended"), u.status === "suspended" ? "Access restored; fresh sign-in required." : "Access revoked immediately.")}>{u.status === "suspended" ? "Restore access" : "Revoke access"}</Button>
           </li>)}
         </ul>

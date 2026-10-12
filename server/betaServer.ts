@@ -20,6 +20,9 @@ const num = (k: string, d: number) => {
   return n;
 };
 const hosted = true;
+const ingress = env.BETA_INGRESS_MODE ?? "worker";
+if (!["worker", "loopback"].includes(ingress)) throw new Error("Invalid BETA_INGRESS_MODE");
+if (ingress === "worker" && (!env.BETA_ORIGIN_KEY || env.BETA_ORIGIN_KEY.length < 32)) throw new Error("Worker ingress requires BETA_ORIGIN_KEY");
 const authMode = "cloudflare" as const;
 if (env.BETA_AUTH_MODE && env.BETA_AUTH_MODE !== authMode) throw new Error("Only verified Cloudflare authentication is supported");
 if (!env.BETA_PUBLIC_ORIGIN || new URL(env.BETA_PUBLIC_ORIGIN).origin !== env.BETA_PUBLIC_ORIGIN || !env.BETA_PUBLIC_ORIGIN.startsWith("https://")) throw new Error("BETA_PUBLIC_ORIGIN must be an HTTPS origin");
@@ -53,7 +56,7 @@ const inferenceReady = env.BETA_CLOUD_APPROVED === "1" && approval?.approved ===
   && approval?.model?.registry_id && approval?.model?.base_revision && /^[0-9a-f]{64}$/.test(approval?.model?.adapter_sha256 ?? "")
   && /^[0-9a-f]{64}$/.test(approval?.data_bundle_sha256 ?? "") && approval?.approved_by && approval?.privacy_contact && approval?.processing_regions?.length && approval?.processors?.length && approval?.attributions?.length;
 const config: BetaConfig = {
-  hosted, authMode, inferenceReady: !!inferenceReady, expectedModel: approval?.model, originKey: env.BETA_ORIGIN_KEY, access: team && aud ? { teamDomain: team, aud } : undefined, getJwks,
+  hosted, authMode, inferenceReady: !!inferenceReady, expectedModel: approval?.model, originKey: env.BETA_ORIGIN_KEY, access: team && aud ? { teamDomain: team, aud, clockSkewSec: 0 } : undefined, getJwks,
   privacy: approval ? { contact: approval.privacy_contact ?? "", processors: approval.processors ?? [], regions: approval.processing_regions ?? [], attributions: approval.attributions ?? [] } : undefined,
   coreUrls: (env.BETA_CORE_URL ?? "http://127.0.0.1:8765").split(",").map(u => u.trim()).filter(Boolean), publicOrigin: env.BETA_PUBLIC_ORIGIN, limits,
   model: { label: env.BETA_MODEL_LABEL ?? "Bhoomi-LLM v1 checkpoint-160 (experimental research beta)", experimental: true,

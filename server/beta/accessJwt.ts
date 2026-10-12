@@ -7,7 +7,7 @@ import { createPublicKey, verify as cryptoVerify } from "node:crypto";
 
 export interface Jwk { kid: string; kty: string; n: string; e: string; alg?: string; use?: string }
 export interface AccessConfig { teamDomain: string; aud: string; clockSkewSec?: number }
-export type JwksFetcher = () => Promise<{ keys: Jwk[] }>;
+export type JwksFetcher = (forceRefresh?: boolean) => Promise<{ keys: Jwk[] }>;
 export interface AccessIdentity { email: string; sub: string; exp: number; iat: number }
 
 export class AccessError extends Error {
@@ -20,9 +20,9 @@ const parseJson = (b: Buffer) => { try { return JSON.parse(b.toString("utf8")); 
 /** Keys are cached for `ttlMs`; an unknown kid triggers at most one refetch per `minRefetchMs` (key rotation). */
 export function cachedJwks(fetcher: JwksFetcher, ttlMs = 3_600_000, minRefetchMs = 60_000, now: () => number = Date.now): JwksFetcher {
   let cache: { keys: Jwk[] } | null = null, at = 0, lastTry = 0;
-  return async () => {
+  return async (forceRefresh = false) => {
     const t = now();
-    if (!cache || t - at > ttlMs || (t - lastTry > minRefetchMs && cache.keys.length === 0)) {
+    if (!cache || t - at > ttlMs || (forceRefresh && t - lastTry >= minRefetchMs)) {
       lastTry = t;
       cache = await fetcher();
       at = t;
@@ -42,7 +42,8 @@ export async function verifyAccessJwt(
   if (!header || !payload || typeof header !== "object" || typeof payload !== "object") throw new AccessError("malformed token");
   if (header.alg !== "RS256" || typeof header.kid !== "string") throw new AccessError("unsupported algorithm");
   const jwks = await getJwks();
-  const jwk = jwks.keys.find(k => k.kid === header.kid && k.kty === "RSA");
+  let jwk = jwks.keys.find(k => k.kid === header.kid && k.kty === "RSA");
+  if (!jwk) jwk = (await getJwks(true)).keys.find(k => k.kid === header.kid && k.kty === "RSA");
   if (!jwk) throw new AccessError("unknown key id");
   let ok = false;
   try {
@@ -54,10 +55,10 @@ export async function verifyAccessJwt(
   if (payload.iss !== `https://${cfg.teamDomain}`) throw new AccessError("wrong issuer");
   const aud = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
   if (!aud.includes(cfg.aud)) throw new AccessError("wrong audience");
-  if (typeof payload.exp !== "number" || payload.exp + skew < nowSec) throw new AccessError("token expired");
+  if (!Number.isSafeInteger(payload.exp) || payload.exp + skew <= nowSec) throw new AccessError("token expired");
   if (typeof payload.nbf === "number" && payload.nbf - skew > nowSec) throw new AccessError("token not yet valid");
   const email = typeof payload.email === "string" ? payload.email.trim().toLowerCase() : "";
   if (!/^[^@\s]{1,64}@[^@\s]{1,255}$/.test(email)) throw new AccessError("no email claim");
-  if (typeof payload.iat !== "number" || !Number.isFinite(payload.iat) || payload.iat > nowSec + skew) throw new AccessError("invalid issue time");
+  if (!Number.isSafeInteger(payload.iat) || payload.iat > nowSec + skew || payload.iat >= payload.exp) throw new AccessError("invalid issue time");
   return { email, sub: String(payload.sub ?? ""), exp: payload.exp, iat: payload.iat };
 }

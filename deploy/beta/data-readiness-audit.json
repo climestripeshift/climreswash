@@ -1,0 +1,31 @@
+{
+  "checked": "2026-10-12",
+  "clearance_file_present": false,
+  "sources": [
+    {
+      "path": "client/public/data/india_hex_props.json",
+      "sha256": "b9351fe192101ad6e8eca4b1c139b41da63b8fc4fa3c153a7172fd9b8c5d3d37",
+      "cloud_approval_found": false,
+      "status": "pending owner/licence/derived-field approval"
+    },
+    {
+      "path": "client/public/data/hex_historical_climatology.json",
+      "sha256": "bc81fc000d8e83c5ea46dda8ee325326dbd4b9195c1b0b6f8c5751243786d461",
+      "cloud_approval_found": false,
+      "status": "pending owner/licence/derived-field approval"
+    },
+    {
+      "path": "METHODOLOGY.md",
+      "sha256": "9e7f6f0f32d0763df5c38928f2627ad4533cce7892f30f2c2eba78f4ae4a3a5f",
+      "cloud_approval_found": false,
+      "status": "pending owner/licence/derived-field approval"
+    }
+  ],
+  "excluded": [
+    "CHIRPS-derived monsoon/rainfall",
+    "IFI-derived flood labels",
+    "LGD crosswalks",
+    "Open-Meteo forecast snapshot"
+  ],
+  "note": "Training licence classes are not cloud deployment approval. No legal permission is inferred."
+}

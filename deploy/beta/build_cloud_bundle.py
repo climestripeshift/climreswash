@@ -35,10 +35,10 @@ ALLOW = [
     # deployment files
     ("deploy/beta", "deploy/beta"),
 ]
-IGNORE = re.compile(r"(__pycache__|\.pyc$|\.DS_Store$|/data/cache/|\.sqlite|test_.*\.py$|\.test\.ts$|\.secret$|/(beta\.env|approval\.json|billing-attestation\.json|source-clearance\.json)$)")
+IGNORE = re.compile(r"(__pycache__|\.pyc$|\.DS_Store$|/data/cache/|\.sqlite|test_.*\.py$|\.test\.ts$|\.secret$|/private-state/|/(beta\.env|approval\.json|billing-attestation\.json|source-clearance\.json)$)")
 
 FORBIDDEN_PATH = re.compile(
-    r"(monsoon_v0|flood_v0|forecast_risk|chirps|lgd_|/lgd|\.sqlite|\.db$|(^|/)\.env(\.|$)|test_v3|dev_v3|test_v4|train\.jsonl|"
+    r"(private-state/|monsoon_v0|flood_v0|forecast_risk|chirps|lgd_|/lgd|\.sqlite|\.db$|(^|/)\.env(\.|$)|test_v3|dev_v3|test_v4|train\.jsonl|"
     r"/adapters/|\.safetensors|\.gguf|\.pt$|\.bin$|\.pem$|id_ed25519|CDS data|(^|/)IMN/|node_modules|\.git/|\.pptx$)", re.I)
 FORBIDDEN_CONTENT = [
     (re.compile(r"/Users/[A-Za-z0-9_.-]+/"), "absolute local path"),
@@ -138,8 +138,8 @@ def build(out: Path) -> int:
                 continue
             rel.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(p, rel)
-    lock = json.loads((REPO / "package-lock.json").read_text())
-    (out / "package.json").write_text(json.dumps({"type": "module", "dependencies": {name: lock["packages"][f"node_modules/{name}"]["version"] for name in ("express", "tsx")}}, indent=2))
+    shutil.copy2(REPO / "deploy/beta/runtime-package.json", out / "package.json")
+    shutil.copy2(REPO / "deploy/beta/runtime-package-lock.json", out / "package-lock.json")
     # The Core's experimental gate reads a registry file. Ship ONLY the one experimental entry, verbatim (status stays
     # experimental_*, deployable stays false): the gate is not bypassed and no other model/dataset record leaves the machine.
     reg = json.loads((REPO / "research/bhoomi_llm_v1/registry/models.json").read_text())
