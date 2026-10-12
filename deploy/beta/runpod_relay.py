@@ -59,7 +59,8 @@ class Config:
         self.database_url = e.get("RELAY_DATABASE_URL") or e.get("BETA_DATABASE_URL")
         if self.database_url:
             database = urlparse(self.database_url)
-            if database.scheme not in ("postgres", "postgresql") or (database.hostname not in ("127.0.0.1", "localhost", "::1")
+            internal = e.get("BETA_DB_TRANSPORT") == "replit-helium" and database.hostname == "helium" and database.path == "/heliumdb" and database.port in (None, 5432) and not database.query
+            if database.scheme not in ("postgres", "postgresql") or (not internal and database.hostname not in ("127.0.0.1", "localhost", "::1")
                     and parse_qs(database.query).get("sslmode") != ["verify-full"]):
                 raise SystemExit("Remote relay PostgreSQL requires verified TLS")
         self.budget_db = e.get("RELAY_BUDGET_DB", "/data/relay-budget.sqlite")

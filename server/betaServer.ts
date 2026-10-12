@@ -3,12 +3,14 @@
 import express from "express";
 import path from "node:path";
 import fs from "node:fs";
+import net from "node:net";
 import { cachedJwks, type JwksFetcher } from "./beta/accessJwt";
 import { createBetaRouter, type BetaConfig } from "./beta/gateway";
 import { DEFAULT_LIMITS, Limiter, type LimitConfig } from "./beta/limits";
 import { PgDatabase } from "./beta/pgDatabase";
 import { PostgresBetaStore } from "./beta/pgStore";
 import { PostgresLimiter } from "./beta/pgLimits";
+import { Conversations } from "./beta/conversations";
 import { CodeAuth } from "./beta/codeAuth";
 
 async function main() {
@@ -50,8 +52,9 @@ if (authMode === "cloudflare") {
 }
 let store;
 if (env.BETA_DATABASE_URL) {
-  const db = new PgDatabase(env.BETA_DATABASE_URL);
+  const db = new PgDatabase(env.BETA_DATABASE_URL, env.BETA_DB_TRANSPORT === "replit-helium" ? "replit-helium" : "tls");
   await db.assertReady();
+  await db.assertIsolatedRole();
   store = new PostgresBetaStore(db, env.BETA_HASH_KEY ?? "");
 } else {
   // Legacy/local fixture only: access-code deployment does not import Node 24 SQLite.
@@ -69,13 +72,18 @@ const inferenceReady = env.BETA_CLOUD_APPROVED === "1" && approval?.approved ===
   && approval?.model?.registry_id && approval?.model?.base_revision && /^[0-9a-f]{64}$/.test(approval?.model?.adapter_sha256 ?? "")
   && /^[0-9a-f]{64}$/.test(approval?.data_bundle_sha256 ?? "") && approval?.approved_by && approval?.privacy_contact && approval?.processing_regions?.length && approval?.processors?.length && approval?.attributions?.length;
 const config: BetaConfig = {
-  hosted, authMode: authMode as "cloudflare" | "code", codeAuth, inferenceReady: !!inferenceReady, expectedModel: approval?.model, originKey: env.BETA_ORIGIN_KEY, access: team && aud ? { teamDomain: team, aud, clockSkewSec: 0 } : undefined, getJwks,
+  hosted, authMode: authMode as "cloudflare" | "code", codeAuth, conversations: store instanceof PostgresBetaStore ? new Conversations(store.db) : undefined, coreKey: env.BETA_ORIGIN_KEY, inferenceReady: !!inferenceReady, expectedModel: approval?.model, originKey: env.BETA_ORIGIN_KEY, access: team && aud ? { teamDomain: team, aud, clockSkewSec: 0 } : undefined, getJwks,
   privacy: approval ? { contact: approval.privacy_contact ?? "", processors: approval.processors ?? [], regions: approval.processing_regions ?? [], attributions: approval.attributions ?? [] } : undefined,
   coreUrls: (env.BETA_CORE_URL ?? "http://127.0.0.1:8765").split(",").map(u => u.trim()).filter(Boolean), publicOrigin: env.BETA_PUBLIC_ORIGIN, limits,
   model: { label: env.BETA_MODEL_LABEL ?? "Bhoomi-LLM v1 checkpoint-160 (experimental research beta)", experimental: true,
            baseModel: "Qwen3-4B-Instruct-2507 + LoRA checkpoint-160",
            note: "Fine-tuned on synthetic, machine-verified examples; not expert-reviewed; not approved for deployment." },
 };
+if(env.BHOOMI_BETA_COLOCATE==="1")config.coreAvailable=()=>new Promise(resolve=>{
+  const socket=net.createConnection({host:"127.0.0.1",port:8765});
+  const finish=(ready:boolean)=>{socket.destroy();resolve(ready);};
+  socket.setTimeout(500);socket.once("connect",()=>finish(true));socket.once("timeout",()=>finish(false));socket.once("error",()=>finish(false));
+});
 
 const app = express();
 app.disable("x-powered-by");

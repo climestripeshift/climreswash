@@ -12,6 +12,7 @@ import { PgDatabase } from "../server/beta/pgDatabase";
 import { PostgresBetaStore } from "../server/beta/pgStore";
 import { PostgresLimiter } from "../server/beta/pgLimits";
 import { DEFAULT_LIMITS } from "../server/beta/limits";
+import { Conversations, coreProof } from "../server/beta/conversations";
 import { CodeAuth } from "../server/beta/codeAuth";
 import { generateAccessCode, hashAccessCode, checkAccessCode } from "../server/beta/accessCodes";
 import { createBetaRouter, type BetaConfig } from "../server/beta/gateway";
@@ -33,8 +34,14 @@ test('PostgreSQL + private codes + Replit proxy: isolated storage, real transact
  const servers:http.Server[]=[];
  const listen=async(app:express.Express)=>{const s=http.createServer(app);servers.push(s);await new Promise<void>(r=>s.listen(0,'127.0.0.1',r));return `http://127.0.0.1:${(s.address() as any).port}`;};
  try {
-  await db.transaction(async()=>{await db.query(await fs.readFile('deploy/beta/migrations/001_beta.sql','utf8'));await db.query(await fs.readFile('deploy/beta/migrations/002_access_codes.sql','utf8'));});
+  await db.transaction(async()=>{await db.query(await fs.readFile('deploy/beta/migrations/001_beta.sql','utf8'));await db.query(await fs.readFile('deploy/beta/migrations/002_access_codes.sql','utf8'));await db.query(await fs.readFile('deploy/beta/migrations/003_portable_conversations.sql','utf8'));});
   await db.assertReady();
+  await db.query("CREATE TABLE public.isolation_probe(secret TEXT)");
+  await db.query(await fs.readFile('deploy/beta/provision-beta-role.example.sql','utf8'));
+  const runtimeUrl = new URL(database);runtimeUrl.username='bhoomi_beta_runtime';
+  const runtime = new PgDatabase(runtimeUrl.href);
+  await runtime.assertIsolatedRole();await assert.rejects(runtime.query('SELECT * FROM public.isolation_probe'));
+  await assert.rejects(runtime.query('CREATE TABLE public.forbidden(id INTEGER)'));await runtime.close();
   await store.invite('owner@example.org','admin','operator');await store.invite('alice@example.org','user','operator');await store.invite('bob@example.org','user','operator');
   await t.test('last administrator removal stays protected under concurrent changes',async()=>{
    await store.invite('owner2@example.org','admin','operator');
@@ -71,7 +78,7 @@ test('PostgreSQL + private codes + Replit proxy: isolated storage, real transact
   });
   await t.test('actual gateway entrypoint boots in code/PostgreSQL mode with inference disarmed',async()=>{
    const reserve=http.createServer();await new Promise<void>(r=>reserve.listen(0,'127.0.0.1',r));const port=String((reserve.address() as any).port);await new Promise<void>(r=>reserve.close(()=>r()));
-   const child=spawn(process.execPath,['--import','tsx','server/betaServer.ts'],{env:{...process.env,BETA_DATABASE_URL:database,BETA_HASH_KEY:'local-test-hmac-key-'.repeat(3),BETA_AUTH_MODE:'code',BETA_AUTH_PROVIDER:'code',BETA_INGRESS_MODE:'proxy',BETA_ORIGIN_KEY:'runtime-local-origin-key-'.repeat(3),BETA_PUBLIC_ORIGIN:'https://climreswash.in',BETA_PORT:port,BETA_CLOUD_APPROVED:'0'},stdio:['ignore','pipe','pipe']});
+   const child=spawn(process.execPath,['--import','tsx','server/betaServer.ts'],{env:{...process.env,BETA_DATABASE_URL:runtimeUrl.href,BETA_HASH_KEY:'local-test-hmac-key-'.repeat(3),BETA_AUTH_MODE:'code',BETA_AUTH_PROVIDER:'code',BETA_INGRESS_MODE:'proxy',BETA_ORIGIN_KEY:'runtime-local-origin-key-'.repeat(3),BETA_PUBLIC_ORIGIN:'https://climreswash.in',BETA_PORT:port,BETA_CLOUD_APPROVED:'0'},stdio:['ignore','pipe','pipe']});
    child.stdout!.resume();child.stderr!.resume();
    try {
     let response:Response|undefined;
@@ -91,14 +98,39 @@ test('PostgreSQL + private codes + Replit proxy: isolated storage, real transact
   for(const email of ['alice@example.org','bob@example.org','owner@example.org']){
    const code=generateAccessCode();codes.set(email,code);await store.setAccessCodeHash(email,await hashAccessCode(code),'operator');
   }
+  await t.test('existing production start command supervises a private gateway without changing public routes',async()=>{
+   const build=path.resolve(process.env.BETA_TEST_PUBLIC_BUILD??'dist');
+   const freePort=async()=>{const s=http.createServer();await new Promise<void>(r=>s.listen(0,'127.0.0.1',r));const port=String((s.address() as any).port);await new Promise<void>(r=>s.close(()=>r()));return port;};
+   const port=await freePort(),privatePort=await freePort();
+   const child=spawn(process.execPath,[path.join(build,'index.cjs')],{cwd:path.dirname(build),env:{...process.env,NODE_ENV:'production',PORT:port,DATABASE_URL:'postgresql://synthetic@127.0.0.1/unavailable',BHOOMI_BETA_COLOCATE:'1',BETA_DATABASE_URL:runtimeUrl.href,BETA_HASH_KEY:'local-test-hmac-key-'.repeat(3),BETA_ORIGIN_KEY:'runtime-local-origin-key-'.repeat(3),BETA_PUBLIC_ORIGIN:'https://climreswash.in',BETA_PORT:privatePort,BETA_CLOUD_APPROVED:'0'},stdio:['ignore','pipe','pipe']});
+   const exited=new Promise<void>(r=>child.once('exit',()=>r()));let diagnostic='';child.stderr!.on('data',c=>diagnostic+=String(c));child.stdout!.on('data',c=>diagnostic+=String(c));
+   const request=(route:string,cookie='',body?:unknown)=>new Promise<Response>((resolve,reject)=>{
+    const payload=body?JSON.stringify(body):undefined;
+    const req=http.request('http://127.0.0.1:'+port+route,{method:payload?'POST':'GET',headers:{host:'climreswash.in',origin:'https://climreswash.in',cookie,'Content-Type':'application/json',...(payload?{'Content-Length':Buffer.byteLength(payload)}:{})}},res=>{
+     const chunks:Buffer[]=[];res.on('data',c=>chunks.push(c));res.on('end',()=>{const headers=new Headers();for(const [key,value]of Object.entries(res.headers))for(const item of Array.isArray(value)?value:[value])if(item!==undefined)headers.append(key,item);resolve(new Response(Buffer.concat(chunks),{status:res.statusCode,headers}));});
+    });req.on('error',reject);req.end(payload);
+   });
+   try {
+    let ready=false,last='';for(let i=0;i<100;i++){try{const response=await request('/bhoomiai/api/me');last=response.status+':'+await response.text();if(response.status===401){ready=true;break;}}catch{}await new Promise(r=>setTimeout(r,50));}assert.ok(ready,last+diagnostic);
+    for(const route of ['/','/grid-v2','/methodology','/bhoomiai','/bhoomiai/admin'])assert.equal((await request(route)).status,200);
+    const login=await request('/bhoomiai/api/auth/login','',{email:'alice@example.org',access_code:codes.get('alice@example.org')});assert.equal(login.status,200);
+    const cookie=login.headers.get('set-cookie')!;assert.match(cookie,/HttpOnly/);assert.match(cookie,/Secure/);assert.match(cookie,/SameSite=Lax/);
+    assert.equal((await request('/bhoomiai/api/me',cookie.split(';')[0])).status,200);
+    assert.equal((await fetch('http://127.0.0.1:'+privatePort+'/bhoomiai/api/me')).status,403);
+    assert.equal((await request('/bhoomiai/api/history')).status,401);
+   }finally{child.kill('SIGTERM');const forced=setTimeout(()=>child.kill('SIGKILL'),2000);await exited;clearTimeout(forced);}
+  });
   let authTime=0;
   const codeAuth=new CodeAuth(store,'https://climreswash.in',28800,()=>Date.now()+authTime);
-  const config:BetaConfig={hosted:true,authMode:'code',codeAuth,originKey:'local-origin-key-'.repeat(3),publicOrigin:'https://climreswash.in',inferenceReady:true,
+  const config:BetaConfig={hosted:true,authMode:'code',codeAuth,conversations:new Conversations(db),originKey:'local-origin-key-'.repeat(3),publicOrigin:'https://climreswash.in',inferenceReady:true,
    limits:{...DEFAULT_LIMITS,perMinute:100,perHour:100,globalPerDay:100,perDay:100,reservationSeconds:10},coreUrl:'http://127.0.0.1:8765',
    model:{label:'Bhoomi-LLM v1 checkpoint-160',experimental:true,baseModel:'Qwen3-4B-Instruct-2507',note:'Experimental'}};
   let coreCalls=0;
-  const gateway=express();gateway.use(express.json());gateway.use(createBetaRouter({store,config,limiter:new PostgresLimiter(config.limits,store),fetchImpl:(async()=>{
-   coreCalls++;await new Promise(r=>setTimeout(r,50));return Response.json({interaction_id:randomBytes(16).toString('hex'),session_id:randomBytes(12).toString('hex'),status:'verified',answer:'Kota, Rajasthan screening index 2.50 [F1].',verification:{passed:true},model:{experimental:true,deployable:false,label:config.model.label},tool_trace:[],latency_s:.1});
+  let sharedConversationId="";
+  const gateway=express();gateway.use(express.json());gateway.use(createBetaRouter({store,config,limiter:new PostgresLimiter(config.limits,store),fetchImpl:(async(_url,init)=>{
+   const body=JSON.parse(String(init?.body));
+   const state=body.portable_session;assert.equal(body.gateway_proof,coreProof(Object.fromEntries(Object.entries(body).filter(([k])=>k!=="gateway_proof")),config.originKey!));
+   coreCalls++;await new Promise(r=>setTimeout(r,50));return Response.json({interaction_id:randomBytes(16).toString('hex'),session_id:state.id,portable_session:{...state,turn_count:state.turn_count+1,context:{district:'Kota',state:'Rajasthan'},turns:[]},status:'verified',answer:'Kota, Rajasthan screening index 2.50 [F1].',verification:{passed:true},model:{experimental:true,deployable:false,label:config.model.label},tool_trace:[],latency_s:.1});
   }) as typeof fetch}));
   const origin=await listen(gateway),site=express();
   let fail=false;
@@ -135,13 +167,13 @@ test('PostgreSQL + private codes + Replit proxy: isolated storage, real transact
    assert.equal((await request('/bhoomiai/api/me',auth.cookie.replace(/=.*/, '=forged'))).status,401);
    await db.query('DELETE FROM login_attempts');
   });
-  const alice=await login();assert.ok(alice.cookie);
+  let alice=await login();assert.ok(alice.cookie);
   await t.test('consent/chat/feedback/history/admin/export persist; users cannot cross ownership',async()=>{
    assert.equal((await request('/bhoomiai/api/admin/users',alice.cookie)).status,403);
    assert.equal((await request('/bhoomiai/api/chat',alice.cookie,{message:'Kota screening index?'})).status,428);
    assert.equal((await request('/bhoomiai/api/consent',alice.cookie,{version:CONSENT_VERSION,research:true,training:false})).status,200);
    const response=await request('/bhoomiai/api/chat',alice.cookie,{message:'Kota screening index?'});assert.equal(response.status,200);
-   const answer=await response.json();assert.match(answer.answer,/Kota/);assert.equal(coreCalls,1);
+   const answer=await response.json();sharedConversationId=answer.session_id;assert.match(answer.answer,/Kota/);assert.equal(coreCalls,1);
    assert.equal((await request('/bhoomiai/api/feedback',alice.cookie,{interaction_id:answer.interaction_id,rating:'down',categories:[],suggested_correction:'Explain the index'})).status,200);
    const bob=await login({email:'bob@example.org'});
    await request('/bhoomiai/api/consent',bob.cookie,{version:CONSENT_VERSION,research:true,training:false});
@@ -162,6 +194,45 @@ test('PostgreSQL + private codes + Replit proxy: isolated storage, real transact
    const results=await Promise.all([request('/bhoomiai/api/chat',alice.cookie,{message:'Kota index?'}),request('/bhoomiai/api/chat',bob.cookie,{message:'Kota index?'})]);
    assert.deepEqual(results.map(r=>r.status).sort(),[200,429]);assert.equal(coreCalls,before+1);
   });
+  await t.test('loopback proxy cookies and durable conversations survive replica switching and restart',async()=>{
+   const runtimeDb=new PgDatabase(runtimeUrl.href);await runtimeDb.assertReady();await runtimeDb.assertIsolatedRole();
+   const otherStore=new PostgresBetaStore(runtimeDb,'local-test-hmac-key-'.repeat(3));
+   let calls=0,failCore=false,ready=true;
+   const replica=async()=>{
+    const cfg={...config,coreAvailable:async()=>ready,codeAuth:new CodeAuth(otherStore,config.publicOrigin!),conversations:new Conversations(runtimeDb)};
+    const app=express();app.use(express.json());app.use(createBetaRouter({store:otherStore,config:cfg,limiter:new PostgresLimiter(cfg.limits,otherStore),fetchImpl:(async(_url,init)=>{
+     calls++;if(failCore)return Response.json({private_debug:'never expose this'}, {status:500});const body=JSON.parse(String(init?.body));const state=body.portable_session;
+     assert.equal(state.context.district,'Kota');assert.equal(state.context.state,'Rajasthan');
+     await new Promise(r=>setTimeout(r,50));
+     return Response.json({interaction_id:randomBytes(16).toString('hex'),session_id:state.id,portable_session:{...state,turn_count:state.turn_count+1},status:'verified',answer:'Kota, Rajasthan index 2.50 [F1].',verification:{passed:true},model:{experimental:true,deployable:false},tool_trace:[],latency_s:.1});
+    }) as typeof fetch}));
+    const url=await listen(app),publicApp=express();registerBetaProxy(publicApp,url,fetch,{originKey:config.originKey,publicOrigin:config.publicOrigin,authMode:'code'});
+    publicApp.get('/',(_q,r)=>r.send('public map/home unaffected'));publicApp.get('*',(_q,r)=>r.send('sign-in shell'));
+    return listen(publicApp);
+   };
+   const send=(base:string,body:object)=>new Promise<Response>((resolve,reject)=>{
+    const payload=JSON.stringify(body);const req=http.request(base+'/bhoomiai/api/chat',{method:'POST',headers:{host:'climreswash.in',origin:config.publicOrigin!,cookie:alice.cookie,'Content-Type':'application/json','Content-Length':Buffer.byteLength(payload)}},res=>{
+     const chunks:Buffer[]=[];res.on('data',c=>chunks.push(c));res.on('end',()=>resolve(new Response(Buffer.concat(chunks),{status:res.statusCode,headers:{'Content-Type':'application/json'}})));
+    });req.on('error',reject);req.end(payload);
+   });
+   try {
+    const first=await replica(),second=await replica();
+    const response=await send(first,{message:'And the same district?',session_id:sharedConversationId});assert.equal(response.status,200);assert.equal((await response.json()).session_id,sharedConversationId);
+    const continued=await send(second,{message:'Explain that figure',session_id:sharedConversationId});assert.equal(continued.status,200);assert.equal((await continued.json()).session_id,sharedConversationId);
+    const before=calls;const race=await Promise.all([send(first,{message:'Again',session_id:sharedConversationId}),send(second,{message:'Again',session_id:sharedConversationId})]);
+    assert.deepEqual(race.map(r=>r.status).sort(),[200,429]);assert.equal(calls,before+1);
+    const stolen=await request('/bhoomiai/api/chat',(await login({email:'bob@example.org'})).cookie,{message:'Steal',session_id:sharedConversationId});assert.equal(stolen.status,400);
+    const saved=await runtimeDb.prepare('SELECT state_json FROM conversations WHERE id=?').get(sharedConversationId);
+    const priorCalls=calls;ready=false;assert.equal((await send(second,{message:'While booting',session_id:sharedConversationId})).status,503);assert.equal(calls,priorCalls);ready=true;
+    failCore=true;const broken=await send(first,{message:'Failure',session_id:sharedConversationId});assert.equal(broken.status,502);assert.ok(!(await broken.text()).includes('private_debug'));failCore=false;
+    const blocked=await send(second,{message:'After failure',session_id:sharedConversationId});assert.equal(blocked.status,503);assert.equal(calls,priorCalls+1);
+    assert.equal((await runtimeDb.prepare('SELECT state_json FROM conversations WHERE id=?').get(sharedConversationId))!.state_json,saved!.state_json);
+    await store.setSetting('paused','false');assert.equal((await send(second,{message:'Operator restored',session_id:sharedConversationId})).status,200);
+    await store.manageUser('alice@example.org',{status:'suspended'},'operator');assert.equal((await send(second,{message:'After revoke',session_id:sharedConversationId})).status,401);
+    await store.manageUser('alice@example.org',{status:'active'},'operator');
+   } finally {await otherStore.close();}
+  });
+  await db.query('DELETE FROM login_attempts');alice=await login();
   await t.test('logout/revocation invalidates existing sessions; restore cannot resurrect them',async()=>{
    const fresh=await login();assert.equal((await request('/bhoomiai/api/logout',fresh.cookie,{})).status,200);
    assert.equal((await request('/bhoomiai/api/me',fresh.cookie)).status,401);

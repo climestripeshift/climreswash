@@ -5,10 +5,13 @@ import { AsyncLocalStorage } from "node:async_hooks";
 export class PgDatabase {
   readonly pool: pg.Pool;
   private context = new AsyncLocalStorage<PoolClient>();
-  constructor(connectionString: string) {
+  constructor(connectionString: string, transport: "tls" | "replit-helium" = "tls") {
     const url = new URL(connectionString);
     if (!["postgres:", "postgresql:"].includes(url.protocol)) throw new Error("Invalid beta database URL");
-    if (!["127.0.0.1", "localhost", "[::1]"].includes(url.hostname) && url.searchParams.get("sslmode") !== "verify-full")
+    const internal = transport === "replit-helium";
+    if (internal && (url.hostname !== "helium" || url.pathname !== "/heliumdb" || url.port && url.port !== "5432" || url.searchParams.has("sslmode")))
+      throw new Error("Helium transport is restricted to the app-internal helium/heliumdb endpoint");
+    if (!internal && !["127.0.0.1", "localhost", "[::1]"].includes(url.hostname) && url.searchParams.get("sslmode") !== "verify-full")
       throw new Error("Remote beta PostgreSQL requires verified TLS (sslmode=verify-full)");
     if (url.searchParams.has("options")) throw new Error("Beta database URL must not override isolated schema options");
     this.pool = new pg.Pool({ connectionString, max: 8, connectionTimeoutMillis: 5000,
@@ -42,8 +45,19 @@ export class PgDatabase {
     };
   }
   async assertReady() {
-    const r = await this.query("SELECT version FROM bhoomi_beta.schema_migrations WHERE version=2");
+    const r = await this.query("SELECT version FROM bhoomi_beta.schema_migrations WHERE version=3");
     if (!r.rows.length) throw new Error("Apply beta migrations explicitly before startup");
+  }
+  async assertIsolatedRole() {
+    const flags = await this.query("SELECT rolsuper,rolcreaterole,rolcreatedb,rolreplication,rolbypassrls FROM pg_roles WHERE rolname=current_user");
+    if (!flags.rows.length || Object.values(flags.rows[0]).some(Boolean)) throw new Error("Beta requires an unprivileged database role");
+    const access = await this.query(`SELECT EXISTS(SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+      WHERE n.nspname NOT IN ('bhoomi_beta','pg_catalog','information_schema') AND n.nspname NOT LIKE 'pg_toast%'
+      AND c.relkind IN ('r','p','v','m','f') AND has_table_privilege(current_user,c.oid,'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')) AS outside,
+      has_schema_privilege(current_user,'public','CREATE') AS public_create,
+      EXISTS(SELECT 1 FROM pg_namespace WHERE nspname='bhoomi_beta' AND nspowner=(SELECT oid FROM pg_roles WHERE rolname=current_user)) AS owns_schema,
+      EXISTS(SELECT 1 FROM pg_auth_members m WHERE m.member=(SELECT oid FROM pg_roles WHERE rolname=current_user)) AS memberships`);
+    if(Object.values(access.rows[0]).some(Boolean))throw new Error("Beta role must not own the schema, inherit roles or access public-site tables");
   }
   close() { return this.pool.end(); }
 }

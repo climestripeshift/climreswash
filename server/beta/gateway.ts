@@ -13,12 +13,16 @@ import type { Role, UserRow } from "./store";
 import type { BetaPersistence } from "./persistence";
 import type { PostgresLimiter } from "./pgLimits";
 import type { CodeAuth } from "./codeAuth";
+import { Conversations, ConversationError, coreProof } from "./conversations";
 import { asyncRouter } from "./asyncRouter";
 
 export interface BetaConfig {
   hosted: boolean;                       // true on the internet-facing host: dev authentication is impossible
   authMode: "cloudflare" | "code";
   codeAuth?: CodeAuth;
+  conversations?: Conversations;
+  coreKey?: string;
+  coreAvailable?: () => Promise<boolean>;
   inferenceReady?: boolean;
   originKey?: string;
   privacy?: { contact: string; processors: string[]; regions: string[]; attributions: string[] };
@@ -87,12 +91,13 @@ const csvCell = (v: unknown) => {
 export function createBetaRouter(deps: BetaDeps): express.Router {
   const { store, limiter, config } = deps;
   if (config.authMode === "code" && (!config.originKey || config.originKey.length < 32)) throw new Error("Code login requires authenticated proxy ingress");
+  if(config.authMode === "code" && !config.conversations)throw new Error("Code mode requires durable conversations");
   const doFetch = deps.fetchImpl ?? fetch;
   const now = deps.now ?? Date.now;
   const cores = (config.coreUrls ?? [config.coreUrl ?? "http://127.0.0.1:8765"]).map(u => loopbackUpstream(u)).filter((u): u is URL => !!u);
   const inflight = cores.map(() => 0);
   const sessionOwner = new Map<string, string>();
-  const sessionCore = new Map<string, number>();   // Core sessions live in one worker's memory: a session sticks to its worker
+  const sessionCore = new Map<string, number>();   // Legacy fixture mode only; access-code mode requires PostgreSQL snapshots.
   const r = asyncRouter();
   const generic = (res: Response, code: number, message: string, extra: object = {}) => res.status(code).json({ message, ...extra });
 
@@ -186,29 +191,37 @@ export function createBetaRouter(deps: BetaDeps): express.Router {
   // ---- chat --------------------------------------------------------------------------------------------------
   r.post("/bhoomiai/api/chat", requireConsent, async (req, res) => {
     if (!config.inferenceReady) return generic(res, 503, "Inference is awaiting launch approval.");
+    if (config.coreAvailable && !await config.coreAvailable()) return generic(res,503,"The assistant is starting; please try again shortly.");
     const p = parseBetaChat(req.body, config.limits.maxQuestionChars);
     if (!p.ok) return generic(res, 400, p.error);
     if (cores.length === 0) return generic(res, 500, "Service misconfigured.");
     const user = req.beta!.userHash;
-    if (p.sessionId && sessionOwner.get(p.sessionId) !== user) return generic(res, 400, "invalid session");
-    const idx = p.sessionId && sessionCore.has(p.sessionId) ? sessionCore.get(p.sessionId)! : inflight.indexOf(Math.min(...inflight));
+    if (!config.conversations && p.sessionId && sessionOwner.get(p.sessionId) !== user) return generic(res, 400, "invalid session");
+    const idx = !config.conversations && p.sessionId && sessionCore.has(p.sessionId) ? sessionCore.get(p.sessionId)! : inflight.indexOf(Math.min(...inflight));
     const core = cores[idx];
     if (inflight[idx]) { res.set("Retry-After", "10"); return generic(res, 429, "This conversation is busy; try again shortly."); }
     // Reserve the local Core worker before PostgreSQL I/O yields to another request.
     inflight[idx]++;
     let slot;
-    try { slot = (await limiter.acquire(user, req.beta!.user.daily_quota ?? config.limits.perDay)); }
+    let ticket: Awaited<ReturnType<Conversations["begin"]>> | undefined;
+    try {
+      if (config.conversations) ticket = await config.conversations.begin(user,p.sessionId,config.limits.requestTimeoutMs);
+      slot = (await limiter.acquire(user, req.beta!.user.daily_quota ?? config.limits.perDay)); }
     catch (e) {
       inflight[idx]--;
+      if(ticket)await config.conversations!.cancel(ticket);
+      if(e instanceof ConversationError)return generic(res,e.code === "busy" ? 429 : 400,e.code === "busy" ? "This conversation is busy." : "Invalid conversation.");
       if (e instanceof LimitError) return res.status(e.code === "kill_switch" || e.code === "gpu_budget" ? 503 : 429).set("Retry-After", String(e.retryAfterSec)).json({ message: e.message, code: e.code, retry_after_s: e.retryAfterSec });
       return generic(res, 500, "Service error.");
     }
     const t0 = now();
     try {
       const out = await withTimeout(config.limits.requestTimeoutMs, async signal => {
+        const payload: Record<string,unknown> = { message:p.message,...(ticket ? { session_id:ticket.id,portable_session:ticket.state } : p.sessionId ? {session_id:p.sessionId} : {}),deployment:"cloud_beta",user_hash:user,deadline_ms:t0+config.limits.requestTimeoutMs };
+        if(ticket)payload.gateway_proof=coreProof(payload,config.coreKey??config.originKey!);
         const rr = await doFetch(new URL("/api/chat", core).toString(), {
           method: "POST", headers: { "Content-Type": "application/json" }, signal,
-          body: JSON.stringify({ message: p.message, ...(p.sessionId ? { session_id: p.sessionId } : {}), deployment: "cloud_beta", user_hash: user, deadline_ms: t0 + config.limits.requestTimeoutMs }),
+          body: JSON.stringify(payload),
         });
         return { status: rr.status, body: (await rr.json().catch(() => ({}))) as any };
       });
@@ -222,7 +235,7 @@ export function createBetaRouter(deps: BetaDeps): express.Router {
       const current = (await store.getUser(req.beta!.email));
       if (!current || current.status === "suspended" || current.revoked_before >= req.beta!.issuedAt || (current.expires_at !== null && current.expires_at <= now()) || (await store.tokenRevoked(req.beta!.tokenHash))) return generic(res, 403, "Access revoked.");
       const shaped: any = shapeChatResponse(out.body);
-      if (typeof shaped.session_id === "string") {
+      if (!config.conversations && typeof shaped.session_id === "string") {
         if (sessionOwner.size > 5000) { sessionOwner.clear(); sessionCore.clear(); }
         sessionOwner.set(shaped.session_id, user);
         sessionCore.set(shaped.session_id, idx);
@@ -231,9 +244,13 @@ export function createBetaRouter(deps: BetaDeps): express.Router {
         .filter((c: any) => c.status && c.status !== "ok" && c.status !== "stale" && c.status !== "control")
         .map((c: any) => `${c.name}: ${String(c.status).replace(/_/g, " ")}`));
       const reply = publicReply(shaped, config.model.label, unavailable);
-      (await store.logInteraction({ id: String(shaped.interaction_id), userHash: user, question: p.message, answer: reply.answer, status: String(shaped.status),
+      const save = async () => { await store.logInteraction({ id: String(shaped.interaction_id), userHash: user, question: p.message, answer: reply.answer, status: String(shaped.status),
         verified: shaped.verification?.passed === true, verification: out.body.verification, toolCalls: out.body.provenance ?? out.body.tool_trace, model: out.body.model,
-        latencyS: Number(shaped.latency_s ?? 0), unavailable, sessionId: String(shaped.session_id ?? "") }));
+        latencyS: Number(shaped.latency_s ?? 0), unavailable, sessionId: String(shaped.session_id ?? "") }); };
+      if(ticket) {
+        if(out.body.session_id!==ticket.id || !out.body.portable_session)throw new Error("Missing portable conversation");
+        await config.conversations!.finish(ticket,out.body.portable_session,save);
+      } else await save();
       res.json(reply);
     } catch (e) {
       await limiter.setKilled(true); // uncertain upstream work or identity: stop all further dispatch until operator review
@@ -241,6 +258,7 @@ export function createBetaRouter(deps: BetaDeps): express.Router {
       return generic(res, 503, "The assistant is temporarily unavailable.");
     } finally {
       inflight[idx]--;
+      if(ticket)await config.conversations!.cancel(ticket);
       (await slot.release((now() - t0) / 1000));
     }
   });

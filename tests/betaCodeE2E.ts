@@ -12,6 +12,7 @@ import { randomBytes } from 'node:crypto';
 import { PgDatabase } from '../server/beta/pgDatabase';
 import { PostgresBetaStore } from '../server/beta/pgStore';
 import { PostgresLimiter } from '../server/beta/pgLimits';
+import { Conversations } from "../server/beta/conversations";
 import { CodeAuth } from '../server/beta/codeAuth';
 import { generateAccessCode, hashAccessCode } from '../server/beta/accessCodes';
 import { createBetaRouter, type BetaConfig } from '../server/beta/gateway';
@@ -28,10 +29,10 @@ try {
  const site=express();const server=https.createServer({key:await fs.readFile(path.join(temp,'key.pem')),cert:await fs.readFile(path.join(temp,'cert.pem'))},site);servers.push(server);
  await new Promise<void>(r=>server.listen(0,'127.0.0.1',r));const web=`https://localhost:${(server.address() as any).port}`;
  const code=generateAccessCode();await store.invite('browser@example.org','user','local-test');await store.setAccessCodeHash('browser@example.org',await hashAccessCode(code),'local-test');
- const config:BetaConfig={hosted:true,authMode:'code',originKey:'browser-local-origin-key-'.repeat(3),publicOrigin:web,codeAuth:new CodeAuth(store,web),inferenceReady:true,coreUrl:'http://127.0.0.1:8765',limits:{...DEFAULT_LIMITS,perMinute:100,globalPerDay:200,reservationSeconds:10},model:{label:'Bhoomi-LLM v1 checkpoint-160',experimental:true,baseModel:'Qwen3-4B-Instruct-2507',note:'Experimental'}};
- const gw=express();gw.use(express.json());gw.use(createBetaRouter({store,config,limiter:new PostgresLimiter(config.limits,store),fetchImpl:(async()=>Response.json({interaction_id:randomBytes(16).toString('hex'),session_id:randomBytes(12).toString('hex'),status:'verified',answer:'Kota, Rajasthan: screening index 2.50 [F1].',verification:{passed:true},model:{experimental:true,deployable:false,label:config.model.label},tool_trace:[],latency_s:.1})) as typeof fetch}));
+ const config:BetaConfig={hosted:true,authMode:'code',conversations:new Conversations(db),originKey:'browser-local-origin-key-'.repeat(3),publicOrigin:web,codeAuth:new CodeAuth(store,web),inferenceReady:true,coreUrl:'http://127.0.0.1:8765',limits:{...DEFAULT_LIMITS,perMinute:100,globalPerDay:200,reservationSeconds:10},model:{label:'Bhoomi-LLM v1 checkpoint-160',experimental:true,baseModel:'Qwen3-4B-Instruct-2507',note:'Experimental'}};
+ const gw=express();gw.use(express.json());gw.use(createBetaRouter({store,config,limiter:new PostgresLimiter(config.limits,store),fetchImpl:(async(_url,init)=>{const state=JSON.parse(String(init?.body)).portable_session;return Response.json({interaction_id:randomBytes(16).toString('hex'),session_id:state.id,portable_session:{...state,turn_count:state.turn_count+1,context:{district:'Kota',state:'Rajasthan'},turns:[]},status:'verified',answer:'Kota, Rajasthan: screening index 2.50 [F1].',verification:{passed:true},model:{experimental:true,deployable:false,label:config.model.label},tool_trace:[],latency_s:.1});}) as typeof fetch}));
  const origin=http.createServer(gw);servers.push(origin);await new Promise<void>(r=>origin.listen(0,'127.0.0.1',r));const base=`http://127.0.0.1:${(origin.address() as any).port}`;
- registerBetaProxy(site,'https://gateway.example.test',(async(u,init)=>fetch(base+new URL(String(u)).pathname+new URL(String(u)).search,{...init,redirect:'manual'})) as typeof fetch,{originKey:config.originKey,publicOrigin:web});
+ registerBetaProxy(site,base,fetch,{authMode:'code',originKey:config.originKey,publicOrigin:web});
  const build=path.resolve(process.env.BETA_BUILD_DIR??'dist/public');
  site.use('/api',(_q,r)=>r.json([])); // public API fixtures only; beta API is handled before this
  site.use(express.static(build));site.get('*',(_q,r)=>r.sendFile(path.join(build,'index.html')));

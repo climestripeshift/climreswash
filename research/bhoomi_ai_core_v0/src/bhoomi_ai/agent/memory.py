@@ -8,9 +8,27 @@ from __future__ import annotations
 
 import re
 import subprocess
+from pathlib import Path
+
+def linux_available_mb(proc: Path = Path("/proc/meminfo"), cgroup: Path = Path("/sys/fs/cgroup")) -> float | None:
+    available = []
+    try:
+        match = re.search(r"MemAvailable:\s+(\d+)\s+kB", proc.read_text())
+        if match: available.append(int(match.group(1)) / 1024)
+    except (OSError, ValueError): pass
+    for maximum, current in [("memory.max", "memory.current"), ("memory/memory.limit_in_bytes", "memory/memory.usage_in_bytes")]:
+        try:
+            limit = (cgroup / maximum).read_text().strip()
+            if limit != "max":
+                total = int(limit)
+                if total < 1 << 60: available.append(max(0, total-int((cgroup / current).read_text())) / (1024*1024))
+        except (OSError, ValueError): pass
+    return min(available) if available else None
 
 
 def read_available_mb() -> float | None:
+    if Path("/proc/meminfo").exists():
+        return linux_available_mb()
     try:
         out = subprocess.run(["vm_stat"], capture_output=True, text=True, timeout=5).stdout
     except Exception:  # noqa: BLE001 - non-macOS or sandbox

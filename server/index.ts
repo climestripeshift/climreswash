@@ -6,12 +6,22 @@ import { serveStatic } from "./static";
 import { createServer } from "http";
 import { seedIfEmpty } from "./autoSeed";
 import { registerBetaProxy } from "./betaProxy";
+import { prepareColocatedBeta } from "./beta/supervisor";
 
 const app = express();
 const httpServer = createServer(app);
 
 // Before parsers, sessions and response logging: beta prompts never enter public-app logs.
-registerBetaProxy(app);
+let betaRuntime: ReturnType<typeof prepareColocatedBeta>;
+try {
+  betaRuntime = prepareColocatedBeta();
+  registerBetaProxy(app,betaRuntime?.gatewayUrl ?? process.env.BHOOMI_BETA_GATEWAY_URL);
+} catch {
+  // Invalid optional beta settings must not prevent public pages/maps from starting.
+  registerBetaProxy(app, "");
+  console.error("[beta] disabled: private configuration is incomplete");
+}
+for(const signal of ["SIGTERM","SIGINT"] as const)process.once(signal,()=>{betaRuntime?.supervisor.stop();httpServer.close();});
 
 app.use(compression());
 
@@ -108,10 +118,11 @@ app.use((req, res, next) => {
     {
       port,
       host: "0.0.0.0",
-      reusePort: true,
+      reusePort: process.platform === "linux",
     },
     () => {
       log(`serving on port ${port}`);
+      betaRuntime?.supervisor.start();
       seedIfEmpty().catch((err) => console.error("[autoSeed] Background seed failed:", err));
     },
   );

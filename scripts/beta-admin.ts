@@ -8,7 +8,7 @@ async function main() {
 const [action, email, value] = process.argv.slice(2);
 if ((!process.env.BETA_DATABASE_URL && !process.env.BETA_DB_PATH) || !process.env.BETA_HASH_KEY) throw new Error("Configure BETA_DB_PATH and BETA_HASH_KEY in the host secret environment");
 const store = process.env.BETA_DATABASE_URL
-  ? new PostgresBetaStore(new PgDatabase(process.env.BETA_DATABASE_URL), process.env.BETA_HASH_KEY)
+  ? new PostgresBetaStore(new PgDatabase(process.env.BETA_DATABASE_URL, process.env.BETA_DB_TRANSPORT === "replit-helium" ? "replit-helium" : "tls"), process.env.BETA_HASH_KEY)
   : new (await import("../server/beta/store")).BetaStore(process.env.BETA_DB_PATH!, process.env.BETA_HASH_KEY);
 if (store instanceof PostgresBetaStore) await store.db.assertReady();
 const actor = process.env.BETA_OPERATOR_ID;

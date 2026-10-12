@@ -1,18 +1,20 @@
 import type { Express } from "express";
 
-export interface BetaProxyOptions { originKey?: string; publicOrigin?: string }
+export interface BetaProxyOptions { originKey?: string; publicOrigin?: string; authMode?: "code" | "cloudflare" }
 // Only the beta namespace is intercepted, before public sessions/parsers/logging.
 export function registerBetaProxy(app: Express, upstream = process.env.BHOOMI_BETA_GATEWAY_URL, fetchImpl = fetch,
-  options: BetaProxyOptions = { originKey: process.env.BETA_ORIGIN_KEY, publicOrigin: process.env.BETA_PUBLIC_ORIGIN }) {
+  options: BetaProxyOptions = { originKey: process.env.BETA_ORIGIN_KEY, publicOrigin: process.env.BETA_PUBLIC_ORIGIN,
+    authMode: process.env.BETA_AUTH_MODE === "code" || process.env.BHOOMI_BETA_COLOCATE === "1" ? "code" : undefined }) {
   let target: URL | undefined;
   let remote = false;
+  const codeMode = options.authMode === "code" || (options.authMode !== "cloudflare" && upstream?.startsWith("https://"));
   if (upstream) {
     target = new URL(upstream);
     const loopback = target.protocol === "http:" && ["127.0.0.1", "localhost", "[::1]"].includes(target.hostname);
     remote = target.protocol === "https:" && !["localhost", "127.0.0.1", "[::1]"].includes(target.hostname);
     if ((!loopback && !remote) || target.pathname !== "/" || target.username || target.password || target.search || target.hash)
       throw new Error("BHOOMI_BETA_GATEWAY_URL must be a loopback HTTP or fixed HTTPS origin");
-    if (remote && (!options.originKey || options.originKey.length < 32 || !options.publicOrigin || new URL(options.publicOrigin).origin !== options.publicOrigin || !options.publicOrigin.startsWith("https://")))
+    if ((remote || codeMode) && (!options.originKey || options.originKey.length < 32 || !options.publicOrigin || new URL(options.publicOrigin).origin !== options.publicOrigin || !options.publicOrigin.startsWith("https://")))
       throw new Error("HTTPS beta gateway requires an origin key and HTTPS public origin; loopback needs no remote credentials");
   }
   app.use("/bhoomiai", async (req, res, next) => {
@@ -23,18 +25,18 @@ export function registerBetaProxy(app: Express, upstream = process.env.BHOOMI_BE
       return next();
     }
     // Direct Replit/default-domain requests cannot establish or use custom-domain beta sessions.
-    if (remote && req.header("host")?.toLowerCase() !== new URL(options.publicOrigin!).host.toLowerCase())
+    if ((remote || codeMode) && req.header("host")?.toLowerCase() !== new URL(options.publicOrigin!).host.toLowerCase())
       return res.status(403).json({ message: "Use the approved beta address." });
-    if (!api && remote) return next(); // minimal React sign-in shell; data/admin authorization remains at gateway
+    if (!api && codeMode) return next(); // minimal sign-in shell; data/admin authorization remains at gateway
     try {
       const headers: Record<string, string> = {};
       for (const key of ["origin", "content-type", "sec-fetch-site"]) {
         const value = req.header(key); if (value) headers[key] = value;
       }
-      const names = remote ? ["BhoomiSession"] : ["CF_Authorization"];
+      const names = codeMode ? ["BhoomiSession"] : ["CF_Authorization"];
       const cookies = (req.header("cookie") ?? "").split(";").map(s => s.trim()).filter(s => names.some(n => s.startsWith(n + "=")));
       if (cookies.length) headers.cookie = cookies.join("; ");
-      if (!remote) { const jwt = req.header("cf-access-jwt-assertion"); if (jwt) headers["cf-access-jwt-assertion"] = jwt; }
+      if (!codeMode) { const jwt = req.header("cf-access-jwt-assertion"); if (jwt) headers["cf-access-jwt-assertion"] = jwt; }
       if (options.originKey) headers["x-bhoomi-origin-key"] = options.originKey;
       const path = api ? req.originalUrl : "/bhoomiai/api/me";
       if (api && !["GET", "POST"].includes(req.method)) return res.status(405).json({ message: "Method not allowed." });
@@ -57,7 +59,7 @@ export function registerBetaProxy(app: Express, upstream = process.env.BHOOMI_BE
         if (req.path.startsWith("/admin") && identity.role !== "admin") return res.status(403).send("Administrator access required.");
         return next();
       }
-      if (remote) {
+      if (codeMode) {
         const setCookies = response.headers.getSetCookie();
         if (setCookies.length) res.setHeader("Set-Cookie", setCookies.filter(s => names.some(n => s.startsWith(n + "="))));
       }

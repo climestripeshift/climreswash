@@ -12,6 +12,8 @@ This server is a research surface. It is not wired into the production Express a
 from __future__ import annotations
 
 import hashlib
+import hmac
+import os
 import json
 import re
 import threading
@@ -22,7 +24,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from . import __version__
 from .agent.orchestrator import Agent
 from .agent.prompts import SYSTEM
-from .agent.session import SessionLimitError, SessionManager
+from .agent.session import SessionLimitError, SessionManager, Session
 from .config import ROOT, load_config
 
 SID = re.compile(r"^[0-9a-f]{24}$")
@@ -52,7 +54,8 @@ class App:
     def __init__(self, agent: Agent, sessions: SessionManager, feedback, cfg: dict, clock=time.time):
         self.agent, self.sessions, self.feedback, self.cfg = agent, sessions, feedback, cfg
         lim = cfg["limits"]
-        self.max_bytes = lim["max_request_bytes"]
+        self.gateway_key = os.environ.get("BHOOMI_GATEWAY_KEY", "")
+        self.max_bytes = 64000 if len(self.gateway_key) >= 32 else lim["max_request_bytes"]
         self.max_chars = cfg["agent"]["max_user_chars"]
         self.rate = RateLimiter(lim["rate_limit_per_min"], clock)
         self.model_lock = threading.Lock()
@@ -86,7 +89,7 @@ class App:
 
     # ---- API
     def chat(self, payload) -> tuple[int, dict]:
-        if not isinstance(payload, dict) or set(payload) - {"message", "session_id", "deployment", "user_hash", "deadline_ms"}:
+        if not isinstance(payload, dict) or set(payload) - {"message", "session_id", "deployment", "user_hash", "deadline_ms", "portable_session", "gateway_proof"}:
             return 400, {"error": "body must be an object with 'message' and optional 'session_id'"}
         msg, sid = payload.get("message"), payload.get("session_id")
         deployment, user_hash = payload.get("deployment"), payload.get("user_hash")
@@ -103,12 +106,28 @@ class App:
             return 400, {"error": f"'message' is limited to {self.max_chars} characters"}
         if sid is not None and (not isinstance(sid, str) or not SID.match(sid)):
             return 400, {"error": "invalid session_id"}
+        portable = payload.get("portable_session")
+        if len(self.gateway_key) >= 32 and portable is None:
+            return 403, {"error": "signed gateway snapshot required"}
         if not self.rate.allow():
             return 429, {"error": "rate limit exceeded; wait a moment"}
         try:
-            session = self.sessions.begin_turn(sid)
+            if portable is not None:
+                unsigned = {k: v for k, v in payload.items() if k != "gateway_proof"}
+                encoded = "bhoomi-core-v1:" + json.dumps(unsigned, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+                expected = hmac.new(self.gateway_key.encode(), encoded.encode(), hashlib.sha256).hexdigest()
+                proof = payload.get("gateway_proof")
+                if len(self.gateway_key) < 32 or deployment != "cloud_beta" or not user_hash or not end or not isinstance(proof, str) or not hmac.compare_digest(proof, expected):
+                    return 403, {"error": "invalid gateway proof"}
+                session = Session.restore(portable, self.cfg["limits"]["max_turns_per_session"])
+                if session.id != sid: return 400, {"error": "invalid portable id"}
+            else:
+                if "gateway_proof" in payload: return 400, {"error": "invalid gateway proof"}
+                session = self.sessions.begin_turn(sid)
         except SessionLimitError as e:
             return 429, {"error": str(e)}
+        except (ValueError, TypeError):
+            return 400, {"error": "invalid portable session"}
         if not self.model_lock.acquire(blocking=False):
             return 429, {"error": "the model is busy with another request; try again shortly"}
         from .llm.deadline import deadline
@@ -119,7 +138,10 @@ class App:
             deadline.reset(deadline_token)
             self.model_lock.release()
         iid = self.feedback.log_interaction(turn, __version__, PROMPT_SHA, deployment=deployment, user_hash=user_hash)
-        return 200, self._trim(turn, iid)
+        reply = self._trim(turn, iid)
+        if portable is not None:
+            reply["portable_session"] = session.portable(self.cfg["agent"].get("history_turns", 3))
+        return 200, reply
 
     def feedback_post(self, payload) -> tuple[int, dict]:
         if not isinstance(payload, dict) or set(payload) - {"interaction_id", "rating", "comment"}:
