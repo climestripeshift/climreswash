@@ -1,0 +1,8 @@
+{
+  "note": "Do not copy source files to a hosted bundle until each current checksum has separately approved cloud processing and attribution.",
+  "sources": [
+    { "path": "client/public/data/india_hex_props.json", "sha256": "", "licence_url": "", "approved_by": "", "attribution": "", "derived_field_review": "" },
+    { "path": "client/public/data/hex_historical_climatology.json", "sha256": "", "licence_url": "", "approved_by": "", "attribution": "", "derived_field_review": "" },
+    { "path": "METHODOLOGY.md", "sha256": "", "licence_url": "", "approved_by": "", "attribution": "", "derived_field_review": "" }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "_comment": "Specification for the Runpod Serverless endpoint. NOT created: creating it needs the owner's separate approval. Items marked UNVERIFIED have not been exercised on a real worker.",
+  "name": "bhoomi-beta-v1",
+  "worker_image": "runpod/worker-v1-vllm:CHANGE_ME_PINNED_TAG",
+  "gpu_pool": [
+    "RTX 4090 24 GB",
+    "RTX A5000 24 GB",
+    "L4 24 GB"
+  ],
+  "scaling": {
+    "workers_min": 0,
+    "workers_max": 1,
+    "idle_timeout_s": 5,
+    "execution_timeout_s": 150,
+    "queue_delay_scaler_s": 4
+  },
+  "spend_controls": [
+    "prepaid balance only (no auto-recharge)",
+    "workers_max 1-2",
+    "billing alert",
+    "gateway GPU-second budget and kill switch"
+  ],
+  "env": {
+    "MODEL_NAME": "Qwen/Qwen3-4B-Instruct-2507",
+    "MODEL_REVISION": "cdbee75f17c01a7cc42f958dc650907174af0554",
+    "ENABLE_LORA": "true",
+    "MAX_LORAS": "1",
+    "MAX_LORA_RANK": "16",
+    "LORA_MODULES": "[{\"name\":\"bhoomi-llm-v1-ckpt160\",\"path\":\"CHANGE_ME/private-hf-repo-with-adapter\",\"base_model_name\":\"Qwen/Qwen3-4B-Instruct-2507\"}]",
+    "MAX_MODEL_LEN": "6144",
+    "GPU_MEMORY_UTILIZATION": "0.90",
+    "MAX_CONCURRENCY": "2",
+    "ENABLE_AUTO_TOOL_CHOICE": "true",
+    "TOOL_CALL_PARSER": "hermes",
+    "HF_TOKEN": "secret reference, read-only, scoped to the one private adapter repo",
+    "DTYPE": "bfloat16",
+    "MAX_NUM_SEQS": "2"
+  },
+  "unverified": [
+    "tool-call output of the LoRA model under the vLLM hermes parser matches the llama.cpp local runtime (run the parity probe, plan section 11)",
+    "the adapter's chat template is honoured by the worker (CUSTOM_CHAT_TEMPLATE or an equivalent); the adapter was trained with its own template",
+    "LoRA selected by name through the OpenAI-compatible route",
+    "cold-start time from a private HF repo with the base weights not baked into the image"
+  ],
+  "data_policy": "The worker receives only prompts that the Core builds from allowed tool outputs and user questions. It never receives data files, the feedback database or restricted datasets."
+}

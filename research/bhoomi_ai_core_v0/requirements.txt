@@ -1,0 +1,3 @@
+# Bhoomi AI Core v0.1 uses the Python standard library only (Python >= 3.10).
+# Runtime services: Ollama (http://127.0.0.1:11434) with the model named in config/agent.json.
+# Tests: python3 -m unittest discover -s tests -t .   (no pytest required)

@@ -1,0 +1,58 @@
+{
+  "version": "0.1.0",
+  "model": {
+    "backend": "ollama",
+    "name": "qwen2.5:3b",
+    "host": "127.0.0.1",
+    "port": 11434,
+    "temperature": 0.0,
+    "num_ctx": 4096,
+    "num_predict": 400,
+    "keep_alive": "10m",
+    "timeout_s": 240
+  },
+  "agent": {
+    "max_tool_steps": 5,
+    "max_calls_per_step": 3,
+    "max_repairs": 1,
+    "max_tool_arg_retries": 2,
+    "history_turns": 3,
+    "max_user_chars": 1500,
+    "max_facts_in_prompt": 28
+  },
+  "limits": {
+    "max_sessions": 20,
+    "max_turns_per_session": 40,
+    "session_idle_s": 3600,
+    "rate_limit_per_min": 30,
+    "max_request_bytes": 8000,
+    "memory_hard_stop_mb": 250,
+    "memory_warn_mb": 600
+  },
+  "server": {"host": "127.0.0.1", "port": 8765},
+  "forecast": {"stale_after_hours": 48},
+  "coverage": {"records_year_from": 2000, "records_year_to": 2023, "forecast_days": 7},
+  "paths": {
+    "hex_props": "../../client/public/data/india_hex_props.json",
+    "forecast": "../../client/public/data/forecast_risk.json",
+    "hist_climate": "../../client/public/data/hex_historical_climatology.json",
+    "monsoon_year": "../bhoomi_monsoon_v0/outputs/district_year_indicators.csv",
+    "monsoon_desc": "../bhoomi_monsoon_v0/outputs/district_descriptive_2000_2023.csv",
+    "flood_labels": "../bhoomi_flood_v0/outputs/district_month_labels.csv",
+    "flood_features": "../bhoomi_flood_v0/outputs/chirps_features.csv",
+    "flood_lgd": "../bhoomi_flood_v0/outputs/lgd_verification.csv",
+    "district_cache": "data/cache/district_cache.json",
+    "feedback_db": "data/feedback.sqlite"
+  },
+  "doc_sources": [
+    "../../METHODOLOGY.md",
+    "../../reports/project_audit_2026-10-03.md",
+    "../../reports/model_validation_report.md",
+    "../../reports/retrospective_validation.md",
+    "../bhoomi_flood_v0/docs/label_definitions.md",
+    "../bhoomi_flood_v0/docs/feature_definitions.md",
+    "../bhoomi_flood_v0/docs/decisions_and_assumptions.md",
+    "../bhoomi_monsoon_v0/docs/indicator_definitions.md",
+    "../bhoomi_monsoon_v0/docs/monsoon_reliability_label_proposal.md"
+  ]
+}

@@ -1,0 +1,179 @@
+{
+  "schema": "bhoomi.model_registry.v1",
+  "note": "Every adapter or baseline that is trained or evaluated is recorded here with its lineage. Only entries with status 'accepted' may be deployed (docs/ACCEPTANCE.md).",
+  "models": [
+    {
+      "id": "baseline-C-qwen2.5-3b-ollama",
+      "kind": "operational_baseline",
+      "status": "baseline",
+      "runtime": "ollama",
+      "name": "qwen2.5:3b",
+      "digest": "357c53fb659c5076",
+      "license": "qwen-research (Qwen Research License, not Apache-2.0) - verified on the hub 2026-10-10; not a commercially suitable training base",
+      "notes": "The currently deployed local agent model (Bhoomi AI Core v0.2). Used only as comparison C.",
+      "evaluation": {
+        "file": "runs_eval/C_qwen25_3b_ollama.jsonl",
+        "dataset": "test_v3 (frozen)",
+        "strict_conversations": [
+          168,
+          302
+        ],
+        "multistep": [
+          0,
+          20
+        ],
+        "followup": [
+          20,
+          50
+        ],
+        "geographic": [
+          16,
+          70
+        ],
+        "latency_mean_s": 14.3,
+        "core_code_tree": "afd9ef77bc48"
+      }
+    },
+    {
+      "id": "foundation-A-qwen3-4b-instruct-2507",
+      "kind": "foundation",
+      "status": "selected_not_evaluated",
+      "repo": "Qwen/Qwen3-4B-Instruct-2507",
+      "revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+      "license": "apache-2.0",
+      "params_b": 4.02,
+      "architecture": "Qwen3ForCausalLM",
+      "notes": "Comparison A and the base of adapter B."
+    },
+    {
+      "id": "adapter-B-bhoomi-llm-v1",
+      "kind": "lora_adapter",
+      "status": "not_trained",
+      "base": "foundation-A-qwen3-4b-instruct-2507",
+      "config": "configs/sft_qwen3_4b_instruct_2507_qlora.yaml",
+      "train_data": "data/processed/train.jsonl",
+      "blocker": "no CUDA GPU on this host and no approved GPU spend; zero expert-reviewed examples; see README.md#blockers",
+      "train_data_stats": {
+        "records": 3165,
+        "tokens_per_epoch": 9469678,
+        "target_tokens": 266981
+      },
+      "served_name": "bhoomi-llm-v1"
+    },
+    {
+      "id": "smoke-tiny-random-qwen3",
+      "kind": "plumbing_smoke_test",
+      "status": "completed_not_a_model",
+      "manifest": "runs/smoke/run_manifest.json",
+      "notes": "Tiny random Qwen3-shaped model + the real tokenizer/template, 12 steps on CPU. Verifies the training pipeline only."
+    },
+    {
+      "id": "smoke-real-20steps-experimental-machine-verified",
+      "kind": "smoke_test_adapter",
+      "status": "experimental_not_evaluated_not_deployable",
+      "label": "Bhoomi-LLM-v1-experimental-machine-verified",
+      "base": "foundation-A-qwen3-4b-instruct-2507",
+      "base_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+      "run_date_utc": "2026-10-11",
+      "steps": 20,
+      "adapter_dir": "adapters/Bhoomi-LLM-v1-experimental-machine-verified-smoke20/runs/real_smoke_20steps/adapter",
+      "adapter_sha256": "23dc9a8b289b34ff52826c11e600047f3b1adb669ff18181af2006cdb6add953",
+      "manifest": "adapters/Bhoomi-LLM-v1-experimental-machine-verified-smoke20/runs/real_smoke_20steps/run_manifest.json",
+      "train_data": {
+        "file": "train.sanitized.jsonl",
+        "sha256": "adccd8beb84a6ab1855fed8c00ef8e51b3596fbece31f6d5b55dfc3f816b3a13",
+        "records": 3162,
+        "parent": "data/processed/train.jsonl sha256 dc3c7781... (3,165)",
+        "excluded_ids": [
+          "t-method-56471dbe:t0",
+          "t-method-77196039:t0",
+          "t-method-5b423418:t0"
+        ]
+      },
+      "dev_data": {
+        "file": "dev.sanitized.jsonl",
+        "sha256": "a34e79e93d8b166b7ee9d48718dba9323dcf9636c811f14e32ad6c582b0bdccb",
+        "records": 467,
+        "excluded_ids": [
+          "d-method-450ba680:t0"
+        ]
+      },
+      "approval": "none: synthetic machine-verified data only; signoff.json blank; no human expert review",
+      "evaluation": "none (test_v3 untouched; no A/B run)",
+      "notes": "Plumbing/feasibility smoke on RTX 4090. Loss values say nothing about answer quality. Not promoted, not deployable."
+    },
+    {
+      "id": "adapter-B-full2ep-experimental-machine-verified",
+      "kind": "lora_adapter",
+      "status": "experimental_machine_verified",
+      "label": "Bhoomi-LLM v1 (experimental, checkpoint-160)",
+      "base": "foundation-A-qwen3-4b-instruct-2507",
+      "base_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+      "run_date_utc": "2026-10-11",
+      "config": "adapters/Bhoomi-LLM-v1-experimental-machine-verified-full2ep/configs/sft_full_experimental_machine_verified.yaml",
+      "adapter_dir": "adapters/Bhoomi-LLM-v1-experimental-machine-verified-full2ep/runs/full_2ep/adapter",
+      "adapter_sha256": "462270265fafcdf6fa52d136b556926d357f9aa6710f72a8fbc934f04a3c65ed",
+      "manifest": "adapters/Bhoomi-LLM-v1-experimental-machine-verified-full2ep/runs/full_2ep/run_manifest.json",
+      "selected_checkpoint": "checkpoint-160 (best dev loss 0.03642)",
+      "steps_run": 280,
+      "steps_planned": 396,
+      "epochs_completed": 1.41,
+      "early_stopped": true,
+      "train_data": {
+        "file": "train.sanitized.jsonl",
+        "sha256": "adccd8beb84a6ab1855fed8c00ef8e51b3596fbece31f6d5b55dfc3f816b3a13",
+        "records": 3162
+      },
+      "dev_data": {
+        "file": "dev.sanitized.jsonl",
+        "sha256": "a34e79e93d8b166b7ee9d48718dba9323dcf9636c811f14e32ad6c582b0bdccb",
+        "records_total": 467,
+        "records_in_loop": 160
+      },
+      "approval": "none: synthetic machine-verified data only; signoff.json blank; no human expert review",
+      "evaluation": "none: test_v3 untouched, no A/B/C comparison run yet; dev loss is not an accuracy claim",
+      "deployable": false,
+      "parent_smoke": "smoke-real-20steps-experimental-machine-verified",
+      "stage1_dev_eval": {
+        "date": "2026-10-11",
+        "dataset": "dev_v3 permitted subset (290 conv; selection set, not independent)",
+        "A_strict": [
+          116,
+          290
+        ],
+        "B_strict": [
+          268,
+          290
+        ],
+        "paired_diff_ci95": [
+          0.462,
+          0.586
+        ],
+        "report": "adapters/Bhoomi-LLM-v1-experimental-machine-verified-full2ep/stage1_dev_eval/STAGE1_REPORT.md",
+        "known_gaps": [
+          "wash 'all values' phrasing 0/7",
+          "ms_rank_wash state-as-district 3/9 fail",
+          "refusal-template/judge ungrounded-numbers defect (shared with A)"
+        ],
+        "test_v3_accessed": false,
+        "deployable": false
+      },
+      "served_name": "bhoomi-llm-v1-ckpt160",
+      "interactive_runtime": "runtime_experimental/RUNTIME.json"
+    },
+    {
+      "id": "adapter-B1.1-candidate",
+      "kind": "lora_adapter",
+      "status": "planned_not_trained_awaiting_approval",
+      "label": "Bhoomi-LLM-v1.1-candidate-experimental-machine-verified",
+      "base": "foundation-A-qwen3-4b-instruct-2507",
+      "base_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+      "config": "configs/sft_v11_qlora.yaml",
+      "train_data": "data/v1_1/train_v11.jsonl (4,382 records = 3,162 v1 sanitized + 1,220 new)",
+      "dev_data": "data/v1_1/dev_v11.jsonl (519 records)",
+      "approval": "none: synthetic machine-verified only; review sample unsigned",
+      "parent_for_comparison": "adapter-B-full2ep-experimental-machine-verified (checkpoint-160, unchanged)",
+      "deployable": false
+    }
+  ]
+}

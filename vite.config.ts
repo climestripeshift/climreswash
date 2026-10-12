@@ -44,6 +44,7 @@ export default defineConfig({
   server: {
     host: "0.0.0.0",
     allowedHosts: true,
+    proxy: { "/bhoomiai/api": "http://127.0.0.1:5100" },
     fs: {
       strict: true,
       deny: ["**/.*"],

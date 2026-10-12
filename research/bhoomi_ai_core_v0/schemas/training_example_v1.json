@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "bhoomi.training_example.v1",
+  "title": "Bhoomi AI reviewed training example (v1)",
+  "description": "One reviewed, authorized interaction in chat format with its audit trail. Produced only by FeedbackStore.export_training_jsonl. Nothing in v0.x trains on it.",
+  "type": "object",
+  "required": ["schema_version", "example_id", "interaction_id", "created_at", "split", "request", "messages", "target", "provenance", "review", "licence"],
+  "properties": {
+    "schema_version": {"const": "bhoomi.training_example.v1"},
+    "example_id": {"type": "string"},
+    "parent_example_id": {"type": ["string", "null"], "description": "set when this example supersedes an earlier one (correction lineage)"},
+    "interaction_id": {"type": "string"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "split": {"const": "training"},
+    "request": {"type": "string"},
+    "messages": {"type": "array", "minItems": 2, "description": "system, user, [assistant tool_calls, tool results...], final assistant answer"},
+    "target": {
+      "type": "object",
+      "required": ["tool_calls", "final_answer", "answer_source"],
+      "properties": {
+        "tool_calls": {"type": "array", "items": {"type": "object", "required": ["name", "arguments"]}},
+        "final_answer": {"type": "string", "minLength": 1},
+        "answer_source": {"enum": ["verified_model_answer", "reviewer_correction"]}
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["model", "system_prompt_sha", "tool_schema_sha", "verifier_version"],
+      "properties": {"model": {"type": "object"}, "system_prompt_sha": {"type": ["string", "null"]},
+                     "tool_schema_sha": {"type": "string"}, "verifier_version": {"type": "string"}, "app_version": {"type": ["string", "null"]}}
+    },
+    "review": {
+      "type": "object",
+      "required": ["reviewer", "verdict", "authorized_by", "reviewed_at"],
+      "properties": {"reviewer": {"type": "string", "minLength": 1}, "verdict": {"enum": ["correct", "partially_correct", "incorrect"]},
+                     "authorized_by": {"type": "string", "minLength": 1}, "reviewed_at": {"type": "number"}, "notes": {"type": "string"}}
+    },
+    "licence": {
+      "type": "object",
+      "required": ["flags", "internal_research_only"],
+      "properties": {"flags": {"type": "array", "items": {"type": "string"}}, "internal_research_only": {"type": "boolean"}}
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "approved": false,
+  "approved_by": "",
+  "endpoint": "https://api.runpod.ai/v2/CHANGE_ME/openai/v1",
+  "served_model": "bhoomi-llm-v1-ckpt160",
+  "data_bundle_sha256": "",
+  "privacy_contact": "",
+  "processing_regions": [],
+  "processors": [],
+  "attributions": [],
+  "model": {
+    "registry_id": "adapter-B-full2ep-experimental-machine-verified",
+    "base_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+    "adapter_sha256": "462270265fafcdf6fa52d136b556926d357f9aa6710f72a8fbc934f04a3c65ed"
+  }
+}

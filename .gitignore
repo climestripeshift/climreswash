@@ -14,3 +14,14 @@ vite.config.ts.*
 /tests/golden/py_results.json
 /tests/golden/ts_results.json
 /tests/golden/hexes_with_scenario.json
+
+# Private beta configuration and runtime state
+deploy/beta/beta.env
+deploy/beta/*.secret
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+deploy/beta/source-clearance.json
+deploy/beta/approval.json
+deploy/beta/billing-attestation.json
+__pycache__/

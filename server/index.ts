@@ -5,9 +5,13 @@ import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import { seedIfEmpty } from "./autoSeed";
+import { registerBetaProxy } from "./betaProxy";
 
 const app = express();
 const httpServer = createServer(app);
+
+// Before parsers, sessions and response logging: beta prompts never enter public-app logs.
+registerBetaProxy(app);
 
 app.use(compression());
 

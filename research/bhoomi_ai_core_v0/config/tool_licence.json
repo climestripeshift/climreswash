@@ -1,0 +1,20 @@
+{
+ "version": "1.0",
+ "note": "Licence class per tool, copied from research/bhoomi_llm_v1/configs/licence_policy.json (a test keeps them equal). In the cloud_beta profile only 'allowed' and 'allowed_with_attribution' tools execute; every other class (and any unclassified tool) is replaced by an inert stub. Engineering control, not legal advice.",
+ "tools": {
+  "district_hazard_profile": "allowed_with_attribution",
+  "rank_districts": "allowed_with_attribution",
+  "historical_climate": "allowed_with_attribution",
+  "wash_context": "allowed_with_attribution",
+  "forecast_summary": "decision_only",
+  "monsoon_indicators": "decision_only",
+  "rainfall_features": "decision_only",
+  "reported_flood_months": "decision_only",
+  "method_notes": "allowed",
+  "map_link": "allowed",
+  "describe_capabilities": "allowed",
+  "resolve_place": "allowed",
+  "ask_clarification": "allowed",
+  "declare_unsupported": "allowed"
+ }
+}

@@ -1,0 +1,10 @@
+{
+  // DRAFT ONLY. No publish command has been run.
+  "name": "bhoomi-private-api",
+  "main": "edgeProxy.ts",
+  "compatibility_date": "2026-10-12",
+  "workers_dev": false,
+  "routes": [{ "pattern": "climreswash.in/bhoomiai/api*", "zone_name": "climreswash.in" }],
+  "vars": { "BETA_ORIGIN": "https://CHANGE_ME_private_gateway_hostname" }
+  // BETA_ORIGIN_KEY belongs in Worker secrets, never vars.
+}

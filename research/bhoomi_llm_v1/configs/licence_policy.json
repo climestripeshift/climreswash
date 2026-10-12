@@ -1,0 +1,25 @@
+{
+  "version": "1.0",
+  "note": "Conservative data-licence policy for training records. 'allowed' tool outputs may appear as values in training traces (with attribution). 'decision_only' tools may appear ONLY as the assistant's tool call (name + arguments, no restricted values anywhere in the record). 'excluded' is never used. This table is an engineering control, not legal advice: every 'allowed_with_attribution' source still needs sign-off by the data owner before a commercial release.",
+  "tools": {
+    "district_hazard_profile": {"class": "allowed_with_attribution", "sources": ["SRTM 90m (public)", "MODIS MOD13Q1 NDVI (open)", "ESA WorldCover 2021 (CC BY 4.0)", "Census 2011 / NFHS-5 published aggregates", "ClimResWASH rule-based scoring (original)"], "attribution_required": true, "legal_review": "recommended"},
+    "rank_districts": {"class": "allowed_with_attribution", "sources": ["same as district_hazard_profile"], "attribution_required": true, "legal_review": "recommended"},
+    "historical_climate": {"class": "allowed_with_attribution", "sources": ["ERA5 reanalysis (Copernicus/ECMWF licence: commercial use permitted with attribution)"], "attribution_required": true, "legal_review": "recommended"},
+    "wash_context": {"class": "allowed_with_attribution", "sources": ["NFHS-5 published district estimates (IIPS/MoHFW)", "JJM IMIS public snapshot"], "attribution_required": true, "legal_review": "required"},
+    "forecast_summary": {"class": "decision_only", "sources": ["Open-Meteo (free API is non-commercial; commercial use needs a subscription)"], "reason": "values derived from a non-commercial API tier; only metadata (issue time, validity, status) may be shown", "metadata_facts_allowed": ["issued_at", "valid_from", "valid_to", "forecast_status", "days_since_issue"]},
+    "monsoon_indicators": {"class": "decision_only", "sources": ["CHIRPS v2.0 daily rainfall (derived)"], "reason": "standing project constraint: CHIRPS-derived outputs are not exported for commercial use"},
+    "rainfall_features": {"class": "decision_only", "sources": ["CHIRPS v2.0 daily rainfall (derived)"], "reason": "standing project constraint: CHIRPS-derived outputs are not exported for commercial use"},
+    "reported_flood_months": {"class": "decision_only", "sources": ["India Flood Inventory (IFI) event records", "LGD district crosswalk (provisional)"], "reason": "standing project constraint: flood-inventory and LGD-derived outputs are not exported for commercial use"},
+    "method_notes": {"class": "allowed", "sources": ["project documentation (original)"]},
+    "map_link": {"class": "allowed", "sources": ["application routes (original)"]},
+    "describe_capabilities": {"class": "allowed", "sources": ["tool descriptions (original)"]},
+    "resolve_place": {"class": "allowed", "sources": ["gazetteer built from the hex grid (names only)"]},
+    "ask_clarification": {"class": "allowed", "sources": ["control tool"]},
+    "declare_unsupported": {"class": "allowed", "sources": ["control tool"]}
+  },
+  "record_rules": {
+    "decision_only_records_end_at_the_tool_call": true,
+    "history_with_restricted_values_must_be_redacted": true,
+    "restricted_numbers_never_in_assistant_targets": true
+  }
+}

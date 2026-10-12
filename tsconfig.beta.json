@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["server/beta/**/*.ts", "server/betaServer.ts", "server/betaProxy.ts", "client/src/pages/BhoomiBeta*.tsx", "client/src/lib/betaApi.ts", "shared/betaFeedback.ts", "deploy/beta/edgeProxy.ts", "scripts/beta-admin.ts", "tests/betaE2E.ts"],
+  "compilerOptions": { "target": "ES2022", "incremental": false }
+}

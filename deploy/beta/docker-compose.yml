@@ -1,0 +1,21 @@
+# TEMPLATE - not run. Requires beta.env (copied from beta.env.example) and the Cloudflare tunnel token.
+services:
+  beta:
+    build: { context: ../../dist/beta-bundle, dockerfile: deploy/beta/Dockerfile }
+    env_file: beta.env
+    restart: unless-stopped
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    volumes:
+      - beta-data:/data                                              # gateway SQLite (system of record) - back this up
+      - core-cache:/app/research/bhoomi_ai_core_v0/data
+    # no 'ports:' - nothing is published; the only ingress is the tunnel below
+  cloudflared:
+    image: cloudflare/cloudflared:latest        # pin by digest before use
+    restart: unless-stopped
+    network_mode: "service:beta"                 # reaches the gateway on 127.0.0.1:5100 inside the shared namespace
+    command: tunnel --no-autoupdate run
+    environment: [TUNNEL_TOKEN]                  # from the host environment / secret store, not from a file in git
+volumes: { beta-data: {}, core-cache: {} }

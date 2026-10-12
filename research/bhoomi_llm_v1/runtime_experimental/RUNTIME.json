@@ -1,0 +1,42 @@
+{
+  "label": "Bhoomi-LLM v1 (experimental, checkpoint-160) - local evaluation runtime",
+  "status": "experimental_machine_verified; deployable=false; evaluation-only; not promoted",
+  "registry_id": "adapter-B-full2ep-experimental-machine-verified",
+  "adapter": {
+    "peft_dir": "adapters/Bhoomi-LLM-v1-experimental-machine-verified-full2ep/runs/full_2ep/adapter",
+    "adapter_model_sha256": "462270265fafcdf6fa52d136b556926d357f9aa6710f72a8fbc934f04a3c65ed",
+    "r": 16,
+    "lora_alpha": 32,
+    "target_modules": [
+      "down_proj",
+      "gate_proj",
+      "k_proj",
+      "o_proj",
+      "q_proj",
+      "up_proj",
+      "v_proj"
+    ],
+    "trained_on": "Qwen/Qwen3-4B-Instruct-2507 @ cdbee75f17c01a7cc42f958dc650907174af0554 (nf4 4-bit QLoRA, bf16 compute)"
+  },
+  "runtime": {
+    "engine": "llama.cpp llama-server (Homebrew 0.6.0 build 11429)",
+    "lora_gguf": "runtime_experimental/bhoomi-llm-v1-ckpt160-lora-f16.gguf",
+    "lora_gguf_sha256": "142fe512d977a8fffa0d34a1e2d6c00ede45f2810444cf6ee77ba3709f68b0d9",
+    "converted_with": "llama.cpp convert_lora_to_gguf.py (master 23b0202), --outtype f16, base config only",
+    "base_gguf": {
+      "source": "Ollama library qwen3:4b-instruct-2507-q4_K_M",
+      "blob_sha256": "sha256:85e4a5b7b8ef0e48af0e8658f5aaab9c2324c76c1641493f4d1e25fce54b18b9",
+      "size_bytes": 2497280480
+    },
+    "chat_template": "adapters/Bhoomi-LLM-v1-experimental-machine-verified-full2ep/runs/full_2ep/adapter/chat_template.jinja",
+    "chat_template_sha256": "64f85b198065d0fba2a81f37e10ed68161ce2c19a754c7100e67e0ca2ee9c326",
+    "context": 6144,
+    "binding": "127.0.0.1:8081 (loopback)"
+  },
+  "known_differences_from_training": [
+    "Base weights are Ollama's Q4_K_M GGUF of Qwen3-4B-Instruct-2507, NOT the pinned bf16 revision cdbee75f; upstream revision of the Ollama build is not recorded in its manifest",
+    "Adapter was trained on an nf4-quantised base; here it is applied at runtime to a Q4_K_M base (different quantisation error, untested)",
+    "LoRA weights are converted to f16 (training used fp32 LoRA weights)",
+    "Stage-1 development results were produced with the bf16 base + adapter, not with this runtime"
+  ]
+}
