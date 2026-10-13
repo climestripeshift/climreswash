@@ -234,6 +234,9 @@ export function createBetaRouter(deps: BetaDeps): express.Router {
       if (identity && (out.body.model?.experimental !== true || out.body.model?.deployable !== false || Object.entries(identity).some(([k, v]) => out.body.model?.[k] !== v))) throw new Error("model identity mismatch");
       const current = (await store.getUser(req.beta!.email));
       if (!current || current.status === "suspended" || current.revoked_before >= req.beta!.issuedAt || (current.expires_at !== null && current.expires_at <= now()) || (await store.tokenRevoked(req.beta!.tokenHash))) return generic(res, 403, "Access revoked.");
+      if(config.authMode==='code'&&config.codeAuth){
+        try{await config.codeAuth.authenticate(req);}catch(e){if(e instanceof AccessError)return generic(res,403,'Access revoked.');throw e;}
+      }
       const shaped: any = shapeChatResponse(out.body);
       if (!config.conversations && typeof shaped.session_id === "string") {
         if (sessionOwner.size > 5000) { sessionOwner.clear(); sessionCore.clear(); }

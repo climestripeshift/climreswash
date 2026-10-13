@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SafeMarkdown } from "@/components/SafeMarkdown";
 import {
-  BetaError, adminSuspend, adminUser, adminFeedback, adminInvite, adminKill, adminReview, adminUsage, adminUsers, exportUrl, getMe,
+  BetaError, adminSuspend, adminUser, adminFeedback, adminKill, adminReview, adminUsage, adminUsers, exportUrl, getMe,
   type AdminFeedbackItem,
 } from "@/lib/betaApi";
 
@@ -22,7 +22,6 @@ export default function BhoomiBetaAdminPage() {
   const [users, setUsers] = useState<Users>([]);
   const [open, setOpen] = useState<number | null>(null);
   const [notes, setNotes] = useState("");
-  const [email, setEmail] = useState("");
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
   const active = Object.fromEntries(Object.entries(f).filter(([, v]) => v).map(([k, v]) => [k, k === "from" || k === "to" ? String(new Date(v).getTime()) : v]));
@@ -39,7 +38,7 @@ export default function BhoomiBetaAdminPage() {
   useEffect(() => { if (allowed) load(); }, [allowed, load]);
 
   if (allowed === undefined) return <div className="p-6 text-sm"><Loader2 className="inline h-4 w-4 animate-spin mr-1" />Loading…</div>;
-  if (!allowed) return <div className="p-6 text-sm"><p><ShieldAlert className="inline h-4 w-4 mr-1" />Administrator access required.</p><BetaLogin onDone={() => { getMe().then(m => setAllowed(m.role === "admin")).catch(() => setAllowed(false)); }} /></div>;
+  if (!allowed) return <div className="p-6 text-sm"><p><ShieldAlert className="inline h-4 w-4 mr-1" />Administrator access required.</p><BetaLogin admin onDone={() => { getMe().then(m => setAllowed(m.role === "admin")).catch(() => setAllowed(false)); }} /></div>;
 
   const act = async (fn: () => Promise<unknown>, ok: string) => {
     try { await fn(); setMsg(ok); await load(); } catch (e) { setMsg(e instanceof BetaError ? e.message : "Failed."); }
@@ -61,12 +60,9 @@ export default function BhoomiBetaAdminPage() {
           <p>{usage?.killed ? <Badge variant="destructive">Chat disabled</Badge> : <Badge variant="outline">Chat enabled</Badge>}</p></div>
           <Button size="sm" variant={usage?.killed ? "default" : "destructive"} onClick={() => act(() => adminKill(!usage?.killed), usage?.killed ? "Chat re-enabled." : "Chat disabled.")}>
             {usage?.killed ? "Enable" : "Disable chat"}</Button></div>
-        <form className="rounded border p-3 flex gap-2 items-end" onSubmit={e => { e.preventDefault(); if (email.trim()) act(() => adminInvite(email.trim(), "user").then(r => setMsg(r.reminder)), "Invited."); setEmail(""); }}>
-          <label className="flex-1 text-xs">Invite (gateway allowlist)<input value={email} onChange={e => setEmail(e.target.value)} type="email" className="mt-1 w-full rounded border bg-background px-2 py-1 text-sm" /></label>
-          <Button size="sm" type="submit">Add</Button></form>
+        <div className="rounded border p-3 text-xs">Ordinary beta access uses the shared PIN. Administrator accounts remain separate.</div>
       </section>
 
-      <p className="text-xs text-muted-foreground">Inviting here updates the gateway allowlist. Add the exact address to Cloudflare Access and send the invitation separately; no email is sent automatically.</p>
       <section className="flex flex-wrap gap-2 items-end text-xs">
         {([["status", "Review status", statuses], ["rating", "Rating", ["up", "down"]], ["category", "Category", ["incorrect_figure", "wrong_geography", "wrong_indicator_or_period", "incomplete_answer", "unclear_explanation", "missing_data_not_explained", "overconfident_or_unsafe", "other"]], ["verified", "Verifier", ["true", "false"]]] as [string, string, string[]][]).map(([k, label, opts]) => (
           <label key={k}>{label}

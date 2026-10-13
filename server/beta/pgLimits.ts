@@ -3,7 +3,7 @@ import { LimitError, utcDay, type LimitConfig } from "./limits";
 import type { PostgresBetaStore } from "./pgStore";
 
 export class PostgresLimiter {
-  constructor(public cfg: LimitConfig, private store: PostgresBetaStore, private now = Date.now) {}
+  constructor(public cfg: LimitConfig, private store: PostgresBetaStore, private now = Date.now, private sharedPinPool=false) {}
   // The relay persists its own stop (`relay_paused`) after an identity mismatch or provider failure; the gateway honours it at
   // admission so no quota or GPU seconds are reserved for requests that cannot be served. Operator resume clears both.
   async isKilled() {
@@ -16,7 +16,16 @@ export class PostgresLimiter {
   }
   async snapshot(user: string, dailyQuota = this.cfg.perDay) {
     const day = utcDay(this.now()), u = await this.store.userDay(user, day);
-    return { day, used_today: u.requests, daily_limit: dailyQuota, remaining_today: Math.max(0, dailyQuota - u.requests),
+    let remaining=Math.max(0,dailyQuota-u.requests);
+    if(this.sharedPinPool){
+      const pin=await this.store.db.prepare('SELECT 1 FROM pin_visitors v JOIN users u ON u.email=v.email WHERE u.user_hash=?').get(user);
+      if(pin){
+        const pool=await this.store.db.prepare(`SELECT COALESCE(SUM(d.requests),0) AS requests FROM usage d
+          JOIN users u ON u.user_hash=d.user_hash JOIN pin_visitors v ON v.email=u.email WHERE d.day=?`).get(day);
+        remaining=Math.min(remaining,Math.max(0,this.cfg.perDay-Number(pool!.requests)));
+      }
+    }
+    return { day, used_today: u.requests, daily_limit: dailyQuota, remaining_today: remaining,
       per_minute: this.cfg.perMinute, per_hour: this.cfg.perHour };
   }
   async acquire(user: string, dailyQuota = this.cfg.perDay) {
@@ -30,6 +39,14 @@ export class PostgresLimiter {
       const g = await s.dayTotals(day), u = await s.userDay(user, day);
       if (g.requests >= c.globalPerDay) deny("global_day");
       if (u.requests >= quota) deny("per_day");
+      if(this.sharedPinPool){
+        const pin=await s.db.prepare('SELECT 1 FROM pin_visitors v JOIN users u ON u.email=v.email WHERE u.user_hash=?').get(user);
+        if(pin){
+          const pool=await s.db.prepare(`SELECT COALESCE(SUM(d.requests),0) AS requests FROM usage d
+            JOIN users u ON u.user_hash=d.user_hash JOIN pin_visitors v ON v.email=u.email WHERE d.day=?`).get(day);
+          if(Number(pool!.requests)>=c.perDay)deny('per_day');
+        }
+      }
       const reserve = c.reservationSeconds ?? c.requestTimeoutMs / 1000;
       if (g.gpuSeconds + reserve > c.dailyGpuSecondsBudget) deny("gpu_budget");
       if (c.monthlyGpuSecondsBudget !== undefined && await s.monthTotal(day.slice(0, 7)) + reserve > c.monthlyGpuSecondsBudget) deny("gpu_budget");

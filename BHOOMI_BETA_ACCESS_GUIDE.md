@@ -1,5 +1,7 @@
 # Private Bhoomi AI beta: email and access-code guide
 
+**Ordinary login is superseded by [BHOOMI_BETA_PIN_DEPLOYMENT.md](BHOOMI_BETA_PIN_DEPLOYMENT.md).** Ordinary users now use a shared 6-digit PIN; email/access codes are reserved for existing administrator authentication. Deploy migration 4 with the PIN change. The historical invitation instructions below are not the ordinary-user deployment workflow.
+
 Current local implementation, 12 October 2026. This supersedes Auth0/Cloudflare requirements in earlier plans. No authentication provider account or BigRock DNS change is required. Nothing has been published.
 
 ## What users do

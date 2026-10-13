@@ -37,12 +37,12 @@ function Consent({ me, onDone }: { me: BetaMe; onDone: () => void }) {
     <div className="max-w-2xl mx-auto space-y-3 text-sm" data-testid="consent">
       <h2 className="text-lg font-semibold flex items-center gap-2"><ShieldCheck className="h-5 w-5" />Before you start: research-beta terms</h2>
       <ul className="list-disc pl-5 space-y-1">
-        <li><b>What this is.</b> An invitation-only research beta of an experimental language model for climate, GIS and WASH questions about Indian districts.</li>
-        <li><b>What we store.</b> Your questions, the answers shown, the model version, verification results, tool provenance and any feedback you give, linked to a pseudonymous ID (not your e-mail). Your e-mail is held only to run the invitation list.</li>
+        <li><b>What this is.</b> A private research beta of an experimental language model for climate, GIS and WASH questions about Indian districts.</li>
+        <li><b>What we store.</b> Your questions, the answers shown, the model version, verification results, tool provenance and any feedback you give, linked to a pseudonymous browser ID. Ordinary PIN access does not collect your email.</li>
         <li><b>Who sees it.</b> The research team. Text you type is processed by our GPU hosting provider to produce answers. {me.privacy && <>Processors: {me.privacy.processors.join(", ")}. Processing regions: {me.privacy.regions.join(", ")}. </>}Do not enter personal, confidential or sensitive information.</li>
         <li><b>How it is used.</b> To evaluate and improve the system. Feedback is <b>never</b> used to train a model automatically: any such use needs expert review, a provenance and licence check, and your separate consent below.</li>
-        <li><b>Limits.</b> Daily question quotas apply. Answers are research outputs, not advice.</li>
-        <li><b>Retention and deletion.</b> Records are kept for the pilot and up to 90 days afterwards, with backup expiry within 30 further days. Request deletion or withdraw optional training consent at any time: {me.privacy?.contact || "contact the sender of your invitation"}.</li>
+        <li><b>Limits.</b> Daily question quotas apply. PIN users also share a daily allowance. Answers are research outputs, not advice.</li>
+        <li><b>Retention and deletion.</b> Records are kept for the pilot and up to 90 days afterwards, with backup expiry within 30 further days. Request deletion or withdraw optional training consent at any time: {me.privacy?.contact || "contact the research team"}.</li>
       </ul>
       <label className="flex gap-2 items-start"><input type="checkbox" checked={agree} onChange={e => setAgree(e.target.checked)} className="mt-1" />
         <span>I understand and agree to the above, including research use of my questions and feedback.</span></label>
@@ -100,7 +100,7 @@ export default function BhoomiBetaPage() {
 
   const refresh = () => getMe().then(setMe).catch((e: BetaError) => {
     setMe(null);
-    setBlocked(e.status === 401 ? "Sign in with your invited email and private access code." : "This beta is invitation-only. If you were invited, contact the research team.");
+    setBlocked(e.status === 401 ? "Sign in with the shared access PIN." : "Private beta access is unavailable. Contact the research team.");
   });
   useEffect(() => { refresh(); }, []);
   useEffect(() => { end.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs, busy]);

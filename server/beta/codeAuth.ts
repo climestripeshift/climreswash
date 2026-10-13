@@ -3,6 +3,7 @@ import type { Request, Response, Router } from "express";
 import { AccessError } from "./accessJwt";
 import { checkAccessCode, hashAccessCode } from "./accessCodes";
 import type { PostgresBetaStore } from "./pgStore";
+import type { PinAuth } from './pinAuth';
 
 export const sessionCookie = "BhoomiSession";
 export const tokenHash = (s: string) => createHash("sha256").update(s).digest("hex");
@@ -14,14 +15,15 @@ export function betaCookie(req: Request) {
 }
 export class CodeAuth {
   private dummy: Promise<string>;
-  constructor(private store: PostgresBetaStore, private origin: string, private sessionSeconds = 8*3600, private now = Date.now) {
+  constructor(private store: PostgresBetaStore, private origin: string, private sessionSeconds = 8*3600, private now = Date.now, private pinAuth?: PinAuth) {
     if (!origin.startsWith("https://") || new URL(origin).origin !== origin || !Number.isSafeInteger(sessionSeconds) || sessionSeconds < 60 || sessionSeconds > 28800)
       throw new Error("Invalid access-code authentication configuration");
     // Unknown emails still pay the same hashing cost, avoiding a fast user-enumeration branch.
     this.dummy = hashAccessCode(randomBytes(32).toString("hex"));
   }
   register(router: Router) {
-    router.post("/bhoomiai/api/auth/login", async (req, res) => {
+    this.pinAuth?.register(router);
+    router.post(this.pinAuth ? "/bhoomiai/api/auth/admin/login" : "/bhoomiai/api/auth/login", async (req, res) => {
       if (req.header("origin") !== this.origin || req.header("sec-fetch-site") === "cross-site" || !req.is("application/json"))
         return res.status(403).json({ message: "Forbidden." });
       const body = req.body;
@@ -33,8 +35,9 @@ export class CodeAuth {
       // Durable per-email + global throttle. No untrusted forwarded-IP identity; bound hash work across replicas.
       const allowed = await this.store.db.transaction(async () => {
         await this.store.db.prepare("DELETE FROM login_attempts WHERE ts<?").run(t-3600000);
-        const row = await this.store.db.prepare(`SELECT COUNT(*) FILTER(WHERE ts>?) AS total,
-          COUNT(*) FILTER(WHERE email_hash=? AND ts>?) AS email FROM login_attempts`).get(t-60000,key,t-900000);
+        const row = await this.store.db.prepare(`SELECT COUNT(*) FILTER(WHERE ts>? AND email_hash NOT IN (?,?)) AS total,
+          COUNT(*) FILTER(WHERE email_hash=? AND ts>?) AS email FROM login_attempts`)
+          .get(t-60000,this.store.hash('shared-pin-failure'),this.store.hash('shared-pin-success'),key,t-900000);
         if (Number(row!.total) >= 20 || Number(row!.email) >= 5) return false;
         await this.store.db.prepare("INSERT INTO login_attempts(email_hash,ts) VALUES(?,?)").run(key,t);
         return true;
@@ -49,7 +52,7 @@ export class CodeAuth {
         // Recheck after expensive hashing: rotation/revocation during sign-in must win.
         const user = await this.store.getUser(email);
         const current = await this.store.db.prepare("SELECT access_code_hash FROM users WHERE email=?").get(email);
-        if (!correct || !user || current?.access_code_hash !== encoded || user.status === "suspended" ||
+        if (!correct || !user || (this.pinAuth && user.role !== 'admin') || current?.access_code_hash !== encoded || user.status === "suspended" ||
           (user.expires_at !== null && user.expires_at <= this.now())) return false;
         const old = betaCookie(req);
         if (old) await this.store.db.prepare("DELETE FROM auth_sessions WHERE hash=?").run(tokenHash(old));
@@ -70,6 +73,8 @@ export class CodeAuth {
     const user = await this.store.getUser(row.email);
     if (!user || user.status === "suspended" || user.revoked_before >= Number(row.issued_at) || (user.expires_at !== null && user.expires_at <= this.now()))
       throw new AccessError("access revoked");
+    if(this.pinAuth && !await this.pinAuth.validateSession(hash,user.role) && user.role!=='admin')
+      throw new AccessError('ordinary access-code session disabled');
     return {email:user.email,userHash:this.store.hash(user.email),user,tokenHash:hash,tokenExpiry:Number(row.expires_at),issuedAt:Number(row.issued_at)};
   }
   async logout(req: Request,res: Response) {

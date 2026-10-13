@@ -444,16 +444,19 @@ test('durable pause, admission reservations and consent snapshots survive reopen
 });
 
 test('50 invited identities: burst is bounded and histories stay separate', async () => {
-  let n = 0;
+  let n = 0,active=0,peak=0;
   const g = await gateway({ limits: { globalConcurrent: 2 }, upstream: async () => {
-    await new Promise(r => setTimeout(r, 20));
-    return new Response(JSON.stringify(coreReply({ interaction_id: (++n).toString(16).padStart(32, '0'), session_id: n.toString(16).padStart(24, '0') })));
+    active++;peak=Math.max(peak,active);
+    try{
+      await new Promise(r => setTimeout(r, 20));
+      return new Response(JSON.stringify(coreReply({ interaction_id: (++n).toString(16).padStart(32, '0'), session_id: n.toString(16).padStart(24, '0') })));
+    }finally{active--;}
   } });
   const emails = Array.from({ length: 50 }, (_, i) => `invite${i}@example.org`);
   for (const email of emails) { g.store.invite(email, 'user', 'admin'); await g.consent(email); }
   const responses = await Promise.all(emails.map(email => g.req('/bhoomiai/api/chat', { email, body: { message: email } })));
   assert.ok(responses.every(r => r.status === 200 || r.status === 429));
-  assert.ok(g.calls.length <= 2);
+  assert.ok(peak > 0 && peak <= 2);
   for (let i = 0; i < emails.length; i++) {
     const history = await (await g.req('/bhoomiai/api/history', { email: emails[i] })).json();
     assert.ok(history.items.every((item: any) => item.question === emails[i]));

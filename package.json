@@ -21,7 +21,8 @@
     "test:beta": "node --import tsx --test --test-force-exit tests/betaGateway.test.ts tests/betaProxy.test.ts tests/betaSupervisor.test.ts",
     "test:release-smoke": "node --import tsx tests/publicReleaseSmoke.ts",
     "test:beta:e2e": "node --import tsx tests/betaE2E.ts",
-    "beta:admin": "tsx scripts/beta-admin.ts"
+    "beta:admin": "tsx scripts/beta-admin.ts",
+    "beta:pin": "tsx scripts/beta-pin.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

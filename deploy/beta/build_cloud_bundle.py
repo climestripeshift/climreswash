@@ -33,6 +33,7 @@ ALLOW = [
     ("server/betaServer.ts", "server/betaServer.ts"), ("server/beta", "server/beta"), ("server/bhoomiAi.ts", "server/bhoomiAi.ts"),
     ("shared/betaFeedback.ts", "shared/betaFeedback.ts"), ("scripts/beta-admin.ts", "scripts/beta-admin.ts"),
     ("scripts/beta-migrate.ts", "scripts/beta-migrate.ts"),
+    ("scripts/beta-pin.ts", "scripts/beta-pin.ts"),
     # deployment files
     ("deploy/beta", "deploy/beta"),
 ]

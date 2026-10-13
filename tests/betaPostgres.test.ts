@@ -34,7 +34,7 @@ test('PostgreSQL + private codes + Replit proxy: isolated storage, real transact
  const servers:http.Server[]=[];
  const listen=async(app:express.Express)=>{const s=http.createServer(app);servers.push(s);await new Promise<void>(r=>s.listen(0,'127.0.0.1',r));return `http://127.0.0.1:${(s.address() as any).port}`;};
  try {
-  await db.transaction(async()=>{await db.query(await fs.readFile('deploy/beta/migrations/001_beta.sql','utf8'));await db.query(await fs.readFile('deploy/beta/migrations/002_access_codes.sql','utf8'));await db.query(await fs.readFile('deploy/beta/migrations/003_portable_conversations.sql','utf8'));});
+  await db.transaction(async()=>{await db.query(await fs.readFile('deploy/beta/migrations/001_beta.sql','utf8'));await db.query(await fs.readFile('deploy/beta/migrations/002_access_codes.sql','utf8'));await db.query(await fs.readFile('deploy/beta/migrations/003_portable_conversations.sql','utf8'));await db.query(await fs.readFile('deploy/beta/migrations/004_shared_pin.sql','utf8'));});
   await db.assertReady();
   await db.query("CREATE TABLE public.isolation_probe(secret TEXT)");
   await db.query(await fs.readFile('deploy/beta/provision-beta-role.example.sql','utf8'));
@@ -113,7 +113,7 @@ test('PostgreSQL + private codes + Replit proxy: isolated storage, real transact
    try {
     let ready=false,last='';for(let i=0;i<100;i++){try{const response=await request('/bhoomiai/api/me');last=response.status+':'+await response.text();if(response.status===401){ready=true;break;}}catch{}await new Promise(r=>setTimeout(r,50));}assert.ok(ready,last+diagnostic);
     for(const route of ['/','/grid-v2','/methodology','/bhoomiai','/bhoomiai/admin'])assert.equal((await request(route)).status,200);
-    const login=await request('/bhoomiai/api/auth/login','',{email:'alice@example.org',access_code:codes.get('alice@example.org')});assert.equal(login.status,200);
+    const login=await request('/bhoomiai/api/auth/admin/login','',{email:'owner@example.org',access_code:codes.get('owner@example.org')});assert.equal(login.status,200);
     const cookie=login.headers.get('set-cookie')!;assert.match(cookie,/HttpOnly/);assert.match(cookie,/Secure/);assert.match(cookie,/SameSite=Lax/);
     assert.equal((await request('/bhoomiai/api/me',cookie.split(';')[0])).status,200);
     assert.equal((await fetch('http://127.0.0.1:'+privatePort+'/bhoomiai/api/me')).status,403);

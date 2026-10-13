@@ -33,7 +33,7 @@ export function registerBetaProxy(app: Express, upstream = process.env.BHOOMI_BE
       for (const key of ["origin", "content-type", "sec-fetch-site"]) {
         const value = req.header(key); if (value) headers[key] = value;
       }
-      const names = codeMode ? ["BhoomiSession"] : ["CF_Authorization"];
+      const names = codeMode ? ["BhoomiSession","BhoomiVisitor"] : ["CF_Authorization"];
       const cookies = (req.header("cookie") ?? "").split(";").map(s => s.trim()).filter(s => names.some(n => s.startsWith(n + "=")));
       if (cookies.length) headers.cookie = cookies.join("; ");
       if (!codeMode) { const jwt = req.header("cf-access-jwt-assertion"); if (jwt) headers["cf-access-jwt-assertion"] = jwt; }

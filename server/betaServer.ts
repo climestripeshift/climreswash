@@ -12,6 +12,7 @@ import { PostgresBetaStore } from "./beta/pgStore";
 import { PostgresLimiter } from "./beta/pgLimits";
 import { Conversations } from "./beta/conversations";
 import { CodeAuth } from "./beta/codeAuth";
+import { PinAuth } from './beta/pinAuth';
 
 async function main() {
 const env = process.env;
@@ -61,9 +62,14 @@ if (env.BETA_DATABASE_URL) {
   const { BetaStore } = await import("./beta/store");
   store = new BetaStore(env.BETA_DB_PATH ?? "beta.sqlite", env.BETA_HASH_KEY ?? "");
 }
+if(authMode==='code'&&store instanceof PostgresBetaStore){
+  if(!(await store.db.query('SELECT 1 FROM bhoomi_beta.schema_migrations WHERE version=4')).rowCount)
+    throw new Error('Apply shared PIN migration before gateway startup');
+}
+const sessionSeconds=num('BETA_SESSION_SECONDS',28800);
 const codeAuth = authMode === "code" ? new CodeAuth(store as PostgresBetaStore, env.BETA_PUBLIC_ORIGIN,
-  num("BETA_SESSION_SECONDS", 28800)) : undefined;
-const limiter = store instanceof PostgresBetaStore ? new PostgresLimiter(limits, store) : new Limiter(limits, store);
+  sessionSeconds,Date.now,new PinAuth(store as PostgresBetaStore,env.BETA_PUBLIC_ORIGIN,sessionSeconds)) : undefined;
+const limiter = store instanceof PostgresBetaStore ? new PostgresLimiter(limits, store,Date.now,authMode==='code') : new Limiter(limits, store);
 // Bootstrap and user changes use the audited CLI; startup never restores revoked administrators.
 const approvalPath = env.BETA_APPROVAL_MANIFEST;
 const approval = approvalPath && fs.existsSync(approvalPath) ? JSON.parse(fs.readFileSync(approvalPath, "utf8")) : null;
