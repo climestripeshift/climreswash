@@ -28,3 +28,6 @@ __pycache__/
 
 # Private beta approvals, worker receipts and billing state
 deploy/beta/private-state/
+
+# Core-generated caches and beta conversations are private runtime state.
+/research/bhoomi_ai_core_v0/data/

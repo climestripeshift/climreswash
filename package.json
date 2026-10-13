@@ -18,7 +18,8 @@
     "dev:beta": "tsx server/betaServer.ts",
     "test:beta-gateway": "node --import tsx --test --test-force-exit tests/betaGateway.test.ts",
     "check:beta": "tsc -p tsconfig.beta.json",
-    "test:beta": "node --import tsx --test --test-force-exit tests/betaGateway.test.ts tests/betaProxy.test.ts",
+    "test:beta": "node --import tsx --test --test-force-exit tests/betaGateway.test.ts tests/betaProxy.test.ts tests/betaSupervisor.test.ts",
+    "test:release-smoke": "node --import tsx tests/publicReleaseSmoke.ts",
     "test:beta:e2e": "node --import tsx tests/betaE2E.ts",
     "beta:admin": "tsx scripts/beta-admin.ts"
   },
