@@ -143,6 +143,7 @@ test('showcase co-location starts only the existing gateway and excludes product
     RUNPOD_API_KEY: 'must-not-inherit', RELAY_UPSTREAM_KEY: 'must-not-inherit' };
   const result = { commands: (prepareColocatedBeta(env)!.supervisor as any).commands };
   assert.equal(result.commands.length, 1); assert.ok(result.commands[0].args.some(a => a.endsWith('server/betaServer.ts')));
+  assert.equal(result.commands[0].component, "gateway");
   assert.equal(result.commands[0].env.BHOOMI_DEMO_EDGE_KEY, edge); assert.equal(result.commands[0].env.RUNPOD_API_KEY, undefined);
   assert.equal(result.commands[0].env.RELAY_UPSTREAM_KEY, undefined);
   assert.throws(() => prepareColocatedBeta({ ...env, BETA_CLOUD_APPROVED: '1' }), /research inference/);
