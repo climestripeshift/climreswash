@@ -38,7 +38,7 @@ export class BetaSupervisor {
 const SERVERLESS_UPSTREAM=/^https:\/\/api\.runpod\.ai\/v2\/[A-Za-z0-9]{6,40}\/openai\/v1$/;
 const POD_UPSTREAM=/^https:\/\/[a-z0-9]{8,24}-[0-9]{2,5}\.proxy\.runpod\.net\/v1$/;
 // Provider/model credentials: each child receives only the ones it needs. Core executes LLM-selected tools, so it never holds them.
-const PROVIDER_SECRETS=["RUNPOD_API_KEY","RUNPOD_MONITOR_API_KEY","RELAY_UPSTREAM_KEY"];
+const PROVIDER_SECRETS=["RUNPOD_API_KEY","RUNPOD_MONITOR_API_KEY","RELAY_UPSTREAM_KEY","BHOOMI_DEMO_EDGE_KEY"];
 const withoutProviderSecrets=(e:NodeJS.ProcessEnv)=>{const copy={...e};for(const k of PROVIDER_SECRETS)delete copy[k];return copy;};
 const DEFAULT_MODEL_ID="adapter-B-full2ep-experimental-machine-verified";
 
@@ -52,6 +52,8 @@ export function prepareColocatedBeta(env=process.env, root=process.cwd()) {
   for(const [name,value]of Object.entries(env))if(/^(BETA_|BHOOMI_|RELAY_|MONITOR_)/.test(name)||["PATH","HOME","TMPDIR","LANG","REPL_ID",...PROVIDER_SECRETS].includes(name))privateEnv[name]=value;
   Object.assign(privateEnv,{BETA_AUTH_MODE:"code",BETA_AUTH_PROVIDER:"code",BETA_INGRESS_MODE:"proxy",BETA_LISTEN_HOST:"127.0.0.1",BETA_PORT:String(port),NODE_ENV:"production"});
   const commands:ManagedCommand[]=[];
+  if (env.BHOOMI_DEMO_ENABLED === "1" && env.BETA_CLOUD_APPROVED === "1")
+    throw new Error("Showcase activation requires research inference to remain off");
   if(env.BETA_CLOUD_APPROVED==="1") {
     const coreRoot=path.resolve(env.BETA_CORE_ROOT??path.join(root,"research/bhoomi_ai_core_v0"));
     // Runtime files live outside the checkout's tracked tree; Replit secrets are environment variables, so the approval manifest
@@ -89,7 +91,7 @@ export function prepareColocatedBeta(env=process.env, root=process.cwd()) {
     commands.push({command:"python3",args:["-m","bhoomi_ai","--port","8765"],cwd:coreRoot,env:coreEnv});
     commands.push({command:process.execPath,args:["--import","tsx",path.join(root,"server/betaServer.ts")],cwd:root,env:base});
   } else {
-    commands.push({command:process.execPath,args:["--import","tsx",path.join(root,"server/betaServer.ts")],cwd:root,env:withoutProviderSecrets(privateEnv)});
+    commands.push({command:process.execPath,args:["--import","tsx",path.join(root,"server/betaServer.ts")],cwd:root,env:{...withoutProviderSecrets(privateEnv),...(env.BHOOMI_DEMO_EDGE_KEY?{BHOOMI_DEMO_EDGE_KEY:env.BHOOMI_DEMO_EDGE_KEY}:{})}});
   }
   const supervisor=new BetaSupervisor(commands,state=>console.log(`[beta] ${state}`));
   return {gatewayUrl:`http://127.0.0.1:${port}`,supervisor};

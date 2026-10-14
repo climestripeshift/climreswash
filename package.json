@@ -22,7 +22,8 @@
     "test:release-smoke": "node --import tsx tests/publicReleaseSmoke.ts",
     "test:beta:e2e": "node --import tsx tests/betaE2E.ts",
     "beta:admin": "tsx scripts/beta-admin.ts",
-    "beta:pin": "tsx scripts/beta-pin.ts"
+    "beta:pin": "tsx scripts/beta-pin.ts",
+    "test:bhoomi-demo": "node --import tsx --test tests/bhoomiDemo.test.ts tests/bhoomiDemoGateway.test.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

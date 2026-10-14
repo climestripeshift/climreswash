@@ -1,0 +1,8 @@
+{
+  "synthetic": true,
+  "max_conversations": 1,
+  "max_user_turns": 1,
+  "prompt": "SYNTHETIC DEMONSTRATION ONLY. For SYNTHETIC District Alpha in SYNTHETIC State, explain the invented overall screening index and why it is not a probability. Label your answer SYNTHETIC; do not describe a real place or recommend an operational decision.",
+  "expected_invented_index": 2.5,
+  "output_label_required": "SYNTHETIC DEMONSTRATION \u2014 invented data; not real climate evidence."
+}

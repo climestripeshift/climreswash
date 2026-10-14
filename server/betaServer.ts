@@ -12,6 +12,7 @@ import { PostgresBetaStore } from "./beta/pgStore";
 import { PostgresLimiter } from "./beta/pgLimits";
 import { Conversations } from "./beta/conversations";
 import { CodeAuth } from "./beta/codeAuth";
+import { ShowcaseDemo } from './beta/demo';
 import { PinAuth } from './beta/pinAuth';
 
 async function main() {
@@ -85,6 +86,7 @@ const config: BetaConfig = {
            baseModel: "Qwen3-4B-Instruct-2507 + LoRA checkpoint-160",
            note: "Fine-tuned on synthetic, machine-verified examples; not expert-reviewed; not approved for deployment." },
 };
+if (authMode === "code" && store instanceof PostgresBetaStore) config.demo = new ShowcaseDemo(store);
 if(env.BHOOMI_BETA_COLOCATE==="1")config.coreAvailable=()=>new Promise(resolve=>{
   const socket=net.createConnection({host:"127.0.0.1",port:8765});
   const finish=(ready:boolean)=>{socket.destroy();resolve(ready);};

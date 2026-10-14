@@ -10,7 +10,7 @@ export function BetaLogin({ onDone,admin=false }: { onDone: () => void; admin?:b
     catch(e) { setError((e as Error).message); }
     finally { setCode(""); setBusy(false); }
   }}>
-    <h1 className="text-lg font-semibold">Bhoomi AI · private research beta</h1>
+    <h1 className="text-lg font-semibold">Bhoomi AI · private access</h1>
     <p className="text-xs">{admin?'Use your existing administrator email and private access code.':'Enter the shared 6-digit access PIN.'}</p>
     {admin&&<label className="block">Administrator email<input type="email" autoComplete="username" required value={email} onChange={e=>setEmail(e.target.value)} className="block border rounded p-2 w-full" /></label>}
     <label className="block">{admin?'Access code':'6-digit PIN'}<input type="password" autoComplete={admin?'current-password':'off'} inputMode={admin?undefined:'numeric'} pattern={admin?undefined:'[0-9]{6}'} required minLength={admin?undefined:6} maxLength={admin?128:6} value={code} onChange={e=>setCode(admin?e.target.value:e.target.value.replace(/\D/g,''))} className="block border rounded p-2 w-full" /></label>

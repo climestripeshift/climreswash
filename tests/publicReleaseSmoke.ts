@@ -22,6 +22,9 @@ const syntheticConfig = {
 };
 const cases: [string, NodeJS.ProcessEnv][] = [
   ["beta disabled", { BHOOMI_BETA_COLOCATE: "0", BETA_CLOUD_APPROVED: "0" }],
+  ["showcase configured; gateway unavailable", { ...syntheticConfig, BETA_CLOUD_APPROVED: "0", BHOOMI_DEMO_ENABLED: "1",
+    BHOOMI_DEMO_ENDPOINT: "https://smokeonly-8000.proxy.runpod.net/v1/chat/completions",
+    BHOOMI_DEMO_EDGE_KEY: "synthetic-demo-edge-".repeat(3), BHOOMI_DEMO_UNTIL: new Date(Date.now() + 20 * 60_000).toISOString() }],
   ["missing beta secrets", { BHOOMI_BETA_COLOCATE: "1" }],
   ["missing approval manifest", { ...syntheticConfig, BETA_CLOUD_APPROVED: "1" }],
   ["missing provider credentials", { ...syntheticConfig, BETA_CLOUD_APPROVED: "1",
@@ -74,14 +77,28 @@ try {
       assert.equal(forecast.status, 200); assert.equal((await forecast.json()).region, "Rajasthan");
       const groundwater = await get("/api/groundwater/levels/Kota");
       assert.equal(groundwater.status, 200); assert.equal((await groundwater.json()).district, "Kota");
-      for (const route of ["/bhoomiai/api/me", "/bhoomiai/api/history", "/bhoomiai/api/admin/export"]) {
-        assert.equal((await get(route)).status, 503, `${label}: ${route} must be closed`);
-      }
-      const chat = await fetch(`http://127.0.0.1:${port}/bhoomiai/api/chat`, {
-        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: "test" }),
+      // Use the configured custom-domain Host; failure must close the actual proxy path, not just reject a wrong Host.
+      const betaRequest = (route: string, body?: object) => new Promise<Response>((resolve, reject) => {
+        const data = body ? JSON.stringify(body) : undefined;
+        const request = http.request(`http://127.0.0.1:${port}${route}`, { method: body ? "POST" : "GET",
+          headers: { Host: new URL(betaEnv.BETA_PUBLIC_ORIGIN ?? "https://climreswash.in").host,
+            Origin: betaEnv.BETA_PUBLIC_ORIGIN ?? "https://climreswash.in", "Content-Type": "application/json",
+            ...(data ? { "Content-Length": Buffer.byteLength(data) } : {}) } }, incoming => {
+          const chunks: Buffer[] = []; incoming.on("data", c => chunks.push(c)); incoming.on("error", reject);
+          incoming.on("end", () => resolve(new Response(Buffer.concat(chunks), { status: incoming.statusCode })));
+        }); request.on("error", reject); request.end(data);
       });
-      assert.equal(chat.status, 503, `${label}: chat must be closed`);
+      for (const route of ["/bhoomiai/api/me", "/bhoomiai/api/history", "/bhoomiai/api/admin/export"]) {
+        assert.equal((await betaRequest(route)).status, 503, `${label}: ${route} must be closed`);
+      }
+      for (const route of ["/bhoomiai/api/chat", "/bhoomiai/api/demo/chat", "/bhoomiai/api/auth/login"]) {
+        const response = await betaRequest(route, { message: "synthetic test" });
+        assert.equal(response.status, 503, `${label}: ${route} must be closed`);
+      }
       console.log(`PASS: ${label}; production pages, map data and mock APIs available; beta APIs closed`);
+    } catch (error) {
+      console.error(`Smoke case failed: ${label}\n${output}`);
+      throw error;
     } finally {
       child.kill("SIGTERM");
       const killTimer = setTimeout(() => child.kill("SIGKILL"), 2000);

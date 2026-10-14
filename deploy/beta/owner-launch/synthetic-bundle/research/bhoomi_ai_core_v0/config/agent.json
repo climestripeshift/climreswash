@@ -1,0 +1,63 @@
+{
+  "version": "0.1.0",
+  "model": {
+    "backend": "ollama",
+    "name": "qwen2.5:3b",
+    "host": "127.0.0.1",
+    "port": 11434,
+    "temperature": 0.0,
+    "num_ctx": 4096,
+    "num_predict": 400,
+    "keep_alive": "10m",
+    "timeout_s": 240
+  },
+  "agent": {
+    "max_tool_steps": 2,
+    "max_calls_per_step": 3,
+    "max_repairs": 1,
+    "max_tool_arg_retries": 2,
+    "history_turns": 1,
+    "max_user_chars": 1500,
+    "max_facts_in_prompt": 28
+  },
+  "limits": {
+    "max_sessions": 20,
+    "max_turns_per_session": 1,
+    "session_idle_s": 3600,
+    "rate_limit_per_min": 30,
+    "max_request_bytes": 8000,
+    "memory_hard_stop_mb": 250,
+    "memory_warn_mb": 600
+  },
+  "server": {
+    "host": "127.0.0.1",
+    "port": 8765
+  },
+  "forecast": {
+    "stale_after_hours": 48
+  },
+  "coverage": {
+    "records_year_from": 0,
+    "records_year_to": 0,
+    "forecast_days": 0
+  },
+  "paths": {
+    "hex_props": "data/owner-synthetic/SYNTHETIC_hex_props.json",
+    "forecast": "data/owner-synthetic/forecast.missing",
+    "hist_climate": "data/owner-synthetic/SYNTHETIC_hist_climate.json",
+    "monsoon_year": "data/owner-synthetic/monsoon_year.missing",
+    "monsoon_desc": "data/owner-synthetic/monsoon_desc.missing",
+    "flood_labels": "data/owner-synthetic/flood_labels.missing",
+    "flood_features": "data/owner-synthetic/flood_features.missing",
+    "flood_lgd": "data/owner-synthetic/flood_lgd.missing",
+    "district_cache": "data/owner-synthetic/cache/district_cache.json",
+    "feedback_db": "data/owner-synthetic/cache/feedback.sqlite"
+  },
+  "doc_sources": [],
+  "cloud": {
+    "doc_sources_cleared": []
+  },
+  "deployment": {
+    "profile": "cloud_beta"
+  }
+}

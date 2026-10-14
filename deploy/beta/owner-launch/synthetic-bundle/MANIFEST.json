@@ -1,0 +1,12 @@
+{
+  "synthetic_only": true,
+  "files": {
+    "README.md": "4a7db2a932d6a5e602a84b1f740a88ed6666f55e306981c3da57001573439fea",
+    "conversation.json": "56337bf6dabb68721580f2ca61f4144063e91828af9359180ca7f43a69ffce1c",
+    "research/bhoomi_ai_core_v0/config/agent.json": "037425a960fbe5673edf9d598c3ae8a955217d26ffa40ec7887f9c39497c4e35",
+    "research/bhoomi_ai_core_v0/data/owner-synthetic/SYNTHETIC_hex_props.json": "71a336c2bf82492e62ff3afc21432d17f30c78e1fe1653ae56c6b088912601bf",
+    "research/bhoomi_ai_core_v0/data/owner-synthetic/SYNTHETIC_hist_climate.json": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+  },
+  "bundle_sha256": "8c9808247db094630e29d193a3712243ada069fbda0fd688b511df2a76438f53",
+  "digest_definition": "SHA256 of sorted compact JSON path-to-file-hash mapping; excludes this manifest"
+}

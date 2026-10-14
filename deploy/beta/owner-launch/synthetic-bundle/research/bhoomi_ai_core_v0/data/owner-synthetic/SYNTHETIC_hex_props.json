@@ -1,0 +1,12 @@
+[
+  {
+    "synthetic": true,
+    "h3_id": "SYNTHETIC_CELL_001",
+    "state": "SYNTHETIC State",
+    "district_name": "SYNTHETIC District Alpha",
+    "population": 100,
+    "hex_risk": 2.5,
+    "flood_risk": 1.0,
+    "heat_risk": 2.5
+  }
+]

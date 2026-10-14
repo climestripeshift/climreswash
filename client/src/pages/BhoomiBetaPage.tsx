@@ -4,7 +4,7 @@ import { AlertTriangle, FlaskConical, Loader2, Send, ShieldCheck } from "lucide-
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AssistantCard } from "@/pages/BhoomiAIChatPage";
-import { BetaError, betaHistory, logoutBeta, acceptConsent, askBeta, getMe, sendBetaFeedback, type BetaMe, type BetaReply } from "@/lib/betaApi";
+import { BetaError, betaHistory, logoutBeta, acceptConsent, askBeta, askDemo, stopDemo, getMe, sendBetaFeedback, type BetaMe, type BetaReply } from "@/lib/betaApi";
 
 type Msg = { role: "user"; text: string } | { role: "assistant"; reply?: BetaReply; error?: string; rated?: "up" | "down" };
 
@@ -16,6 +16,15 @@ const SUGGESTIONS = [
 ];
 
 export function BetaNotice({ me }: { me: BetaMe }) {
+  if (me.demo?.configured) return (
+    <div className="rounded border border-amber-500/50 bg-amber-500/5 p-3 text-xs space-y-1" role="note" data-testid="demo-notice">
+      <p className="font-semibold">Bhoomi AI SHOWCASE DEMO · {me.demo.enabled ? "Active" : "Off"}</p>
+      <p>{me.demo.label}</p>
+      <p>The fine-tuned model calls read-only synthetic tools. The backend displays approved tool results and explanations. No real scientific data, forecasts or operational advice.</p>
+      <p>Messages are sent to the authenticated Runpod model endpoint. Conversation context is held briefly in server memory, without research feedback or training records. Do not enter personal or confidential information.</p>
+      <p>Shared limits: {me.demo.limits.concurrent} concurrent conversation request; {me.demo.limits.minute} requests per minute; {me.demo.limits.total} requests for the supervised demo.</p>
+    </div>
+  );
   return (
     <div className="rounded border border-amber-500/50 bg-amber-500/5 p-3 text-xs space-y-1" role="note" data-testid="beta-notice">
       <p className="font-medium flex items-center gap-1"><FlaskConical className="h-4 w-4" />Research beta · {me.model.label}</p>
@@ -107,17 +116,17 @@ export default function BhoomiBetaPage() {
 
   async function send(q: string) {
     const message = q.trim();
-    if (!message || busy || !me) return;
+    if (!message || busy || !me || (me.demo?.configured && !me.demo.enabled)) return;
     setText(""); setWait(""); setBusy(true);
     setMsgs(m => [...m, { role: "user", text: message }]);
     try {
-      const reply = await askBeta(message, sid);
+      const reply = await (me.demo?.configured ? askDemo : askBeta)(message, sid);
       setSid(reply.session_id);
       setMsgs(m => [...m, { role: "assistant", reply }]);
       refresh();
     } catch (e) {
       const err = e as BetaError;
-      if (err.status === 428) { refresh(); }
+      if (err.status === 428 || (me.demo?.configured && err.status === 503)) { refresh(); }
       if (err.retryAfter) setWait(`Please wait about ${err.retryAfter} s.`);
       setMsgs(m => [...m, { role: "assistant", error: err.message }]);
     } finally { setBusy(false); }
@@ -125,39 +134,44 @@ export default function BhoomiBetaPage() {
 
   if (me === undefined) return <div className="p-6 text-sm"><Loader2 className="inline h-4 w-4 animate-spin mr-1" />Loading…</div>;
   if (me === null) return <div className="p-6 max-w-xl mx-auto text-sm"><p>{blocked}</p><BetaLogin onDone={refresh} /><a className="underline block mt-4" href="/">ClimResWASH home</a></div>;
-  const consented = me.consent.accepted_version === me.consent.required_version && me.consent.research;
+  const demo = me.demo?.configured === true;
+  const consented = demo || me.consent.accepted_version === me.consent.required_version && me.consent.research;
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col" data-testid="beta-page">
       <header className="border-b px-4 py-3 flex items-center gap-3 flex-wrap">
         <div className="flex-1">
-          <h1 className="text-base font-semibold">Bhoomi AI <Badge variant="outline">Research beta</Badge></h1>
-          <p className="text-xs text-muted-foreground">Invitation-only · experimental model · answers are verified against ClimResWASH tools</p>
+          <h1 className="text-base font-semibold">Bhoomi AI <Badge variant="outline">{demo ? "Showcase demo" : "Research beta"}</Badge></h1>
+          <p className="text-xs text-muted-foreground">{demo ? "PIN access · DEMONSTRATION DATA · synthetic tools only" : "Invitation-only · experimental model · answers are verified against ClimResWASH tools"}</p>
         </div>
-        <Badge variant="outline" data-testid="serving-model">{me.model.label}</Badge>
-        <span className="text-xs text-muted-foreground" data-testid="quota">{me.quota.remaining_today} of {me.quota.daily_limit} questions left today</span>
+        <Badge variant="outline" data-testid="serving-model">{demo ? "Bhoomi-LLM v1 checkpoint-160" : me.model.label}</Badge>
+        {!demo && <span className="text-xs text-muted-foreground" data-testid="quota">{me.quota.remaining_today} of {me.quota.daily_limit} questions left today</span>}
         <a className="text-xs underline" href="/">ClimResWASH home</a>
         <button className="text-xs underline" onClick={async () => { const result = await logoutBeta(); setMsgs([]); setHistory([]); window.location.assign(result.redirect); }}>Sign out</button>
+        {demo && me.role === "admin" && <button className="text-xs underline" onClick={async () => { await stopDemo(); refresh(); }}>Emergency demo off</button>}
         {me.role === "admin" && <a className="text-xs underline" href="/bhoomiai/admin">Admin</a>}
       </header>
       <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-4 space-y-3">
         <BetaNotice me={me} />
         {!consented ? <Consent me={me} onDone={refresh} /> : (
           <>
-            <details className="text-sm rounded border p-2"><summary onClick={() => betaHistory().then(r => setHistory(r.items)).catch(() => setHistory([]))}>Your recent questions</summary>
+            {!demo && <details className="text-sm rounded border p-2"><summary onClick={() => betaHistory().then(r => setHistory(r.items)).catch(() => setHistory([]))}>Your recent questions</summary>
               {history.map(item => <div className="border-t py-2" key={item.interaction_id}><p>{item.question}</p><p className="text-muted-foreground whitespace-pre-wrap">{item.answer}</p></div>)}
-            </details>
+            </details>}
             {msgs.length === 0 && (
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">Try a question:</p>
-                {SUGGESTIONS.map(s => <button key={s} onClick={() => send(s)} disabled={busy} className="block w-full text-left text-sm rounded border px-3 py-2 hover:bg-muted">{s}</button>)}
+                {(demo ? ["What is the invented overall screening index for SYNTHETIC District Alpha in SYNTHETIC State?", "Why is this synthetic screening index not a probability?", "What can this demo show?"] : SUGGESTIONS).map(s => <button key={s} onClick={() => send(s)} disabled={busy || (demo && !me.demo?.enabled)} className="block w-full text-left text-sm rounded border px-3 py-2 hover:bg-muted">{s}</button>)}
               </div>
             )}
             {msgs.map((m, i) => m.role === "user" ? (
               <div key={i} className="rounded-lg border-l-4 border-primary bg-muted/40 px-3 py-2 text-sm" data-testid="user-msg">{m.text}</div>
             ) : (
               <div key={i} className="space-y-2">
-                <AssistantCard reply={m.reply} error={m.error} modelId="bhoomi_v1" rated={m.rated}
+                {demo ? <div className="rounded-lg border p-3 text-sm whitespace-pre-wrap" data-testid="demo-answer" role={m.error ? "alert" : undefined}>
+                  {m.error || m.reply?.answer}
+                  {m.reply && <p className="mt-2 text-xs text-muted-foreground">Real model tool calls: {m.reply.tool_trace?.flatMap(t => t.calls.map(c => c.name)).join(", ")}</p>}
+                </div> : <AssistantCard reply={m.reply} error={m.error} modelId="bhoomi_v1" rated={m.rated}
                   onRate={r => {
                     const reply = m.reply;
                     if (!reply) return;
@@ -165,8 +179,8 @@ export default function BhoomiBetaPage() {
                     sendBetaFeedback({ interaction_id: reply.interaction_id, rating: r, categories: [] }).catch(() => {
                       setMsgs(all => all.map((x, j) => (j === i && x.role === "assistant" ? { ...x, rated: undefined } : x)));
                     });
-                  }} />
-                {m.reply && <FeedbackForm reply={m.reply} me={me} />}
+                  }} />}
+                {!demo && m.reply && <FeedbackForm reply={m.reply} me={me} />}
               </div>
             ))}
             {busy && <p className="text-sm text-muted-foreground"><Loader2 className="inline h-4 w-4 animate-spin mr-1" />Working… this can take up to a minute.</p>}
@@ -178,10 +192,10 @@ export default function BhoomiBetaPage() {
       {consented && (
         <form className="border-t px-4 py-3 max-w-3xl w-full mx-auto flex gap-2" onSubmit={e => { e.preventDefault(); send(text); }}>
           <textarea value={text} onChange={e => setText(e.target.value)} maxLength={1000} rows={2} aria-label="Question"
-            placeholder="Ask about a district: hazards, rainfall variability, WASH indicators… (no personal information)"
+            placeholder={demo ? "Ask about SYNTHETIC District Alpha or demo limitations…" : "Ask about a district: hazards, rainfall variability, WASH indicators… (no personal information)"}
             className="flex-1 rounded border bg-background px-3 py-2 text-sm"
             onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(text); } }} />
-          <Button type="submit" disabled={busy || !text.trim()}><Send className="h-4 w-4" /></Button>
+          <Button type="submit" disabled={busy || !text.trim() || (demo && !me.demo?.enabled)}><Send className="h-4 w-4" /></Button>
         </form>
       )}
     </div>

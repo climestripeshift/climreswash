@@ -23,6 +23,7 @@ export interface BetaConfig {
   conversations?: Conversations;
   coreKey?: string;
   coreAvailable?: () => Promise<boolean>;
+  demo?: import("./demo").ShowcaseDemo;
   inferenceReady?: boolean;
   originKey?: string;
   privacy?: { contact: string; processors: string[]; regions: string[]; attributions: string[] };
@@ -172,10 +173,16 @@ export function createBetaRouter(deps: BetaDeps): express.Router {
     res.json({ ok: true, redirect: "/cdn-cgi/access/logout" });
   });
 
+  // Showcase routes inherit ingress, PIN/admin authentication, CSRF and write throttles above.
+  // They never enter research consent, approval, Core verification, quota or conversation paths.
+  if (config.demo && config.authMode === "code" && config.codeAuth)
+    config.demo.register(r, req => config.codeAuth!.authenticate(req));
+
   // ---- me / consent ------------------------------------------------------------------------------------------
   r.get("/bhoomiai/api/me", async (req, res) => {
     const u = req.beta!.user;
     res.json({
+      demo: config.demo ? await config.demo.status() : undefined,
       role: u.role, consent: { required_version: CONSENT_VERSION, accepted_version: u.consent_version, research: u.consent_research, training: u.consent_training },
       quota: (await limiter.snapshot(req.beta!.userHash, u.daily_quota ?? config.limits.perDay)), model: config.model, feedback_categories: FEEDBACK_CATEGORIES, privacy: config.privacy,
     });

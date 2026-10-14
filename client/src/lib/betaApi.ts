@@ -2,6 +2,7 @@
 import type { BhoomiReply } from "./bhoomiAi";
 
 export interface BetaMe {
+  demo?: { configured: boolean; enabled: boolean; label: string; limits: { concurrent: number; minute: number; total: number; timeoutMs: number } };
   role: "user" | "admin";
   consent: { required_version: string; accepted_version: string | null; research: boolean; training: boolean };
   quota: { used_today: number; daily_limit: number; remaining_today: number; per_minute: number; per_hour: number };
@@ -53,3 +54,7 @@ export const adminSuspend = (email: string, suspended: boolean, f: Fetch = fetch
 export const adminUser = (email: string, changes: { role?: string; quota?: number }, f: Fetch = fetch) => call<{ ok: true }>("/bhoomiai/api/admin/user", post({ email, ...changes }), f);
 export const logoutBeta = (f: Fetch = fetch) => call<{ ok: true; redirect: string }>("/bhoomiai/api/logout", post({}), f);
 export const betaHistory = (f: Fetch = fetch) => call<{ items: { interaction_id: string; ts: number; question: string; answer: string; verified: boolean }[] }>("/bhoomiai/api/history", undefined, f);
+
+export const askDemo = (message: string, sessionId: string | undefined, f: Fetch = fetch) =>
+  call<BetaReply>("/bhoomiai/api/demo/chat", post(sessionId ? { message, session_id: sessionId } : { message }), f);
+export const stopDemo = (f: Fetch = fetch) => call<{ ok: true; enabled: false }>("/bhoomiai/api/demo/off", post({}), f);
