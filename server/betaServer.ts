@@ -14,8 +14,12 @@ import { Conversations } from "./beta/conversations";
 import { CodeAuth } from "./beta/codeAuth";
 import { ShowcaseDemo } from './beta/demo';
 import { PinAuth } from './beta/pinAuth';
+import { startupEvent, type StartupPhase } from "./beta/startupDiagnostics";
 
+let phase: StartupPhase = "configuration";
+function startupPhase(next: StartupPhase) { phase=next;startupEvent(next); }
 async function main() {
+startupPhase("configuration");
 const env = process.env;
 const num = (k: string, d: number) => {
   const n = env[k] === undefined ? d : Number(env[k]);
@@ -55,7 +59,9 @@ if (authMode === "cloudflare") {
 let store;
 if (env.BETA_DATABASE_URL) {
   const db = new PgDatabase(env.BETA_DATABASE_URL, env.BETA_DB_TRANSPORT === "replit-helium" ? "replit-helium" : "tls");
+  startupPhase("database_schema");
   await db.assertReady();
+  startupPhase("database_role");
   await db.assertIsolatedRole();
   store = new PostgresBetaStore(db, env.BETA_HASH_KEY ?? "");
 } else {
@@ -64,15 +70,18 @@ if (env.BETA_DATABASE_URL) {
   store = new BetaStore(env.BETA_DB_PATH ?? "beta.sqlite", env.BETA_HASH_KEY ?? "");
 }
 if(authMode==='code'&&store instanceof PostgresBetaStore){
+  startupPhase("pin_schema");
   if(!(await store.db.query('SELECT 1 FROM bhoomi_beta.schema_migrations WHERE version=4')).rowCount)
     throw new Error('Apply shared PIN migration before gateway startup');
 }
 const sessionSeconds=num('BETA_SESSION_SECONDS',28800);
+startupPhase("authentication");
 const codeAuth = authMode === "code" ? new CodeAuth(store as PostgresBetaStore, env.BETA_PUBLIC_ORIGIN,
   sessionSeconds,Date.now,new PinAuth(store as PostgresBetaStore,env.BETA_PUBLIC_ORIGIN,sessionSeconds)) : undefined;
 const limiter = store instanceof PostgresBetaStore ? new PostgresLimiter(limits, store,Date.now,authMode==='code') : new Limiter(limits, store);
 // Bootstrap and user changes use the audited CLI; startup never restores revoked administrators.
 const approvalPath = env.BETA_APPROVAL_MANIFEST;
+startupPhase("approval_manifest");
 const approval = approvalPath && fs.existsSync(approvalPath) ? JSON.parse(fs.readFileSync(approvalPath, "utf8")) : null;
 if (env.BETA_ORIGIN_KEY && env.BETA_ORIGIN_KEY.length < 32) throw new Error("BETA_ORIGIN_KEY must have 32+ characters");
 const inferenceReady = env.BETA_CLOUD_APPROVED === "1" && approval?.approved === true
@@ -108,9 +117,11 @@ app.use((_req, res) => { res.status(404).json({ message: "Not found." }); });
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => { res.status(err.type === "entity.too.large" ? 413 : err instanceof SyntaxError ? 400 : 500).json({ message: "Service error." }); });
 
 const port = num("BETA_PORT", 5100);
+startupPhase("listener");
 const listenHost = env.BETA_LISTEN_HOST ?? "127.0.0.1";
 if (!["127.0.0.1", "0.0.0.0"].includes(listenHost) || (listenHost === "0.0.0.0" && (!env.BETA_ORIGIN_KEY || env.BETA_ORIGIN_KEY.length < 32))) throw new Error("Unsafe gateway listener");
-app.listen(port, listenHost, () => console.log(`[beta] gateway on 127.0.0.1:${port} (${hosted ? "hosted" : "local"}, auth=${authMode})`));
+const server=app.listen(port, listenHost, () => {startupPhase("ready");console.log(`[beta] gateway on 127.0.0.1:${port} (${hosted ? "hosted" : "local"}, auth=${authMode})`);});
+server.once("error",error=>{startupEvent("listener",error);process.exit(1);});
 
 }
-main().catch(() => { console.error("[beta] Startup failed; check private configuration and migration status."); process.exit(1); });
+main().catch(error => { startupEvent(phase,error);process.exit(1); });

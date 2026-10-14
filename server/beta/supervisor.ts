@@ -1,8 +1,9 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { StartupOutput, safeStartupCode } from "./startupDiagnostics";
 
-export interface ManagedCommand { command: string; args: string[]; cwd: string; env: NodeJS.ProcessEnv }
+export interface ManagedCommand { component?: "gateway" | "core" | "relay" | "monitor"; command: string; args: string[]; cwd: string; env: NodeJS.ProcessEnv }
 // Beta failures never terminate the public Express process. Three retries, then fail closed.
 export class BetaSupervisor {
   private children = new Set<ChildProcess>();
@@ -15,16 +16,25 @@ export class BetaSupervisor {
     let failed=false;
     for(const spec of this.commands) {
       if(failed)break;
-      const child=spawn(spec.command,spec.args,{cwd:spec.cwd,env:spec.env,stdio:"ignore"});
+      const child=spawn(spec.command,spec.args,{cwd:spec.cwd,env:spec.env,stdio:["ignore","ignore","pipe"]});
+      const diagnostic=new StartupOutput();
+      child.stderr?.on("data",chunk=>diagnostic.consume(String(chunk)));
       this.children.add(child);
-      const fail=()=>{
+      const fail=(exitCode:number|null,signal:NodeJS.Signals|null,spawnError?:unknown)=>{
         this.children.delete(child);
         if(failed||this.stopped)return;
+        console.error("[beta] child_failure "+JSON.stringify({
+          component:spec.component??"beta",attempt:this.attempts+1,
+          phase:diagnostic.phase??"spawn_or_import",exit_code:exitCode,
+          signal:signal??null,
+          code:spawnError ? safeStartupCode((spawnError as {code?:unknown}).code) : diagnostic.classifiedCode()??"UNCLASSIFIED_EXIT",
+        }));
         failed=true;this.kill();this.report("unavailable");
         if(this.attempts++<3){this.timer=setTimeout(()=>this.launch(),this.delayMs*this.attempts);this.timer.unref();}
         else this.report("retry_limit");
       };
-      child.once("error",fail);child.once("exit",fail);
+      child.once("error",error=>fail(null,null,error));
+      child.once("exit",(code,signal)=>fail(code,signal));
     }
     if(!failed)this.report("starting");
   }
@@ -86,12 +96,12 @@ export function prepareColocatedBeta(env=process.env, root=process.cwd()) {
     base.BETA_CORE_URL="http://127.0.0.1:8765";
     const relayEnv={...base,...(serverless?{RUNPOD_API_KEY:env.RUNPOD_API_KEY}:{RELAY_UPSTREAM_KEY:env.RELAY_UPSTREAM_KEY})};
     const monitorEnv={...base,RUNPOD_MONITOR_API_KEY:env.RUNPOD_MONITOR_API_KEY??env.RUNPOD_API_KEY};
-    commands.push({command:"python3",args:[path.join(root,"deploy/beta/runpod_relay.py")],cwd:root,env:relayEnv});
-    commands.push({command:"python3",args:[path.join(root,"deploy/beta/billing_monitor.py")],cwd:root,env:monitorEnv});
-    commands.push({command:"python3",args:["-m","bhoomi_ai","--port","8765"],cwd:coreRoot,env:coreEnv});
-    commands.push({command:process.execPath,args:["--import","tsx",path.join(root,"server/betaServer.ts")],cwd:root,env:base});
+    commands.push({component:"relay",command:"python3",args:[path.join(root,"deploy/beta/runpod_relay.py")],cwd:root,env:relayEnv});
+    commands.push({component:"monitor",command:"python3",args:[path.join(root,"deploy/beta/billing_monitor.py")],cwd:root,env:monitorEnv});
+    commands.push({component:"core",command:"python3",args:["-m","bhoomi_ai","--port","8765"],cwd:coreRoot,env:coreEnv});
+    commands.push({component:"gateway",command:process.execPath,args:["--import","tsx",path.join(root,"server/betaServer.ts")],cwd:root,env:base});
   } else {
-    commands.push({command:process.execPath,args:["--import","tsx",path.join(root,"server/betaServer.ts")],cwd:root,env:{...withoutProviderSecrets(privateEnv),...(env.BHOOMI_DEMO_EDGE_KEY?{BHOOMI_DEMO_EDGE_KEY:env.BHOOMI_DEMO_EDGE_KEY}:{})}});
+    commands.push({component:"gateway",command:process.execPath,args:["--import","tsx",path.join(root,"server/betaServer.ts")],cwd:root,env:{...withoutProviderSecrets(privateEnv),...(env.BHOOMI_DEMO_EDGE_KEY?{BHOOMI_DEMO_EDGE_KEY:env.BHOOMI_DEMO_EDGE_KEY}:{})}});
   }
   const supervisor=new BetaSupervisor(commands,state=>console.log(`[beta] ${state}`));
   return {gatewayUrl:`http://127.0.0.1:${port}`,supervisor};
