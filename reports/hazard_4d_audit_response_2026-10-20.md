@@ -1,0 +1,22 @@
+# Response to the hazard 4-D audit of 20 October 2026
+
+Audit: `reports/hazard_4d_audit_2026-10-20.md`. All five findings were checked against the code and data. I agree with all five; four are fixed in code and data, one (the 4.5 °C uplift) is fixed in labelling and documentation because it is a modelling assumption that needs daily data to replace. Layers were regenerated from the raw NetCDF files, and `HAZARD_4D_CALCULATIONS.md` now describes the corrected state.
+
+| # | Finding | Verdict | What was done | Measured effect |
+|---|---|---|---|---|
+| 1 (P1) | Missing heavy-rain observations become zero hazard | **Agree** | `rain_season` keeps missingness (`None`). Landslide and flash flood store such hexes as **no estimate** (−1); aggregates exclude them and report coverage; the page draws them rose with a legend note and a coverage line. Flood keeps its river part and is flagged as a lower bound (`partial_pluvial_hexes`, `coverage_note`). | 678 hexes, 8,682,409 people (J&K 387, Ladakh 289, Arunachal 2), matching the audit. Coverage 94.7 % of hexes, 99.3 % of people. Scores on hexes with data are unchanged (landslide and flood baseline files identical on those hexes). |
+| 1b | 209 hexes with a recorded zero but `rain_rp10_mm > 100` | **Agree it is not proof of a defect** | My document called it a raster gap; reworded as unexplained (D1) and left as recorded zeros. | Not corrected; needs investigation of the heavy-day source. |
+| 2 (P2) | Wet-bulb uses the hour of maximum air temperature | **Agree** | New `wet_bulb_hazard_best_hour` scores each hour's (T, Td) pair and takes the maximum; the script samples all three hours. Regression test with the audit's synthetic case ((36, 22) → 0.43 vs (34, 27) → 4.01). | Baseline: 3,120 of 152,460 cells changed (2.0 %), in 2,092 hexes; mean change +0.16, maximum +0.9, minimum −0.1. India worst-month baseline 1.20 → 1.21. So the error was real but small in practice. |
+| 3 (P2) | 4.5 °C uplift labelled as sourced | **Agree** | Reclassified: the IMD figure is [S] as a classification threshold; its use as a fixed tail uplift (heat) or offset (cold wave) is [A]. Register entry A3 changed to assumed, sensitivity H. Heat and cold-wave scores are described as **conditional proxy severity**. Code comments updated. | No numeric change. Replacing the assumption needs daily data (backlog item 4). The page's own footers still say "IMD criteria"; not yet changed. |
+| 4 (P2) | Scenario numbers not reproducible from the stated derivation | **Agree, and the original table was not exactly reproducible** | `scenarios.py` now derives every entry in code: AR6 SPM.1 rows (checked against the SPM text), baseline shift 0.87 °C (interpolated between AR6's 0.85 for 1995–2014 and 0.99 for 2001–2020), mean = GSAT − 0.87, hot extremes = 1.2 × mean. `tests/test_scenarios.py` pins all 12 entries. | The old table used an unstated offset of about 1.0 °C; new values are 0.1–0.3 °C higher (for example SSP5-8.5 2050 hot extremes 1.7 → 1.8, mean 1.42 → 1.53). All seven layers were regenerated. The 0.87 offset interpolation and the 1.2 factor remain assumptions. |
+| 5 (P3) | Grid-resolution ratio reversed | **Agree** | Corrected in section 3.1: a 0.25° ERA5 cell is about 700 km², a hex about 252 km² (mean 258), so a hex is about one third of a cell. | Documentation only. |
+
+Additional notes from the audit, handled:
+- **Rounding ties** (exact 10.0 values): added to section 3.7 with the current counts (837 cold-wave hexes at baseline, 752 under SSP5-8.5 2080).
+- **SPI wording**: corrected to "a fixed percentile of a standardized distribution".
+- **Soil and NDVI sampling limits**: already D3 and D4; unchanged.
+- **Test count**: the audit's 59 was a smaller selection. The full command `python -m pytest tests --ignore=tests/golden` now passes 108 tests (including the new scenario and wet-bulb regression tests).
+
+Verification after the fixes: all seven layers regenerated; formula, scenario and base-layer tests pass; the golden parity suite and the five backtests were re-run (see the reply for results); the 4-D page was checked in a real browser for the coverage line, the rose no-estimate cells and the flood lower-bound note, with no console errors.
+
+Points where I would not go further without direction: (a) whether flood should also drop the 678 hexes entirely (it currently shows the river part as a lower bound); (b) whether the 209 unexplained zeros should be treated as missing; (c) replacing the page footers' "IMD criteria" wording.

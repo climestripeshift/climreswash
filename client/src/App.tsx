@@ -32,6 +32,14 @@ import CSRCostAssumptionsPage from "@/pages/CSRCostAssumptionsPage";
 
 const BhoomiBetaPage = lazy(() => import("@/pages/BhoomiBetaPage"));
 const BhoomiBetaAdminPage = lazy(() => import("@/pages/BhoomiBetaAdminPage"));
+const Heat4DPage = lazy(() => import("@/pages/Heat4DPage"));
+const Flood4DPage = lazy(() => import("@/pages/Flood4DPage"));
+const Drought4DPage = lazy(() => import("@/pages/Drought4DPage"));
+const Wetbulb4DPage = lazy(() => import("@/pages/Wetbulb4DPage"));
+const Landslide4DPage = lazy(() => import("@/pages/Landslide4DPage"));
+const Coldwave4DPage = lazy(() => import("@/pages/Coldwave4DPage"));
+const Flashflood4DPage = lazy(() => import("@/pages/Flashflood4DPage"));
+const Hazard4DRoute = lazy(() => import("@/pages/Hazard4DRoute"));
 
 function Router() {
   return (
@@ -43,6 +51,14 @@ function Router() {
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/live-data" component={LiveDataPage} />
       <Route path="/grid" component={HexMapPage} />
+      <Route path="/4d">{() => <Suspense fallback={null}><Hazard4DRoute /></Suspense>}</Route>
+      <Route path="/heat-4d">{() => <Suspense fallback={null}><Heat4DPage /></Suspense>}</Route>
+      <Route path="/flood-4d">{() => <Suspense fallback={null}><Flood4DPage /></Suspense>}</Route>
+      <Route path="/drought-4d">{() => <Suspense fallback={null}><Drought4DPage /></Suspense>}</Route>
+      <Route path="/wetbulb-4d">{() => <Suspense fallback={null}><Wetbulb4DPage /></Suspense>}</Route>
+      <Route path="/landslide-4d">{() => <Suspense fallback={null}><Landslide4DPage /></Suspense>}</Route>
+      <Route path="/coldwave-4d">{() => <Suspense fallback={null}><Coldwave4DPage /></Suspense>}</Route>
+      <Route path="/flashflood-4d">{() => <Suspense fallback={null}><Flashflood4DPage /></Suspense>}</Route>
       <Route path="/grid-v2" component={HexMapV2Page} />
       <Route path="/forecast" component={ForecastPage} />
       <Route path="/report/:district" component={ReportPage} />

@@ -17,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from risk.formulas import (
     compute_risk,
     drought_score,
+    heat_threshold_smooth,
     heatwave_score,
     pluvial_flood_score,
     wet_bulb_score,
@@ -280,7 +281,7 @@ def main():
             # (dist_w_heat, min of real river distance and nearest-water-hex
             # distance) instead of the plain dist_w flood/landslide/flashflood
             # keep -- see chat, compute_forecast.py unification.
-            threshold = 30.0 if elev > 800 else (37.0 if dist_coast < 50000 else 40.0)
+            threshold = heat_threshold_smooth(elev, dist_coast)
             heat_haz = heatwave_score(temp, threshold, 3, built_pct, tree_pct, dist_w_heat)
             heat_r = compute_risk(heat_haz, exposure_10, hs, ac)
 

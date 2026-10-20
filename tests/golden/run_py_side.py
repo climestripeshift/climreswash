@@ -14,7 +14,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from risk.formulas import (
     compute_risk, drought_score, exposure_score, flood_sensitivity,
-    heat_sensitivity, heatwave_score, pluvial_flood_score, wet_bulb_score,
+    heat_sensitivity, heat_threshold_smooth, heatwave_score, pluvial_flood_score, wet_bulb_score,
 )
 from risk.hex_risk import build_wash_state_context, resolve_static_hex_inputs
 
@@ -56,7 +56,7 @@ def run_tier2(hexes, scenario):
         flood_haz = pluvial_flood_score(scenario["rainfall_mm"], inp["sand_pct"], inp["built_pct"], inp["slope"])
         flood_risk = compute_risk(flood_haz, inp["exposure_10"], inp["fs"], inp["ac"])
 
-        threshold = 30.0 if elev > 800 else (37.0 if dist_coast < 50000 else 40.0)
+        threshold = heat_threshold_smooth(elev, dist_coast)
         heat_haz = heatwave_score(scenario["tmax_c"], threshold, scenario["hot_days"], inp["built_pct"], inp["tree_pct"], inp["dist_w_heat"])
         heat_risk = compute_risk(heat_haz, inp["exposure_10"], inp["hs"], inp["ac"])
 

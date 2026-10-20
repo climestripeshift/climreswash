@@ -7,7 +7,6 @@ a groundwater/AC-input correction) without duplicating formula logic.
 dict (from india_hex_props.json) — everything here uses .get(), so either works.
 """
 import math
-import random
 
 from .cascades import evaluate_cascades
 from .formulas import (
@@ -19,6 +18,7 @@ from .formulas import (
     exposure_score,
     flood_sensitivity,
     heat_sensitivity,
+    heat_threshold_smooth,
     heatwave_score,
     pluvial_flood_score,
     wet_bulb_score,
@@ -51,6 +51,30 @@ AC_EFFECTIVENESS = {
 
 HP_WEIGHT = 0.2  # heat-pollution compound amplifier weight
 
+# Flood v2 (FORMULA_REVIEW_FLOOD.md §5.1, adopted 2026-10-18 after the holdout backtest).
+# Riverine hazard = share of land <= 5 m above the nearest OSM main river within 20 km.
+# Pluvial hazard = SCS-CN runoff of the 1-in-10-yr daily rain x flat-land share,
+# log min-max scaled between the national p1 and p99 of the 2026-10-18 release.
+PLUVIAL_P1, PLUVIAL_P99 = 0.08, 99.34
+
+
+def _num(row, key: str):
+    """Float value of row[key], or None when absent, blank or NaN.
+
+    A real 0 stays 0. The old `float(row.get(k, d) or d)` idiom turned a real
+    0 m elevation into the default (200 m) and let pandas NaN through, where
+    min(1.0, nan / ref) == 1.0 scored missing climate as maximum frequency
+    (all 678 J&K/Ladakh hexes; see BASE_LAYERS.md).
+    """
+    v = row.get(key)
+    if v is None or v == "":
+        return None
+    try:
+        v = float(v)
+    except (TypeError, ValueError):
+        return None
+    return None if math.isnan(v) else v
+
 LAND_USE_PARAMS: dict[str, dict[str, float]] = {
     "tree":     {"tree_pct": 75, "built_pct": 2,  "sand_pct": 20},
     "shrub":    {"tree_pct": 30, "built_pct": 3,  "sand_pct": 35},
@@ -66,13 +90,13 @@ LAND_USE_PARAMS: dict[str, dict[str, float]] = {
 DEFAULT_PARAMS = {"tree_pct": 10, "built_pct": 10, "sand_pct": 30}
 
 RISK_COLS = [
-    "flood_risk", "heat_risk", "cyclone_risk", "drought_risk", "wetbulb_risk",
+    "flood_risk", "pluvial_flood_risk", "heat_risk", "cyclone_risk", "drought_risk", "wetbulb_risk",
     "landslide_risk", "coldwave_risk", "flashflood_risk", "sealevel_risk", "fire_risk",
     "hex_risk", "pollution_risk", "pm25_annual", "wash_disruption_days",
     "total_burden_days", "single_hazard_days", "multi_hazard_days",
     "weighted_burden", "weighted_burden_children", "weighted_burden_elderly",
     "heat_chronic_factor", "drought_chronic_factor", "wetbulb_chronic_factor",
-    "cascade_count", "cascade_actions",
+    "cascade_count", "cascade_actions", "inputs_missing",
 ]
 
 
@@ -209,13 +233,23 @@ def resolve_static_hex_inputs(row, lat: float, lon: float, wash_by_state: dict, 
     unification. Pure extraction: verified byte-identical compute_hex_risk() output
     before/after this split.
     """
-    elev = float(row.get("elevation_mean", 200) or 200)
+    elev = _num(row, "elevation_mean")
+    elev = 200.0 if elev is None else elev
     lu   = str(row.get("land_use", "crop") or "crop")
-    ndvi = float(row.get("ndvi_mean", 0.3) or 0.3)
+    ndvi = _num(row, "ndvi_mean")
+    ndvi = 0.3 if ndvi is None else ndvi
 
+    # Real per-hex land-cover fractions (ESA WorldCover, build_base_layers.py)
+    # replace the one-class lookup table when present: the table gave every
+    # "built" hex 70 % built and every "crop" hex 10 %, from a single 10 m pixel.
     params    = LAND_USE_PARAMS.get(lu, DEFAULT_PARAMS)
-    tree_pct  = max(params["tree_pct"], ndvi * 100 * 0.8)
-    built_pct = params["built_pct"]
+    lc_tree, lc_built = _num(row, "lc_tree_pct"), _num(row, "lc_built_pct")
+    if lc_tree is not None and lc_built is not None:
+        tree_pct  = lc_tree + (_num(row, "lc_mangrove_pct") or 0.0)
+        built_pct = lc_built
+    else:
+        tree_pct  = max(params["tree_pct"], ndvi * 100 * 0.8)
+        built_pct = params["built_pct"]
     # Real per-hex soil sand % (ISRIC SoilGrids, see fetch_soilgrids_sand.py) takes
     # priority over the flat land-use lookup -- every "crop" hex used to get an
     # identical 25% regardless of whether it's Thar desert sand or Gangetic clay.
@@ -223,9 +257,19 @@ def resolve_static_hex_inputs(row, lat: float, lon: float, wash_by_state: dict, 
     # water-only pixel at the sampled point).
     real_sand = row.get("real_sand_pct")
     sand_pct  = float(real_sand) if real_sand is not None else params["sand_pct"]
-    slope     = float(row.get("slope_deg", 0) or 0) or estimate_slope(elev)
-    dist_w    = float(row.get("dist_water_m", 0) or 0) or estimate_dist_water(lu, elev)
-    dist_coast = estimate_coast_dist(lat, lon, elev)
+    slope     = _num(row, "slope_deg")
+    slope     = estimate_slope(elev) if slope is None else slope
+    dist_w    = _num(row, "dist_water_m")
+    dist_w    = estimate_dist_water(lu, elev) if dist_w is None else dist_w
+    # Real distance to the Natural Earth coastline (build_base_layers.py) when
+    # present; the lat/lon rule (Mumbai = 548 km) is a legacy fallback only.
+    dist_coast = _num(row, "dist_coast_m")
+    if dist_coast is None:
+        dist_coast = estimate_coast_dist(lat, lon, elev)
+    else:
+        # The sea is water: the hex grid has no ocean hexes, so the
+        # nearest-water-pixel distance alone cannot see it.
+        dist_w = min(dist_w, dist_coast)
 
     # BUG 6 (see chat): heat_sensitivity()/heatwave_score() used dist_w above, which
     # only finds a hex's nearest "water"-tagged NEIGHBOR HEX -- misses real rivers/
@@ -259,8 +303,15 @@ def resolve_static_hex_inputs(row, lat: float, lon: float, wash_by_state: dict, 
     fs = flood_sensitivity(slope, sand_pct, built_pct, dist_w)
     hs = heat_sensitivity(tree_pct, built_pct, dist_w_heat)
 
-    pop = int(row.get("population", 10000) or 10000)
-    exposure_10 = exposure_score(max(1, pop), 9, 8, 25)
+    pop_raw = _num(row, "population")
+    pop = 10000 if pop_raw is None else int(pop_raw)
+    # Per-hex vulnerable-group shares (WorldPop x Census age ratios) instead of
+    # the flat national 9 / 8 / 25 %; the flat shares remain the fallback.
+    shares = (9.0, 8.0, 25.0)
+    counts = [_num(row, k) for k in ("pop_children_under_5", "pop_elderly_60plus", "pop_women_15_49")]
+    if pop > 0 and all(c is not None for c in counts):
+        shares = tuple(min(100.0, 100.0 * c / pop) for c in counts)
+    exposure_10 = exposure_score(max(1, pop), *shares)
     state_name = str(row.get("state", "") or "")
     # FIX A (see chat, null-AC audit): a JSON null becomes float('nan') once this
     # reaches a pandas/geopandas DataFrame (adaptive_capacity is a float64 column).
@@ -279,7 +330,8 @@ def resolve_static_hex_inputs(row, lat: float, lon: float, wash_by_state: dict, 
     ac_base = 0.0 if ac_missing else float(ac_raw)
     if ac_missing or ac_base < 0.05:
         ac_base = state_ac.get(state_name, 0.7)
-    gw_stress = float(row.get("gw_stress_score", GW_DEFAULT) or GW_DEFAULT)
+    gw_stress = _num(row, "gw_stress_score")
+    gw_stress = GW_DEFAULT if gw_stress is None else gw_stress
     ac = max(0.1, ac_base * (1 - AC_GW_PENALTY * gw_stress))
 
     return {
@@ -290,6 +342,40 @@ def resolve_static_hex_inputs(row, lat: float, lon: float, wash_by_state: dict, 
         "state_name": state_name, "ac": ac, "gw_stress": gw_stress,
         "fs": fs, "hs": hs,
     }
+
+
+def compute_frequency_channels(inp: dict, flood_days, heat_days,
+                               pollution_hazard: float = 0.0,
+                               warming_c: float = 0.0) -> dict:
+    """Shared existing pluvial-flood/heat calculation for reference and future runs.
+
+    Frequency-only scenarios keep the existing severity weather, static terrain,
+    exposure/capacity and pollution context fixed. No new coefficients are added.
+    A day count of None means the frequency is unknown: that channel is returned
+    as None (not calculated) rather than scored as zero or maximum.
+    """
+    for value in (flood_days, heat_days):
+        if value is not None and (not math.isfinite(value) or not 0 <= value <= 366):
+            raise ValueError("Annual hazard frequency must be finite and in [0,366]")
+    flood = heat = None
+    if flood_days is not None:
+        flood_sev = pluvial_flood_score(50, inp["sand_pct"], inp["built_pct"], inp["slope"])
+        flood_occ, flood_cf, flood_haz = _occ_and_chronic("flood", flood_days, flood_sev)
+        flood_r = compute_risk(flood_haz, inp["exposure_10"], inp["fs"], inp["ac"] * AC_EFFECTIVENESS["flood"])
+        flood = {"days": flood_days, "severity": flood_sev, "occurrence": flood_occ,
+                 "chronic_factor": flood_cf, "hazard": flood_haz, "risk": flood_r}
+    if heat_days is not None:
+        threshold = heat_threshold_smooth(inp["elev"], inp["dist_coast"])
+        heat_sev = heatwave_score(44, threshold, 3, inp["built_pct"], inp["tree_pct"], inp["dist_w_heat"],
+                                warming_c)
+        heat_occ, heat_cf, heat_haz = _occ_and_chronic("heat", heat_days, heat_sev)
+        compound = HP_WEIGHT * min(heat_haz, pollution_hazard) / 10
+        adjusted_heat = min(10.0, heat_haz * (1 + compound))
+        heat_r = compute_risk(adjusted_heat, inp["exposure_10"], inp["hs"], inp["ac"] * AC_EFFECTIVENESS["heat"])
+        heat = {"days": heat_days, "severity": heat_sev, "occurrence": heat_occ,
+                "chronic_factor": heat_cf, "hazard": adjusted_heat, "raw_hazard": heat_haz,
+                "risk": heat_r, "threshold": threshold}
+    return {"flood": flood, "heat": heat}
 
 
 def compute_hex_risk(row, lat: float, lon: float, wash_by_state: dict, state_ac: dict) -> dict:
@@ -303,22 +389,39 @@ def compute_hex_risk(row, lat: float, lon: float, wash_by_state: dict, state_ac:
     exposure_10, state_name, ac, gw_stress = inp["exposure_10"], inp["state_name"], inp["ac"], inp["gw_stress"]
     fs, hs = inp["fs"], inp["hs"]
 
-    flood_days   = float(row.get("flood_days_per_year", 0) or 0)
-    heat_days    = float(row.get("heat_days_per_year", 0) or 0)
-    drought_days = float(row.get("drought_days_per_year", 0) or 0)
-    wb_days      = float(row.get("wet_bulb_days_per_year", 0) or 0)
-    cyc_lk       = float(row.get("cyclone_likelihood", 0) or 0)
+    # Climatology frequencies. None = no raster coverage (678 J&K/Ladakh hexes
+    # outside the GAUL clip); those channels are reported as not calculated.
+    flood_days   = _num(row, "flood_days_per_year")
+    heat_days    = _num(row, "heat_days_per_year")
+    # drought_days_per_year is a FRACTION of months with rain < 50 % of normal
+    # (gee_climatology.js), not days; OCCURRENCE_REF/DURATION_REF are set on
+    # that fraction. The field name is legacy.
+    drought_days = _num(row, "drought_days_per_year")
+    wb_days      = _num(row, "wet_bulb_days_per_year")
+    cyc_lk       = _num(row, "cyclone_likelihood") or 0.0
+    inputs_missing = [name for name, v in (("flood_days", flood_days), ("heat_days", heat_days),
+                                           ("drought_freq", drought_days), ("wet_bulb_days", wb_days))
+                      if v is None]
 
-    # ── 1. Pluvial flood ──
-    flood_sev = pluvial_flood_score(50, sand_pct, built_pct, slope)
-    flood_occ, flood_cf, flood_haz = _occ_and_chronic("flood", flood_days, flood_sev)
-    flood_r = compute_risk(flood_haz, exposure_10, fs, ac * AC_EFFECTIVENESS["flood"])
+    frequency_channels = compute_frequency_channels(inp, flood_days, heat_days)
+    flood = frequency_channels["flood"]
+    flood_haz, flood_r = (flood["hazard"], flood["risk"]) if flood else (None, None)
 
-    # ── 2. Heatwave ──
-    threshold = 30.0 if elev > 800 else (37.0 if dist_coast < 50000 else 40.0)
-    heat_sev = heatwave_score(44, threshold, 3, built_pct, tree_pct, dist_w_heat)
-    heat_occ, heat_cf, heat_haz = _occ_and_chronic("heat", heat_days, heat_sev)
-    heat_r = compute_risk(heat_haz, exposure_10, hs, ac * AC_EFFECTIVENESS["heat"])
+    # Flood v2: river-floodplain hazard replaces the legacy pluvial formula for
+    # flood_risk when build_flood_inputs.py has run (legacy kept as fallback).
+    floodplain = _num(row, "floodplain_pct")
+    if floodplain is not None:
+        flood_haz = floodplain / 10.0
+        flood_r = compute_risk(flood_haz, exposure_10, fs, ac * AC_EFFECTIVENESS["flood"])
+    runoff, flat = _num(row, "runoff_rp10_mm"), _num(row, "flat_pct")
+    pluvial_r = None
+    if runoff is not None and flat is not None:
+        ponded = runoff * flat / 100.0
+        lo, hi = math.log1p(PLUVIAL_P1), math.log1p(PLUVIAL_P99)
+        pluvial_haz = min(10.0, max(0.0, (math.log1p(ponded) - lo) / (hi - lo) * 10))
+        pluvial_r = compute_risk(pluvial_haz, exposure_10, fs, ac * AC_EFFECTIVENESS["flood"])
+    heat = frequency_channels["heat"]
+    heat_haz, heat_cf = (heat["raw_hazard"], heat["chronic_factor"]) if heat else (None, None)
 
     # ── 3. Cyclone ──
     if dist_coast < 300000:
@@ -394,47 +497,47 @@ def compute_hex_risk(row, lat: float, lon: float, wash_by_state: dict, state_ac:
     if sand_pct > 50:
         spi_proxy -= 0.5
     drought_sev = min(7.0, drought_score(spi_proxy))
-    drought_occ, drought_cf, drought_haz = _occ_and_chronic("drought", drought_days, drought_sev)
-    drought_sens_base = 0.5 + 0.3 * (1 - ndvi) + 0.2 * (sand_pct / 100)
-    drought_sens = min(1.0, drought_sens_base * (1 + GW_WEIGHT * gw_stress))
-    drought_r = compute_risk(drought_haz, exposure_10, drought_sens, ac * AC_EFFECTIVENESS["drought"])
+    if drought_days is not None:
+        _, drought_cf, drought_haz = _occ_and_chronic("drought", drought_days, drought_sev)
+        drought_sens_base = 0.5 + 0.3 * (1 - ndvi) + 0.2 * (sand_pct / 100)
+        drought_sens = min(1.0, drought_sens_base * (1 + GW_WEIGHT * gw_stress))
+        drought_r = compute_risk(drought_haz, exposure_10, drought_sens, ac * AC_EFFECTIVENESS["drought"])
+    else:
+        drought_cf = drought_haz = drought_r = None
 
     # ── 5. Wet bulb ──
-    rh_proxy = min(95, 40 + ndvi * 40 + max(0, 20 - dist_coast / 10000))
-    wb_sev = wet_bulb_score(38, rh_proxy)
-    wb_occ, wb_cf, wb_haz = _occ_and_chronic("wet_bulb", wb_days, wb_sev)
-    wb_r = compute_risk(wb_haz, exposure_10, hs, ac * AC_EFFECTIVENESS["wet_bulb"])
+    if wb_days is not None:
+        rh_proxy = min(95, 40 + ndvi * 40 + max(0, 20 - dist_coast / 10000))
+        wb_sev = wet_bulb_score(38, rh_proxy)
+        _, wb_cf, wb_haz = _occ_and_chronic("wet_bulb", wb_days, wb_sev)
+        wb_r = compute_risk(wb_haz, exposure_10, hs, ac * AC_EFFECTIVENESS["wet_bulb"])
+    else:
+        wb_cf = wb_haz = wb_r = None
 
     # ── 5b. Air pollution ──
-    pm25 = float(row.get("pm25_annual", 0) or 0)
-    if pm25 <= 0:
-        if 76 < lon < 86 and 24 < lat < 30:
-            pm25 = 60 + (30 - lat) * 5 + random.uniform(-10, 10)
-        elif 76 < lon < 78 and 28 < lat < 29:
-            pm25 = 90 + random.uniform(-10, 15)
-        elif lon < 74 and lat > 22:
-            pm25 = 35 + random.uniform(-5, 10)
-        elif lon > 88 and lat > 22:
-            pm25 = 15 + random.uniform(-3, 5)
-        elif lat < 15:
-            pm25 = 20 + random.uniform(-5, 5)
-        else:
-            pm25 = 30 + random.uniform(-10, 10)
-        pm25 = max(5, pm25)
+    # Missing PM2.5 is not calculated. The former random regional fallback made
+    # rebuilds non-reproducible and presented invented values as observations.
+    pm25 = _num(row, "pm25_annual")
+    if pm25 is not None and pm25 <= 0:
+        pm25 = None
+    if pm25 is None:
+        inputs_missing.append("pm25")
+        pollution_haz = pollution_r = None
+    else:
+        pollution_haz = air_pollution_score(pm25)
+        pollution_r = compute_risk(pollution_haz, exposure_10, 0.5, ac * AC_EFFECTIVENESS["air_pollution"])
 
-    pollution_haz = air_pollution_score(pm25)
-
-    heat_pollution_compound = HP_WEIGHT * min(heat_haz, pollution_haz) / 10
-    heat_haz_adjusted = min(10.0, heat_haz * (1 + heat_pollution_compound))
-    heat_r = compute_risk(heat_haz_adjusted, exposure_10, hs, ac * AC_EFFECTIVENESS["heat"])
-
-    pollution_r = compute_risk(pollution_haz, exposure_10, 0.5, ac * AC_EFFECTIVENESS["air_pollution"])
+    adjusted_channels = compute_frequency_channels(inp, flood_days, heat_days, pollution_haz or 0.0)
+    heat_haz_adjusted = adjusted_channels["heat"]["hazard"] if heat else None
+    heat_r = adjusted_channels["heat"]["risk"] if heat else None
 
     wash_disruption = 0.0
     for hz_name, hz_days, hz_haz in [
         ("flood", flood_days, flood_haz), ("heat", heat_days, heat_haz),
         ("drought", drought_days, drought_haz), ("wet_bulb", wb_days, wb_haz),
     ]:
+        if hz_days is None:
+            continue
         sev_frac = min(1.0, hz_haz / 10) if hz_haz > 0 else 0.0
         wash_disruption += hz_days * sev_frac * WASH_RELEVANCE.get(hz_name, 0.5)
     wash_disruption = round(wash_disruption, 1)
@@ -481,13 +584,15 @@ def compute_hex_risk(row, lat: float, lon: float, wash_by_state: dict, state_ac:
         fire_r = 0.0
 
     # ── Cumulative burden days ──
+    # Unknown channels are left out of the burden (it then covers known hazards only).
     burden_hz_days = {
         "heat": heat_days,
         "flood": flood_days,
-        "drought": max(0, drought_days * 30),
+        "drought": max(0, drought_days * 30) if drought_days is not None else None,
         "wet_bulb": wb_days,
-        "pollution": max(0, (pm25 - 25) / 75 * 120) if pm25 > 25 else 0,
+        "pollution": (max(0, (pm25 - 25) / 75 * 120) if pm25 > 25 else 0) if pm25 is not None else None,
     }
+    burden_hz_days = {h: d for h, d in burden_hz_days.items() if d is not None}
     p = {h: min(0.99, d / 365) for h, d in burden_hz_days.items() if d > 0}
     if p:
         p_clear = 1.0
@@ -511,19 +616,20 @@ def compute_hex_risk(row, lat: float, lon: float, wash_by_state: dict, state_ac:
     haz_by_name = {"heat": heat_haz, "flood": flood_haz, "drought": drought_haz,
                    "wet_bulb": wb_haz, "pollution": pollution_haz}
     weighted_burden = sum(
-        d * (min(1, haz_by_name.get(h, 0) / 10)) * WASH_RELEVANCE.get(h, 0.5)
+        d * (min(1, (haz_by_name.get(h) or 0) / 10)) * WASH_RELEVANCE.get(h, 0.5)
         for h, d in burden_hz_days.items()
     )
     weighted_child = sum(d * DEMO_SENS["child"].get(h, 1) * 0.1 for h, d in burden_hz_days.items())
     weighted_elderly = sum(d * DEMO_SENS["elderly"].get(h, 1) * 0.1 for h, d in burden_hz_days.items())
 
-    all_risks = [flood_r, heat_r, cyc_r, drought_r, wb_r, ls_r, cw_r, ff_r, slr_r, fire_r, pollution_r]
-    combined = max(all_risks)
+    all_risks = [flood_r, pluvial_r, heat_r, cyc_r, drought_r, wb_r, ls_r, cw_r, ff_r, slr_r, fire_r, pollution_r]
+    combined = max(r for r in all_risks if r is not None)
 
+    # A channel that was not calculated cannot trigger a cascade rule.
     cascade_props = {
-        "flood_risk": flood_r, "heat_risk": heat_r, "cyclone_risk": cyc_r,
-        "drought_risk": drought_r, "wetbulb_risk": wb_r, "landslide_risk": ls_r,
-        "coldwave_risk": cw_r, "population": int(row.get("population", 0) or 0),
+        "flood_risk": flood_r or 0.0, "heat_risk": heat_r or 0.0, "cyclone_risk": cyc_r,
+        "drought_risk": drought_r or 0.0, "wetbulb_risk": wb_r or 0.0, "landslide_risk": ls_r,
+        "coldwave_risk": cw_r, "population": int(_num(row, "population") or 0),
         "elevation_mean": elev, "built_pct": built_pct,
         **wash_by_state.get(state_name, {}),
     }
@@ -532,20 +638,24 @@ def compute_hex_risk(row, lat: float, lon: float, wash_by_state: dict, state_ac:
     combined = min(10.0, combined + cascade_amp)
     cascade_action_str = " | ".join(f"[{c.severity.upper()}] {c.action}" for c in cascades) if cascades else ""
 
+    def r2(v):
+        return None if v is None else round(v, 2)
+
     return {
-        "flood_risk": round(flood_r, 2),
-        "heat_risk": round(heat_r, 2),
+        "flood_risk": r2(flood_r),
+        "pluvial_flood_risk": r2(pluvial_r),
+        "heat_risk": r2(heat_r),
         "cyclone_risk": round(cyc_r, 2),
-        "drought_risk": round(drought_r, 2),
-        "wetbulb_risk": round(wb_r, 2),
+        "drought_risk": r2(drought_r),
+        "wetbulb_risk": r2(wb_r),
         "landslide_risk": round(ls_r, 2),
         "coldwave_risk": round(cw_r, 2),
         "flashflood_risk": round(ff_r, 2),
         "sealevel_risk": round(slr_r, 2),
         "fire_risk": round(fire_r, 2),
         "hex_risk": round(combined, 2),
-        "pollution_risk": round(pollution_r, 2),
-        "pm25_annual": round(pm25, 1),
+        "pollution_risk": r2(pollution_r),
+        "pm25_annual": None if pm25 is None else round(pm25, 1),
         "wash_disruption_days": wash_disruption,
         "total_burden_days": total_burden,
         "single_hazard_days": single_burden,
@@ -553,10 +663,11 @@ def compute_hex_risk(row, lat: float, lon: float, wash_by_state: dict, state_ac:
         "weighted_burden": round(weighted_burden, 1),
         "weighted_burden_children": round(weighted_child, 1),
         "weighted_burden_elderly": round(weighted_elderly, 1),
-        "heat_chronic_factor": round(heat_cf, 2),
-        "drought_chronic_factor": round(drought_cf, 2),
-        "wetbulb_chronic_factor": round(wb_cf, 2),
+        "heat_chronic_factor": r2(heat_cf),
+        "drought_chronic_factor": r2(drought_cf),
+        "wetbulb_chronic_factor": r2(wb_cf),
         "cascade_count": len(cascades),
         "cascade_actions": cascade_action_str,
+        "inputs_missing": ",".join(inputs_missing),
         "_cascade_rule_ids": [c.rule_id for c in cascades],
     }

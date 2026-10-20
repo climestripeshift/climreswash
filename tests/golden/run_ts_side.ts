@@ -21,7 +21,7 @@ const round = (n: number, d = 6) => Math.round(n * 10 ** d) / 10 ** d;
 function runTier1(vectors: any) {
   return {
     pluvial_flood_score: vectors.pluvial_flood_score.map((v: number[]) => round(pluvialFloodScore(v[0], v[1], v[2], v[3]))),
-    heatwave_score: vectors.heatwave_score.map((v: number[]) => round(heatwaveScore(v[0], v[1], v[2], v[3], v[4], v[5]))),
+    heatwave_score: vectors.heatwave_score.map((v: number[]) => round(heatwaveScore(v[0], v[1], v[2], v[3], v[4], v[5], v[6] ?? 0))),
     drought_score: vectors.drought_score.map((v: number) => round(droughtScore(v))),
     wet_bulb_score: vectors.wet_bulb_score.map((v: number[]) => round(wetBulbScore(v[0], v[1]))),
     exposure_score: vectors.exposure_score.map((v: number[]) => round(exposureScore(v[0], v[1], v[2], v[3]))),

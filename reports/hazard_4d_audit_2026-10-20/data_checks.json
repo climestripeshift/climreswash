@@ -1,0 +1,429 @@
+{
+  "hex_count": 12705,
+  "layers": {
+    "heat": {
+      "files_checked": 13,
+      "aggregate_errors": [],
+      "extremes": {
+        "baseline_1991-2020": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 2682
+        },
+        "ssp126_2030": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 2369
+        },
+        "ssp126_2050": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 2283
+        },
+        "ssp126_2080": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 2202
+        },
+        "ssp245_2030": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 2369
+        },
+        "ssp245_2050": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 2150
+        },
+        "ssp245_2080": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 1972
+        },
+        "ssp370_2030": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 2369
+        },
+        "ssp370_2050": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 2124
+        },
+        "ssp370_2080": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 1818
+        },
+        "ssp585_2030": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 2322
+        },
+        "ssp585_2050": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 2029
+        },
+        "ssp585_2080": {
+          "hexes_with_score_100": 3,
+          "all_zero_hexes": 1596
+        }
+      }
+    },
+    "flood": {
+      "files_checked": 13,
+      "aggregate_errors": [],
+      "extremes": {
+        "baseline_1991-2020": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 242
+        },
+        "ssp126_2030": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 239
+        },
+        "ssp126_2050": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 238
+        },
+        "ssp126_2080": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 234
+        },
+        "ssp245_2030": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 239
+        },
+        "ssp245_2050": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 232
+        },
+        "ssp245_2080": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 226
+        },
+        "ssp370_2030": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 239
+        },
+        "ssp370_2050": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 231
+        },
+        "ssp370_2080": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 214
+        },
+        "ssp585_2030": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 239
+        },
+        "ssp585_2050": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 228
+        },
+        "ssp585_2080": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 212
+        }
+      }
+    },
+    "drought": {
+      "files_checked": 13,
+      "aggregate_errors": [],
+      "extremes": {
+        "baseline_1991-2020": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 0
+        },
+        "ssp126_2030": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 0
+        },
+        "ssp126_2050": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 0
+        },
+        "ssp126_2080": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 0
+        },
+        "ssp245_2030": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 0
+        },
+        "ssp245_2050": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 0
+        },
+        "ssp245_2080": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 0
+        },
+        "ssp370_2030": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 0
+        },
+        "ssp370_2050": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 0
+        },
+        "ssp370_2080": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 0
+        },
+        "ssp585_2030": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 0
+        },
+        "ssp585_2050": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 0
+        },
+        "ssp585_2080": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 0
+        }
+      }
+    },
+    "wetbulb": {
+      "files_checked": 13,
+      "aggregate_errors": [],
+      "extremes": {
+        "baseline_1991-2020": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 7027
+        },
+        "ssp126_2030": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 5807
+        },
+        "ssp126_2050": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 5378
+        },
+        "ssp126_2080": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 4973
+        },
+        "ssp245_2030": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 5807
+        },
+        "ssp245_2050": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 4589
+        },
+        "ssp245_2080": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 3330
+        },
+        "ssp370_2030": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 5807
+        },
+        "ssp370_2050": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 4416
+        },
+        "ssp370_2080": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 2266
+        },
+        "ssp585_2030": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 5607
+        },
+        "ssp585_2050": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 3783
+        },
+        "ssp585_2080": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 1621
+        }
+      }
+    },
+    "landslide": {
+      "files_checked": 13,
+      "aggregate_errors": [],
+      "extremes": {
+        "baseline_1991-2020": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 8721
+        },
+        "ssp126_2030": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 8697
+        },
+        "ssp126_2050": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 8692
+        },
+        "ssp126_2080": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 8688
+        },
+        "ssp245_2030": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 8697
+        },
+        "ssp245_2050": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 8680
+        },
+        "ssp245_2080": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 8648
+        },
+        "ssp370_2030": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 8697
+        },
+        "ssp370_2050": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 8678
+        },
+        "ssp370_2080": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 8624
+        },
+        "ssp585_2030": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 8694
+        },
+        "ssp585_2050": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 8660
+        },
+        "ssp585_2080": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 8605
+        }
+      }
+    },
+    "flashflood": {
+      "files_checked": 13,
+      "aggregate_errors": [],
+      "extremes": {
+        "baseline_1991-2020": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 2131
+        },
+        "ssp126_2030": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 2067
+        },
+        "ssp126_2050": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 2048
+        },
+        "ssp126_2080": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 2034
+        },
+        "ssp245_2030": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 2067
+        },
+        "ssp245_2050": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 2008
+        },
+        "ssp245_2080": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 1933
+        },
+        "ssp370_2030": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 2067
+        },
+        "ssp370_2050": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 2002
+        },
+        "ssp370_2080": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 1863
+        },
+        "ssp585_2030": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 2056
+        },
+        "ssp585_2050": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 1971
+        },
+        "ssp585_2080": {
+          "hexes_with_score_100": 0,
+          "all_zero_hexes": 1804
+        }
+      }
+    },
+    "coldwave": {
+      "files_checked": 13,
+      "aggregate_errors": [],
+      "extremes": {
+        "baseline_1991-2020": {
+          "hexes_with_score_100": 837,
+          "all_zero_hexes": 5034
+        },
+        "ssp126_2030": {
+          "hexes_with_score_100": 822,
+          "all_zero_hexes": 5529
+        },
+        "ssp126_2050": {
+          "hexes_with_score_100": 818,
+          "all_zero_hexes": 5676
+        },
+        "ssp126_2080": {
+          "hexes_with_score_100": 810,
+          "all_zero_hexes": 5805
+        },
+        "ssp245_2030": {
+          "hexes_with_score_100": 822,
+          "all_zero_hexes": 5529
+        },
+        "ssp245_2050": {
+          "hexes_with_score_100": 806,
+          "all_zero_hexes": 5949
+        },
+        "ssp245_2080": {
+          "hexes_with_score_100": 797,
+          "all_zero_hexes": 6538
+        },
+        "ssp370_2030": {
+          "hexes_with_score_100": 822,
+          "all_zero_hexes": 5529
+        },
+        "ssp370_2050": {
+          "hexes_with_score_100": 804,
+          "all_zero_hexes": 6021
+        },
+        "ssp370_2080": {
+          "hexes_with_score_100": 778,
+          "all_zero_hexes": 7247
+        },
+        "ssp585_2030": {
+          "hexes_with_score_100": 819,
+          "all_zero_hexes": 5596
+        },
+        "ssp585_2050": {
+          "hexes_with_score_100": 801,
+          "all_zero_hexes": 6330
+        },
+        "ssp585_2080": {
+          "hexes_with_score_100": 754,
+          "all_zero_hexes": 8276
+        }
+      }
+    }
+  },
+  "missing_heavy_days": {
+    "states": {
+      "Jammu & Kashmir": 387,
+      "Ladakh": 289,
+      "Arunachal Pradesh": 2
+    },
+    "hex_count": 678,
+    "population": 8682409
+  },
+  "zero_heavy_days_rp10_gt100": {
+    "states": {
+      "Arunachal Pradesh": 155,
+      "Jammu & Kashmir": 48,
+      "Assam": 6
+    },
+    "hex_count": 209,
+    "population": 4143167
+  }
+}

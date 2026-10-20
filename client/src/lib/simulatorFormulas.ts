@@ -84,17 +84,38 @@ export function pluvialFloodScore(mm: number, sand: number, built: number, slope
 
 // ── 2. Heatwave score (§2) ───────────────────────────────────────────────────
 
+// Mirrors scripts/risk/formulas.py: soft knee above 8 (instead of a hard clip at 10) and
+// optional scenario warming that raises the excess and lengthens the spell.
+const HEAT_KNEE = 8;
+const HEAT_SPELL_GAIN = 0.15;
+function softCap(x: number, knee = HEAT_KNEE, cap = 10): number {
+  if (x <= knee) return x;
+  const room = cap - knee;
+  return knee + room * (1 - Math.exp(-(x - knee) / room));
+}
+
 export function heatwaveScore(
   tmax: number, threshold: number, days: number,
   built: number, tree: number, distWater: number,
+  warmingC = 0,
 ): number {
-  const excess = Math.max(0, tmax - threshold);
-  const dur = Math.min(days, 5);
+  const warming = Math.max(0, warmingC);
+  const excess = Math.max(0, tmax + warming - threshold);
+  const dur = Math.min(days * (1 + HEAT_SPELL_GAIN * warming), 5);
   const base = (excess / 8) * (dur / 5) * 10;
   const urbanAmp = 1 + 0.3 * (built / 100);
   const vegCool  = 1 - 0.2 * (tree / 100);
   const waterCool = 1 - 0.1 * Math.exp(-distWater / 3000);
-  return Math.min(10, base * urbanAmp * vegCool * waterCool);
+  return softCap(base * urbanAmp * vegCool * waterCool);
+}
+
+// Mirrors heat_threshold_smooth() in scripts/risk/formulas.py: 40 C plains / 37 C coastal,
+// blending continuously to 30 C between 500 m and 1,500 m (no cliff at 800 m). The coastal tier
+// needs a hex's distance to coast, which the simulator doesn't have, so it defaults to inland.
+export function heatThresholdSmooth(elevM: number, distCoastM = Infinity): number {
+  const base = distCoastM < 50000 ? 37.0 : 40.0;
+  const w = Math.min(1, Math.max(0, (elevM - 500) / 1000));
+  return base * (1 - w) + 30.0 * w;
 }
 
 // ── 3. Drought score (§3) ────────────────────────────────────────────────────
@@ -281,9 +302,9 @@ export function scoreHexBreakdown(hex: HexProp, inputs: SimInputs, stateAc: Reco
   const floodRisk   = computeRisk(floodHazard, exp, floodSens, ac);
 
   // Heat threshold (see chat, golden-test heat-threshold fix): hex_risk.py
-  // uses `30.0 if elev > 800 else (37.0 if dist_coast < 50000 else 40.0)` --
-  // high-altitude regions aren't heat-adapted, so "heatwave" kicks in lower.
-  // Ported the elevation branch (the one explicitly asked for, and the one
+  // uses an elevation-smooth threshold (heat_threshold_smooth; formerly a step
+  // `30.0 if elev > 800 ...`) -- high-altitude regions aren't heat-adapted, so
+  // "heatwave" kicks in lower. Ported the elevation blend (the one explicitly asked for, and the one
   // that drove every heat-channel Tier-2b mismatch in the golden test --
   // Leh/Shimla/Kargil/Sikkim/NE hills, all elev>800). NOT ported: the
   // dist_coast<50000 -> 37 middle tier -- that needs a hex's lat/lon, which
@@ -291,7 +312,7 @@ export function scoreHexBreakdown(hex: HexProp, inputs: SimInputs, stateAc: Reco
   // hex geometry from h3_id via h3-js rather than storing coordinates), and
   // none of the current test hexes' mismatches are driven by that branch.
   // Flagging as a known, deliberate simplification, not a silent omission.
-  const heatThreshold = elev > 800 ? 30.0 : 40.0;
+  const heatThreshold = heatThresholdSmooth(elev);
 
   // Heat
   const heatHazard = heatwaveScore(inputs.tmax_c, heatThreshold, inputs.hot_days, lu.built_pct, treePct, distWHeat);
